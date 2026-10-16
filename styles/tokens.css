@@ -1,0 +1,39 @@
+:root {
+  /* Carbon Dark Palette */
+  --bg-primary: #0A0B0F;
+  --bg-surface: #12141A;
+  --bg-elevated: #181B22;
+
+  /* Accent & Electric Highlights */
+  --accent-cyan: #19D3FF;
+  --accent-cyan-hover: #00BEEA;
+  --accent-glow: rgba(25, 211, 255, 0.25);
+  --accent-green: #00E599;
+  --accent-green-glow: rgba(0, 229, 153, 0.3);
+
+  /* Status Colors */
+  --status-danger: #EF4444;
+  --status-warning: #F59E0B;
+  --status-info: #3B82F6;
+
+  /* Text & Foreground */
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+
+  /* Borders & Dividers */
+  --border-subtle: #232733;
+  --border-active: #19D3FF;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(18, 20, 26, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 16px;
+}
