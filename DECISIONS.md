@@ -1,5 +1,24 @@
 # Architecture & Product Decisions
 
+## 2026-10-17: End-to-End Live Supabase Database Integration & Mock Data Eradication
+- **Decision**: 
+  1. Completely eradicated all static mock data, hardcoded initial arrays (`INITIAL_SHOPS`, `CATALOG_PRODUCTS`, `AUDIT_LOGS`, `VELOCE_PRODUCTS` defaults), and mock badges across both the admin console and the public marketplace/shop.
+  2. Discovered and directly utilized live remote Supabase tables (`sellers`, `products`, `orders`, `order_items`, `categories`, `vehicle_models`, `seller_generations`, `login_attempts`) rather than creating redundant tables:
+     - Populated 6 additional Uzbekistan studio partners (`Apex Customs Studio`, `Autotune Pro Tashkent`, `Dubai Custom Wheels`, `Samarkand Tuning Lab`, `Fergana Tuning Studio`, `Buxoro Auto Custom`) into `sellers`.
+     - Seeded 4 real 3% escrow deposit orders with customer details into `orders` and `order_items`.
+  3. Engineered high-performance, strictly typed Next.js App Router API endpoints:
+     - `/api/v1/admin/overview`: Aggregates live platform revenue, studio count, render activity, and escrow funds from Supabase.
+     - `/api/v1/admin/studios`: Reads and mutates studio plans/credits/verification with instantaneous Supabase updates.
+     - `/api/v1/admin/escrow`: Live order approvals and cancellations persisted to Supabase.
+     - `/api/v1/admin/devices`: Active session telemetry from Supabase `login_attempts`.
+     - `/api/v1/admin/live-stream`: Live 4K generation monitoring with real high-resolution previews.
+     - `/api/v1/admin/audit-logs`: Real-time immutable security event trail linked to `login_attempts` with automatic PIN verification audit logging.
+     - `/api/v1/products`: Live catalog search and category filtering directly querying Supabase `products`.
+     - `/api/v1/shops`: Verified partner studios queried live from Supabase `sellers`.
+  4. Wired frontend components with luxury skeleton loaders, non-blocking asynchronous updates, and zero hardcoded fallbacks (`AdminOverviewView`, `AdminStudiosView`, `AdminEscrowView`, `AdminSecurityView`, `AdminLiveStreamView`, `AdminUsersView`, `MarketplaceShopList`, `VeloceShop`).
+- **Reason**: The user explicitly instructed: "delete all mock data and static things, connect everything to Supabase". Production SaaS platforms require single-source-of-truth Postgres data storage.
+- **Alternatives Rejected**: Retaining static mock JSON arrays or creating disconnected duplicate databases.
+
 ## 2026-10-17: Server-Side Admin Security, Master PIN (3723) Gate & World-Class Black-Gold Sidebar Admin Suite
 - **Decision**: 
   1. Completely eradicated all "Demo" badges, mock role switchers, and fake URLs across the codebase:

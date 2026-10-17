@@ -7,132 +7,8 @@ import { ReceiptUploadModal, type UnlockedShopDetails } from './ReceiptUploadMod
 import { VoucherUnlockedScreen } from './VoucherUnlockedScreen';
 import { ProductGrid, type CatalogProduct } from '@/components/ProductCard';
 import { UserAccountBar } from '@/features/auth/components/UserAccountBar';
-import { ShieldCheck, Search, Sparkles, SlidersHorizontal, Store, Check, Wrench } from 'lucide-react';
+import { ShieldCheck, Search, Sparkles, Store, Check, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const DEMO_SHOPS: MaskedShopData[] = [
-  {
-    id: '7f8b919d-6484-4827-86c3-16279f6bb123',
-    maskedLabel: 'Verified Partner #B123',
-    district: 'Yunusobod',
-    distanceKm: 3.8,
-    ratingAvg: 4.9,
-    ratingCount: 42,
-    logoUrl: undefined,
-    activeOffersCount: 68,
-  },
-  {
-    id: '9c12a84e-1249-411a-829b-81729afca772',
-    maskedLabel: 'Verified Partner #A772',
-    district: 'Chilanzar',
-    distanceKm: 5.4,
-    ratingAvg: 4.8,
-    ratingCount: 29,
-    logoUrl: undefined,
-    activeOffersCount: 45,
-  },
-  {
-    id: 'e49120ba-4412-4211-9012-71829afca881',
-    maskedLabel: 'Verified Partner #C881',
-    district: 'Mirzo Ulugbek',
-    distanceKm: 6.1,
-    ratingAvg: 5.0,
-    ratingCount: 18,
-    logoUrl: undefined,
-    activeOffersCount: 54,
-  },
-];
-
-const CATALOG_PRODUCTS: CatalogProduct[] = [
-  {
-    id: 'p-1',
-    name: 'Vossen HF-5 20" Forged Wheels',
-    price: 85000,
-    image_url: 'https://cdn.carvision.app/catalog/vossen-hf5.webp',
-    stock: 8,
-    category: 'wheels',
-    brand: 'Vossen',
-    seller: { id: 's-1', business_name: 'Apex Wheels Tashkent' },
-    compatibility: [{ id: 'chevrolet-malibu-2' }, { id: 'byd-seal' }],
-  },
-  {
-    id: 'p-2',
-    name: 'BBS CI-R 19" Satin Titanium Wheels',
-    price: 65000,
-    image_url: 'https://cdn.carvision.app/catalog/bbs-cir.webp',
-    stock: 4,
-    category: 'wheels',
-    brand: 'BBS',
-    seller: { id: 's-2', business_name: 'BBS Official Distributor' },
-    compatibility: [{ id: 'chevrolet-malibu-2' }, { id: 'bmw-3-g20' }],
-  },
-  {
-    id: 'p-3',
-    name: 'Redline Sport Carbon Front Bumper & Splitter',
-    price: 48000,
-    image_url: 'https://cdn.carvision.app/catalog/malibu-redline-bumper.webp',
-    stock: 3,
-    category: 'aero',
-    brand: 'OEM+ Performance',
-    seller: { id: 's-3', business_name: 'CarbonTech Lab' },
-    compatibility: [{ id: 'chevrolet-malibu-2' }],
-  },
-  {
-    id: 'p-4',
-    name: 'Full Matrix LED Laser Headlight Assembly',
-    price: 58000,
-    image_url: 'https://cdn.carvision.app/catalog/malibu-laser-led.webp',
-    stock: 5,
-    category: 'lighting',
-    brand: 'CustomLED Pro',
-    seller: { id: 's-4', business_name: 'LuxOptics Pro' },
-    compatibility: [{ id: 'chevrolet-malibu-2' }, { id: 'byd-seal' }],
-  },
-  {
-    id: 'p-5',
-    name: 'Supergloss Nardo Gray Ultra Vinyl Wrap (Full Roll)',
-    price: 160000,
-    image_url: 'https://cdn.carvision.app/catalog/wrap-nardo-gray.webp',
-    stock: 12,
-    category: 'wrap',
-    brand: 'Inozetek',
-    seller: { id: 's-5', business_name: 'ColorWrap Studio' },
-    compatibility: [{ id: 'chevrolet-malibu-2' }],
-  },
-  {
-    id: 'p-6',
-    name: 'Dry Carbon Fiber Ducktail Trunk Spoiler',
-    price: 35000,
-    image_url: 'https://cdn.carvision.app/catalog/malibu-laser-led.webp',
-    stock: 0,
-    category: 'aero',
-    brand: 'AeroCraft',
-    seller: { id: 's-3', business_name: 'CarbonTech Lab' },
-    compatibility: [{ id: 'chevrolet-malibu-2' }],
-  },
-  {
-    id: 'p-7',
-    name: 'Dual Quad-Fin Rear Aero Diffuser',
-    price: 49000,
-    image_url: 'https://cdn.carvision.app/catalog/malibu-redline-bumper.webp',
-    stock: 6,
-    category: 'aero',
-    brand: 'Akrapovic Style',
-    seller: { id: 's-3', business_name: 'CarbonTech Lab' },
-    compatibility: [{ id: 'chevrolet-malibu-2' }],
-  },
-  {
-    id: 'p-8',
-    name: 'Nano-Ceramic IR 15% Heat-Rejection Window Tint',
-    price: 28000,
-    image_url: 'https://cdn.carvision.app/catalog/wrap-nardo-gray.webp',
-    stock: 20,
-    category: 'tint',
-    brand: 'SunTek Ultra',
-    seller: { id: 's-6', business_name: 'SolarShield Tint' },
-    compatibility: [{ id: 'chevrolet-malibu-2' }, { id: 'byd-seal' }],
-  },
-];
 
 const CATEGORIES = [
   { id: 'all', label: 'All Catalog' },
@@ -145,7 +21,13 @@ const CATEGORIES = [
 
 export function MarketplaceShopList() {
   const [activeTab, setActiveTab] = React.useState<'catalog' | 'workshops'>('catalog');
+  const [shops, setShops] = React.useState<MaskedShopData[]>([]);
+  const [products, setProducts] = React.useState<CatalogProduct[]>([]);
+  const [loadingShops, setLoadingShops] = React.useState(true);
+  const [loadingProducts, setLoadingProducts] = React.useState(true);
+
   const [selectedShop, setSelectedShop] = React.useState<MaskedShopData | null>(null);
+  const [selectedProduct, setSelectedProduct] = React.useState<CatalogProduct | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = React.useState(false);
   const [unlockedDetails, setUnlockedDetails] = React.useState<UnlockedShopDetails | null>(null);
@@ -153,10 +35,57 @@ export function MarketplaceShopList() {
   const [selectedCategory, setSelectedCategory] = React.useState('all');
   const [onlyCompatible, setOnlyCompatible] = React.useState(true);
 
+  // Fetch verified workshops from live Supabase
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchShops = async () => {
+      try {
+        setLoadingShops(true);
+        const res = await fetch('/api/v1/shops');
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.shops)) {
+          setShops(data.shops);
+        }
+      } catch (err) {
+        console.error('Failed to load shops from Supabase:', err);
+      } finally {
+        if (isMounted) setLoadingShops(false);
+      }
+    };
+    fetchShops();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch real products from live Supabase
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchProducts = async () => {
+      try {
+        setLoadingProducts(true);
+        const res = await fetch('/api/v1/products');
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.products)) {
+          setProducts(data.products);
+        }
+      } catch (err) {
+        console.error('Failed to load products from Supabase:', err);
+      } finally {
+        if (isMounted) setLoadingProducts(false);
+      }
+    };
+    fetchProducts();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const vehicleModelId = 'chevrolet-malibu-2';
 
   const handleBookClick = (shop: MaskedShopData) => {
     setSelectedShop(shop);
+    setSelectedProduct(null);
     setIsCheckoutOpen(true);
   };
 
@@ -168,20 +97,25 @@ export function MarketplaceShopList() {
     return <VoucherUnlockedScreen details={unlockedDetails} onReset={() => setUnlockedDetails(null)} />;
   }
 
-  const filteredShops = DEMO_SHOPS.filter(
+  const filteredShops = shops.filter(
     (s) =>
       s.maskedLabel.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.district.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredProducts = CATALOG_PRODUCTS.filter((p) => {
+  const filteredProducts = products.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      (p.category && p.category.toLowerCase().includes(selectedCategory.toLowerCase()));
     const matchesCompatibility = !onlyCompatible || (p.compatibility?.some((m) => m.id === vehicleModelId) ?? false);
     return matchesSearch && matchesCategory && matchesCompatibility;
   });
+
+  const activeTotalPrice = selectedProduct ? selectedProduct.price : 145000;
+  const activeDepositAmount = Math.round(activeTotalPrice * 0.03);
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
@@ -197,79 +131,85 @@ export function MarketplaceShopList() {
           </h1>
           <p className="text-xs text-[#94A3B8] mt-1.5 leading-relaxed max-w-xl">
             {activeTab === 'catalog'
-              ? 'OEM-precision aftermarket aero components, forged wheels, and vinyl finishes calibrated for your chassis.'
-              : 'Book certified partner workshops with reserved inventory, OEM precision fitment, and guaranteed price protection.'}
+              ? 'Browse genuine aerodynamic kits, forged wheels, and styling components with verified Malibu 2 fitment.'
+              : 'Direct connection to certified tuning garages in Tashkent. Locked contact details unlock upon 3% escrow deposit confirmation.'}
           </p>
         </div>
 
-        {/* Actions & Search */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+        {/* User Account / Balance Bar */}
+        <div className="shrink-0">
           <UserAccountBar />
-          <div className="relative w-full sm:w-72">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={activeTab === 'catalog' ? 'Search parts, brands...' : 'Search by district or shop...'}
-              className="w-full px-4 py-2.5 ps-10 rounded-2xl bg-[#12141A] border border-white/10 text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#19D3FF] focus:shadow-glow transition-all"
-            />
-            <Search className="w-4 h-4 text-[#64748B] absolute start-3.5 top-3 pointer-events-none" />
-          </div>
         </div>
       </header>
 
-      {/* Primary Navigation Tabs */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex rounded-full bg-[#12141A] p-1 border border-white/10">
-          <button
-            type="button"
-            onClick={() => setActiveTab('catalog')}
-            className={cn(
-              'flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer select-none',
+      {/* Nav Tabs */}
+      <div className="flex items-center gap-2 border-b border-white/5 pb-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab('catalog')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer',
+            activeTab === 'catalog'
+              ? 'bg-[#19D3FF]/15 text-[#19D3FF] border border-[#19D3FF]/30 shadow-[0_0_15px_rgba(25,211,255,0.2)]'
+              : 'text-[#94A3B8] hover:text-white hover:bg-white/5'
+          )}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Tuning Parts Catalog</span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white">
+            {products.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('workshops')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer',
+            activeTab === 'workshops'
+              ? 'bg-[#19D3FF]/15 text-[#19D3FF] border border-[#19D3FF]/30 shadow-[0_0_15px_rgba(25,211,255,0.2)]'
+              : 'text-[#94A3B8] hover:text-white hover:bg-white/5'
+          )}
+        >
+          <Store className="w-4 h-4" />
+          <span>Verified Studios</span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white">
+            {shops.length}
+          </span>
+        </button>
+      </div>
+
+      {/* Controls Bar: Search & Filters */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={
               activeTab === 'catalog'
-                ? 'bg-[#19D3FF] text-[#0A0B0F] shadow-[0_0_16px_rgba(25,211,255,0.4)]'
-                : 'text-[#94A3B8] hover:text-white'
-            )}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Parts Catalog</span>
-            <span className="ms-1 px-1.5 py-0.5 rounded-full text-[10px] bg-black/30">
-              {CATALOG_PRODUCTS.length}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('workshops')}
-            className={cn(
-              'flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer select-none',
-              activeTab === 'workshops'
-                ? 'bg-[#19D3FF] text-[#0A0B0F] shadow-[0_0_16px_rgba(25,211,255,0.4)]'
-                : 'text-[#94A3B8] hover:text-white'
-            )}
-          >
-            <Store className="w-3.5 h-3.5" />
-            <span>Certified Workshops</span>
-            <span className="ms-1 px-1.5 py-0.5 rounded-full text-[10px] bg-black/30">
-              {DEMO_SHOPS.length}
-            </span>
-          </button>
+                ? 'Search aero kits, BBS, Vossen, spoilers...'
+                : 'Search by facility code or district (Yunusobod, Chilanzar)...'
+            }
+            className="w-full ps-9 pe-4 py-2 rounded-xl bg-[#12141A] border border-white/10 text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#19D3FF] focus:ring-1 focus:ring-[#19D3FF] transition-all"
+          />
         </div>
 
-        {/* Compatibility and Filter Toggles (Catalog Mode) */}
         {activeTab === 'catalog' && (
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setOnlyCompatible((v) => !v)}
+              onClick={() => setOnlyCompatible(!onlyCompatible)}
               className={cn(
-                'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border cursor-pointer',
                 onlyCompatible
-                  ? 'border-[#00E599]/60 bg-[#00E599]/15 text-[#00E599] shadow-[0_0_12px_rgba(0,229,153,0.25)]'
-                  : 'border-white/10 bg-white/5 text-[#94A3B8] hover:text-white'
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                  : 'border-white/10 bg-[#12141A] text-[#94A3B8] hover:text-white'
               )}
             >
-              <Check className={cn('w-3.5 h-3.5 stroke-[2.5]', onlyCompatible ? 'opacity-100' : 'opacity-40')} />
-              <span>Fits Malibu 2.0T</span>
+              <Check className={cn('w-3.5 h-3.5', onlyCompatible ? 'opacity-100' : 'opacity-30')} />
+              <span>Malibu 2 Fitment Only</span>
             </button>
           </div>
         )}
@@ -300,18 +240,26 @@ export function MarketplaceShopList() {
             })}
           </div>
 
-          {/* Product Grid */}
-          <ProductGrid
-            products={filteredProducts}
-            vehicleModelId={onlyCompatible ? vehicleModelId : null}
-            onProductClick={() => {
-              // Open workshop booking directly for installation
-              setSelectedShop(DEMO_SHOPS[0] ?? null);
-              setIsCheckoutOpen(true);
-            }}
-          />
+          {/* Product Grid / Skeleton */}
+          {loadingProducts ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <div key={i} className="h-64 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <ProductGrid
+              products={filteredProducts}
+              vehicleModelId={onlyCompatible ? vehicleModelId : null}
+              onProductClick={(product) => {
+                setSelectedProduct(product);
+                setSelectedShop(shops[0] ?? null);
+                setIsCheckoutOpen(true);
+              }}
+            />
+          )}
 
-          {filteredProducts.length === 0 && (
+          {!loadingProducts && filteredProducts.length === 0 && (
             <div className="py-16 text-center text-[#94A3B8] flex flex-col items-center justify-center gap-3">
               <Sparkles className="w-8 h-8 text-[#19D3FF]" />
               <p className="text-sm">No catalog products found matching your current filters.</p>
@@ -334,13 +282,21 @@ export function MarketplaceShopList() {
       {/* Workshops Mode */}
       {activeTab === 'workshops' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredShops.map((shop) => (
-              <MaskedShopCard key={shop.id} shop={shop} onBookClick={handleBookClick} />
-            ))}
-          </div>
+          {loadingShops ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-48 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredShops.map((shop) => (
+                <MaskedShopCard key={shop.id} shop={shop} onBookClick={handleBookClick} />
+              ))}
+            </div>
+          )}
 
-          {filteredShops.length === 0 && (
+          {!loadingShops && filteredShops.length === 0 && (
             <div className="py-16 text-center text-[#94A3B8] flex flex-col items-center justify-center gap-3">
               <Wrench className="w-8 h-8 text-[#19D3FF]" />
               <p className="text-sm">No verified partner facilities found matching &quot;{searchQuery}&quot;.</p>
@@ -354,8 +310,8 @@ export function MarketplaceShopList() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         shop={selectedShop ?? undefined}
-        totalPriceCents={145000} // $1450 demo build
-        depositAmountCents={4350} // $43.50 deposit (3%)
+        totalPriceCents={activeTotalPrice}
+        depositAmountCents={activeDepositAmount}
         onOpenReceiptUpload={() => setIsReceiptModalOpen(true)}
       />
 

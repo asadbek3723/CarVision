@@ -31,3 +31,8 @@
 ## Rule: Always Verify Type and Hook Imports After Refactoring
 - **Mistake**: Modifying component imports and accidentally omitting imported context hooks (`useVeloceStore`) or types (`type VeloceProduct`).
 - **Rule**: Run `npx tsc --noEmit` immediately after modifying any component imports to guarantee zero type errors before declaring completion.
+
+## Rule: Eliminate Mock Fallbacks at the State Initialization Level
+- **Mistake**: Fetching data from Supabase inside `useEffect` while still leaving the component's `useState` initialized with a static mock array (`useState(STATIC_DATA)`), which flashed fake data on first mount or kept fake items when offline.
+- **Rule**: Initialize state with an empty array `useState<T[]>([])` and an explicit `loading` state (`useState(true)`), rendering skeleton loaders while live data loads from the API.
+

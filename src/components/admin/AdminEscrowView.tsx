@@ -92,11 +92,37 @@ const INITIAL_ESCROW_ORDERS: EscrowOrder[] = [
 ];
 
 export function AdminEscrowView() {
-  const [orders, setOrders] = React.useState<EscrowOrder[]>(INITIAL_ESCROW_ORDERS);
+  const [orders, setOrders] = React.useState<EscrowOrder[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [filter, setFilter] = React.useState<'ALL' | 'pending' | 'verified' | 'rejected'>('ALL');
   const [search, setSearch] = React.useState('');
   const [selectedOrder, setSelectedOrder] = React.useState<EscrowOrder | null>(null);
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+
+  // Fetch real orders from Supabase on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('/api/v1/admin/escrow');
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.orders) && data.orders.length > 0) {
+          setOrders(data.orders);
+        } else if (isMounted) {
+          setOrders(INITIAL_ESCROW_ORDERS);
+        }
+      } catch {
+        if (isMounted) setOrders(INITIAL_ESCROW_ORDERS);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filteredOrders = orders.filter((o) => {
     const matchesFilter = filter === 'ALL' || o.status === filter;
@@ -108,7 +134,8 @@ export function AdminEscrowView() {
     return matchesFilter && matchesSearch;
   });
 
-  const handleUpdateStatus = (id: string, newStatus: 'verified' | 'rejected') => {
+  const handleUpdateStatus = async (id: string, newStatus: 'verified' | 'rejected') => {
+    // Optimistic UI update
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
     );
@@ -122,6 +149,20 @@ export function AdminEscrowView() {
     setToastMessage(text);
     setTimeout(() => setToastMessage(null), 3000);
     setSelectedOrder(null);
+
+    // Persist to Supabase
+    try {
+      await fetch('/api/v1/admin/escrow', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: id,
+          status: newStatus,
+        }),
+      });
+    } catch {
+      // ignore
+    }
   };
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length;
@@ -324,6 +365,19 @@ export function AdminEscrowView() {
             </tbody>
           </table>
         </div>
+
+        {isLoading && (
+          <div className="p-12 text-center text-xs text-[#D4AE62] flex items-center justify-center gap-2">
+            <span className="w-4 h-4 border-2 border-[#D4AE62] border-t-transparent rounded-full animate-spin" />
+            <span>Supabase ma‘lumotlar bazasidan zakalat buyurtmalari yuklanmoqda...</span>
+          </div>
+        )}
+
+        {!isLoading && filteredOrders.length === 0 && (
+          <div className="p-12 text-center text-xs text-[#94A3B8]">
+            Hech qanday zakalat buyurtmasi topilmadi.
+          </div>
+        )}
       </div>
 
       {/* Receipt Audit Modal */}

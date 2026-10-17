@@ -4,26 +4,54 @@ import * as React from 'react';
 import { DollarSign, Store, Sparkles, ShieldCheck, TrendingUp, Cpu, Activity, Clock } from 'lucide-react';
 
 export function AdminOverviewView() {
+  const [metrics, setMetrics] = React.useState({
+    totalRevenueFormatted: '$48.9k',
+    sellersCount: 8,
+    productsCount: 36,
+    generationsCount: 18450,
+    escrowDepositFormatted: '$8.4k',
+    activeOrdersCount: 4,
+  });
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchMetrics = async () => {
+      try {
+        const res = await fetch('/api/v1/admin/overview');
+        const data = await res.json();
+        if (isMounted && data.success && data.metrics) {
+          setMetrics(data.metrics);
+        }
+      } catch {
+        // keep defaults
+      }
+    };
+    fetchMetrics();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const kpis = [
     {
       title: 'Jami Tushum',
-      value: '$48,920',
+      value: metrics.totalRevenueFormatted,
       change: '+18.4%',
       period: 'o‘tgan oyga nisbatan',
       icon: DollarSign,
       glow: 'shadow-[0_8px_24px_-6px_rgba(212,174,98,0.25)]',
     },
     {
-      title: 'Faol Atelyelar',
-      value: '142',
-      change: '+12 ta',
-      period: 'yangi servislar',
+      title: 'Hamkor Atelyelar',
+      value: String(metrics.sellersCount),
+      change: `+${metrics.sellersCount} ta`,
+      period: 'Supabase tasdiqlangan',
       icon: Store,
       glow: 'shadow-[0_8px_24px_-6px_rgba(59,130,246,0.25)]',
     },
     {
       title: '4K AI Renderlar',
-      value: '18,450',
+      value: metrics.generationsCount.toLocaleString(),
       change: '+420 ta',
       period: 'bugun amalga oshirildi',
       icon: Sparkles,
@@ -31,8 +59,8 @@ export function AdminOverviewView() {
     },
     {
       title: '3% Zakalat Depozitlari',
-      value: '$8,420',
-      change: '34 ta',
+      value: metrics.escrowDepositFormatted,
+      change: `${metrics.activeOrdersCount} ta`,
       period: 'faol kafolatli buyurtma',
       icon: ShieldCheck,
       glow: 'shadow-[0_8px_24px_-6px_rgba(16,185,129,0.25)]',

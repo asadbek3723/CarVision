@@ -82,6 +82,26 @@ export function AdminUsersView() {
   const [search, setSearch] = React.useState('');
   const [toast, setToast] = React.useState<string | null>(null);
 
+  // Fetch active sessions from live Supabase
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchDevices = async () => {
+      try {
+        const res = await fetch('/api/v1/admin/devices');
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.devices) && data.devices.length > 0) {
+          setDevices(data.devices);
+        }
+      } catch {
+        // keep fallback
+      }
+    };
+    fetchDevices();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleEvict = (id: string, name: string) => {
     setDevices((prev) => prev.filter((d) => d.id !== id));
     setToast(`"${name}" sessiyasi masofadan yakunlandi.`);

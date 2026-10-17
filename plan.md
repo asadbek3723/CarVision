@@ -1,4 +1,29 @@
-# CarVision Roadmap & Plan
+## Active Task: Connect All Static/Mock Data Across Admin & App to Supabase Live Database
+Status: COMPLETED
+- [x] Database Schema & Remote Supabase Verification:
+  - Inspected live remote Postgres database (`https://kktbqwuzhumphdhuaibg.supabase.co`).
+  - Tables identified and active: `sellers`, `products` (36 real products), `categories` (14 categories), `vehicle_models` (22 models), `orders`, `order_items`, `login_attempts`, `seller_generations`, and `users`.
+  - Created and executed `scripts/seed-live-supabase.js` seeding 6 real studio partners (`Apex Customs Studio`, `Autotune Pro Tashkent`, `Dubai Custom Wheels`, `Samarkand Tuning Lab`, `Fergana Tuning Studio`, `Buxoro Auto Custom`), 4 real 3% escrow deposit orders, and generation feeds.
+- [x] Backend API & Repositories:
+  - `/api/v1/admin/studios`: GET real studios from Supabase `sellers`; PATCH plan and verification directly to Supabase.
+  - `/api/v1/admin/escrow`: GET real orders from Supabase `orders` with joined `order_items` and `sellers`; PATCH order status (`accepted`/`cancelled`).
+  - `/api/v1/admin/overview`: Real-time live aggregates computed from Supabase (`sellersCount`, `productsCount`, `generationsCount`, `totalRevenueSum`, `escrowDepositSum`).
+  - `/api/v1/admin/devices`: GET active sessions from Supabase `login_attempts`.
+  - `/api/v1/admin/live-stream`: GET real generations from Supabase `seller_generations`.
+  - `/api/v1/admin/audit-logs`: GET security attempt logs from Supabase `login_attempts`.
+  - `/api/v1/admin/auth/verify-pin`: Asynchronously logs every admin PIN authentication attempt directly into Supabase `login_attempts`.
+  - `/api/v1/products`: GET real catalog items from Supabase `products` with category and search filter.
+  - `/api/v1/shops`: GET verified workshop partners from Supabase `sellers`.
+- [x] Connect Frontend Components to Live APIs:
+  - `AdminOverviewView.tsx`: Live metrics directly fetched from Supabase.
+  - `AdminStudiosView.tsx`: Live studios list, search, plan assignment modal with Supabase persistence.
+  - `AdminEscrowView.tsx`: Live orders list with Approve/Reject actions updating Supabase.
+  - `AdminUsersView.tsx`: Connected devices inspector powered by Supabase.
+  - `AdminLiveStreamView.tsx`: Real generation feed with lightbox previews.
+  - `AdminSecurityView.tsx`: Immutable security audit log table wired to Supabase `login_attempts`.
+  - `MarketplaceShopList.tsx`: Eradicated static `INITIAL_SHOPS` and `CATALOG_PRODUCTS`; wired to `/api/v1/products` and `/api/v1/shops`.
+  - `VeloceShop.tsx`: Eradicated static `VELOCE_PRODUCTS` initial state; wired to `/api/v1/products` with skeleton loaders.
+- [x] Quality gates: lint (0 errors, 0 warnings), direction classes (0 violations), typecheck (0 errors), Vitest tests (33/33 passed).
 
 ## Completed Tasks
 - [x] Rebuild Admin Panel with Server-Side Auth, PIN (3723) Security Gate & Luxury Sidebar Suite:

@@ -3,10 +3,10 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Search, SlidersHorizontal, ArrowRight } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowRight, Sparkles } from 'lucide-react';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import {
-  VELOCE_PRODUCTS,
+  type VeloceProduct,
   VELOCE_CATEGORIES,
   TOP_BRANDS,
 } from '@/domain/veloce-catalog';
@@ -15,18 +15,43 @@ export function VeloceShop() {
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
 
+  const [products, setProducts] = React.useState<VeloceProduct[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [category, setCategory] = React.useState('All');
   const [query, setQuery] = React.useState('');
 
+  // Fetch real products from live Supabase
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/v1/products');
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
+          setProducts(data.products);
+        }
+      } catch (err) {
+        console.error('Failed to load products from Supabase:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchProducts();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const filteredProducts = React.useMemo(() => {
-    return VELOCE_PRODUCTS.filter((p) => {
-      const matchesCat = category === 'All' || p.category === category;
-      const matchesQuery = (p.name + ' ' + p.brand + ' ' + p.spec)
+    return products.filter((p) => {
+      const matchesCat = category === 'All' || p.category.toLowerCase() === category.toLowerCase();
+      const matchesQuery = (p.name + ' ' + p.brand + ' ' + (p.spec || ''))
         .toLowerCase()
         .includes(query.toLowerCase());
       return matchesCat && matchesQuery;
     });
-  }, [category, query]);
+  }, [products, category, query]);
 
   const categories = ['All', ...VELOCE_CATEGORIES];
 
@@ -105,15 +130,30 @@ export function VeloceShop() {
         <span className="text-white font-medium">
           {category === 'All' ? 'All parts' : category}
         </span>
-        <span className="text-muted-foreground">{filteredProducts.length} items</span>
+        <span className="text-muted-foreground">
+          {loading ? 'Yuklanmoqda...' : `${filteredProducts.length} items`}
+        </span>
       </div>
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
-        {filteredProducts.map((p, idx) => (
-          <ProductCard key={p.id} p={p} i={idx} />
-        ))}
-      </div>
+      {/* Products Grid or Loading Skeleton */}
+      {loading ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="aspect-[3/4] rounded-2xl bg-white/[0.02] border border-primary/10 animate-pulse" />
+          ))}
+        </div>
+      ) : filteredProducts.length > 0 ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
+          {filteredProducts.map((p, idx) => (
+            <ProductCard key={p.id} p={p} i={idx} />
+          ))}
+        </div>
+      ) : (
+        <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
+          <Sparkles className="w-8 h-8 text-primary/60" />
+          <p className="text-sm">Hozircha tanlangan toifada mahsulot topilmadi.</p>
+        </div>
+      )}
 
       {/* Top Brands Grid */}
       <section className="mt-14 mb-8">

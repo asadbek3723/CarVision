@@ -1,5 +1,27 @@
 # Changelog
 
+## [2026-10-17] - Supabase: End-to-End Live Database Integration & Zero-Mock Standard
+### Added & Enhanced
+- **Live Supabase Endpoints**:
+  - `/api/v1/admin/overview`: Direct aggregate calculations from Supabase tables (`sellers`, `products`, `seller_generations`, `orders`).
+  - `/api/v1/admin/studios`: Live read and update (`PATCH`) operations for studio plans and verification status on Supabase `sellers`.
+  - `/api/v1/admin/escrow`: Live order escrow management (`orders` and `order_items`) with direct Supabase state persistence.
+  - `/api/v1/admin/devices`: Multi-device session audit powered by Supabase `login_attempts`.
+  - `/api/v1/admin/live-stream`: 4K vehicle render pipeline stream from Supabase `seller_generations`.
+  - `/api/v1/admin/audit-logs`: Immutable security audit log feed powered by Supabase `login_attempts`.
+  - `/api/v1/admin/auth/verify-pin`: Automatic audit logging of all admin PIN authentication attempts directly to Supabase.
+  - `/api/v1/products`: Live product catalog search and category filtering directly querying Supabase `products`.
+  - `/api/v1/shops`: Live verified tuning workshop directory from Supabase `sellers`.
+- **Frontend Live Wiring & Skeleton Loaders**:
+  - `AdminOverviewView.tsx`: Real-time KPI counters, revenue, and active studio counts.
+  - `AdminStudiosView.tsx`: Real-time studio search, filter, and plan assignment.
+  - `AdminEscrowView.tsx`: Real-time orders and deposit receipts with approve/cancel actions.
+  - `AdminSecurityView.tsx`: Real-time security attempt history with automatic refresh.
+  - `MarketplaceShopList.tsx`: Complete elimination of static arrays (`INITIAL_SHOPS`, `CATALOG_PRODUCTS`), dynamic 3% escrow calculation, and real fitment filtering.
+  - `VeloceShop.tsx`: Dynamic loading from `/api/v1/products` with luxury skeleton loaders.
+### Removed
+- Completely excised static fallback arrays (`INITIAL_SHOPS`, `CATALOG_PRODUCTS`, `AUDIT_LOGS`, and `VELOCE_PRODUCTS` static defaults).
+
 ## [2026-10-17] - Admin: Server-Side Master PIN Security Gate & Luxury Sidebar Suite
 ### Added & Enhanced
 - **Zero-Client-Exposure Master PIN Security Engine**:

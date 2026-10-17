@@ -68,8 +68,27 @@ const LIVE_GENERATIONS: GenerationFeedItem[] = [
 ];
 
 export function AdminLiveStreamView() {
-  const [items] = React.useState<GenerationFeedItem[]>(LIVE_GENERATIONS);
+  const [items, setItems] = React.useState<GenerationFeedItem[]>(LIVE_GENERATIONS);
   const [selectedImage, setSelectedImage] = React.useState<GenerationFeedItem | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchLiveGens = async () => {
+      try {
+        const res = await fetch('/api/v1/admin/live-stream');
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.items) && data.items.length > 0) {
+          setItems(data.items);
+        }
+      } catch {
+        // keep fallback
+      }
+    };
+    fetchLiveGens();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { createAdminClient } from '@/lib/supabase/server';
 import {
   checkPinRateLimit,
   recordFailedPinAttempt,
@@ -60,6 +61,22 @@ export async function POST(request: NextRequest) {
 
     if (!isMatch) {
       const failure = recordFailedPinAttempt(ip);
+
+      // Log failed attempt to Supabase
+      try {
+        const supabase = createAdminClient();
+        await supabase.from('login_attempts').insert([
+          {
+            kind: 'login',
+            login_key: 'admin_pin_failed:invalid_pin',
+            ip,
+            success: false,
+          },
+        ]);
+      } catch {
+        // Non-blocking log
+      }
+
       return NextResponse.json(
         {
           success: false,
@@ -78,6 +95,21 @@ export async function POST(request: NextRequest) {
 
     // 4. Verification successful - clear rate limit
     clearPinRateLimit(ip);
+
+    // Log successful attempt to Supabase
+    try {
+      const supabase = createAdminClient();
+      await supabase.from('login_attempts').insert([
+        {
+          kind: 'login',
+          login_key: 'admin_pin:kursant410@gmail.com',
+          ip,
+          success: true,
+        },
+      ]);
+    } catch {
+      // Non-blocking log
+    }
 
     // 5. Issue signed admin session token
     const token = createAdminSessionToken();

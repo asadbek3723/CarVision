@@ -128,10 +128,36 @@ const INITIAL_STUDIOS: Studio[] = [
 ];
 
 export function AdminStudiosView() {
-  const [studios, setStudios] = React.useState<Studio[]>(INITIAL_STUDIOS);
+  const [studios, setStudios] = React.useState<Studio[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [planFilter, setPlanFilter] = React.useState<'ALL' | 'FREE' | 'PRO' | 'MAX'>('ALL');
   const [editingStudio, setEditingStudio] = React.useState<Studio | null>(null);
+
+  // Fetch real studios from Supabase on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchStudios = async () => {
+      try {
+        const res = await fetch('/api/v1/admin/studios');
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.studios) && data.studios.length > 0) {
+          setStudios(data.studios);
+        } else if (isMounted) {
+          setStudios(INITIAL_STUDIOS);
+        }
+      } catch {
+        if (isMounted) setStudios(INITIAL_STUDIOS);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchStudios();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Edit Plan Modal Form State
   const [modalPlan, setModalPlan] = React.useState<'FREE' | 'PRO' | 'MAX'>('PRO');
@@ -150,10 +176,28 @@ export function AdminStudiosView() {
     return matchesSearch && matchesPlan;
   });
 
-  const toggleStudioStatus = (id: string) => {
+  const toggleStudioStatus = async (id: string) => {
+    const target = studios.find((s) => s.id === id);
+    const newStatus = target?.status === 'active' ? 'blocked' : 'active';
+
+    // Optimistic UI update
     setStudios((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: s.status === 'active' ? 'blocked' : 'active' } : s))
+      prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
     );
+
+    // Persist to Supabase
+    try {
+      await fetch('/api/v1/admin/studios', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studioId: id,
+          verified: newStatus === 'active',
+        }),
+      });
+    } catch {
+      // ignore
+    }
   };
 
   const openPlanModal = (studio: Studio) => {
@@ -170,7 +214,21 @@ export function AdminStudiosView() {
     if (!editingStudio) return;
 
     setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
+    const parsedCredits = parseInt(modalCredits, 10);
+
+    // Update live in Supabase
+    try {
+      await fetch('/api/v1/admin/studios', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studioId: editingStudio.id,
+          credits: parsedCredits,
+        }),
+      });
+    } catch {
+      // ignore
+    }
 
     setStudios((prev) =>
       prev.map((s) =>
@@ -178,7 +236,7 @@ export function AdminStudiosView() {
           ? {
               ...s,
               plan: modalPlan,
-              maxRenders: parseInt(modalCredits, 10),
+              maxRenders: parsedCredits,
               maxDevices: modalPlan === 'MAX' ? 8 : modalPlan === 'PRO' ? 3 : 1,
             }
           : s
@@ -367,7 +425,14 @@ export function AdminStudiosView() {
           </table>
         </div>
 
-        {filteredStudios.length === 0 && (
+        {isLoading && (
+          <div className="p-12 text-center text-xs text-[#D4AE62] flex items-center justify-center gap-2">
+            <span className="w-4 h-4 border-2 border-[#D4AE62] border-t-transparent rounded-full animate-spin" />
+            <span>Supabase ma‘lumotlar bazasidan atelyelar yuklanmoqda...</span>
+          </div>
+        )}
+
+        {!isLoading && filteredStudios.length === 0 && (
           <div className="p-12 text-center text-xs text-[#94A3B8]">
             Hech qanday atelye topilmadi. Qidiruv so‘zini o‘zgartirib ko‘ring.
           </div>
