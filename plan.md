@@ -1,12 +1,19 @@
 # CarVision Roadmap & Plan
 
-## Active Task: Landing Page & Configurator Polish
+## Active Task: Landing Page & Studio UX Polish
 Status: READY_FOR_FEEDBACK
-- [x] Removed obsolete item `'Narxni himoya qiluvchi PIN'` from Target Audience Atelier card.
-- [x] Update Landing Page Pricing Tiers Copy & FOMO Anchoring (`FREE`, `PRO`, `MAX`).
-- [x] Settle 1:1 matching Before/After Slider assets (`car-before.jpg` & `car-after.jpg`).
-- [x] Zero design regressions: identical glass borders, cards, buttons, responsive scaling, and fonts preserved.
-- [x] Full quality gates passed: 0 direction errors, 0 TS errors, 0 ESLint warnings, 24/24 Vitest domain tests.
+- [x] Overhaul `PwaInstallPrompt.tsx` to match CarVision's luxury Black-Gold landing page aesthetic.
+- [x] Passed full quality gates: zero direction violations, zero TS errors, zero lint warnings, 24/24 Vitest domain tests.
+
+## Completed Tasks
+- [x] Redesign PWA Install Prompt to Luxury Black-Gold Aesthetic (`PwaInstallPrompt.tsx`):
+  - Completely removed obsolete neon cyan (`#19D3FF`) borders, buttons, and glow.
+  - Re-themed with luxury obsidian glass backdrop (`bg-[#0B0C10]/95 backdrop-blur-2xl`), multi-layer depth shadow (`shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85),0_0_35px_rgba(212,174,98,0.1)]`), and champagne gold accents (`border-[#D4AE62]/20`, `text-[#E5C378]`).
+  - Added rounded-2xl champagne gold gradient badge container for download icon and full-width `btn-gold` action button.
+  - Added multilingual localized support (Uzbek, Russian, English) for natural headlines, descriptions, and iOS home screen guide.
+  - Verified 100% RTL compliance, zero TypeScript warnings, and 24/24 Vitest domain test passes.
+
+
 
 ## Completed Tasks
 - [x] Update Landing Page Pricing Tiers Copy & FOMO Anchoring (FREE, PRO, MAX):

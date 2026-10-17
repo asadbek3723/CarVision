@@ -1,5 +1,14 @@
 # Architecture & Product Decisions
 
+## 2026-10-17: PWA Install Prompt Luxury Black-Gold Harmonization
+- **Decision**: Completely overhauled `PwaInstallPrompt.tsx` from the legacy cyan `#19D3FF` style to the luxury Black-Gold landing page design language:
+  - Deep obsidian frosted glass background (`bg-[#0B0C10]/95 backdrop-blur-2xl`) with multi-layer shadow and gold border (`border-[#D4AE62]/20`).
+  - Rounded-2xl champagne gold gradient badge container for download icon (`bg-gradient-to-br from-[#D4AE62]/20 via-[#D4AE62]/10 to-transparent`).
+  - Full-width `btn-gold` button with hover micro-scaling and active press feedback.
+  - Multilingual localization support (`uz`, `ru`, `en`) for clear, user-friendly instructions.
+- **Reason**: The legacy PWA banner used bright neon cyan colors and generic English copy that clashed strongly with the dark luxury gold aesthetic of the rest of the application.
+- **Alternatives Rejected**: Hiding the PWA banner entirely or retaining raw unstyled browser installation prompts.
+
 ## 2026-10-17: Landing Page Pricing Tiers (FREE $0, PRO $29, MAX $99) & FOMO Anchoring
 - **Decision**: Updated landing page pricing tiers in `src/app/[locale]/page.tsx` with user-specified copy and commercial positioning without altering the borderless luxury design system:
   1. **FREE** ($0 / sinov): 40 ta bepul rasm, "Tuned by CarVision" watermark, 1 ta faol qurilma, oddiy foydalanuvchilar va avtoservislar sinovi.

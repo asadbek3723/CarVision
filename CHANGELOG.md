@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026-10-17] - PWA: Luxury Black-Gold Redesign of Install Prompt
+### Changed & Enhanced
+- **Aesthetic Overhaul (`PwaInstallPrompt.tsx`)**:
+  - Replaced harsh neon cyan `#19D3FF` borders, background, and buttons with luxury obsidian frosted glass (`bg-[#0B0C10]/95 backdrop-blur-2xl`) and champagne gold accents (`border-[#D4AE62]/20`, `text-[#E5C378]`, `btn-gold`).
+  - Added rounded-2xl champagne gold gradient badge container with `Download` icon.
+  - Implemented full multilingual localization (Uzbek, Russian, English) for headlines, body copy, and iOS step-by-step instructions.
+  - Sized and positioned responsively (`sm:w-[420px] bottom-5 end-6`) with smooth spring entrance and exit animations.
+
 ## [2026-10-17] - Landing Page: Removed Obsolete "Narxni himoya qiluvchi PIN"
 ### Removed
 - **Target Audience Card Item**: Excised `'Narxni himoya qiluvchi PIN'` from the Atelier Audience Card (`AUDIENCE_CARDS[0].items`) in `src/app/[locale]/page.tsx` as requested.
