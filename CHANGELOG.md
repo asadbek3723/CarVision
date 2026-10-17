@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026-10-17] - Build & CI: Fix Vercel Production Build ESLint Errors & Ambiguous Classes
+### Fixed
+- **ESLint Unused Variables**: Removed unused imports `User` and `Building` in `src/components/veloce/VeloceProfile.tsx`, removed unused `isCustomize` in `src/components/veloce/VeloceShell.tsx`, and verified `completedAngles` in `SmartCameraLandscapeView.tsx`.
+- **Tailwind Ambiguous Classes**: Replaced `ease-[cubic-bezier(...)]` with `[transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)]` in `src/app/[locale]/page.tsx` to eliminate build-time warnings.
+- **Production Build Verified**: Ran `npm run build` (`next build`) locally, completing successful full build with zero errors and zero warnings.
+
 ## [2026-10-17] - Camera: Maximized Central Viewport Rectangle & Full Responsive Adaptation Across All Devices
 ### Changed & Polished
 - **Maximized Central Framing Rectangle**: Removed restrictive `max-w-3xl` and `max-h-[520px]` limits. The central gold framing rectangle now dynamically expands to command the maximum screen area (`h-[90%-96%]`, fluid width) across desktop, laptop, tablet, and mobile screens.
