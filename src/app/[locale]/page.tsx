@@ -864,14 +864,14 @@ function AppStoreButton({
   return (
     <a
       href="#"
-      className="btn-ghost-gold flex items-center justify-center gap-4 rounded-2xl px-6 py-3.5 sm:justify-start"
+      className="btn-ghost-gold flex items-center justify-center gap-3.5 sm:gap-4 rounded-2xl px-5 py-3.5 sm:px-6 sm:py-3.5 sm:justify-start w-full sm:w-auto transition-transform active:scale-[0.98]"
     >
-      <Icon className="h-7 w-7 text-primary" />
+      <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-primary shrink-0" />
       <span className="text-start leading-tight">
         <span className="block text-[10px] tracking-[0.2em] text-muted-foreground">
           {top}
         </span>
-        <span className="block text-lg font-semibold">{name}</span>
+        <span className="block text-base sm:text-lg font-semibold">{name}</span>
       </span>
     </a>
   );
@@ -879,25 +879,25 @@ function AppStoreButton({
 
 function MobileApp() {
   return (
-    <section id="app" className="relative mx-auto max-w-7xl px-6 py-20 sm:py-32">
-      <div className="reveal relative overflow-hidden rounded-[2.5rem] border border-primary/20 bg-card-lux shadow-lux">
+    <section id="app" className="relative mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-32 overflow-hidden">
+      <div className="reveal relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-primary/20 bg-card-lux shadow-lux w-full">
         <div className="absolute -start-40 top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
 
-        <div className="relative grid items-center gap-10 p-6 sm:p-16 lg:grid-cols-2">
-          <div>
+        <div className="relative grid w-full min-w-0 items-center gap-8 sm:gap-10 p-5 sm:p-16 lg:grid-cols-2">
+          <div className="w-full min-w-0">
             <p className="text-[11px] tracking-lux text-primary">
               05 — MOBIL ILOVA
             </p>
-            <h2 className="mt-5 font-display text-5xl font-light leading-[1.02] sm:text-6xl">
+            <h2 className="mt-4 sm:mt-5 font-display text-[2rem] font-light leading-[1.08] sm:text-6xl sm:leading-[1.02] break-words">
               CarVision <br />
               <span className="text-gold italic">cho&apos;ntagingizda.</span>
             </h2>
-            <p className="mt-6 max-w-md text-lg text-muted-foreground">
+            <p className="mt-4 sm:mt-6 max-w-md text-base sm:text-lg text-muted-foreground leading-relaxed">
               Ilovamizni yuklab oling — mashinangizni suratga oling va soniyalar
               ichida yangi qiyofasini ko&apos;ring.
             </p>
 
-            <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="mt-5 sm:mt-6 flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
               <span className="flex text-primary">
                 {Array.from({ length: 5 }).map((_, idx) => (
                   <Star key={idx} className="h-4 w-4 fill-current" />
@@ -906,7 +906,7 @@ function MobileApp() {
               <span>4.9 · 12 000+ foydalanuvchi</span>
             </div>
 
-            <div className="mt-10 grid gap-3 sm:flex sm:flex-wrap sm:gap-4">
+            <div className="mt-8 sm:mt-10 grid gap-3 sm:flex sm:flex-wrap sm:gap-4 w-full">
               <AppStoreButton
                 icon={Apple}
                 top="YUKLAB OLING"
@@ -920,14 +920,16 @@ function MobileApp() {
             </div>
           </div>
 
-          <img
-            src="/images/golden/app-phones.jpg"
-            alt="CarVision mobil ilovasi"
-            loading="lazy"
-            width={1200}
-            height={1200}
-            className="animate-float mx-auto w-full max-w-md mix-blend-lighten pointer-events-none select-none"
-          />
+          <div className="relative flex justify-center w-full min-w-0 mt-4 sm:mt-0">
+            <img
+              src="/images/golden/app-phones.jpg"
+              alt="CarVision mobil ilovasi"
+              loading="lazy"
+              width={1200}
+              height={1200}
+              className="animate-float mx-auto w-full max-w-[280px] sm:max-w-md mix-blend-lighten pointer-events-none select-none object-contain"
+            />
+          </div>
         </div>
       </div>
     </section>

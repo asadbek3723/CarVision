@@ -1,5 +1,23 @@
-## Active Task: Connect All Static/Mock Data Across Admin & App to Supabase Live Database
+## Active Task: Fix Mobile App Section Horizontal Overflow & Cramped Layout on Mobile Landing Page
 Status: COMPLETED
+- [x] Root Cause Analysis:
+  - Section `#app` on mobile had excessive combined padding (`px-6` on section + `p-6` on card = 96px total horizontal margins).
+  - Heading font size `text-5xl` (48px) on mobile caused the 16-character word `cho'ntagingizda.` to expand past viewport boundaries.
+  - Grid container and items lacked `min-w-0`, causing CSS Grid min-content sizing to blow out past the viewport edge (>430px) on mobile screens (<400px), clipping the card, texts, and buttons on the right.
+- [x] Implementation (Strictly Mobile-Only, 0 Desktop Regressions):
+  - Calibrated mobile typography: `text-[2rem] leading-[1.08] sm:text-6xl sm:leading-[1.02] break-words` so it never overflows.
+  - Optimized mobile spacing: `px-4 sm:px-6` on section and `p-5 sm:p-16` on inner card with `w-full min-w-0 overflow-hidden`.
+  - Added `min-w-0 w-full` on columns and containers so buttons and description texts scale cleanly without clipping.
+  - Preserved 100% of desktop breakpoints (`sm:`, `lg:`) and luxury aesthetic tokens.
+- [x] Verification & Quality Gates:
+  - Ran `npm run check-direction`: 0 physical direction violations (100% RTL/logical CSS).
+  - Ran `npx tsc --noEmit`: 0 TypeScript errors.
+  - Ran `npm run lint`: 0 errors / 0 warnings.
+  - Ran `npm test`: 33/33 Vitest tests passing.
+  - Verified `http://localhost:3000/uz` loads with HTTP 200.
+
+## Completed Tasks
+- [x] Connect All Static/Mock Data Across Admin & App to Supabase Live Database:
 - [x] Database Schema & Remote Supabase Verification:
   - Inspected live remote Postgres database (`https://kktbqwuzhumphdhuaibg.supabase.co`).
   - Tables identified and active: `sellers`, `products` (36 real products), `categories` (14 categories), `vehicle_models` (22 models), `orders`, `order_items`, `login_attempts`, `seller_generations`, and `users`.

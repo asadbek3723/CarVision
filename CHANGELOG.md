@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026-10-17] - Landing Page: Fix Mobile App Section Horizontal Overflow & Layout
+### Fixed & Enhanced
+- **Mobile Responsive Layout (`src/app/[locale]/page.tsx`)**:
+  - Calibrated mobile typography for `MobileApp`: resized mobile heading to `text-[2rem] leading-[1.08] break-words` (with `sm:text-6xl sm:leading-[1.02]` on desktop), eliminating horizontal overflow caused by long words like `cho'ntagingizda.`.
+  - Optimized section and container padding: `px-4 sm:px-6` on outer section and `p-5 sm:p-16` on card, preventing inner elements from expanding past viewport boundaries.
+  - Added `min-w-0 w-full` to grid items and container, ensuring store buttons and description texts never blowout the CSS grid min-content constraint on screens <400px.
+  - Constrained phone mockup image on mobile to `max-w-[280px]` with `object-contain` and centered flex container.
+  - Verified 100% RTL compliance, zero TypeScript errors, and zero desktop regressions.
+
 ## [2026-10-17] - Supabase: End-to-End Live Database Integration & Zero-Mock Standard
 ### Added & Enhanced
 - **Live Supabase Endpoints**:
