@@ -196,7 +196,7 @@ export function SellerDashboard({
   const pathname = usePathname();
   const router = useRouter();
   const locale = (params['locale'] as string) || 'uz';
-  const { user, signOut, switchDemoProfile } = useAuth();
+  const { user, signOut } = useAuth();
 
   const isGarageRoute = pathname?.includes('/garage') ?? false;
   const resolvedTab: 'home' | 'garage' | 'shop' | 'more' = isGarageRoute ? 'garage' : initialTab;
@@ -849,26 +849,6 @@ export function SellerDashboard({
                 <ChevronRight className="h-4 w-4 text-[#94A3B8] rtl:rotate-180" />
               </button>
             </div>
-
-            <div className="mt-8 border-t border-white/5 pt-4">
-              <p className="text-[10px] font-mono text-[#94A3B8] uppercase">SINOV AKKAUNTLARI</p>
-              <div className="mt-2.5 flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => switchDemoProfile('b2b_seller')}
-                  className="rounded-xl bg-white/5 px-3 py-1.5 text-start text-[11px] font-medium text-white hover:bg-[#D4AE62]/10 hover:text-[#E6C687] transition-colors cursor-pointer"
-                >
-                  B2B Usta (Apex Customs)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchDemoProfile('b2c_user')}
-                  className="rounded-xl bg-white/5 px-3 py-1.5 text-start text-[11px] font-medium text-white hover:bg-[#D4AE62]/10 hover:text-[#E6C687] transition-colors cursor-pointer"
-                >
-                  B2C Mijoz (Bobur Karimov)
-                </button>
-              </div>
-            </div>
           </div>
         </aside>
       </div>
@@ -1234,7 +1214,7 @@ export function SellerDashboard({
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-[#D4AE62]/40 bg-[#D4AE62]/10 px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#E6C687] hover:bg-[#D4AE62]/20 transition-all cursor-pointer"
               >
                 <Sparkles className="h-3 w-3" />
-                <span>DEMO KADR</span>
+                <span>NAMUNA KADR</span>
               </button>
 
               <label className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-medium tracking-wider text-white hover:bg-white/20 transition-all cursor-pointer">

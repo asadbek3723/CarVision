@@ -17,14 +17,13 @@ import {
   SlidersHorizontal,
   Lock,
 } from 'lucide-react';
-import { playLock } from '@/features/camera/lib/fx';
 
 export interface UserAccountBarProps {
   className?: string;
 }
 
 export function UserAccountBar({ className }: UserAccountBarProps) {
-  const { user, signOut, switchDemoProfile } = useAuth();
+  const { user, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const params = useParams();
@@ -164,56 +163,7 @@ export function UserAccountBar({ className }: UserAccountBarProps) {
             )}
           </div>
 
-          {/* Switch Profile Shortcuts */}
-          <div className="pt-2 border-t border-white/10 mb-2">
-            <p className="text-[10px] uppercase font-bold text-[#94A3B8] px-2 mb-1.5">
-              Rolni almashtirish (Demo)
-            </p>
-            <div className="grid grid-cols-3 gap-1 px-1">
-              <button
-                type="button"
-                onClick={() => {
-                  playLock();
-                  switchDemoProfile('b2b_seller');
-                  setDropdownOpen(false);
-                }}
-                className={cn(
-                  'py-1 text-[10px] font-bold rounded-lg border text-center transition-colors cursor-pointer',
-                  isB2B ? 'border-[#19D3FF] bg-[#19D3FF]/20 text-[#19D3FF]' : 'border-white/5 bg-white/5 text-[#94A3B8]'
-                )}
-              >
-                B2B Usta
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  playLock();
-                  switchDemoProfile('b2c_user');
-                  setDropdownOpen(false);
-                }}
-                className={cn(
-                  'py-1 text-[10px] font-bold rounded-lg border text-center transition-colors cursor-pointer',
-                  !isB2B && !isAdmin ? 'border-[#00E599] bg-[#00E599]/20 text-[#00E599]' : 'border-white/5 bg-white/5 text-[#94A3B8]'
-                )}
-              >
-                B2C Mijoz
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  playLock();
-                  switchDemoProfile('super_admin');
-                  setDropdownOpen(false);
-                }}
-                className={cn(
-                  'py-1 text-[10px] font-bold rounded-lg border text-center transition-colors cursor-pointer',
-                  isAdmin ? 'border-amber-400 bg-amber-400/20 text-amber-300' : 'border-white/5 bg-white/5 text-[#94A3B8]'
-                )}
-              >
-                Admin
-              </button>
-            </div>
-          </div>
+          {/* Sign Out */}
 
           {/* Sign Out */}
           <div className="pt-1.5 border-t border-white/10">

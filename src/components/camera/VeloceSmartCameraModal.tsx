@@ -414,7 +414,7 @@ export function VeloceSmartCameraModal({
                   className="flex items-center gap-2 rounded-xl bg-gold-gradient px-4 py-2 text-xs font-semibold text-black tracking-wider uppercase transition hover:brightness-110 shadow-gold cursor-pointer"
                 >
                   <Sparkles className="h-4 w-4" />
-                  <span>Demo 4K Kadr Bilan O‘tish</span>
+                  <span>4K Kadr Bilan Sinash</span>
                 </button>
 
                 <button

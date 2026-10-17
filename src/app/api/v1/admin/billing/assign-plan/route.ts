@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
+import { verifyAdminSessionToken, ADMIN_COOKIE_NAME } from '@/lib/admin-auth';
 
 const adminAssignPlanSchema = z.object({
   shopId: z.string().uuid(),
@@ -15,6 +16,20 @@ const adminAssignPlanSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // 0. Verify admin security session cookie
+    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+    if (!verifyAdminSessionToken(token)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED_ADMIN_SESSION',
+            message: 'Ruxsat berilmagan. Admin PIN kodi orqali xavfsizlik sessiyasini tasdiqlang.',
+          },
+        },
+        { status: 401 }
+      );
+    }
     const body = await request.json();
     const validated = adminAssignPlanSchema.safeParse(body);
 

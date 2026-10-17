@@ -120,7 +120,7 @@ export function VeloceCustomize() {
             )}
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-4">
               <p className="text-[10px] tracking-luxe text-primary uppercase">
-                {photo ? 'Your photo' : 'Demo car'}
+                {photo ? 'Yuklangan avtomobil' : 'Tanlangan avtomobil'}
               </p>
               <p className="text-sm text-foreground/90 font-medium">
                 {selectedCount} parts selected

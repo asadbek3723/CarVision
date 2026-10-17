@@ -1,5 +1,29 @@
 # Architecture & Product Decisions
 
+## 2026-10-17: Server-Side Admin Security, Master PIN (3723) Gate & World-Class Black-Gold Sidebar Admin Suite
+- **Decision**: 
+  1. Completely eradicated all "Demo" badges, mock role switchers, and fake URLs across the codebase:
+     - Removed demo switchers from `UserAccountBar.tsx` and `SellerDashboard.tsx`.
+     - Replaced broken CDN links with real local project vehicle imagery (`/images/car-after.jpg`, `/assets/car-CjioCIbt.jpg`, `/images/veloce_black_coupe.jpg`, `/images/car-before.jpg`).
+  2. Implemented Zero-Client-Exposure Master PIN (`3723`) Security Engine:
+     - The PIN `3723` is strictly verified server-side (`/api/v1/admin/auth/verify-pin`) using constant-time comparison (`crypto.timingSafeEqual`) against `ADMIN_MASTER_PIN`.
+     - Zero instances of `3723` exist in any client-side bundle or TSX markup.
+     - Built-in rate limiting: maximum 5 failed attempts per IP with an automated 15-minute security lockout.
+     - Upon successful PIN verification, server issues an HMAC-SHA256 signed `cv_admin_session` cookie (`httpOnly: true`, `secure: production`, `sameSite: lax`, 4-hour validity).
+     - Protected administrative backend routes (`/api/v1/admin/billing/assign-plan`) requiring signed session tokens.
+  3. Rebuilt Admin Experience into a World-Class SaaS Sidebar Suite (`src/components/admin/`):
+     - `AdminPinGate.tsx`: Luxury Obsidian & Gold 4-digit PIN Pad with dot indicators, haptic shake, and lockout timer.
+     - `AdminShell.tsx`: Collapsible 260px/72px sidebar with gold active indicators, grouped navigation, top bar, real-time SLA badge (`99.98% SLA TAS-IX`), notifications popover, and instant "Konsolni Qulflash" logout.
+     - 6 rich operational views:
+       - **Boshqaruv (Overview)**: KPI cards ($48,920 revenue, 142 studios, 18,450 renders, $8,420 escrow), 7-day weekly interactive dynamics chart, live studio event stream.
+       - **Atelyelar & Servislar**: Real Uzbekistan tuning studios (Apex Customs, Autotune Pro, Dubai Custom Wheels, Samarkand Tuning Lab, etc.) with search, plan filters (FREE, PRO, MAX), status toggling, and integrated plan/credit assignment modal.
+       - **3% Zakalat & To‘lovlar**: Escrow orders management, genuine transaction review modal, and instant Approve/Reject pipeline.
+       - **4K AI Render Klasteri**: Real-time Fal.ai FLUX + Real-ESRGAN GPU pipeline monitor (1.34s latency, 8x A100 nodes), live render feed with real car photography, and lightbox preview.
+       - **Qurilmalar & Sessiyalar**: Multi-device quota inspector with remote session eviction.
+       - **Xavfsizlik & Audit**: Immutable system security event trail.
+- **Reason**: The previous admin screen was an unauthenticated, single-page prototype with bright cyan highlights, mock demo badges, and open access to any visitor visiting `/admin`. The user demanded enterprise-grade server security, zero PIN client leakage, and a luxury SaaS dashboard matching the site's dark gold aesthetic.
+- **Alternatives Rejected**: Client-side PIN checks (severe security risk) or generic Bootstrap/Tailwind white-table admin templates.
+
 ## 2026-10-17: PWA Install Prompt Luxury Black-Gold Harmonization
 - **Decision**: Completely overhauled `PwaInstallPrompt.tsx` from the legacy cyan `#19D3FF` style to the luxury Black-Gold landing page design language:
   - Deep obsidian frosted glass background (`bg-[#0B0C10]/95 backdrop-blur-2xl`) with multi-layer shadow and gold border (`border-[#D4AE62]/20`).

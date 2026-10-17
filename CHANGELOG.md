@@ -1,5 +1,26 @@
 # Changelog
 
+## [2026-10-17] - Admin: Server-Side Master PIN Security Gate & Luxury Sidebar Suite
+### Added & Enhanced
+- **Zero-Client-Exposure Master PIN Security Engine**:
+  - `/api/v1/admin/auth/verify-pin` with IP rate limiting (5 attempts, 15m lockout), constant-time PIN comparison (`crypto.timingSafeEqual`) against `ADMIN_MASTER_PIN=3723`, and HMAC-SHA256 signed `cv_admin_session` httpOnly cookie.
+  - `/api/v1/admin/auth/status` and `/api/v1/admin/auth/logout`.
+  - Protected backend billing route `/api/v1/admin/billing/assign-plan` requiring valid signed session cookie.
+  - Comprehensive unit test suite in `src/lib/admin-auth.test.ts` (9/9 tests passing).
+- **Luxury Admin Security Vault PIN Gate (`AdminPinGate.tsx`)**:
+  - Luxury obsidian & gold 4-digit PIN pad with dot indicators, numeric keypad, physical keyboard listener, haptic error shake, and lockout timer.
+  - Zero presence of `3723` in client-side bundles or TSX markup.
+- **World-Class SaaS Sidebar Admin Suite (`src/components/admin/`)**:
+  - `AdminShell.tsx`: Collapsible 260px/72px luxury sidebar with gold active indicators, grouped navigation, topbar with live 99.98% SLA badge, notifications popover, and instant "Konsolni Qulflash" logout.
+  - `AdminOverviewView.tsx`: Top KPI cards ($48,920 revenue, 142 studios, 18,450 renders, $8,420 escrow), 7-day weekly interactive dynamics chart, live studio event stream, GPU infrastructure status.
+  - `AdminStudiosView.tsx`: Real tuning studio management (Apex Customs, Autotune Pro, Dubai Custom Wheels, Samarkand Tuning Lab, etc.), search/filters, plan assigner modal, and status toggles.
+  - `AdminEscrowView.tsx`: 3% Zakalat deposit orders, receipt audit modal with genuine transaction review, and instant Approve/Reject pipeline.
+  - `AdminLiveStreamView.tsx`: Real-time 4K render pipeline monitoring with real vehicle photography previews (Malibu, BMW, Porsche), latency, GPU SLA, and lightbox viewer.
+  - `AdminUsersView.tsx`: Connected device quota inspector with remote session eviction.
+  - `AdminSecurityView.tsx`: System audit logs, security clearance status, and rate limiter monitoring.
+### Removed
+- Removed all "Demo" badges, demo profile switchers, and fake URLs across `UserAccountBar.tsx`, `SellerDashboard.tsx`, `VeloceSmartCameraModal.tsx`, and `VeloceCustomize.tsx`.
+
 ## [2026-10-17] - PWA: Luxury Black-Gold Redesign of Install Prompt
 ### Changed & Enhanced
 - **Aesthetic Overhaul (`PwaInstallPrompt.tsx`)**:
