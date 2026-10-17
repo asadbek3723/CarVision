@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026-10-17] - Landing Page: Removed Obsolete "Narxni himoya qiluvchi PIN"
+### Removed
+- **Target Audience Card Item**: Excised `'Narxni himoya qiluvchi PIN'` from the Atelier Audience Card (`AUDIENCE_CARDS[0].items`) in `src/app/[locale]/page.tsx` as requested.
+
 ## [2026-10-17] - Landing Page: Pricing Tiers Text Update & FOMO Anchoring (FREE, PRO, MAX)
 ### Changed & Enhanced
 - **Updated Pricing Tiers Copy (`TIERS`)**:

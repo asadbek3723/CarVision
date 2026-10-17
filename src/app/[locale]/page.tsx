@@ -545,7 +545,6 @@ const AUDIENCE_CARDS = [
     items: [
       '40 ta bepul token',
       '500+ master katalog',
-      'Narxni himoya qiluvchi PIN',
       '3% depozit tizimi',
     ],
     cta: 'ATELYE OCHISH',

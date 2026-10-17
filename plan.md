@@ -2,6 +2,7 @@
 
 ## Active Task: Landing Page & Configurator Polish
 Status: READY_FOR_FEEDBACK
+- [x] Removed obsolete item `'Narxni himoya qiluvchi PIN'` from Target Audience Atelier card.
 - [x] Update Landing Page Pricing Tiers Copy & FOMO Anchoring (`FREE`, `PRO`, `MAX`).
 - [x] Settle 1:1 matching Before/After Slider assets (`car-before.jpg` & `car-after.jpg`).
 - [x] Zero design regressions: identical glass borders, cards, buttons, responsive scaling, and fonts preserved.
