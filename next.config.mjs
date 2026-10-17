@@ -12,6 +12,7 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   images: {
     remotePatterns: [
       {
@@ -19,6 +20,12 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+  },
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.cache = false;
+    }
+    return config;
   },
 };
 

@@ -32,6 +32,13 @@ export function DepositCheckoutModal({
   const handleCopyCard = () => {
     navigator.clipboard.writeText(cardPan.replace(/\s/g, ''));
     setCopied(true);
+    if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
+      try {
+        navigator.vibrate(10);
+      } catch {
+        // ignore
+      }
+    }
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -44,55 +51,58 @@ export function DepositCheckoutModal({
     >
       <div className="space-y-4 p-1">
         {/* Price & Deposit Summary */}
-        <div className="p-4 rounded-xl bg-[#181B22] border border-[#232733] space-y-2 text-sm text-[#94A3B8]">
-          <div className="flex justify-between">
+        <div className="p-4 rounded-2xl bg-[#181B22]/90 border border-white/10 space-y-2 text-sm text-[#94A3B8]">
+          <div className="flex justify-between items-center">
             <span>Total Modifications:</span>
-            <span className="font-mono text-white">${(totalPriceCents / 100).toFixed(0)}</span>
+            <span className="font-mono text-white font-bold tabular-nums">${(totalPriceCents / 100).toFixed(0)}</span>
           </div>
-          <div className="flex justify-between font-bold text-white pt-2 border-t border-[#232733]">
-            <span className="text-accent-cyan">Mandatory 3% Deposit:</span>
-            <span className="font-mono text-accent-cyan text-base">${(depositAmountCents / 100).toFixed(2)}</span>
+          <div className="flex justify-between items-center font-bold text-white pt-2.5 border-t border-white/10">
+            <span className="text-[#19D3FF]">Mandatory 3% Escrow:</span>
+            <span className="font-mono text-[#19D3FF] text-base tabular-nums drop-shadow-[0_0_8px_rgba(25,211,255,0.4)]">
+              ${(depositAmountCents / 100).toFixed(2)}
+            </span>
           </div>
-          <div className="flex justify-between text-xs text-accent-cyan font-mono">
+          <div className="flex justify-between items-center text-xs text-[#19D3FF] font-mono">
             <span>Local currency equivalent:</span>
-            <span>{depositUzsFormatted}</span>
+            <span className="tabular-nums font-semibold">{depositUzsFormatted}</span>
           </div>
         </div>
 
         {/* Payment Card Box */}
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-[#12141A] to-[#181B22] border border-accent-cyan/30 shadow-lg space-y-3">
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#12141A] via-[#181B22] to-[#12141A] border border-[#19D3FF]/30 shadow-xl space-y-3 relative overflow-hidden">
           <div className="flex items-center justify-between text-xs text-[#94A3B8]">
             <span className="flex items-center gap-1.5 text-white font-semibold">
-              <CreditCard className="w-4 h-4 text-accent-cyan" /> Bank Transfer (Uzcard / Humo)
+              <CreditCard className="w-4 h-4 text-[#19D3FF]" />
+              <span>Direct Bank Transfer (Uzcard / Humo)</span>
             </span>
-            <span className="flex items-center gap-1 text-amber-400">
+            <span className="flex items-center gap-1 text-amber-400 font-mono text-[11px]">
               <Clock className="w-3.5 h-3.5" /> 45:00 min remaining
             </span>
           </div>
 
-          <div className="flex items-center justify-between bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
-            <span className="font-mono text-lg tracking-widest text-white">{cardPan}</span>
+          <div className="flex items-center justify-between bg-black/60 px-4 py-3 rounded-xl border border-white/10">
+            <span className="font-mono text-lg tracking-widest text-white font-bold">{cardPan}</span>
             <button
               onClick={handleCopyCard}
-              className="p-1.5 text-[#94A3B8] hover:text-white rounded-lg transition-colors"
+              className="p-2 text-[#94A3B8] hover:text-[#19D3FF] rounded-lg transition-colors cursor-pointer"
               aria-label="Copy card number"
             >
-              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-[#00E599]" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>
 
-          <div className="flex justify-between text-[11px] text-[#94A3B8]">
-            <span>Recipient: {cardHolder}</span>
-            <span>Bank: Kapitalbank</span>
+          <div className="flex justify-between text-[11px] text-[#94A3B8] font-mono">
+            <span>Holder: {cardHolder}</span>
+            <span>Bank: Kapitalbank Escrow</span>
           </div>
         </div>
 
         {/* Protection Explainer */}
-        <div className="flex items-start gap-2.5 text-xs text-[#94A3B8] p-3 rounded-xl bg-accent-cyan/5 border border-accent-cyan/20">
-          <ShieldCheck className="w-5 h-5 text-accent-cyan shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 text-xs text-[#94A3B8] p-3.5 rounded-2xl bg-[#19D3FF]/10 border border-[#19D3FF]/25 leading-relaxed">
+          <ShieldCheck className="w-5 h-5 text-[#19D3FF] shrink-0 mt-0.5" />
           <span>
-            Your 3% deposit is held in escrow and deducted 100% from your final bill at the shop.
-            If the workshop cancels, you are refunded immediately.
+            Your 3% deposit is held in escrow and deducted 100% from your final garage invoice.
+            If the partner workshop cancels, you are refunded immediately.
           </span>
         </div>
 
@@ -103,7 +113,8 @@ export function DepositCheckoutModal({
             onOpenReceiptUpload();
           }}
           variant="primary"
-          className="w-full h-12 shadow-glow"
+          size="lg"
+          className="w-full shadow-glow font-bold"
         >
           <Upload className="w-4 h-4 me-2" />
           <span>I Have Transferred — Upload Receipt</span>

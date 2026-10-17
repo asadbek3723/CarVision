@@ -48,7 +48,7 @@ export function Sheet({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-[#0A0B0F]/70 backdrop-blur-sm"
+            className="fixed inset-0 bg-[#0A0B0F]/80 backdrop-blur-md"
           />
 
           {/* Drawer Panel */}
@@ -56,9 +56,9 @@ export function Sheet({
             initial={isBottom ? { y: '100%' } : { x: '100%' }}
             animate={isBottom ? { y: 0 } : { x: 0 }}
             exit={isBottom ? { y: '100%' } : { x: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             className={cn(
-              'fixed bg-[#12141A] border-[#232733] shadow-2xl z-10 flex flex-col',
+              'fixed bg-[#12141A]/95 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-10 flex flex-col',
               isBottom
                 ? 'inset-x-0 bottom-0 max-h-[85vh] rounded-t-3xl border-t p-6'
                 : 'inset-y-0 end-0 w-full max-w-md border-s p-6',
@@ -71,7 +71,7 @@ export function Sheet({
             )}
 
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#232733] mb-4 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
               {title ? (
                 <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
               ) : (
@@ -79,7 +79,7 @@ export function Sheet({
               )}
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl text-[#94A3B8] hover:text-white hover:bg-white/5 transition-colors"
+                className="p-2 rounded-xl text-[#94A3B8] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 aria-label="Close sheet"
               >
                 <X className="w-5 h-5" />
@@ -87,7 +87,9 @@ export function Sheet({
             </div>
 
             {/* Scrollable Content */}
-            <div className="overflow-y-auto flex-1 overscroll-contain">{children}</div>
+            <div className="overflow-y-auto flex-1 overscroll-contain no-scrollbar">
+              {children}
+            </div>
           </motion.div>
         </div>
       )}

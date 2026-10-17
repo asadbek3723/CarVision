@@ -9,6 +9,7 @@ export interface StudioPartItem {
   laborCostCents: number;
   imageUrl: string;
   inStock: boolean;
+  swatchHex?: string | undefined;
 }
 
 export interface SelectedPartBuild {

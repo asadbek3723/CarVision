@@ -1,5 +1,10 @@
-import { MarketplaceShopList } from '@/features/marketplace/components/MarketplaceShopList';
+import { VeloceShell } from '@/components/veloce/VeloceShell';
+import { VeloceShop } from '@/components/veloce/VeloceShop';
 
 export default function MarketplacePage() {
-  return <MarketplaceShopList />;
+  return (
+    <VeloceShell>
+      <VeloceShop />
+    </VeloceShell>
+  );
 }
