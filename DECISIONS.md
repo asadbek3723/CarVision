@@ -1,5 +1,13 @@
 # Architecture & Product Decisions
 
+## 2026-10-17: 1:1 Matched Before/After Landing Page Slider Images
+- **Decision**: Replaced the mismatched Before/After assets (`public/images/golden/car-before.jpg` and `car-after.jpg`) with a 100% pixel-perfect 1:1 matching Chevrolet Malibu pair at 1600x912 resolution:
+  - **OLDIN (Before)**: OEM Factory Stock Chevrolet Malibu in clean white paint with factory 18" split-spoke alloys, standard ride height, chrome window trim, and clean rocker panels.
+  - **KEYIN (After)**: 4K Custom Tuned version in glossy Nardo Grey wrap with 20" gloss-black forged wheels, lowered stance, carbon-fiber side skirts, gloss-black shadowline window trim, and carbon ducktail trunk spoiler.
+  - Sourced from identical-seed Gemini studio photography with sub-millimeter roofline, B-pillar, door handle, and studio lighting continuity verified at 0%, 25%, 50%, 75%, and 100% slider positions.
+- **Reason**: The previous setup used a silver Toyota Camry facing left for "Before" and a matte black BMW M3 facing right for "After", creating an jarring, broken visual jump when dragging the comparison slider.
+- **Alternatives Rejected**: Keeping mismatched models or using low-quality, watermarked third-party generative alternatives.
+
 ## 2026-10-17: 1:1 Landscape Smart Camera (6 Angles, Floor AR) & Desktop QR Hand-off
 - **Decision**: 
   1. Built standalone `SmartCameraLandscapeView` replicating the user-provided camera screen 1:1:

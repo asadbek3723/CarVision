@@ -1,9 +1,19 @@
 # CarVision Roadmap & Plan
 
-## Active Task: None (All tasks complete & verified)
-Status: COMPLETED
+## Active Task: Landing Page Visual Polish & Next Milestones
+Status: READY_FOR_FEEDBACK
+- [x] Generate & Replace 1:1 Professional Before/After Slider Images (`car-before.jpg` & `car-after.jpg`).
+- [x] Verify seamless 1:1 pixel alignment across 0%, 25%, 50%, 75%, and 100% split positions.
+- [x] Run full quality gates (direction check, typecheck, lint, and Vitest test suite).
 
 ## Completed Tasks
+- [x] Generate & Replace 1:1 Professional Before/After Slider Images (`car-before.jpg` & `car-after.jpg`):
+  - Replaced the mismatched pair (silver Toyota Camry facing left vs black BMW M3 facing right) with a 100% pixel-perfect 1:1 matching Chevrolet Malibu pair in the exact same luxury dark studio setting at 1600x912 resolution.
+  - OLDIN (Before): Factory OEM stock white Chevrolet Malibu with standard 18" alloy wheels, factory suspension height, chrome window trim, and clean rocker panels.
+  - KEYIN (After): 4K tuned custom version with aggressive Nardo Grey wrap, 20" gloss-black forged wheels, lowered stance, carbon-fiber side skirts, gloss-black shadowline window trim, and carbon ducktail trunk spoiler.
+  - Verified 1:1 alignment at 25%, 50%, and 75% split points with zero seam jumping or perspective distortion.
+  - Passed all quality gates: zero direction violations (`npm run check-direction`), zero TypeScript errors (`npx tsc --noEmit`), zero ESLint warnings (`npm run lint`), and 24/24 Vitest domain tests passing.
+
 - [x] Fix Vercel Production Build Failures (ESLint Unused Variables & Build Verification):
   - Fixed ESLint unused variable errors in `VeloceProfile.tsx` (`User`, `Building`), `VeloceShell.tsx` (`isCustomize`), and confirmed `completedAngles` usage in `SmartCameraLandscapeView.tsx`.
   - Replaced ambiguous Tailwind timing function classes `ease-[cubic-bezier(...)]` with standard `[transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)]` in `src/app/[locale]/page.tsx`.

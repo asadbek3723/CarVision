@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026-10-17] - Landing Page: 1:1 Matched Professional Before/After Slider Images
+### Changed & Enhanced
+- **1:1 Pixel-Perfect Vehicle Pair**: Replaced mismatched Before/After assets (`public/images/golden/car-before.jpg` and `car-after.jpg`) with a 100% matched Chevrolet Malibu pair at 1600x912 resolution.
+- **Seamless Visual Continuity**:
+  - `OLDIN`: OEM stock white Chevrolet Malibu 2.0T with factory 18" silver wheels, standard factory ride height, chrome window trim, and clean rocker panels.
+  - `KEYIN`: Aggressively tuned 4K version with Nardo Grey wrap, 20" gloss-black forged wheels, lowered sport suspension stance, gloss-black shadowline window trim, carbon-fiber side skirts, and carbon ducktail trunk spoiler.
+  - Sourced from identical-camera studio photography with sub-millimeter continuity along the roofline, B-pillar, C-pillar, door handles, and lighting reflections.
+- **Verification**: Tested at 25%, 50%, and 75% slider split positions. Passed all quality gates (0 direction violations, 0 TypeScript errors, 0 ESLint warnings, 24/24 Vitest domain tests passing).
+
 ## [2026-10-17] - Build & CI: Fix Vercel Production Build ESLint Errors & Ambiguous Classes
 ### Fixed
 - **ESLint Unused Variables**: Removed unused imports `User` and `Building` in `src/components/veloce/VeloceProfile.tsx`, removed unused `isCustomize` in `src/components/veloce/VeloceShell.tsx`, and verified `completedAngles` in `SmartCameraLandscapeView.tsx`.
