@@ -620,47 +620,67 @@ function TargetAudience({ locale }: { locale: string }) {
    Pricing Table
    =================================================================== */
 
-const TIERS = [
+const TIERS: {
+  tier: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  per: string;
+  d: string;
+  items: string[];
+  cta: string;
+  hot: boolean;
+  badge?: string;
+}[] = [
   {
-    tier: 'SINOV',
-    name: 'Studio Onboarding',
+    tier: 'SINOV VA TANISHUV',
+    name: 'FREE',
     price: 0,
     per: 'sinov',
-    d: 'Mustaqil ustalar va kichik studiyalar uchun.',
-    items: ['40 ta 4K token', '1 ta faol qurilma', '500+ katalog'],
+    d: 'Oddiy foydalanuvchilar va AI kuchini to‘lovsiz sinab ko‘rmoqchi bo‘lgan avtoservislar uchun.',
+    items: [
+      '40 ta bepul rasm',
+      '"Tuned by CarVision" suv belgisi (watermark)',
+      '1 ta faol qurilma',
+      'AIning kuchini sinash va ishonch hosil qilish',
+      'Oddiy foydalanuvchilar uchun qulay',
+    ],
     cta: 'BEPUL BOSHLASH',
     hot: false,
   },
   {
-    tier: 'PRODUCTION',
-    name: 'Pro Atelier 800',
-    price: 99,
+    tier: 'KICHIK BIZNES',
+    name: 'PRO',
+    price: 29,
     per: 'oy',
-    d: 'Tijorat tuning markazlari va wrap franshizalari uchun.',
+    d: 'Kichik auto tuning saloni borlar uchun boshlang‘ich qadam.',
     items: [
-      '800 ta 4K render / oy',
-      '3 ta qurilma',
-      'PIN himoya rejimi',
-      '3% depozit markazi',
-      "O'z detallaringizni yuklash",
+      '800 ta rasm / oy',
+      'Suv belgisisiz toza 4K sifatli rasmlar',
+      'Maksimum 3 ta qurilma (planshet / telefon)',
+      'Mahsulot joylash imkoniyati',
+      'Boshlang‘ich biznes qo‘llab-quvvatlash',
     ],
-    cta: "PRO'NI YOQISH",
-    hot: true,
+    cta: "PRO'NI TANLASH",
+    hot: false,
   },
   {
-    tier: 'FLEET',
-    name: 'Enterprise Network',
-    price: 349,
+    tier: 'PROFESSIONAL SERVISLAR',
+    name: 'MAX',
+    badge: "$145 O'RNIGA $99 — SIZ 32% TEJAB QOLYAPSIZ!",
+    price: 99,
+    originalPrice: 145,
     per: 'oy',
-    d: 'Dilerlik tarmoqlari va ishlab chiqaruvchilar uchun.',
+    d: 'Katta auto tuning do‘koni yoki professional tuning saloni borlar uchun.',
     items: [
-      '3 500 ta 4K render',
-      'Cheksiz planshetlar',
-      '3D CAD integratsiya',
-      'Maxsus GPU (99.9% SLA)',
+      '4,000 ta rasm / oy',
+      'Tizimdagi eng optimal tanlov',
+      'Bir vaqtda 8 tagacha qurilmadan kirish',
+      'Videolarni 4K formatda yuklab olish imkoni',
+      'Mahsulot joylash imkoniyati',
     ],
-    cta: "BOG'LANISH",
-    hot: false,
+    cta: "MAX'NI YOQISH",
+    hot: true,
   },
 ];
 
@@ -704,8 +724,8 @@ function Pricing({ locale }: { locale: string }) {
             style={{ transitionDelay: `${idx * 120}ms` }}
           >
             {tier.hot && (
-              <span className="btn-gold absolute -top-3 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 rounded-full px-4 py-1 text-[10px] font-bold tracking-[0.2em]">
-                ENG MASHHUR
+              <span className="btn-gold absolute -top-3.5 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 rounded-full px-4 py-1 text-[9px] sm:text-[10px] font-bold tracking-[0.12em] whitespace-nowrap shadow-gold">
+                {tier.badge || 'ENG MASHHUR'}
               </span>
             )}
             <p className="text-[11px] tracking-lux text-primary">{tier.tier}</p>
@@ -718,6 +738,11 @@ function Pricing({ locale }: { locale: string }) {
                   ? Math.round(tier.price * 0.8)
                   : tier.price}
               </span>
+              {tier.originalPrice && (
+                <span className="text-xl text-muted-foreground/60 line-through decoration-primary/50">
+                  ${isAnnual ? Math.round(tier.originalPrice * 0.8) : tier.originalPrice}
+                </span>
+              )}
               <span className="text-sm text-muted-foreground">/ {tier.per}</span>
             </p>
 

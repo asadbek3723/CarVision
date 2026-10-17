@@ -1,5 +1,13 @@
 # Architecture & Product Decisions
 
+## 2026-10-17: Landing Page Pricing Tiers (FREE $0, PRO $29, MAX $99) & FOMO Anchoring
+- **Decision**: Updated landing page pricing tiers in `src/app/[locale]/page.tsx` with user-specified copy and commercial positioning without altering the borderless luxury design system:
+  1. **FREE** ($0 / sinov): 40 ta bepul rasm, "Tuned by CarVision" watermark, 1 ta faol qurilma, oddiy foydalanuvchilar va avtoservislar sinovi.
+  2. **PRO** ($29 / oy): 800 ta rasm, suv belgisisiz toza 4K sifat, 3 ta qurilma, mahsulot joylash imkoni, kichik tuning salonlari uchun.
+  3. **MAX** ($99 / oy): 4 000 ta rasm, 8 ta qurilma, 4K video yuklab olish, mahsulot joylash imkoni, katta do'konlar va salonlar uchun. Elevated as the highlighted card (`hot: true`) with FOMO badge: `$145 O'RNIGA $99 — SIZ 32% TEJAB QOLYAPSIZ!` and strike-through anchoring price ($145 crossed out).
+- **Reason**: User requested exact conversion-optimized copy, audience segmentation (regular users, small tuning salons, large tuning shops), and psychological FOMO anchoring on MAX tier while strictly preserving existing UI design tokens.
+- **Alternatives Rejected**: Modifying card dimensions or adding custom borders which would break visual consistency.
+
 ## 2026-10-17: 1:1 Matched Before/After Landing Page Slider Images
 - **Decision**: Replaced the mismatched Before/After assets (`public/images/golden/car-before.jpg` and `car-after.jpg`) with a 100% pixel-perfect 1:1 matching Chevrolet Malibu pair at 1600x912 resolution:
   - **OLDIN (Before)**: OEM Factory Stock Chevrolet Malibu in clean white paint with factory 18" split-spoke alloys, standard ride height, chrome window trim, and clean rocker panels.

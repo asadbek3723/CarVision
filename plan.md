@@ -1,10 +1,20 @@
 # CarVision Roadmap & Plan
 
-## Active Task: Landing Page Visual Polish & Next Milestones
+## Active Task: Landing Page & Configurator Polish
 Status: READY_FOR_FEEDBACK
-- [x] Generate & Replace 1:1 Professional Before/After Slider Images (`car-before.jpg` & `car-after.jpg`).
-- [x] Verify seamless 1:1 pixel alignment across 0%, 25%, 50%, 75%, and 100% split positions.
-- [x] Run full quality gates (direction check, typecheck, lint, and Vitest test suite).
+- [x] Update Landing Page Pricing Tiers Copy & FOMO Anchoring (`FREE`, `PRO`, `MAX`).
+- [x] Settle 1:1 matching Before/After Slider assets (`car-before.jpg` & `car-after.jpg`).
+- [x] Zero design regressions: identical glass borders, cards, buttons, responsive scaling, and fonts preserved.
+- [x] Full quality gates passed: 0 direction errors, 0 TS errors, 0 ESLint warnings, 24/24 Vitest domain tests.
+
+## Completed Tasks
+- [x] Update Landing Page Pricing Tiers Copy & FOMO Anchoring (FREE, PRO, MAX):
+  - Card 1 (`FREE`): $0 / sinov, 40 ta bepul rasm, "Tuned by CarVision" watermark, 1 ta faol qurilma, oddiy foydalanuvchilar va servislar uchun.
+  - Card 2 (`PRO`): $29 / oy, 800 ta rasm, suv belgisisiz toza 4K sifat, 3 ta qurilma, mahsulot joylash imkoniyati, kichik tuning salonlari uchun.
+  - Card 3 (`MAX`): $99 / oy ($145 crossed out), 4 000 ta rasm, 8 ta qurilma, 4K videolarni yuklab olish, mahsulot joylash imkoniyati, katta do'konlar va salonlar uchun.
+  - Sits as the flagship highlighted card (`hot: true`) with glowing top badge: `$145 O'RNIGA $99 — SIZ 32% TEJAB QOLYAPSIZ!`.
+  - Maintained 100% of existing card styling, CSS variables, and responsive layout without any design regressions.
+
 
 ## Completed Tasks
 - [x] Generate & Replace 1:1 Professional Before/After Slider Images (`car-before.jpg` & `car-after.jpg`):
