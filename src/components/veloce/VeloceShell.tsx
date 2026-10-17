@@ -34,7 +34,6 @@ export function VeloceShell({ children }: VeloceShellProps) {
   const isHome = pathname === `/${locale}` || pathname === `/${locale}/seller`;
   const isGarage = pathname.includes('/garage');
   const isShop = pathname.includes('/shop') || pathname.includes('/marketplace');
-  const isCustomize = pathname.includes('/customize') || pathname.includes('/studio');
   const isCart = pathname.includes('/cart');
   const isProfile = pathname.includes('/profile');
 

@@ -1,7 +1,19 @@
 # CarVision Roadmap & Plan
 
-## Active Task: None (All tasks complete & verified)
-Status: COMPLETED
+## Active Task: Fix Vercel Production Build Failures (ESLint Unused Variables & Build Verification)
+Status: IN_PROGRESS
+- [ ] Fix ESLint unused variable errors in VeloceProfile.tsx (`User`, `Building`), VeloceShell.tsx (`isCustomize`), and SmartCameraLandscapeView.tsx (`completedAngles`).
+- [ ] Fix ambiguous Tailwind class warning `ease-[cubic-bezier(...)]`.
+- [ ] Run `npm run lint` and `npm run build` locally to verify 100% production build success.
+- [ ] Run full quality gates (`npm run check-direction`, `npm run typecheck`, `npm test`).
+
+## Completed Tasks
+- [x] Maximize Central Viewport Rectangle & Seamless Responsive Adaptation Across All Devices:
+  - Removed restrictive `max-w-3xl` and `max-h-[520px]` caps: central golden rectangle now dynamically expands to fill the maximum possible viewport space (`h-[90%-96%]`, full fluid width).
+  - Implemented universal fluid responsiveness: on landscape (MacBook, PC, tablet, rotated phone), the left 360° car compass scales cleanly (`h-36` to `h-64`), shutter scales dynamically (`h-16` to `h-28`), giving over 75-80% of total horizontal width to the camera frame.
+  - Implemented native mobile portrait support: when opened or held vertically on smartphones, eliminates blocking "rotate phone" screen and provides a vertical layout where the middle rectangle commands >70% of phone height, with top angle switcher chips and bottom luxury shutter button.
+  - Sized corner brackets responsively with logical start/end properties (`rounded-ss-xl`, `rounded-se-xl`, `rounded-es-xl`, `rounded-ee-xl`).
+  - Passed full quality gates: zero TypeScript errors (`tsc --noEmit`), zero physical direction violations (`npm run check-direction`), 24/24 Vitest domain tests passing.
 
 ## Completed Tasks
 - [x] 1:1 Landscape Smart Camera: 100% Real Live Camera Feed & Permanently Removed Floor Trapezoid:

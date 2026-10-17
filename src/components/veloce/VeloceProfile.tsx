@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  User,
   ShieldCheck,
   Award,
   Sparkles,
@@ -22,7 +21,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  Building,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useVeloceStore } from '@/context/VeloceStore';

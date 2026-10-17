@@ -121,7 +121,7 @@ function Header({ locale }: { locale: string }) {
 
   return (
     <header
-      className={`fixed inset-x-0 top-3 z-50 px-3 sm:top-4 sm:px-4 transition-all duration-700 ease-[cubic-bezier(.2,.8,.2,1)] ${
+      className={`fixed inset-x-0 top-3 z-50 px-3 sm:top-4 sm:px-4 transition-all duration-700 [transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)] ${
         scrolled
           ? 'translate-y-0 opacity-100'
           : '-translate-y-24 opacity-0 pointer-events-none'
@@ -971,7 +971,7 @@ function Faq() {
               </button>
 
               <div
-                className={`grid transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+                className={`grid transition-all duration-500 [transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)] ${
                   isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
               >

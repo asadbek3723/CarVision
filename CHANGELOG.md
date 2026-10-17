@@ -1,13 +1,18 @@
 # Changelog
 
-## [2026-10-17] - Camera: 1:1 Landscape Smart Camera Pixel-Perfect Matching to Reference Mockup
+## [2026-10-17] - Camera: Maximized Central Viewport Rectangle & Full Responsive Adaptation Across All Devices
 ### Changed & Polished
-- **Transparent PNG Car Asset**: Created ultra-clean 733x976 transparent PNG cutout (`topdown_coupe.png`) eliminating all square background borders. Scaled car up prominently (`h-48 w-32 sm:h-56 sm:w-36`) inside the 360° compass circle with smooth rotation animation (`transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)`).
-- **Calibrated Shutter Button (1:1 with reference Image 2)**: Outer champagne gold neon ring (`border-[2.5px] border-[#DDBE78] shadow-[0_0_24px_rgba(221,190,120,0.55)]`), tight uniform dark gap, and solid pure white circular shutter disc with smooth press scaling.
-- **Photorealistic Garage Viewport**: Replaced empty black background with high-res underground parking garage workshop (`camera_garage_bg.jpg`) with concrete pillars, vertical warm amber LED lights, and wet reflective floor.
-- **Top-Left Back Navigation**: Integrated frosted glass circular button with sharp `ArrowLeft` icon.
-- **System Clutter Removal**: Confirmed 0 iOS status elements (no battery, no 9:41, no Wi-Fi, no hardware bezel) and suppressed Next.js dev server overlay `N` badge.
-- **Radar Compass Calibration**: Scaled up top-down black coupe to fill circle height; streamlined to 4 cardinal directions (Front active gold pill with `ChevronUp`, Left/Right/Rear frosted buttons); removed diagonal chevrons and bottom text pill.
+- **Maximized Central Framing Rectangle**: Removed restrictive `max-w-3xl` and `max-h-[520px]` limits. The central gold framing rectangle now dynamically expands to command the maximum screen area (`h-[90%-96%]`, fluid width) across desktop, laptop, tablet, and mobile screens.
+- **Universal Fluid Responsiveness**: Dynamically scales the 360° car alignment compass and luxury shutter button across all viewport widths and heights. On laptops and large monitors, the central camera frame commands over 75-80% of horizontal space.
+- **Native Mobile Portrait Adaptation**: Eliminates blocking rotation alerts on phones; provides a native vertical layout where the middle rectangle occupies over 70% of screen height and 94% of screen width, accompanied by an ergonomic top angle chip selector and bottom shutter trigger with mini compass feedback.
+- **Zero Direction Violations**: Ensured all corner framing brackets and positioning classes strictly adhere to CSS logical properties (`rounded-ss-xl`, `rounded-se-xl`, `rounded-es-xl`, `rounded-ee-xl`, `border-s`, `border-e`, `start-*`, `end-*`).
+
+## [2026-10-17] - Camera: Real Live Camera Stream & Permanent Removal of Perspective Floor Trapezoid
+### Changed & Polished
+- **Permanently Removed Floor Trapezoid**: Excised the SVG perspective floor parking bay projection from the camera viewport. The camera view is now 100% unobstructed and framed only by the 4 golden corner brackets.
+- **100% Real Live Camera Stream**: Deleted static fake background image (`camera_garage_bg.jpg`) and activated live `<video>` feed with automatic start on mount and multi-platform fallback (environment camera on mobile, FaceTime/webcam on laptops/PCs).
+- **Transparent PNG Car Asset**: Ultra-clean 733x976 transparent PNG cutout (`topdown_coupe.png`) without background square borders, filling the 360° compass height with smooth angle rotation animation.
+- **Calibrated Shutter Button**: 1:1 match with reference mockup (thin gold glowing neon ring `#DDBE78`, uniform dark gap, pure solid white disc).
 - **Center Viewfinder**: Added golden rounded outer frame (`rounded-[32px] sm:rounded-[36px] border-[1.5px] border-[#D4AE62]/55`), 4 bright gold corner framing brackets (`┌ ┐ └ ┘`), and 3D floor perspective parking bay with 2 pairs of side alignment notches.
 ### Added
 - **1:1 Landscape Smart Camera UI (`SmartCameraLandscapeView`)**:
