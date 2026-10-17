@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026-10-17] - Landing Page: Pricing Tiers Text Update & FOMO Anchoring (FREE, PRO, MAX)
+### Changed & Enhanced
+- **Updated Pricing Tiers Copy (`TIERS`)**:
+  - `FREE`: $0 / sinov, 40 ta bepul rasm, "Tuned by CarVision" watermark, 1 ta faol qurilma, oddiy foydalanuvchilar va servislar uchun bepul tanishuv.
+  - `PRO`: $29 / oy, 800 ta rasm, suv belgisisiz toza 4K sifat, 3 tagacha qurilmadan kirish, mahsulot joylash imkoni, kichik auto tuning salonlari uchun.
+  - `MAX`: $99 / oy ($145 crossed out), 4 000 ta rasm, 8 tagacha qurilmadan kirish ruxsati, videolarni 4K formatda yuklab olish, mahsulot joylash imkoni, katta do'konlar va salonlar uchun.
+- **FOMO Psychology & Flagship Card**: Positioned `MAX` as the featured elevated card (`hot: true`) with glowing top badge: `$145 O'RNIGA $99 — SIZ 32% TEJAB QOLYAPSIZ!` and strike-through anchoring price.
+- **Design Preserved**: 100% of existing borderless, glassmorphic card styling, radii, colors, and responsive layouts were strictly preserved.
+
 ## [2026-10-17] - Landing Page: 1:1 Matched Professional Before/After Slider Images
 ### Changed & Enhanced
 - **1:1 Pixel-Perfect Vehicle Pair**: Replaced mismatched Before/After assets (`public/images/golden/car-before.jpg` and `car-after.jpg`) with a 100% matched Chevrolet Malibu pair at 1600x912 resolution.
