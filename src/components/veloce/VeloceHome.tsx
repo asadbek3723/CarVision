@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { useVeloceStore } from '@/context/VeloceStore';
-import { VELOCE_PRODUCTS, type VeloceProduct } from '@/domain/veloce-catalog';
+import { type VeloceProduct } from '@/domain/veloce-catalog';
 
 const STATS = [
   { v: '1,240+', l: 'Premium parts' },
@@ -44,12 +44,26 @@ export function VeloceHome() {
   const locale = (params?.['locale'] as string) || 'uz';
   const { openCamera } = useVeloceStore();
 
-  const trendingProducts: VeloceProduct[] = [
-    VELOCE_PRODUCTS[0], // VZ-01 Forged
-    VELOCE_PRODUCTS[8], // Carbon Front Lip
-    VELOCE_PRODUCTS[16], // KW Variant 3
-    VELOCE_PRODUCTS[29], // Valvetronic Exhaust
-  ].filter((p): p is VeloceProduct => Boolean(p));
+  const [trendingProducts, setTrendingProducts] = React.useState<VeloceProduct[]>([]);
+  const [isLoadingTrending, setIsLoadingTrending] = React.useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    fetch('/api/v1/products?limit=4')
+      .then((r) => r.json())
+      .then((data) => {
+        if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
+          setTrendingProducts(data.products);
+        }
+      })
+      .catch((err) => console.warn('Could not load trending products:', err))
+      .finally(() => {
+        if (isMounted) setIsLoadingTrending(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div>
@@ -194,9 +208,15 @@ export function VeloceHome() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
-            {trendingProducts.map((p, idx) => (
-              <ProductCard key={p.id} p={p} i={idx} />
-            ))}
+            {isLoadingTrending ? (
+              [1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-64 rounded-2xl bg-[#12141C] animate-pulse" />
+              ))
+            ) : (
+              trendingProducts.map((p, idx) => (
+                <ProductCard key={p.id} p={p} i={idx} />
+              ))
+            )}
           </div>
         </section>
       </div>

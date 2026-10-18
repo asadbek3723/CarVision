@@ -9,6 +9,9 @@ export interface VeloceProduct {
   rating: number;
   stock: number;
   image: string;
+  angleImage?: string | undefined;
+  targetCar?: string | undefined;
+  compatibility?: Array<{ id: string; name: string }> | undefined;
 }
 
 export const VELOCE_CATEGORIES = [
@@ -41,6 +44,10 @@ export const TOP_BRANDS = [
   'Vossen',
   'Recaro',
 ] as const;
+
+export function formatPriceUSD(amount: number): string {
+  return `$${amount.toLocaleString('en-US')}`;
+}
 
 const RAW_PRODUCTS: [string, string, string, number, string, string?][] = [
   ['Wheels', 'VZ-01 Forged', 'Veloce', 3890, '20" · Forged Lightweight'],
@@ -105,8 +112,4 @@ export const VELOCE_PRODUCTS: VeloceProduct[] = RAW_PRODUCTS.map(
 
 export function getProductById(id: string): VeloceProduct | undefined {
   return VELOCE_PRODUCTS.find((p) => p.id === id);
-}
-
-export function formatPriceUSD(amount: number): string {
-  return `$${amount.toLocaleString('en-US')}`;
 }

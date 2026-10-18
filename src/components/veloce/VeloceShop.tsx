@@ -93,7 +93,7 @@ export function VeloceShop() {
               Monoblock aerospace aluminium. 7.9 kg per wheel. Hand-finished in champagne gold.
             </p>
             <Link
-              href={`/${locale}/shop/p1`}
+              href={`/${locale}/shop/${products[0]?.id || ''}`}
               className="shimmer mt-6 inline-flex items-center gap-2 rounded-full bg-gold-gradient px-6 py-3 text-xs font-bold tracking-[0.2em] text-black uppercase shadow-gold transition hover:brightness-110 active:scale-95"
             >
               Shop now <ArrowRight className="h-4 w-4" />

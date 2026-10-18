@@ -4,6 +4,7 @@ import { routing, type Locale } from '@/i18n/routing';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
+import { CurrencyProvider } from '@/context/CurrencyContext';
 import { VeloceStoreProvider } from '@/context/VeloceStore';
 import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt';
 import '../../../styles/globals.css';
@@ -57,10 +58,12 @@ export default async function LocaleLayout({
       <body className="bg-[#0A0B0F] text-white min-h-screen antialiased select-none" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
-            <VeloceStoreProvider>
-              {children}
-              <PwaInstallPrompt />
-            </VeloceStoreProvider>
+            <CurrencyProvider>
+              <VeloceStoreProvider>
+                {children}
+                <PwaInstallPrompt />
+              </VeloceStoreProvider>
+            </CurrencyProvider>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

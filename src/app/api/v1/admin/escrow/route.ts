@@ -39,13 +39,37 @@ export async function GET(request: NextRequest) {
     }
 
     const mappedOrders = (orders || []).map((o, idx) => {
-      const orderNumber = `CV-${9821 - idx}`;
+      // Parse custom order number if present in note (e.g. #CV-9825)
+      const orderNumberMatch = o.note?.match(/#(CV-[0-9A-Z]+)/);
+      const orderNumber = orderNumberMatch ? orderNumberMatch[1] : `CV-${9821 - idx}`;
+
       const firstItem = Array.isArray(o.order_items) && o.order_items[0] ? o.order_items[0] : null;
       const seller = Array.isArray(o.sellers) ? o.sellers[0] : o.sellers;
       const studioName = seller?.business_name || 'Partner Atelier';
       const itemDescription = firstItem?.product_name || o.note || 'Tuning jamlanmasi';
-      const totalPrice = Number(o.total || 0);
-      const depositCents = Math.round(totalPrice * 0.03); // 3% escrow deposit
+      const rawTotal = Number(o.total || 0);
+      const totalPrice = rawTotal > 50000 ? Math.round(rawTotal / 13000) : rawTotal;
+      const depositCents = Math.round(totalPrice * 3); // exact 3% in cents (e.g. $1250 * 3 = 3750 cents = $37.50)
+
+      // Parse payment method from note if present
+      const paymentMatch = o.note?.match(/\[(Click|Payme|Uzum|Bank)\]/i);
+      const paymentMethod = paymentMatch
+        ? (paymentMatch[1] as 'Click' | 'Payme' | 'Uzum' | 'Bank')
+        : ((idx % 3 === 0 ? 'Click' : idx % 3 === 1 ? 'Payme' : 'Uzum') as 'Click' | 'Payme' | 'Uzum' | 'Bank');
+
+      // Parse customer name from note
+      let customerName = 'Mijoz';
+      if (o.note) {
+        if (o.note.includes('•')) {
+          const bulletName = o.note.split('•')[1]?.trim();
+          if (bulletName && !bulletName.startsWith('[')) customerName = bulletName;
+        } else {
+          const rawName = o.note.split('(')[0]?.split('[')[0]?.split(':')[0]?.trim();
+          if (rawName && rawName.length > 1) {
+            customerName = rawName;
+          }
+        }
+      }
 
       let mappedStatus: 'pending' | 'verified' | 'rejected' = 'pending';
       if (o.status === 'accepted' || o.status === 'installing' || o.status === 'completed') {
@@ -57,13 +81,13 @@ export async function GET(request: NextRequest) {
       return {
         id: o.id,
         orderNumber,
-        customerName: o.note ? o.note.split(':')[0]?.trim() || 'Mijoz' : 'Mijoz',
+        customerName,
         customerPhone: o.phone || '+998 90 000 00 00',
         studioName,
         itemDescription,
         totalPriceCents: totalPrice * 100, // store in cents for UI
-        depositCents: depositCents * 100,
-        paymentMethod: (idx % 3 === 0 ? 'Click' : idx % 3 === 1 ? 'Payme' : 'Uzum') as 'Click' | 'Payme' | 'Uzum' | 'Bank',
+        depositCents,
+        paymentMethod,
         transactionRef: `TXN-${o.id.substring(0, 8).toUpperCase()}`,
         status: mappedStatus,
         submittedAt: new Date(o.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) + ' oldin',

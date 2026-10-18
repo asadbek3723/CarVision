@@ -28,7 +28,6 @@ import {
   Trash2,
   ExternalLink,
   Camera,
-  Upload,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { Modal } from '@/components/ui/Modal';
@@ -36,8 +35,7 @@ import { CustomerViewLockModal } from './CustomerViewLockModal';
 import { RedeemVoucherModal } from './RedeemVoucherModal';
 import { OneClickCatalogImporter } from './OneClickCatalogImporter';
 import { CustomPartUploader } from './CustomPartUploader';
-import { SmartCameraView } from '@/features/camera/components/SmartCameraView';
-import type { CompressResult } from '@/features/camera/lib/image-compressor';
+import { VeloceSmartCameraModal } from '@/components/camera/VeloceSmartCameraModal';
 
 export type GarageCategory = 'ALL' | 'WHEELS' | 'BODY KIT' | 'SUSPENSION' | 'INTERIOR' | 'PERFORMANCE';
 
@@ -225,44 +223,6 @@ export function SellerDashboard({
 
   // Smart Camera Scan & Capture state
   const [isSmartCameraOpen, setIsSmartCameraOpen] = React.useState(false);
-  const [isProcessingCapture, setIsProcessingCapture] = React.useState(false);
-
-  const handlePhotoCaptured = (result: CompressResult) => {
-    setIsProcessingCapture(true);
-    try {
-      if (typeof window !== 'undefined') {
-        const objectUrl = URL.createObjectURL(result.blob);
-        sessionStorage.setItem('carvision_captured_image', objectUrl);
-        sessionStorage.setItem('carvision_captured_at', Date.now().toString());
-      }
-    } catch {
-      // Ignore sessionStorage errors
-    }
-
-    setTimeout(() => {
-      setIsProcessingCapture(false);
-      setIsSmartCameraOpen(false);
-      router.push(`/${locale}/studio?captured=1`);
-    }, 700);
-  };
-
-  const handleSampleCarSelect = (sampleUrl: string) => {
-    setIsProcessingCapture(true);
-    try {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('carvision_captured_image', sampleUrl);
-        sessionStorage.setItem('carvision_captured_at', Date.now().toString());
-      }
-    } catch {
-      // Ignore sessionStorage errors
-    }
-
-    setTimeout(() => {
-      setIsProcessingCapture(false);
-      setIsSmartCameraOpen(false);
-      router.push(`/${locale}/studio?captured=1`);
-    }, 600);
-  };
 
   // Garage Inventory & Detail state
   const [garageCategory, setGarageCategory] = React.useState<GarageCategory>('ALL');
@@ -1174,103 +1134,14 @@ export function SellerDashboard({
       </Modal>
 
       {/* FULLSCREEN SMART CAMERA // 4K SCAN MODAL */}
-      {isSmartCameraOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-[#07080B] text-white">
-          {/* Top Bar Header */}
-          <div className="relative z-30 flex h-16 items-center justify-between px-4 sm:px-6 bg-[#07080B]/90 backdrop-blur-xl border-b border-white/[0.06]">
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (!isProcessingCapture) {
-                  setIsSmartCameraOpen(false);
-                }
-              }}
-              aria-label="Yopish"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {/* Title & Guidance */}
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#19D3FF] animate-pulse" />
-                <h2 className="text-xs sm:text-sm font-bold tracking-[0.2em] text-[#EDE8DF]">
-                  SMART CAMERA // 4K SCAN
-                </h2>
-              </div>
-              <p className="text-[9px] sm:text-[10px] tracking-wider text-[#D4AE62]">
-                AVTOMOBILNI KADRGA JOYLASHTIRING
-              </p>
-            </div>
-
-            {/* Quick Demo Photo Trigger & File Upload Fallback */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleSampleCarSelect('/images/veloce_black_coupe.jpg')}
-                disabled={isProcessingCapture}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-[#D4AE62]/40 bg-[#D4AE62]/10 px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#E6C687] hover:bg-[#D4AE62]/20 transition-all cursor-pointer"
-              >
-                <Sparkles className="h-3 w-3" />
-                <span>NAMUNA KADR</span>
-              </button>
-
-              <label className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-medium tracking-wider text-white hover:bg-white/20 transition-all cursor-pointer">
-                <Upload className="h-3 w-3" />
-                <span className="hidden sm:inline">RASM YUKLASH</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        if (typeof reader.result === 'string') {
-                          handleSampleCarSelect(reader.result);
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Camera Viewport Area */}
-          <div className="relative flex-1 w-full h-full overflow-hidden bg-black">
-            <SmartCameraView
-              currentAngleId={1}
-              totalAngles={1}
-              completedAngles={[]}
-              onPhotoCaptured={handlePhotoCaptured}
-              className="w-full h-full"
-            />
-
-            {/* Processing / Transfer Overlay */}
-            {isProcessingCapture && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#07080B]/90 backdrop-blur-2xl">
-                <div className="relative mb-6">
-                  <div className="h-20 w-20 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Sparkles className="h-8 w-8 text-[#D4AE62] animate-pulse" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-bold tracking-[0.2em] text-[#EDE8DF] uppercase">
-                  AVTOMOBIL ANQLANDI // 4K SCAN TAYYOR
-                </h3>
-                <p className="mt-2 text-xs font-mono text-[#D4AE62] tracking-wider">
-                  4K Studio visualizerga o&apos;tkazilmoqda...
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <VeloceSmartCameraModal
+        isOpen={isSmartCameraOpen}
+        onClose={() => setIsSmartCameraOpen(false)}
+        onCaptured={(_dataUrl) => {
+          setIsSmartCameraOpen(false);
+          router.push(`/${locale}/customize?captured=1`);
+        }}
+      />
     </div>
   );
 }

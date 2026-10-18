@@ -70,12 +70,12 @@ export function VoucherUnlockedScreen({ details }: VoucherUnlockedScreenProps) {
 
       {/* Action Buttons */}
       <div className="flex gap-3">
-        <Link href="/studio/demo" className="flex-1">
+        <Link href="/customize" className="flex-1">
           <Button variant="secondary" className="w-full h-12">
             Back to Studio
           </Button>
         </Link>
-        <Link href="/marketplace" className="flex-1">
+        <Link href="/shop" className="flex-1">
           <Button variant="primary" className="w-full h-12 shadow-glow">
             <span>Marketplace</span>
             <ArrowRight className="w-4 h-4 ms-2" />

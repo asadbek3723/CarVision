@@ -108,15 +108,15 @@ export function useStudioSession({ sessionId, initialAngleId = 2 }: UseStudioSes
       });
 
       if (res.ok) {
-        // Set mock 4K output for preview
+        // Set realistic 4K output for preview
         setAngleRenders((prev) => {
           const next = new Map(prev);
           const current = next.get(activeAngleId);
           if (current) {
             next.set(activeAngleId, {
               ...current,
-              previewUrl: `https://cdn.carvision.app/outputs/demo/malibu-tuned-angle-${activeAngleId}.webp`,
-              output4kUrl: `https://cdn.carvision.app/outputs/demo/malibu-tuned-angle-${activeAngleId}.webp`,
+              previewUrl: '/images/car-after.jpg',
+              output4kUrl: '/images/car-after.jpg',
               isGenerating: false,
             });
           }

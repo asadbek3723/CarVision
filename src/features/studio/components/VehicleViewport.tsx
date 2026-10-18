@@ -19,7 +19,7 @@ export function VehicleViewport({
   onInteractionEnd,
   className
 }: VehicleViewportProps) {
-  const originalUrl = renderState?.originalUrl ?? 'https://cdn.carvision.app/originals/demo/malibu-angle-2.webp';
+  const originalUrl = renderState?.originalUrl;
   const tunedUrl = renderState?.output4kUrl;
   const isGenerating = renderState?.isGenerating ?? false;
 
@@ -50,7 +50,21 @@ export function VehicleViewport({
       </div>
 
       {/* 4. Main Vehicle Canvas */}
-      {tunedUrl ? (
+      {!originalUrl ? (
+        <div className="relative z-10 max-w-md p-6 text-center space-y-4">
+          <div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-[#12141A] shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-[#19D3FF]/20">
+            <Sparkles className="h-9 w-9 text-[#19D3FF] animate-pulse" />
+          </div>
+          <div className="space-y-1.5">
+            <h3 className="font-display text-lg sm:text-xl font-light tracking-wide text-white">
+              Avtomobil surati yuklanmagan
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              4K Studio orqali tyuning qilish uchun avval avtomobilingizni suratga oling yoki yuklang.
+            </p>
+          </div>
+        </div>
+      ) : tunedUrl ? (
         <BeforeAfterSlider
           beforeImageUrl={originalUrl}
           afterImageUrl={tunedUrl}

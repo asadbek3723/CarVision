@@ -18,79 +18,6 @@ interface EscrowOrder {
   submittedAt: string;
 }
 
-const INITIAL_ESCROW_ORDERS: EscrowOrder[] = [
-  {
-    id: 'ord-01',
-    orderNumber: 'CV-9821',
-    customerName: 'Bobur Karimov',
-    customerPhone: '+998 97 765 43 21',
-    studioName: 'Apex Customs Studio',
-    itemDescription: 'Chevrolet Malibu 2 uchun 20" Gloss Black Forged g‘ildirak jamlanmasi',
-    totalPriceCents: 240000,
-    depositCents: 7200,
-    paymentMethod: 'Click',
-    transactionRef: 'CLK-20261017-982133',
-    status: 'pending',
-    submittedAt: '8 daqiqa oldin',
-  },
-  {
-    id: 'ord-02',
-    orderNumber: 'CV-9820',
-    customerName: 'Sherzod Aliyev',
-    customerPhone: '+998 90 999 11 22',
-    studioName: 'Autotune Pro Tashkent',
-    itemDescription: 'BMW M4 (G82) Carbon Fiber aerodinamik split va diffuzor',
-    totalPriceCents: 480000,
-    depositCents: 14400,
-    paymentMethod: 'Payme',
-    transactionRef: 'PYM-20261017-884102',
-    status: 'verified',
-    submittedAt: '42 daqiqa oldin',
-  },
-  {
-    id: 'ord-03',
-    orderNumber: 'CV-9819',
-    customerName: 'Jasur Ergashev',
-    customerPhone: '+998 93 111 22 33',
-    studioName: 'Dubai Custom Wheels',
-    itemDescription: 'Porsche 911 Carrera Titanium sport glushitel tizimi',
-    totalPriceCents: 360000,
-    depositCents: 10800,
-    paymentMethod: 'Uzum',
-    transactionRef: 'UZM-20261017-471099',
-    status: 'verified',
-    submittedAt: '2 soat oldin',
-  },
-  {
-    id: 'ord-04',
-    orderNumber: 'CV-9818',
-    customerName: 'Farrux Toshmatov',
-    customerPhone: '+998 91 333 44 55',
-    studioName: 'Samarkand Tuning Lab',
-    itemDescription: 'Chevrolet Tracker 2 sport podveska va prujinalar jamlanmasi',
-    totalPriceCents: 95000,
-    depositCents: 2850,
-    paymentMethod: 'Click',
-    transactionRef: 'CLK-20261017-310892',
-    status: 'pending',
-    submittedAt: '3 soat oldin',
-  },
-  {
-    id: 'ord-05',
-    orderNumber: 'CV-9817',
-    customerName: 'Rustam Qosimov',
-    customerPhone: '+998 94 777 88 99',
-    studioName: 'Fergana Tuning Studio',
-    itemDescription: 'Monoblock sport tuning bodykit va qora radiator panjarasi',
-    totalPriceCents: 180000,
-    depositCents: 5400,
-    paymentMethod: 'Payme',
-    transactionRef: 'PYM-20261017-109382',
-    status: 'verified',
-    submittedAt: '5 soat oldin',
-  },
-];
-
 export function AdminEscrowView() {
   const [orders, setOrders] = React.useState<EscrowOrder[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -104,15 +31,14 @@ export function AdminEscrowView() {
     let isMounted = true;
     const fetchOrders = async () => {
       try {
+        setIsLoading(true);
         const res = await fetch('/api/v1/admin/escrow');
         const data = await res.json();
-        if (isMounted && data.success && Array.isArray(data.orders) && data.orders.length > 0) {
+        if (isMounted && data.success && Array.isArray(data.orders)) {
           setOrders(data.orders);
-        } else if (isMounted) {
-          setOrders(INITIAL_ESCROW_ORDERS);
         }
-      } catch {
-        if (isMounted) setOrders(INITIAL_ESCROW_ORDERS);
+      } catch (err) {
+        console.error('Failed to load escrow orders from Supabase:', err);
       } finally {
         if (isMounted) setIsLoading(false);
       }

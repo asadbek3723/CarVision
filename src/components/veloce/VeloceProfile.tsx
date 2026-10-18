@@ -2,521 +2,340 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import {
-  ShieldCheck,
-  Award,
-  Sparkles,
-  Car,
-  Wrench,
-  Clock,
-  ChevronRight,
-  LogOut,
-  Sliders,
-  Globe,
-  Check,
-  ExternalLink,
-  Zap,
   Phone,
-  Mail,
   MapPin,
+  LogOut,
+  Globe,
+  Car,
+  Check,
+  ArrowRight,
+  Navigation,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { useVeloceStore } from '@/context/VeloceStore';
+import { useCurrency } from '@/context/CurrencyContext';
+import { SupportedCurrency } from '@/domain/currency';
+import type { UnlockedWorkshopLead } from '@/app/[locale]/cart/checkout/page';
 
-interface FleetVehicle {
-  id: string;
-  name: string;
-  chassis: string;
-  image: string;
-  stage: string;
-  specs: string[];
-  lastModified: string;
-}
+const LANGUAGES = [
+  { code: 'uz', name: "O'zbekcha" },
+  { code: 'ru', name: 'Русский' },
+  { code: 'en', name: 'English' },
+  { code: 'ar', name: 'العربية' },
+  { code: 'tr', name: 'Türkçe' },
+  { code: 'kk', name: 'Қазақша' },
+  { code: 'ky', name: 'Кыргызча' },
+  { code: 'tg', name: 'Тоҷикӣ' },
+] as const;
 
-const FLEET_PROJECTS: FleetVehicle[] = [
-  {
-    id: 'f1',
-    name: 'BMW M4 Competition',
-    chassis: 'G82 Coupé',
-    image: '/assets/car-CjioCIbt.jpg',
-    stage: 'Stage 2 Completed',
-    specs: ['VZ-01 20" Forged', 'Akrapovič Evolution Titanium', 'KW V4 Coilovers'],
-    lastModified: 'Bugun, 14:30',
-  },
-  {
-    id: 'f2',
-    name: 'Porsche 911 GT3 RS',
-    chassis: '992 Track Spec',
-    image: '/images/studio/studio_coupe_tuned.jpg',
-    stage: 'Fitting In Progress',
-    specs: ['Carbon Aero Lip', 'Öhlins TTX Race Damper', 'Forged BBS Monoblock'],
-    lastModified: 'Kecha, 18:45',
-  },
-  {
-    id: 'f3',
-    name: 'Audi RS6 Avant',
-    chassis: 'C8 Quattro',
-    image: '/assets/garage-Bst4bQtu.jpg',
-    stage: 'Scheduled for Scan',
-    specs: ['Capristo Valved Exhaust', '22" Billet Wheels'],
-    lastModified: '14 Okt, 2026',
-  },
-];
-
-const RECENT_ORDERS = [
-  {
-    id: 'ORD-8924',
-    title: 'VZ-01 Forged Monoblock Set (20")',
-    date: '16 Okt, 2026',
-    price: '$4,800',
-    status: 'Fitted',
-  },
-  {
-    id: 'ORD-8921',
-    title: 'Akrapovič Evolution Titanium Exhaust',
-    date: '12 Okt, 2026',
-    price: '$6,400',
-    status: 'Delivered',
-  },
-  {
-    id: 'ORD-8890',
-    title: 'Öhlins TTX Pro Suspension Kit',
-    date: '04 Okt, 2026',
-    price: '$3,850',
-    status: 'Delivered',
-  },
+const CURRENCIES: SupportedCurrency[] = [
+  'UZS',
+  'USD',
+  'AED',
+  'TRY',
+  'KZT',
+  'KGS',
+  'TJS',
+  'RUB',
 ];
 
 export function VeloceProfile() {
   const params = useParams();
-  const router = useRouter();
+  const pathname = usePathname();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { user, signOut } = useAuth();
-  const { openCamera } = useVeloceStore();
+  const { user, signOut, updateProfile } = useAuth();
+  const { currency, setCurrency, formatPrice } = useCurrency();
 
-  const [activeTab, setActiveTab] = React.useState<'fleet' | 'activity' | 'atelier'>('fleet');
-  const [selectedLocale, setSelectedLocale] = React.useState(locale);
-  const [isSignOutModalOpen, setIsSignOutModalOpen] = React.useState(false);
-  const [isAiUpscaleActive, setIsAiUpscaleActive] = React.useState(true);
-  const [isHapticsActive, setIsHapticsActive] = React.useState(true);
+  const [unlockedLeads, setUnlockedLeads] = React.useState<UnlockedWorkshopLead[]>([]);
+  const [editingName, setEditingName] = React.useState(false);
+  const [nameInput, setNameInput] = React.useState(user?.full_name || '');
+  const [phoneInput, setPhoneInput] = React.useState(user?.phone || '+998 90 123 45 67');
 
-  // Authenticated or luxury default atelier profile
-  const profileName = user?.full_name || 'Sanjar Usmonov';
-  const atelierName = user?.shop?.shop_name || 'Apex Customs Atelier';
-  const profileEmail = user?.email || 'master@apexcustoms.uz';
-  const profilePhone = user?.phone || '+998 90 123 45 67';
-  const profileCity = user?.shop?.city ? `${user.shop.city}, ${user.shop.district}` : 'Toshkent, Yunusobod';
-  const creditsBalance = user?.credits_balance ?? 2450;
+  React.useEffect(() => {
+    if (user?.full_name) setNameInput(user.full_name);
+    if (user?.phone) setPhoneInput(user.phone);
+  }, [user]);
 
-  const handleLanguageChange = (newLocale: string) => {
-    setSelectedLocale(newLocale);
-    router.push(`/${newLocale}/profile`);
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem('carvision_unlocked_leads');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setUnlockedLeads(parsed);
+          return;
+        }
+      }
+    } catch {
+      // Ignore
+    }
+
+    // Fetch live orders from API as fallback
+    fetch('/api/v1/orders')
+      .then((r) => r.json())
+      .then((res) => {
+        if (res?.success && Array.isArray(res.orders)) {
+          const mapped: UnlockedWorkshopLead[] = res.orders.slice(0, 6).map(
+            (o: {
+              id: string;
+              voucherCode?: string;
+              partName: string;
+              partImage?: string;
+              totalPriceUSD: number;
+              depositUSD: number;
+              studioName?: string;
+              createdAt?: string;
+            }) => ({
+              id: o.voucherCode || o.id,
+              partName: o.partName,
+              partImage: o.partImage || '/assets/wheel-CiWWvvai.jpg',
+              targetCar: 'Chevrolet Gentra',
+              partPriceUSD: o.totalPriceUSD,
+              depositPaidUSD: o.depositUSD,
+              workshopName: o.studioName || 'Sardor Tuning Garage',
+              workshopAddress: 'Toshkent sh., Sergeli tumani, Avtosalon ko‘chasi 14-ustaxona',
+              workshopPhone: '+998 90 945 12 34',
+              customerPhone: user?.phone || '+998 90 123 45 67',
+              unlockedAt: o.createdAt || 'Bugun',
+            })
+          );
+          setUnlockedLeads(mapped);
+        }
+      })
+      .catch(() => {});
+  }, [user?.phone]);
+
+  const buildLocalizedPath = (targetLocale: string) => {
+    return pathname.replace(/^\/(uz|ru|en|ar|tr|kk|ky|tg)(?=\/|$)/, `/${targetLocale}`);
   };
 
-  const handleConfirmSignOut = async () => {
-    setIsSignOutModalOpen(false);
-    await signOut();
-    router.push(`/${locale}/login`);
+  const handleSaveIdentity = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (user) {
+      updateProfile({
+        full_name: nameInput.trim() || user.full_name,
+        phone: phoneInput.trim() || user.phone,
+      });
+    }
+    setEditingName(false);
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-80px)] px-4 py-6 md:px-10 lg:px-16 max-w-6xl mx-auto space-y-10">
-      {/* Profile Header Hero Card */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#161821] to-[#0F1015] p-6 sm:p-8 md:p-10 shadow-card border border-[#D4AE62]/20">
-        <div className="absolute -top-24 end-0 h-72 w-72 rounded-full bg-[#D4AE62]/10 blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6">
-            {/* Avatar with Gold Halo Glow */}
-            <div className="relative">
-              <div className="grid h-20 w-20 sm:h-24 sm:w-24 place-items-center rounded-2xl bg-gradient-to-br from-[#242735] to-[#12141A] shadow-gold border border-[#D4AE62]/30 text-2xl font-light text-primary">
-                {profileName
-                  .split(' ')
-                  .map((p) => p[0])
-                  .slice(0, 2)
-                  .join('')
-                  .toUpperCase()}
-              </div>
-              <span className="absolute -bottom-1 -end-1 grid h-7 w-7 place-items-center rounded-full bg-gold-gradient text-black shadow-md">
-                <ShieldCheck className="h-4 w-4" />
-              </span>
-            </div>
-
-            {/* Profile Info */}
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-foreground">
-                  {profileName}
-                </h1>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#D4AE62]/15 px-3 py-1 text-[10px] font-semibold tracking-wider text-primary uppercase">
-                  <Award className="h-3 w-3" />
-                  VIP Tier 1
-                </span>
-              </div>
-              <p className="font-display text-xs sm:text-sm font-light tracking-widest text-[#A69F92] uppercase">
-                {atelierName} • Certified Master
+    <div className="mx-auto max-w-4xl px-5 pt-8 pb-28 md:px-10 md:pt-12">
+      {/* 1. Simple User Header (Boxless) */}
+      <div className="flex flex-col gap-4 pb-10 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-medium tracking-widest uppercase text-[#D4AE62]">
+            Shaxsiy Profil
+          </p>
+          {editingName ? (
+            <form onSubmit={handleSaveIdentity} className="mt-3 flex flex-wrap items-center gap-3">
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="Ismingiz"
+                className="rounded-xl bg-white/[0.06] px-4 py-2.5 text-sm text-white focus:outline-none"
+              />
+              <input
+                type="tel"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                placeholder="+998..."
+                className="rounded-xl bg-white/[0.06] px-4 py-2.5 font-mono text-sm text-white focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="rounded-xl bg-[#D4AE62] px-4 py-2.5 text-xs font-bold uppercase text-black cursor-pointer"
+              >
+                Saqlash
+              </button>
+            </form>
+          ) : (
+            <>
+              <h1 className="mt-1 font-display text-2xl font-light text-white sm:text-4xl">
+                {user?.full_name || 'Mehmon Foydalanuvchi'}
+              </h1>
+              <p className="mt-1 font-mono text-sm text-white/55">
+                {user?.phone || '+998 90 123 45 67'}
               </p>
-              <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5 text-primary" />
-                  {profileEmail}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5 text-primary" />
-                  {profilePhone}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-primary" />
-                  {profileCity}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Action Buttons */}
-          <div className="flex items-center gap-3 pt-2 md:pt-0">
-            <button
-              onClick={openCamera}
-              className="flex items-center gap-2 rounded-xl bg-gold-gradient px-4 py-2.5 text-xs font-semibold tracking-widest text-black uppercase transition hover:brightness-110 shadow-gold cursor-pointer"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span>Yangi Loyiha</span>
-            </button>
-            <button
-              onClick={() => setIsSignOutModalOpen(true)}
-              className="grid h-10 w-10 place-items-center rounded-xl border border-[#D4AE62]/20 text-muted-foreground transition hover:border-red-500/50 hover:text-red-400 cursor-pointer"
-              title="Chiqish"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
+            </>
+          )}
         </div>
 
-        {/* KPI Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-8 border-t border-[#D4AE62]/15">
-          <div className="rounded-2xl bg-[#0D0E12]/60 p-4 border border-[#D4AE62]/10">
-            <div className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
-              Faol Loyihalar
-            </div>
-            <div className="mt-1 font-display text-xl sm:text-2xl font-light text-foreground">
-              3 Ta Avto
-            </div>
-          </div>
-          <div className="rounded-2xl bg-[#0D0E12]/60 p-4 border border-[#D4AE62]/10">
-            <div className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
-              AI Kreditlar
-            </div>
-            <div className="mt-1 font-display text-xl sm:text-2xl font-light text-gold-gradient">
-              {creditsBalance.toLocaleString()} PTS
-            </div>
-          </div>
-          <div className="rounded-2xl bg-[#0D0E12]/60 p-4 border border-[#D4AE62]/10">
-            <div className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
-              Ustaxona Reytingi
-            </div>
-            <div className="mt-1 font-display text-xl sm:text-2xl font-light text-foreground">
-              4.95 / 5.0
-            </div>
-          </div>
-          <div className="rounded-2xl bg-[#0D0E12]/60 p-4 border border-[#D4AE62]/10">
-            <div className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
-              SLA Kafolati
-            </div>
-            <div className="mt-1 font-display text-xl sm:text-2xl font-light text-foreground">
-              100% 4K Ultra
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {user ? (
+            <>
+              {!editingName && (
+                <button
+                  type="button"
+                  onClick={() => setEditingName(true)}
+                  className="rounded-2xl bg-white/[0.05] px-4 py-2.5 text-xs font-medium text-white/80 hover:bg-white/[0.1] cursor-pointer"
+                >
+                  Tahrirlash
+                </button>
+              )}
+              {user.role === 'b2b_seller' && (
+                <Link
+                  href={`/${locale}/seller?tab=dashboard`}
+                  className="rounded-2xl bg-gold-gradient px-5 py-2.5 text-xs font-bold uppercase text-black"
+                >
+                  Ustaxona Boshqaruvi
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={signOut}
+                className="flex items-center gap-1.5 rounded-2xl bg-white/[0.04] px-4 py-2.5 text-xs text-white/60 hover:text-red-400 cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Chiqish</span>
+              </button>
+            </>
+          ) : (
+            <Link
+              href={`/${locale}/login`}
+              className="rounded-2xl bg-gold-gradient px-6 py-3 text-xs font-bold uppercase text-black"
+            >
+              Tizimga Kirish
+            </Link>
+          )}
         </div>
-      </section>
-
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-3 border-b border-[#D4AE62]/15 pb-2">
-        <button
-          onClick={() => setActiveTab('fleet')}
-          data-active={activeTab === 'fleet'}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition data-[active=true]:bg-gold-gradient data-[active=true]:text-black text-muted-foreground hover:text-foreground cursor-pointer"
-        >
-          <Car className="h-4 w-4" />
-          <span>Atelier Garaji</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('activity')}
-          data-active={activeTab === 'activity'}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition data-[active=true]:bg-gold-gradient data-[active=true]:text-black text-muted-foreground hover:text-foreground cursor-pointer"
-        >
-          <Clock className="h-4 w-4" />
-          <span>Buyurtmalar & Tarix</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('atelier')}
-          data-active={activeTab === 'atelier'}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-widest uppercase transition data-[active=true]:bg-gold-gradient data-[active=true]:text-black text-muted-foreground hover:text-foreground cursor-pointer"
-        >
-          <Sliders className="h-4 w-4" />
-          <span>Sozlamalar</span>
-        </button>
       </div>
 
-      {/* TAB 1: FLEET / ATELIER GARAJI */}
-      {activeTab === 'fleet' && (
-        <section className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-display text-lg font-light tracking-wide text-foreground">
-                Joriy Tyuning Loyihalari
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Ustaxonada tayyorlanayotgan va tyuning qilingan sport avtomobillari
-              </p>
-            </div>
+      {/* 2. Unlocked Workshop Addresses (3% Paid) */}
+      <section className="pt-4 pb-12">
+        <h2 className="font-display text-xl font-light text-white">
+          Ochilgan Ustaxona Manzillari (3% Zakalat)
+        </h2>
+        <p className="mt-1 text-xs text-white/50">
+          Siz 3% zakalat to‘lab manzilini ochgan tuning servislar va jihozlar ro‘yxati.
+        </p>
+
+        {unlockedLeads.length === 0 ? (
+          <div className="mt-6 py-10">
+            <p className="text-sm text-white/50">
+              Hozircha ochilgan ustaxona manzillari yo‘q.
+            </p>
             <Link
-              href={`/${locale}/garage`}
-              className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+              href={`/${locale}/shop`}
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/[0.06] px-5 py-3 text-xs font-semibold uppercase text-[#D4AE62] hover:bg-white/[0.1]"
             >
-              <span>Barcha omborni ko‘rish</span>
-              <ChevronRight className="h-4 w-4" />
+              <span>Detallarni Ko‘rish</span>
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {FLEET_PROJECTS.map((vehicle) => (
+        ) : (
+          <div className="mt-6 divide-y divide-white/[0.06]">
+            {unlockedLeads.map((item) => (
               <div
-                key={vehicle.id}
-                className="group relative overflow-hidden rounded-2xl bg-[#12141A] border border-[#D4AE62]/15 shadow-card transition duration-300 hover:-translate-y-1 hover:border-primary"
+                key={item.id}
+                className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="relative h-48 w-full overflow-hidden bg-black/40">
-                  <Image
-                    src={vehicle.image}
-                    alt={vehicle.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                <div className="flex items-start gap-4">
+                  <img
+                    src={item.partImage}
+                    alt={item.partName}
+                    onError={(e) => {
+                      e.currentTarget.src = '/assets/wheel-CiWWvvai.jpg';
+                    }}
+                    className="h-16 w-20 shrink-0 rounded-2xl object-cover bg-[#12141C]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#12141A] via-transparent to-transparent" />
-                  <span className="absolute top-3 end-3 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-semibold text-primary backdrop-blur-md border border-[#D4AE62]/20">
-                    {vehicle.stage}
-                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-semibold text-white">
+                        {item.workshopName}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs text-[#D4AE62]">
+                        <Car className="h-3.5 w-3.5" />
+                        <span>{item.targetCar}</span>
+                      </span>
+                    </div>
+
+                    <p className="mt-1 flex items-center gap-1.5 text-sm text-white/85">
+                      <MapPin className="h-4 w-4 shrink-0 text-[#D4AE62]" />
+                      <span>{item.workshopAddress}</span>
+                    </p>
+
+                    <p className="mt-1 text-xs text-white/55">
+                      Jihoz: <strong className="text-white">{item.partName}</strong> · Narxi: {formatPrice(item.partPriceUSD)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="p-5 space-y-3">
-                  <div>
-                    <h3 className="font-display text-base font-medium text-foreground">
-                      {vehicle.name}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">{vehicle.chassis}</p>
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <a
+                    href={`tel:${item.workshopPhone}`}
+                    className="flex items-center gap-2 rounded-2xl bg-gold-gradient px-5 py-3 text-xs font-bold uppercase text-black"
+                  >
+                    <Phone className="h-4 w-4" />
+                    <span>{item.workshopPhone}</span>
+                  </a>
 
-                  <div className="space-y-1.5 pt-1">
-                    <div className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-                      O‘rnatilgan Detallar:
-                    </div>
-                    <ul className="space-y-1 text-xs text-[#E6E1D6]">
-                      {vehicle.specs.map((spec, i) => (
-                        <li key={i} className="flex items-center gap-1.5">
-                          <Check className="h-3 w-3 text-primary shrink-0" />
-                          <span className="truncate">{spec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-3 border-t border-[#D4AE62]/10 flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">
-                      {vehicle.lastModified}
-                    </span>
-                    <Link
-                      href={`/${locale}/studio`}
-                      className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-gold-soft uppercase tracking-wider"
-                    >
-                      <span>Studio</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </Link>
-                  </div>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.workshopAddress)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.06] text-white/80 hover:bg-white/[0.12]"
+                    title="Xaritada ko‘rish"
+                  >
+                    <Navigation className="h-4 w-4 text-[#D4AE62]" />
+                  </a>
                 </div>
               </div>
             ))}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
-      {/* TAB 2: BUYURTMALAR & TARIX */}
-      {activeTab === 'activity' && (
-        <section className="space-y-4">
-          <div>
-            <h2 className="font-display text-lg font-light tracking-wide text-foreground">
-              So‘nggi Buyurtmalar & Tranzaksiyalar
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Atelier hisobidan sotib olingan va buyurtma berilgan sertifikatlangan qismlar
-            </p>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl bg-[#12141A] border border-[#D4AE62]/15 shadow-card">
-            <div className="divide-y divide-[#D4AE62]/10">
-              {RECENT_ORDERS.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 transition hover:bg-[#161821]"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#0D0E12] border border-[#D4AE62]/20 text-primary">
-                      <Wrench className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="font-display text-sm font-medium text-foreground">
-                        {order.title}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        ID: {order.id} • {order.date}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between sm:justify-end gap-5">
-                    <div className="font-display text-base font-light text-gold-gradient">
-                      {order.price}
-                    </div>
-                    <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
-                      {order.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* TAB 3: SOZLAMALAR */}
-      {activeTab === 'atelier' && (
-        <section className="space-y-6">
-          <div>
-            <h2 className="font-display text-lg font-light tracking-wide text-foreground">
-              Atelier & Tizim Sozlamalari
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Til, interfeys va AI render parametrlarini sozlash
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Language Switcher Card */}
-            <div className="rounded-2xl bg-[#12141A] p-5 border border-[#D4AE62]/15 shadow-card space-y-4">
-              <div className="flex items-center gap-3">
-                <Globe className="h-5 w-5 text-primary" />
-                <h3 className="font-display text-sm font-medium uppercase tracking-wider text-foreground">
-                  Interfeys Tili
-                </h3>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { code: 'uz', label: 'O‘zbekcha' },
-                  { code: 'ru', label: 'Русский' },
-                  { code: 'en', label: 'English' },
-                ].map((item) => (
-                  <button
-                    key={item.code}
-                    onClick={() => handleLanguageChange(item.code)}
-                    data-selected={selectedLocale === item.code}
-                    className="flex flex-col items-center justify-center p-3 rounded-xl border border-[#D4AE62]/15 text-xs font-medium transition data-[selected=true]:border-primary data-[selected=true]:bg-gold-gradient data-[selected=true]:text-black text-muted-foreground hover:text-foreground cursor-pointer"
-                  >
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Engine & Rendering Card */}
-            <div className="rounded-2xl bg-[#12141A] p-5 border border-[#D4AE62]/15 shadow-card space-y-4">
-              <div className="flex items-center gap-3">
-                <Zap className="h-5 w-5 text-primary" />
-                <h3 className="font-display text-sm font-medium uppercase tracking-wider text-foreground">
-                  AI & Studio Render
-                </h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-medium text-foreground">4K Ultra Upscale</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      Fal.ai FLUX Fill bilan 4K o‘ta aniq fotorealistik render
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsAiUpscaleActive(!isAiUpscaleActive)}
-                    className={`h-6 w-11 rounded-full p-1 transition cursor-pointer ${
-                      isAiUpscaleActive ? 'bg-primary' : 'bg-neutral-800'
-                    }`}
-                  >
-                    <div
-                      className={`h-4 w-4 rounded-full bg-black transition-transform ${
-                        isAiUpscaleActive ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-[#D4AE62]/10">
-                  <div>
-                    <div className="text-xs font-medium text-foreground">
-                      Audio & Haptic Feedback
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      Kamerada suratga olish va tugma bosilganda mexanik tovushlar
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsHapticsActive(!isHapticsActive)}
-                    className={`h-6 w-11 rounded-full p-1 transition cursor-pointer ${
-                      isHapticsActive ? 'bg-primary' : 'bg-neutral-800'
-                    }`}
-                  >
-                    <div
-                      className={`h-4 w-4 rounded-full bg-black transition-transform ${
-                        isHapticsActive ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Sign Out Confirmation Modal */}
-      {isSignOutModalOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[#12141A] border border-[#D4AE62]/30 p-6 text-center space-y-4 shadow-2xl">
-            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20">
-              <LogOut className="h-7 w-7" />
-            </div>
-            <div className="space-y-1.5">
-              <h3 className="font-display text-lg font-medium text-foreground">
-                Tizimdan chiqish
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Haqiqatan ham atelier profilidan chiqmoqchimisiz?
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                onClick={() => setIsSignOutModalOpen(false)}
-                className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-white transition cursor-pointer"
-              >
-                Bekor qilish
-              </button>
-              <button
-                onClick={handleConfirmSignOut}
-                className="rounded-xl bg-red-600 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white hover:bg-red-500 transition shadow-lg cursor-pointer"
-              >
-                Chiqish
-              </button>
-            </div>
-          </div>
+      {/* 3. Simple Language & Currency Switcher */}
+      <section className="space-y-6 pt-6">
+        <div className="flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-[#D4AE62]">
+          <Globe className="h-4 w-4" />
+          <span>Til va Valyuta</span>
         </div>
-      )}
+
+        <div className="flex flex-wrap gap-2">
+          {LANGUAGES.map((lang) => {
+            const active = locale === lang.code;
+            return (
+              <Link
+                key={lang.code}
+                href={buildLocalizedPath(lang.code)}
+                className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-medium transition ${
+                  active
+                    ? 'bg-[#D4AE62] text-black font-semibold'
+                    : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white'
+                }`}
+              >
+                <span>{lang.name}</span>
+                {active && <Check className="h-3.5 w-3.5" />}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {CURRENCIES.map((curr) => {
+            const active = currency === curr;
+            return (
+              <button
+                key={curr}
+                type="button"
+                onClick={() => setCurrency(curr)}
+                className={`rounded-2xl px-4 py-2 text-xs font-semibold uppercase transition cursor-pointer ${
+                  active
+                    ? 'bg-[#D4AE62]/20 text-[#D4AE62]'
+                    : 'bg-white/[0.03] text-white/60 hover:bg-white/[0.08] hover:text-white'
+                }`}
+              >
+                {curr}
+              </button>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

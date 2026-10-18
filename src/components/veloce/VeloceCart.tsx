@@ -3,145 +3,195 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Plus, Minus, ShoppingCart } from 'lucide-react';
+import {
+  ShoppingBag,
+  Plus,
+  Minus,
+  ArrowRight,
+  Lock,
+  Car,
+} from 'lucide-react';
+import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
-import { getProductById, formatPriceUSD, VeloceProduct } from '@/domain/veloce-catalog';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export function VeloceCart() {
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { cart, add, remove } = useVeloceStore();
+  const { formatPrice } = useCurrency();
 
-  const cartItems = React.useMemo(() => {
-    return Object.entries(cart)
-      .map(([id, qty]) => {
-        const prod = getProductById(id);
-        if (!prod) return null;
-        return { p: prod, q: qty };
+  const [productsMap, setProductsMap] = React.useState<Record<string, VeloceProduct>>({});
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const cartIdsKey = Object.keys(cart).sort().join(',');
+
+  React.useEffect(() => {
+    if (!cartIdsKey) return;
+    let isMounted = true;
+    setIsLoading(true);
+    fetch('/api/v1/products?limit=100')
+      .then((r) => r.json())
+      .then((data) => {
+        if (isMounted && data.success && Array.isArray(data.products)) {
+          const map: Record<string, VeloceProduct> = {};
+          data.products.forEach((p: VeloceProduct) => {
+            map[p.id] = p;
+          });
+          setProductsMap(map);
+        }
       })
-      .filter((item): item is { p: VeloceProduct; q: number } => item !== null);
-  }, [cart]);
+      .catch((err) => console.warn('Could not load cart products:', err))
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [cartIdsKey]);
 
-  const subtotal = React.useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.p.price * item.q, 0);
-  }, [cartItems]);
+  const items = React.useMemo(() => {
+    return Object.entries(cart)
+      .map(([id, quantity]) => {
+        const product = productsMap[id];
+        return product ? { product, quantity } : null;
+      })
+      .filter(
+        (entry): entry is { product: VeloceProduct; quantity: number } =>
+          entry !== null
+      );
+  }, [cart, productsMap]);
 
-  if (!cartItems.length) {
-    return (
-      <div className="rise mx-auto grid max-w-md place-items-center px-5 pt-24 text-center">
-        <ShoppingCart className="h-12 w-12 text-primary" />
-        <h1 className="mt-4 font-display text-2xl tracking-[0.2em] text-white">
-          CART IS EMPTY
-        </h1>
-        <p className="mt-2 text-xs text-muted-foreground">
-          You haven't added any tuning parts to your order yet.
-        </p>
-        <Link
-          href={`/${locale}/shop`}
-          className="mt-6 rounded-full bg-gold-gradient px-7 py-3 text-xs font-bold tracking-[0.2em] text-black uppercase shadow-gold transition hover:brightness-110 active:scale-95"
-        >
-          Go to shop
-        </Link>
-      </div>
-    );
-  }
+  const totalUSD = items.reduce((sum, { product, quantity }) => {
+    const unitUSD = product.price > 50000 ? Math.round(product.price / 13000) : product.price;
+    return sum + unitUSD * quantity;
+  }, 0);
+
+  const deposit3PercentUSD = Math.max(1, Math.round(totalUSD * 0.03));
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-8 px-5 pt-8 md:px-10 lg:grid-cols-[1fr_360px]">
-      {/* Cart Items List */}
-      <div className="space-y-3">
-        <h1 className="mb-4 font-display text-2xl tracking-[0.2em] text-white">
-          YOUR CART
+    <div className="mx-auto max-w-4xl px-5 pt-8 pb-24 md:px-10 md:pt-12">
+      <div className="mb-8">
+        <p className="text-[11px] font-medium tracking-[0.25em] uppercase text-[#D4AE62]">
+          Tanlangan Jihozlar
+        </p>
+        <h1 className="mt-1 font-display text-2xl font-light text-white sm:text-4xl">
+          3% To‘lov Orqali Manzilni Olish
         </h1>
-
-        {cartItems.map(({ p, q }, idx) => (
-          <div
-            key={p.id}
-            className="rise flex items-center gap-4 rounded-2xl border border-primary/20 bg-card-gradient p-3 shadow-card"
-            style={{ animationDelay: `${idx * 60}ms` }}
-          >
-            {p.swatch ? (
-              <div
-                className="h-20 w-20 shrink-0 rounded-xl"
-                style={{
-                  background: `radial-gradient(circle at 30% 30%, ${p.swatch}, oklch(0.08 0 0))`,
-                }}
-              />
-            ) : (
-              <img
-                src={p.image}
-                alt={p.name}
-                className="h-20 w-20 shrink-0 rounded-xl object-cover"
-              />
-            )}
-
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] tracking-widest text-muted-foreground uppercase">
-                {p.brand}
-              </p>
-              <p className="truncate font-semibold text-white">{p.name}</p>
-              <p className="text-gold-gradient text-sm font-bold">
-                {formatPriceUSD(p.price)}
-              </p>
-            </div>
-
-            {/* Stepper */}
-            <div className="flex items-center gap-2 rounded-full border border-primary/20 p-1 bg-card/60">
-              <button
-                onClick={() => remove(p.id)}
-                aria-label="Decrease quantity"
-                className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10 transition cursor-pointer text-foreground/80 hover:text-white"
-              >
-                <Minus className="h-3 w-3" />
-              </button>
-              <span className="w-4 text-center text-sm font-semibold text-white">
-                {q}
-              </span>
-              <button
-                onClick={() => add(p.id)}
-                aria-label="Increase quantity"
-                className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10 transition cursor-pointer text-foreground/80 hover:text-white"
-              >
-                <Plus className="h-3 w-3" />
-              </button>
-            </div>
-          </div>
-        ))}
+        <p className="mt-2 text-xs text-white/55 sm:text-sm">
+          Yoqtirgan jihozingiz qaysi tuning servisda borligini bilish va ustaxonaga raqamingizni yuborish uchun 3% zakalat to‘loviga o‘ting.
+        </p>
       </div>
 
-      {/* Order Summary Aside */}
-      <aside className="rise h-fit rounded-3xl border border-primary/40 bg-card-gradient p-6 shadow-gold lg:sticky lg:top-24">
-        <h2 className="text-xs tracking-luxe uppercase text-white font-medium">
-          Summary
-        </h2>
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-24 rounded-2xl bg-white/[0.03] animate-pulse" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <div className="py-20 text-center">
+          <ShoppingBag className="mx-auto h-12 w-12 text-white/25" />
+          <h2 className="mt-4 font-display text-xl font-light text-white">
+            Hozircha hech qanday detal tanlanmagan
+          </h2>
+          <Link
+            href={`/${locale}/shop`}
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-gold-gradient px-7 py-3.5 text-xs font-bold tracking-wider uppercase text-black"
+          >
+            <span>Detallarni Ko‘rish</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Clean Boxless List */}
+          <div className="divide-y divide-white/[0.06]">
+            {items.map(({ product: p, quantity: q }) => {
+              const unitUSD = p.price > 50000 ? Math.round(p.price / 13000) : p.price;
+              const carName = p.targetCar || p.compatibility?.[0]?.name || 'Chevrolet Gentra';
+              return (
+                <div
+                  key={p.id}
+                  className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      onError={(e) => {
+                        e.currentTarget.src = '/assets/wheel-CiWWvvai.jpg';
+                      }}
+                      className="h-20 w-24 shrink-0 rounded-2xl object-cover bg-[#12141C]"
+                    />
+                    <div>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D4AE62]">
+                        <Car className="h-3.5 w-3.5" />
+                        <span>{carName} uchun</span>
+                      </span>
+                      <h3 className="mt-0.5 text-base font-medium text-white">{p.name}</h3>
+                      <p className="mt-1 font-mono text-sm font-semibold text-white/80 tabular-nums">
+                        Narxi: {formatPrice(unitUSD)}
+                      </p>
+                    </div>
+                  </div>
 
-        <div className="mt-5 space-y-2 text-sm text-muted-foreground">
-          <div className="flex justify-between">
-            <span>Subtotal</span>
-            <span className="text-white font-medium">{formatPriceUSD(subtotal)}</span>
+                  <div className="flex items-center justify-between gap-4 sm:justify-end">
+                    <div className="flex items-center gap-2 rounded-xl bg-white/[0.04] p-1.5">
+                      <button
+                        type="button"
+                        onClick={() => remove(p.id)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08] cursor-pointer"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="min-w-[24px] text-center font-mono text-xs font-bold text-white">
+                        {q}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => add(p.id)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08] cursor-pointer"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="flex justify-between">
-            <span>Shipping</span>
-            <span className="text-success font-medium">Free</span>
+
+          {/* Simple Summary & Unlock CTA */}
+          <div className="rounded-3xl bg-[#12151E] p-6 sm:p-8 shadow-[0_24px_60px_rgba(0,0,0,0.65)]">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-xs text-white/50">
+                  <Lock className="h-3.5 w-3.5 text-[#D4AE62]" />
+                  <span>Tuning servis manzili 3% to‘lovdan keyin ochiladi</span>
+                </div>
+                <div className="mt-2 flex items-baseline gap-3">
+                  <span className="text-sm text-white/60">Hozir to‘lanadigan 3% zakalat:</span>
+                  <span className="font-mono text-2xl font-bold text-emerald-400 tabular-nums sm:text-3xl">
+                    {formatPrice(deposit3PercentUSD)}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-white/40">
+                  Detalning ustaxonadagi umumiy narxi: {formatPrice(totalUSD)}
+                </p>
+              </div>
+
+              <Link
+                href={`/${locale}/cart/checkout`}
+                className="shimmer inline-flex items-center justify-center gap-3 rounded-2xl bg-gold-gradient px-8 py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110"
+              >
+                <span>3% To‘lash va Manzilni Ochish</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
-
-        <div className="mt-4 flex justify-between border-t border-primary/15 pt-4 font-bold text-white">
-          <span>Total</span>
-          <span className="text-gold-gradient text-xl">
-            {formatPriceUSD(subtotal)}
-          </span>
-        </div>
-
-        <button
-          onClick={() => {
-            alert(`Buyurtmangiz qabul qilindi! Jami: ${formatPriceUSD(subtotal)}`);
-          }}
-          className="shimmer mt-6 w-full rounded-full bg-gold-gradient py-4 text-xs font-bold tracking-[0.25em] text-black uppercase shadow-gold transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
-        >
-          Checkout
-        </button>
-      </aside>
+      )}
     </div>
   );
 }

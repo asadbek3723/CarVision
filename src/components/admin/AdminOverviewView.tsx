@@ -3,27 +3,55 @@
 import * as React from 'react';
 import { DollarSign, Store, Sparkles, ShieldCheck, TrendingUp, Cpu, Activity, Clock } from 'lucide-react';
 
+export interface RecentActivityItem {
+  id: string;
+  studio: string;
+  action: string;
+  time: string;
+  tag: string;
+  tagColor: string;
+}
+
+export interface WeeklyTelemetryItem {
+  day: string;
+  amount: number;
+  renders: number;
+  height: string;
+}
+
 export function AdminOverviewView() {
   const [metrics, setMetrics] = React.useState({
-    totalRevenueFormatted: '$48.9k',
-    sellersCount: 8,
-    productsCount: 36,
-    generationsCount: 18450,
-    escrowDepositFormatted: '$8.4k',
-    activeOrdersCount: 4,
+    totalRevenueFormatted: '$0',
+    sellersCount: 0,
+    productsCount: 0,
+    generationsCount: 0,
+    escrowDepositFormatted: '$0',
+    activeOrdersCount: 0,
   });
+  const [recentActivity, setRecentActivity] = React.useState<RecentActivityItem[]>([]);
+  const [weeklyData, setWeeklyData] = React.useState<WeeklyTelemetryItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     let isMounted = true;
     const fetchMetrics = async () => {
       try {
+        setIsLoading(true);
         const res = await fetch('/api/v1/admin/overview');
         const data = await res.json();
-        if (isMounted && data.success && data.metrics) {
-          setMetrics(data.metrics);
+        if (isMounted && data.success) {
+          if (data.metrics) setMetrics(data.metrics);
+          if (Array.isArray(data.recentActivity) && data.recentActivity.length > 0) {
+            setRecentActivity(data.recentActivity);
+          }
+          if (Array.isArray(data.weeklyData) && data.weeklyData.length > 0) {
+            setWeeklyData(data.weeklyData);
+          }
         }
-      } catch {
-        // keep defaults
+      } catch (err) {
+        console.warn('Failed to load admin overview from Supabase:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     };
     fetchMetrics();
@@ -67,83 +95,44 @@ export function AdminOverviewView() {
     },
   ];
 
-  const weeklyData = [
-    { day: 'Dsh', amount: 4800, renders: 2100, height: '55%' },
-    { day: 'Ssh', amount: 6200, renders: 2600, height: '70%' },
-    { day: 'Chsh', amount: 5400, renders: 2350, height: '62%' },
-    { day: 'Pay', amount: 7900, renders: 3100, height: '85%' },
-    { day: 'Jum', amount: 9200, renders: 3900, height: '100%' },
-    { day: 'Shb', amount: 8400, renders: 3400, height: '90%' },
-    { day: 'Yak', amount: 6900, renders: 2800, height: '75%' },
-  ];
-
-  const recentActivity = [
-    {
-      id: 'act-1',
-      studio: 'Apex Customs Studio',
-      action: 'Chevrolet Malibu 2 uchun 20" Forged disklar 4K renderini yakunladi',
-      time: '2 daqiqa oldin',
-      tag: '4K Render',
-      tagColor: 'text-[#D4AE62] bg-[#D4AE62]/10',
-    },
-    {
-      id: 'act-2',
-      studio: 'Autotune Pro Toshkent',
-      action: 'Buyurtma #CV-9821 uchun $72 zakalat depoziti qabul qilindi',
-      time: '14 daqiqa oldin',
-      tag: '3% Zakalat',
-      tagColor: 'text-emerald-400 bg-emerald-500/10',
-    },
-    {
-      id: 'act-3',
-      studio: 'Dubai Custom Wheels',
-      action: 'MAX tarifiga yangilandi (8 ta qurilma, 4,000 ta kadr)',
-      time: '45 daqiqa oldin',
-      tag: 'Obuna',
-      tagColor: 'text-sky-400 bg-sky-500/10',
-    },
-    {
-      id: 'act-4',
-      studio: 'Samarkand Tuning Lab',
-      action: 'Yangi iPad Pro 12.9" plansheti kassa tizimiga ulandi',
-      time: '1 soat oldin',
-      tag: 'Qurilma',
-      tagColor: 'text-purple-400 bg-purple-500/10',
-    },
-  ];
-
   return (
     <div className="space-y-7">
       {/* 4 Top KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map((kpi, idx) => {
-          const Icon = kpi.icon;
-          return (
-            <div
-              key={idx}
-              className={`rounded-2xl bg-[#0D0F15] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-[#D4AE62]/15 relative overflow-hidden transition-all duration-200 hover:-translate-y-1 ${kpi.glow}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-[#94A3B8]">{kpi.title}</span>
-                <div className="w-9 h-9 rounded-xl bg-[#141722] flex items-center justify-center text-[#D4AE62]">
-                  <Icon className="w-4 h-4" />
+        {isLoading ? (
+          [1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 rounded-2xl bg-[#0D0F15] border border-[#D4AE62]/10 animate-pulse" />
+          ))
+        ) : (
+          kpis.map((kpi, idx) => {
+            const Icon = kpi.icon;
+            return (
+              <div
+                key={idx}
+                className={`rounded-2xl bg-[#0D0F15] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-[#D4AE62]/15 relative overflow-hidden transition-all duration-200 hover:-translate-y-1 ${kpi.glow}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-[#94A3B8]">{kpi.title}</span>
+                  <div className="w-9 h-9 rounded-xl bg-[#141722] flex items-center justify-center text-[#D4AE62]">
+                    <Icon className="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-4 flex items-baseline justify-between">
-                <span className="text-2xl font-bold font-mono tracking-tight text-white">
-                  {kpi.value}
-                </span>
-                <span className="inline-flex items-center text-xs font-semibold text-emerald-400">
-                  <TrendingUp className="w-3.5 h-3.5 me-1" />
-                  {kpi.change}
-                </span>
-              </div>
+                <div className="mt-4 flex items-baseline justify-between">
+                  <span className="text-2xl font-bold font-mono tracking-tight text-white">
+                    {kpi.value}
+                  </span>
+                  <span className="inline-flex items-center text-xs font-semibold text-emerald-400">
+                    <TrendingUp className="w-3.5 h-3.5 me-1" />
+                    {kpi.change}
+                  </span>
+                </div>
 
-              <p className="mt-1 text-[11px] text-[#64748B]">{kpi.period}</p>
-            </div>
-          );
-        })}
+                <p className="mt-1 text-[11px] text-[#64748B]">{kpi.period}</p>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Main Analytics Section: Chart & Live Feed */}
@@ -173,24 +162,36 @@ export function AdminOverviewView() {
             </div>
 
             {/* Custom Bar Visualization */}
-            <div className="mt-8 flex items-end justify-between gap-3 h-52 px-2">
-              {weeklyData.map((item, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
-                  <div className="text-[10px] font-mono text-[#D4AE62] opacity-0 group-hover:opacity-100 transition-opacity">
-                    ${(item.amount / 1000).toFixed(1)}k
+            {isLoading ? (
+              <div className="mt-8 flex items-end justify-between gap-3 h-52 px-2 animate-pulse">
+                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <div key={i} className="flex-1 bg-white/[0.03] rounded-t-xl h-[40%]" />
+                ))}
+              </div>
+            ) : weeklyData.length > 0 ? (
+              <div className="mt-8 flex items-end justify-between gap-3 h-52 px-2">
+                {weeklyData.map((item, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
+                    <div className="text-[10px] font-mono text-[#D4AE62] opacity-0 group-hover:opacity-100 transition-opacity">
+                      ${item.amount > 0 ? (item.amount / 1000).toFixed(1) + 'k' : '$0'}
+                    </div>
+                    <div className="w-full max-w-[42px] bg-[#141722] rounded-t-xl overflow-hidden flex flex-col justify-end p-0.5 relative h-full">
+                      <div
+                        className="w-full bg-gradient-to-t from-[#B88E3E] via-[#D4AE62] to-[#F3DE9D] rounded-t-lg transition-all duration-500 group-hover:brightness-125 shadow-[0_0_12px_rgba(212,174,98,0.3)]"
+                        style={{ height: item.height }}
+                      />
+                    </div>
+                    <span className="text-[11px] font-medium text-[#94A3B8] group-hover:text-white transition-colors">
+                      {item.day}
+                    </span>
                   </div>
-                  <div className="w-full max-w-[42px] bg-[#141722] rounded-t-xl overflow-hidden flex flex-col justify-end p-0.5 relative h-full">
-                    <div
-                      className="w-full bg-gradient-to-t from-[#B88E3E] via-[#D4AE62] to-[#F3DE9D] rounded-t-lg transition-all duration-500 group-hover:brightness-125 shadow-[0_0_12px_rgba(212,174,98,0.3)]"
-                      style={{ height: item.height }}
-                    />
-                  </div>
-                  <span className="text-[11px] font-medium text-[#94A3B8] group-hover:text-white transition-colors">
-                    {item.day}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-52 flex items-center justify-center text-xs text-[#94A3B8]">
+                Hozircha haftalik dinamika ma‘lumotlari mavjud emas
+              </div>
+            )}
           </div>
 
           <div className="mt-6 pt-4 border-t border-[#D4AE62]/10 flex items-center justify-between text-xs text-[#94A3B8]">
@@ -198,7 +199,9 @@ export function AdminOverviewView() {
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               O‘rtacha kunlik o‘sish: +14.2%
             </span>
-            <span className="font-mono text-white font-bold">Jami haftalik: $48,920</span>
+            <span className="font-mono text-white font-bold">
+              Jami haftalik: ${weeklyData.reduce((acc, d) => acc + d.amount, 0).toLocaleString()}
+            </span>
           </div>
         </div>
 
@@ -297,27 +300,37 @@ export function AdminOverviewView() {
         </div>
 
         <div className="mt-4 divide-y divide-[#D4AE62]/5">
-          {recentActivity.map((act) => (
-            <div
-              key={act.id}
-              className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-white/[0.02] px-2 rounded-xl transition-colors"
-            >
-              <div className="flex items-start sm:items-center gap-3">
-                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${act.tagColor}`}>
-                  {act.tag}
-                </span>
-                <div>
-                  <h4 className="text-xs font-bold text-white">{act.studio}</h4>
-                  <p className="text-xs text-[#94A3B8] mt-0.5">{act.action}</p>
+          {isLoading ? (
+            [1, 2, 3].map((i) => (
+              <div key={i} className="py-4 h-14 bg-white/[0.02] rounded-xl animate-pulse" />
+            ))
+          ) : recentActivity.length > 0 ? (
+            recentActivity.map((act) => (
+              <div
+                key={act.id}
+                className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-white/[0.02] px-2 rounded-xl transition-colors"
+              >
+                <div className="flex items-start sm:items-center gap-3">
+                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${act.tagColor}`}>
+                    {act.tag}
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">{act.studio}</h4>
+                    <p className="text-xs text-[#94A3B8] mt-0.5">{act.action}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 text-[11px] text-[#64748B] shrink-0 font-medium">
+                  <Clock className="w-3 h-3" />
+                  <span>{act.time}</span>
                 </div>
               </div>
-
-              <div className="flex items-center gap-1 text-[11px] text-[#64748B] shrink-0 font-medium">
-                <Clock className="w-3 h-3" />
-                <span>{act.time}</span>
-              </div>
+            ))
+          ) : (
+            <div className="py-8 text-center text-xs text-[#94A3B8]">
+              Hozircha atelyelar faoliyati qayd etilmagan
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

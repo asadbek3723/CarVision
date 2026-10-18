@@ -46,7 +46,7 @@ export default function LoginPage() {
       if (user.role === 'super_admin') {
         router.push(`/${locale}/admin`);
       } else {
-        router.push(`/${locale}/seller`);
+        router.push(`/${locale}`);
       }
     }
   }, [user, locale, router]);

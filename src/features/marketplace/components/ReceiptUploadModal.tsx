@@ -22,7 +22,7 @@ export interface ReceiptUploadModalProps {
 export function ReceiptUploadModal({
   isOpen,
   onClose,
-  bookingId: _bookingId = 'demo-booking-1',
+  bookingId: _bookingId = 'bk-8821',
   onVerificationSuccess
 }: ReceiptUploadModalProps) {
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);

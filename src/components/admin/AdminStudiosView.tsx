@@ -19,114 +19,6 @@ interface Studio {
   joinedDate: string;
 }
 
-const INITIAL_STUDIOS: Studio[] = [
-  {
-    id: 'st-01',
-    name: 'Apex Customs Studio',
-    city: 'Toshkent',
-    district: 'Yunusobod',
-    phone: '+998 90 123 45 67',
-    plan: 'MAX',
-    devicesCount: 7,
-    maxDevices: 8,
-    rendersCount: 3240,
-    maxRenders: 4000,
-    balanceCents: 45000,
-    status: 'active',
-    joinedDate: '12-yanvar, 2026',
-  },
-  {
-    id: 'st-02',
-    name: 'Autotune Pro Tashkent',
-    city: 'Toshkent',
-    district: 'Chilonzor',
-    phone: '+998 97 765 43 21',
-    plan: 'PRO',
-    devicesCount: 3,
-    maxDevices: 3,
-    rendersCount: 680,
-    maxRenders: 800,
-    balanceCents: 12000,
-    status: 'active',
-    joinedDate: '18-yanvar, 2026',
-  },
-  {
-    id: 'st-03',
-    name: 'Dubai Custom Wheels',
-    city: 'Toshkent',
-    district: 'Mirzo Ulug‘bek',
-    phone: '+998 99 888 77 66',
-    plan: 'MAX',
-    devicesCount: 8,
-    maxDevices: 8,
-    rendersCount: 3920,
-    maxRenders: 4000,
-    balanceCents: 98000,
-    status: 'active',
-    joinedDate: '03-fevral, 2026',
-  },
-  {
-    id: 'st-04',
-    name: 'Samarkand Tuning Lab',
-    city: 'Samarqand',
-    district: 'Registon',
-    phone: '+998 93 456 78 90',
-    plan: 'PRO',
-    devicesCount: 2,
-    maxDevices: 3,
-    rendersCount: 540,
-    maxRenders: 800,
-    balanceCents: 8500,
-    status: 'active',
-    joinedDate: '10-fevral, 2026',
-  },
-  {
-    id: 'st-05',
-    name: 'Fergana Tuning Studio',
-    city: 'Farg‘ona',
-    district: 'Markaz',
-    phone: '+998 91 234 56 78',
-    plan: 'FREE',
-    devicesCount: 1,
-    maxDevices: 1,
-    rendersCount: 38,
-    maxRenders: 40,
-    balanceCents: 0,
-    status: 'active',
-    joinedDate: '24-fevral, 2026',
-  },
-  {
-    id: 'st-06',
-    name: 'Buxoro Auto Custom',
-    city: 'Buxoro',
-    district: 'G‘ijduvon',
-    phone: '+998 94 345 67 89',
-    plan: 'PRO',
-    devicesCount: 3,
-    maxDevices: 3,
-    rendersCount: 710,
-    maxRenders: 800,
-    balanceCents: 15400,
-    status: 'active',
-    joinedDate: '01-mart, 2026',
-  },
-  {
-    id: 'st-07',
-    name: 'Namangan Motors',
-    city: 'Namangan',
-    district: 'Kosonsoy',
-    phone: '+998 90 987 65 43',
-    plan: 'PRO',
-    devicesCount: 1,
-    maxDevices: 3,
-    rendersCount: 490,
-    maxRenders: 800,
-    balanceCents: 4200,
-    status: 'blocked',
-    joinedDate: '15-mart, 2026',
-  },
-];
-
 export function AdminStudiosView() {
   const [studios, setStudios] = React.useState<Studio[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -141,13 +33,11 @@ export function AdminStudiosView() {
       try {
         const res = await fetch('/api/v1/admin/studios');
         const data = await res.json();
-        if (isMounted && data.success && Array.isArray(data.studios) && data.studios.length > 0) {
+        if (isMounted && data.success && Array.isArray(data.studios)) {
           setStudios(data.studios);
-        } else if (isMounted) {
-          setStudios(INITIAL_STUDIOS);
         }
-      } catch {
-        if (isMounted) setStudios(INITIAL_STUDIOS);
+      } catch (err) {
+        console.error('Failed to load studios from Supabase:', err);
       } finally {
         if (isMounted) setIsLoading(false);
       }

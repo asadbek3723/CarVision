@@ -133,7 +133,7 @@ export function UserAccountBar({ className }: UserAccountBarProps) {
 
             {(isB2B || isAdmin) && (
               <Link
-                href={`/${locale}/seller`}
+                href={`/${locale}/seller?tab=dashboard`}
                 onClick={() => setDropdownOpen(false)}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-white hover:bg-white/10 transition-colors"
               >

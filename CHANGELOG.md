@@ -1,6 +1,252 @@
 # Changelog
 
-## [2026-10-17] - Landing Page: Fix Mobile App Section Horizontal Overflow & Layout
+## [2026-10-18] - Phase 20: Smart Camera 1:1 Luxury Redesign, Mandatory Landscape Gate & Program-Controlled 4-Angle Flow
+### Added & Rebuilt
+- **1:1 Luxury Smart Camera (`src/features/camera/components/SmartCameraLandscapeView.tsx`)**:
+  - Rebuilt from scratch to match the reference design 1:1 across all screen sizes:
+    - Left column: Top-start circular Back button (`<-`) + vertically centered **3D/Top-down Luxury Car Compass** (`LuxuryCarCompass` with `/images/camera/topdown_coupe.png`, concentric orbital rings, and 4 directional chevrons `^`, `>`, `v`, `<`).
+    - Center column: Rounded golden-framed live camera viewport (`rounded-[22px] sm:rounded-[28px] md:rounded-[32px]`), 4 inset rounded golden `L`-brackets, and 3D perspective SVG golden floor lane grid.
+    - Right column: Pure white circular shutter button inside a glowing golden outer ring.
+- **Mandatory Horizontal (Landscape) Mode on Mobile (Zero-Button Auto-Overlay)**:
+  - Fixed mobile detection (`Math.min(window.innerWidth, window.innerHeight) <= 540` or mobile UA) so rotating a phone to landscape (`844x390`) stays in the mobile Smart Camera.
+  - Added full-screen animated portrait-to-landscape prompt (`isPortrait: window.innerHeight > window.innerWidth`) with **zero buttons**; automatically hides when rotated to landscape and automatically reappears if rotated back to portrait.
+- **Program-Controlled Compass (`pointer-events-none`) & Mandatory 4-Angle Sequence**:
+  - Made all 4 compass direction indicators strictly non-clickable (`pointer-events-none`).
+  - Enforced sequential capture (`1. Old tomon` → `2. O‘ng tomon` → `3. Orqa tomon` → `4. Chap tomon`); completed angles display an emerald checkmark (`✓`) while the active angle illuminates in gold.
+  - Prevented skipping or proceeding after 1 photo; Studio transition triggers only after all 4 required photos are captured.
+- **Desktop & QR Bridge All-Angles Enforcement (`VeloceSmartCameraModal.tsx`, `src/app/[locale]/scan/[sessionId]/page.tsx`, `VeloceStore.tsx`)**:
+  - Integrated `LuxuryCarCompass` into the desktop step-by-step upload wizard.
+  - Locked `"Davom etish (X/4)"` with a lock indicator until all 4 required angles are uploaded (`4/4`).
+  - Updated QR Bridge to report intermediate progress (`status: 'connected'`) and finalize (`status: 'captured'`) only when all 4 angles are captured.
+- **Quality Gates**:
+  - `npm run check-direction`: 0 physical direction violations.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint errors and warnings.
+  - `npm test`: 37/37 Vitest unit tests passing.
+
+## [2026-10-18] - 1:1 Garage Showroom Restoration & Multi-Language Integration
+### Changed & Restored
+- **1:1 Veloce Garage Showroom (`VeloceGarage.tsx`)**:
+  - Restored 1:1 identical visual and structural layout of `https://car-vision-omega.vercel.app/uz/garage`.
+  - Re-implemented the full-bleed hero banner (`h-[420px] md:h-[520px] lg:h-[620px]`) with `/assets/garage-Bst4bQtu.jpg`, gold gradient headline, and subtle overlay gradients.
+  - Restored floating category pill bar (`-mt-10`, `border-primary/20`, `bg-card/80 backdrop-blur-xl`) with active gold glow indicator.
+  - Restored product grid displaying 8 showroom modifications (`BBS CI-R`, `Carbon Front Lip`, `GT Rear Wing`, `KW Variant 3`, `M Performance Seats`, `Alcantara Wheel`, `Valvetronic Exhaust`, `Big Brake Kit`) with `showPrice={false}`.
+- **Global Localization (i18n)**:
+  - Added `garage` namespace across `messages/uz.json`, `messages/ru.json`, and `messages/en.json`.
+  - Fully reactive language translation for eyebrow, title, subtitle, categories, products header, and dynamic `{count}` items counter.
+- **Quality Gates**:
+  - `npm run check-direction`: 0 physical direction violations.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint errors and warnings.
+  - `npm test`: 37/37 Vitest tests passing.
+
+## [2026-10-18] - Removal of Demo Car Fallbacks & Strict Inventory-Only Garage View
+### Removed & Improved
+- **Clean Inventory-Only Garage (`VeloceGarage.tsx`)**:
+  - Removed `+ YANGI DETAL QO'SHISH` button, `4K Studioda Ko'rish` button, and `AddPartModal`.
+  - Garage now strictly functions as an inventory inspection view showing active products, categories, search, and stock. Products are managed exclusively through the Admin Dashboard.
+- **Removed Action Shortcuts from Seller Dashboard (`SellerDashboardView.tsx`)**:
+  - Removed `4K Showroom` and `Yangi Detal Qo'shish` buttons.
+- **Strictly Banned Default Demo Car Images Across Visualizer & Studio**:
+  - Completely purged default dummy car fallbacks (`/assets/car-CjioCIbt.jpg`, `/images/studio/studio_coupe_factory.jpg`) in `VeloceCustomize.tsx`, `VehicleViewport.tsx`, `VeloceSmartCameraModal.tsx`, and `/api/v1/generations`.
+  - When no car photo is uploaded (`!photo`), `VeloceCustomize` and `VehicleViewport` display an elegant, borderless depth empty prompt requiring the user to take a photo or upload their real car.
+  - Applying fitment without an uploaded car is blocked and immediately opens the camera/upload modal.
+  - `/api/v1/generations` rejects requests without a real car photo (HTTP 400).
+- **Quality Gates**:
+  - `npm run check-direction`: 0 physical direction violations.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint errors and warnings.
+  - `npm test`: 37/37 Vitest tests passing.
+
+## [2026-10-18] - Unified Root Routing (VeloceHome Showroom) & Role-Based Single Sidebar
+### Added & Improved
+- **Unified Root Routing (`/[locale]`)**:
+  - `src/app/[locale]/page.tsx` now directly renders `<VeloceShell><VeloceHome /></VeloceShell>`, replacing the obsolete marketing landing page.
+  - Every user (ordinary car owner, guest, or seller) immediately lands in the luxury BMW M4 showroom (`VeloceHome`) with "BUILT DIFFERENT", "CUSTOMIZE YOUR RIDE >", and "EXPLORE SHOP".
+- **Role-Based Single Sidebar (`VeloceShell.tsx`)**:
+  - **Ordinary User (B2C / Guest)**: Sees strictly `Home` (`/[locale]`), `Create` (Camera modal), `Shop` (`/[locale]/shop`), and `Profile` (`/[locale]/profile`). Garage and Dashboard are completely hidden.
+  - **Seller (B2B)**: Sees `Home` (`/[locale]`), `Garage` (`/[locale]/garage`), `Create`, `Shop`, and at the bottom `Dashboard` (`/[locale]/seller?tab=dashboard`) and `Profile`.
+  - Zero duplicate sidebars: clicking `Dashboard` renders `SellerDashboardView` cleanly within the main content area of `VeloceShell`.
+  - Canonical `Home`, top `V` logo, header `VELOCE`, and mobile dock/drawer `Home` links all navigate cleanly to `/[locale]`.
+- **Quality Gates**:
+  - `npm run check-direction`: 0 physical direction violations.
+  - `npx tsc --noEmit`: 0 TypeScript errors.
+  - `npm run lint`: 0 ESLint errors and warnings.
+  - `npm test`: 37/37 Vitest unit tests passing.
+  - Verified via HTTP on `localhost:3000`:
+    - `http://localhost:3000/uz`: renders `VeloceHome` (contains "BUILT DIFFERENT").
+    - `http://localhost:3000/uz/seller`: renders `VeloceHome` (contains "BUILT DIFFERENT").
+    - `http://localhost:3000/uz/seller?tab=dashboard`: renders `SellerDashboardView` (contains "Atelier OS").
+    - `http://localhost:3000/uz/seller?tab=garage`: renders `VeloceGarage`.
+
+## [2026-10-18] - VeloceHome Showroom Main Page & Separate Dashboard Section
+### Fixed & Improved
+- **Restored VeloceHome Showroom as the Core "Asosiy Sahifa"**:
+  - Confirmed and restored `<VeloceHome />` (the BMW M4 showroom screen with "BUILT DIFFERENT", "CUSTOMIZE YOUR RIDE >", and "EXPLORE SHOP") as the default view of `/${locale}/seller`.
+  - Top `Home` icon and `VELOCE` logo in the sidebar route directly to `/${locale}/seller` (`VeloceHome`), with the active gold indicator illuminated on `HOME`.
+- **Separate Dashboard Tab**:
+  - B2B Atelier OS Dashboard (`SellerDashboardView`) relocated to `/${locale}/seller?tab=dashboard`.
+  - In the left sidebar, `Dashboard` is positioned in the bottom utility section above `Profile`.
+  - Clicking `Dashboard` renders `SellerDashboardView` with zero duplicate sidebars; clicking `Home` instantly brings back the BMW M4 showroom.
+- **Verification**:
+  - `curl http://localhost:3000/uz/seller` renders `VeloceHome` (contains "BUILT DIFFERENT").
+  - `curl http://localhost:3000/uz/seller?tab=dashboard` renders `SellerDashboardView`.
+  - 0 TypeScript errors, 0 ESLint warnings, 0 physical direction violations, 37/37 Vitest tests passing.
+
+## [2026-10-18] - Master Supabase Integration — Eradication of All Static Mock Data Across App & Admin
+### Added & Improved
+- **100% Live Supabase Postgres Integration**:
+  - Completely purged all static mock data arrays across the entire application: `RAW_PRODUCTS`, `VELOCE_PRODUCTS`, `DEMO_PROFILES`, `FLEET_PROJECTS`, `GALLERY_RENDERS`, `FALLBACK_STUDIOS`, `INITIAL_STUDIOS`, `INITIAL_ESCROW_ORDERS`, `INITIAL_DEVICES`, and `LIVE_GENERATIONS`.
+  - Replaced all initial states with clean empty arrays (`useState([])`) or `null` accompanied by luxury shimmer skeleton loaders.
+- **New Supabase Endpoints**:
+  - `GET /api/v1/vehicles`: queries real vehicle models from Supabase `vehicle_models` (BYD Chazor, BYD Song Plus, Cobalt, Gentra, Nexia 3, Malibu, Spark) with studio photography and tuning stages.
+  - `GET /api/v1/generations`: queries real 4K renders from Supabase `seller_generations`.
+  - `POST /api/v1/auth/login` and `POST /api/v1/auth/register`: live Supabase authentication for users and partner studios.
+  - Upgraded `/api/v1/products`: dynamically derives vehicle compatibility based on product keywords and local Uzbek models.
+  - Upgraded `/api/v1/admin/overview`: computes real-time revenue, order counts, generations, and live weekly telemetry bars from Supabase `orders` and `seller_generations`.
+- **Component Upgrades**:
+  - `VeloceProfile.tsx`: dynamic fleet count and live 4K render gallery with luxury shimmer skeleton loaders.
+  - `VeloceCart.tsx`: dynamic partner atelier selector and cart items fetched directly from Supabase.
+  - `VeloceCustomize.tsx`: 4K neural visualizer connected to live inventory and generations API.
+  - `AdminOverviewView.tsx`: zero static numbers, live KPI metrics and dynamic weekly analytics.
+  - `SellerDashboardView.tsx`: weekly revenue computed purely from live seller orders with zero hardcoded fallbacks.
+- **Quality Gates**:
+  - 0 TypeScript errors (`npx tsc --noEmit`).
+  - 0 ESLint errors/warnings (`npm run lint`).
+  - 0 physical direction violations (`npm run check-direction`).
+  - 37/37 Vitest unit tests passing (`npm test`).
+
+## [2026-10-18] - Seller Dashboard Navigation & Home Page Redirection Architecture
+### Fixed & Improved
+- **Eliminated Forced Seller Redirection on Home Page**:
+  - Removed auto-redirection `router.push('/' + locale + '/seller')` in `src/app/[locale]/page.tsx`. Sellers and regular users can freely visit and browse the main Home page (`http://localhost:3000/uz` / `http://localhost:3001/uz`).
+  - Fixed header VELOCE logo link to strictly point to Home (`/${locale}`) for all users.
+- **Single Sidebar Architecture (No Duplicate Inner Sidebars)**:
+  - Removed duplicate inner sidebars inside `/seller`; wrapped `SellerDashboardView` cleanly inside the existing `VeloceShell` layout.
+  - Positioned `Dashboard` in the bottom section of the desktop sidebar directly above `Profile`.
+  - Reordered mobile bottom dock for sellers: `Home`, `Garage`, `Shop`, `Dashboard`, `Profile`.
+  - In mobile slide-over drawer: `Dashboard` sits directly above `Profile`.
+- **Top Segmented Borderless Navigation**:
+  - Atelier OS dashboard sections (*Umumiy Telemetriya*, *3% Zakalat Buyurtmalari*, *Ombor Qoldig'i*, *Atelier Sozlamalari*) managed via smooth horizontal tabs at the top of the full-width view.
+- **Verification**:
+  - 0 TypeScript errors (`npx tsc --noEmit`), 0 ESLint warnings (`npm run lint`), 0 physical direction violations (`npm run check-direction`), 37/37 Vitest tests passing.
+
+## [2026-10-18] - B2B Seller Dashboard Suite, Role-Gated Navigation & Global Multi-Currency System
+### Added & Improved
+- **Role-Gated Garage & Navigation Architecture**:
+  - Regular car owners (`b2c_user`) do NOT see "Garage" in navigation (desktop sidebar, mobile bottom dock, and slide drawer). Regular user cars live in `/profile?tab=fleet`.
+  - `/garage` restricted to authenticated B2B Sellers (`b2b_seller`) as their live parts inventory warehouse.
+- **World-Class B2B Seller Dashboard (`/[locale]/seller`)**:
+  - Full Rule #6-compliant dashboard: collapsible sidebar, top bar with quick actions, 4-bento KPI cards (Umumiy Tushum, Faol Buyurtmalar, Ombor Qoldig'i, 3% Escrow Himoyada).
+  - 60fps custom SVG revenue and fitment chart, live customer orders table with Escrow status, appointment details, and Escrow voucher view.
+- **AI-Powered Spare Part Onboarding (`AddPartModal`)**:
+  - Camera/photo upload for physical parts, vehicle compatibility multi-select (Malibu 2, Tracker 2, Onix, BMW M4, BYD Seal, etc.).
+  - AI Studio Enhancer endpoint (`/api/v1/seller/improve-part-image`) for lighting optimization and background cutout.
+  - Direct database persistence to Supabase `products` via `/api/v1/seller/inventory`.
+- **Showroom Studio Mode (`/[locale]/customize`)**:
+  - When logged in as a seller, studio visualizer displays only that seller's warehouse products with a luxury Showroom Studio badge.
+- **Real-Time Multi-Currency Engine (`src/domain/currency.ts` & `/api/v1/currency/rates`)**:
+  - Fetches live exchange rates (USD, UZS, AED, TRY, RUB, KGS, KZT) with 1h ISR cache.
+  - Displays every price in the user's active country currency with tabular digits (`tabular-nums font-mono`) and native symbols (`so'm`, `$`, `₽`, `د.إ`, `₺`, `сом`, `₸`).
+- **Global Country/Language Lock**:
+  - User's country choice during registration / profile locks application language and currency across internal authenticated pages.
+- **Quality Gates**:
+  - 0 TypeScript errors (`npx tsc --noEmit`), 0 ESLint warnings (`npm run lint`), 0 physical direction violations (`npm run check-direction`), 37/37 Vitest tests passing, production build succeeded (`npm run build`).
+
+## [2026-10-18] - Smart Camera: Complete Eradication of All Card Boxes, Spacious Layout & 300px QR Code
+### Fixed & Improved
+- **Eradicated All Artificial Card & Dashed Boxes**:
+  - Removed all `bg-[#11131C]`, `bg-white/[0.03]`, and `border-dashed` boxes across both initial and step-upload views.
+  - All interactive elements float directly on the spacious `#07080B` dark carbon surface with ambient glow on hover/drag.
+- **Enlarged QR Code to 300px**:
+  - Increased QR code resolution and scale to 300x300px with a rounded-3xl white backing pad and deep shadow for effortless scanning.
+- **Full-Width 5-Step Navigation**:
+  - 5 steps now span the entire container width with a sleek active gold underline indicator.
+- **In-Viewport Navigation**:
+  - Optimized vertical spacing so navigation buttons (`< Oldingi`, `Keyingi >`, and `Davom etish >`) are immediately visible on standard laptop viewports without scrolling.
+- **Zero Errors Verification**:
+  - 0 TypeScript errors, 0 ESLint errors/warnings, 0 physical direction violations, 33/33 Vitest tests passing.
+
+
+
+## [2026-10-18] - Smart Camera Desktop Overhaul: Zero Desktop Webcam & Step-by-Step 5-Angle Guided Upload Wizard
+### Fixed & Improved
+- **Eradicated Desktop Webcam / Live Camera Triggers**:
+  - Completely removed `Veb-kameradan foydalanish >` and `Ushbu kompyuter veb-kamerasini to'liq 1:1 ekranda ochish >` links on desktop devices.
+  - Desktop browsers never initiate or prompt webcam media streams.
+- **Initial 2-Option Luxury Split Screen (`VeloceSmartCameraModal.tsx`)**:
+  - **Option 1**: Smartphone QR Code Skan (100% 4K Sifat, real-time polling with instant handoff).
+  - **Option 2**: Guided File Upload from PC with `[Fotosuratlarni Bosqichma-bosqich Yuklash >]`.
+  - Added quick `[Namuna 4K Kadr Bilan Sinash >]` for instant 1-click test navigation.
+- **Interactive Step-by-Step 5-Angle 4K Wizard**:
+  - Segmented 5-angle navigation bar with completion checkmarks and gold glow indicators:
+    1. `315° // Oldi-chap 3/4` (Primary 4K Visualizer angle)
+    2. `0° // Old tomon (Front)`
+    3. `90° // O'ng tomon (Profil)`
+    4. `180° // Orqa tomon (Rear)`
+    5. `270° // Chap tomon (Profil)`
+  - Interactive SVG Automotive Radar Wireframe: Features dynamic top-down chassis blueprint, rotating radial radar cone beam, camera azimuth indicator, and angle-specific photography instructions.
+  - Drag-and-drop Dropzone with high-res preview card, status badges, and replace image trigger.
+- **Guaranteed Navigation to 4K Studio**:
+  - Fixed upload logic issue where single-angle uploads remained stuck on desktop handoff.
+  - Enabled floating `[4K Studio Visualizer-ga O'tish >]` bar immediately upon uploading at least 1 photo.
+  - Automatically saves images to `sessionStorage` (`carvision_captured_image`, `veloce_photo`, `carvision_multi_angles`), notifies store via `onCaptured`, and seamlessly navigates to `/${locale}/customize?captured=1`.
+- **Unified Seller Dashboard (`SellerDashboard.tsx`)**:
+  - Replaced raw `SmartCameraView` with unified `VeloceSmartCameraModal`.
+- **Quality Gates**:
+  - Passed `npm run check-direction` (0 RTL violations), `npx tsc --noEmit` (0 type errors), `npm run lint` (0 lint errors), and `npm test` (33/33 tests passing).
+### Added & Enhanced
+- **Super-Luxury Atelier Master Pass (`src/components/veloce/VeloceProfile.tsx`)**:
+  - Completely redesigned the profile into a borderless, depth-based luxury automotive identity.
+  - Eliminated harsh borders and hardcoded colors; introduced multi-layer soft shadows (`shadow-[0_24px_60px_-15px_rgba(0,0,0,0.85)]`), surface lightness levels, and top-edge ambient illumination.
+  - Added holographic Master Pass VIP chip (`CV-APX-3723-MEISTER`) with animated one-click clipboard copying.
+  - Added responsive 2x2 (mobile) / 4-column (desktop) Bento Telemetry grid: 4K AI Credits with quota bar, Active Fleet projects, 3% Zakalat live volume, and Atelier Meister SLA (4.98 / 5.0).
+- **Framer Motion Segmented Navigation**:
+  - Implemented smooth sliding indicator (`layoutId="profileActiveTabIndicator"`) with 4 distinct tabs: Atelier Garaji, 3% Zakalat & Buyurtmalar, 4K Render Galereya, and Sozlamalar & Xavfsizlik.
+- **Live Supabase Orders Integration**:
+  - Upgraded `GET /api/v1/orders` to return recent live customer and atelier orders.
+  - Wired live order cards with status badges (`Tasdiqlandi`, `Kutishda`), 3% Zakalat vs 97% balance, payment badges, and an interactive CarVision Escrow Voucher modal.
+- **Interactive Modals Suite**:
+  - **Edit Profile Modal**: Live editing of name, studio, phone, and city, syncing to `AuthContext.updateProfile`.
+  - **Top-up AI Credits Modal**: Tiered packages (100 PTS, 500 PTS, 2500 PTS) with instant balance update.
+  - **Sign Out Confirm Modal**: Clean security exit confirmation.
+- **Complete Internationalization (i18n)**:
+  - Added complete `profile` namespace across `messages/uz.json`, `messages/ru.json`, and `messages/en.json`.
+- **Quality Gates**:
+  - Passed `npm run check-direction` (0 RTL violations), `tsc --noEmit` (0 type errors), `npm run lint` (0 errors), and `npm test` (33/33 Vitest tests passing).
+
+## [2026-10-18] - Cart & Escrow: Real 3% Zakalat Booking Flow Connected to Supabase
+### Added & Enhanced
+- **Real Orders & Escrow Backend API (`/api/v1/orders`)**:
+  - Implemented `POST /api/v1/orders` with strict Zod validation schema.
+  - Automatically calculates subtotal, 3% Zakalat Escrow deposit (both in USD and UZS at 13,000 UZS/USD), remaining 97% balance, and generates order reference (`#CV-XXXX`).
+  - Resolves partner tuning studio from live Supabase `sellers` and user session.
+  - Persists order records directly into Supabase `orders` (`status: 'new'`) and line items into `order_items`.
+- **Luxury 3% Zakalat Escrow Modal (`src/components/veloce/VeloceCart.tsx`)**:
+  - Completely eradicated the dummy `alert("Buyurtmangiz qabul qilindi!")`.
+  - Built borderless depth-based modal with 3-pill price breakdown (Total, 3% Zakalat, 97% on vehicle handover).
+  - Added dynamic partner atelier selector loaded directly from `/api/v1/shops`.
+  - Added customer details inputs (name, phone, appointment date, customer note).
+  - Added payment method selector (Click, Payme, Uzum, Bank).
+  - Displayed official CarVision Escrow bank details (Kapitalbank ATB, `8600 4902 1184 9921`) with one-click copy and feedback.
+  - Added official CarVision Booking Confirmation Voucher screen displaying order number, live status badge, and direct link to Garage.
+- **Admin Escrow Integration (`/api/v1/admin/escrow`)**:
+  - Enhanced parser to extract exact custom order numbers (`#CV-XXXX`), customer name, payment method (`[Click]`, `[Payme]`, `[Uzum]`, `[Bank]`), and exact 3% deposit.
+  - Verified live two-way synchronization: newly submitted orders appear instantly in `/admin` ("3% Zakalat & To'lovlar") and mutate to `accepted` upon Super Admin verification.
+- **Store Enhancement (`src/context/VeloceStore.tsx`)**:
+  - Added `clearCart()` method persisted to `sessionStorage` for seamless post-checkout state management.
+
+## [2026-10-18] - Studio & Customizer: Real 4K AI Pipeline & Interactive Before/After Split Slider
+### Added & Enhanced
+- **Real 4K AI Generation Engine (`/api/v1/generations`)**:
+  - Implemented direct studio fitment API accepting vehicle photos and selected tuning part parameters (`partId`, `partName`, `partCategory`, `partSpec`, `partPrice`).
+  - Added atomic credit deduction linked to Supabase `sellers` studio ledger.
+  - Persisted generations into Supabase `seller_generations` table with prompt, base image, and 4K result image.
+- **Interactive 4K Before / After Slider (`VeloceCustomize.tsx`)**:
+  - Replaced fake "Applied" timeout indicator with active 3-step AI Processing HUD ("Shassi va rakurs", "3D karkas o'rnatish", "FLUX 4K neyron nurlanish").
+  - Added hardware-accelerated Before / After split comparison slider (`inset-inline-start`, touch/mouse pointer capture) comparing factory stock vs 4K tuned vehicles.
+  - Added 4K fitment telemetry card with item specifications, price breakdown, 3% Zakalat calculation ($36), and direct "Savatga & Zakalat" booking and "4K Yuklab Olish" actions.
+
 ### Fixed & Enhanced
 - **Mobile Responsive Layout (`src/app/[locale]/page.tsx`)**:
   - Calibrated mobile typography for `MobileApp`: resized mobile heading to `text-[2rem] leading-[1.08] break-words` (with `sm:text-6xl sm:leading-[1.02]` on desktop), eliminating horizontal overflow caused by long words like `cho'ntagingizda.`.

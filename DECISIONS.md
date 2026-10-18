@@ -1,6 +1,262 @@
 # Architecture & Product Decisions
 
-## 2026-10-17: End-to-End Live Supabase Database Integration & Mock Data Eradication
+## 2026-10-18: Phase 21 Universal Drop-In AI Image Generation (`FAL_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY`), Photorealistic Perspective Part Compositor & 4-Act Scripted Video Engine with Embedded Audio Muxing
+- **Decision**:
+  1. **Zero-Config Drop-In AI Image Fitment Router (`src/server/providers/ai/direct-fitment-engine.ts`)**:
+     - Wired `POST /api/v1/generations` and `POST /api/v1/video-edit` directly to `executeDirectAiFitment`.
+     - As soon as `FAL_KEY` (or `FAL_API_KEY`), `GEMINI_API_KEY` (or `GOOGLE_API_KEY`), or `OPENAI_API_KEY` is added to `.env` / `.env.local`, the server automatically resolves any local `/public` or `data:image/` asset into a base64 Data URI (ensuring 100% compatibility even on `localhost`) and executes live neural fitment:
+       - **Fal.ai**: `fal-ai/flux-pro/kontext` + `fal-ai/flux/dev/image-to-image` with category-specific automotive prompts.
+       - **Google Gemini**: Multimodal `gemini-2.0-flash-exp-image-generation` / `gemini-2.5-flash-image-preview` receiving both the customer's car image AND the exact reference part images (`inlineData`) to replicate every spoke, contour, and carbon weave 1:1.
+       - **OpenAI**: `gpt-image-1` high-resolution automotive fitment.
+  2. **Photorealistic Perspective Part Fitting & Pixel-Aligned Normalizer (`src/lib/automotive-compositor.ts`)**:
+     - Built `composeCarAnglePhotorealistic` with automated studio background removal (`extractPartCutout`), anatomical wheel hub ellipse placement per angle (`right`, `front-left`, `rear-right`), optical LED headlamp/taillamp illumination (`front`, `rear`, `front-left`, `rear-right`), lower aero shadow contouring, and metallic body paint blending while keeping `Before` and `After` dimensions 100% pixel-aligned.
+  3. **4-Act Scripted Cinema Video Engine with Real Audio-In-Video Muxing (`src/components/studio/CinematicVideoStudio.tsx`)**:
+     - Upgraded the video choreography to a 10.0-second, 4-Act automotive commercial edit:
+       - **Act 1 (`0.0s–2.35s`)**: Stock Intro (Cold grade + slow dolly zoom).
+       - **Act 2 (`2.35s–2.95s`)**: AI Golden Laser Scanline Wipe (`Before` transforms into `After` behind a sweeping golden laser beam + bass drop impact).
+       - **Act 3 (`2.95s–8.2s`)**: 5-Angle Beat-Synced Tuned Showcase with Speed-Ramp ease-out cubic zoom, floating golden studio bokeh particles, and lower-third part callouts.
+       - **Act 4 (`8.2s–10.0s`)**: Split Before/After Comparison Finale.
+     - Routed the multi-layered Web Audio synthesizer (808 sub-bass kick, trap hi-hats, riser sweep, and lead synth) into an `AudioContext.createMediaStreamDestination()` track merged with `canvas.captureStream(60)` so downloaded `.webm` / `.mp4` videos contain embedded synchronized studio music.
+- **Reason**: User explicitly requested full focus on making Before/After image generation and the video edit studio 100% drop-in ready for `.env` API keys while delivering a truly premium, flawless visual and video result.
+- **Alternatives Rejected**: Returning static stock demo images when `POST /api/v1/generations` is called; exporting silent canvas videos without muxed audio tracks.
+
+## 2026-10-18: Phase 20 Smart Camera 1:1 Luxury Redesign, Mandatory Buttonless Landscape Gate & Program-Driven 4-Angle Enforcement
+- **Decision**:
+  1. **1:1 Visual Architecture Matching Reference Design (`SmartCameraLandscapeView.tsx`)**:
+     - Pure deep matte black canvas (`#050507`) with a 3-column horizontal composition:
+       - **Left Column**: Top-start circular Back button (`<-`) + vertically centered **3D/Top-down Luxury Car Compass** (`LuxuryCarCompass` using `/images/camera/topdown_coupe.png`, concentric thin orbital rings, and 4 directional chevrons `^` Top/Front, `>` Right, `v` Bottom/Rear, `<` Left).
+       - **Center Column**: Wide rounded golden-framed viewport (`rounded-[22px] sm:rounded-[28px] md:rounded-[32px]`, `border-[#D4AE62]/65`, soft gold outer shadow) housing the live `<video>` stream, 4 inset rounded golden `L`-shaped corner brackets, and the 3D perspective golden parking-bay floor alignment grid (SVG).
+       - **Right Column**: Large pure white circular shutter disc inside a glowing golden ring.
+  2. **Mandatory Horizontal (Landscape) Mode on Mobile (Buttonless Auto-Overlay)**:
+     - Mobile device detection uses `Math.min(window.innerWidth, window.innerHeight) <= 540` or mobile UA so rotating a phone from portrait (`390x844`) to landscape (`844x390`) keeps the mobile camera active.
+     - When `isPortrait` (`window.innerHeight > window.innerWidth`), a full-screen animated overlay asks the user to rotate their phone horizontally.
+     - **Zero buttons** on the portrait overlay (`tugma bo'lmasin`): it automatically disappears when rotated to landscape, and automatically reappears if rotated back to portrait.
+  3. **Program-Controlled Compass (`pointer-events-none`) & Mandatory 4-Angle Sequence**:
+     - All 4 directional badges (`^`, `>`, `v`, `<`) around the car compass have `pointer-events-none` and `select-none`. Users cannot click arrows or choose/skip angles.
+     - The program strictly controls the sequence: `1. Old tomon (^)` → `2. O‘ng tomon (>)` → `3. Orqa tomon (v)` → `4. Chap tomon (<)`.
+     - Completed directions turn into glowing emerald checkmarks (`✓`); the active required direction glows with a golden outer aura.
+     - Users cannot proceed after 1 photo; transition to the 4K Studio occurs only after all 4 required photos are captured.
+  4. **Mandatory All-Angles Upload on Desktop & QR Bridge (`VeloceSmartCameraModal.tsx` & `/scan/[sessionId]`)**:
+     - Desktop step-by-step upload uses the same non-clickable `LuxuryCarCompass` and locks the `"Davom etish (X/4)"` button until all 4 angles are uploaded (`uploadedCount === 4`).
+     - Mobile QR Bridge (`/scan/[sessionId]`) streams intermediate angles (`status: 'connected'`) and marks `status: 'captured'` only when all 4 angles are completed.
+- **Reason**: User explicitly requested a 1:1 ground-up redesign matching their reference image, a buttonless automatic portrait-to-landscape rotation lock on mobile, a non-clickable program-controlled 3D car compass, and mandatory all-4-angles capture/upload on both mobile and desktop before continuing.
+- **Alternatives Rejected**: Allowing users to click compass arrows to pick angles; allowing 1-photo quick skip; adding a manual "Continue anyway" button on the portrait lock screen.
+
+## 2026-10-18: Phase 19 Core B2B Product Alignment — 3% Address-Unlock Marketplace, Radical Boxless Simplification, AI Vision Part Gatekeeper (1-Car Rule), B2B Tablet Filmstrip Flow & Beat-Synced AI Video Studio
+- **Decision**:
+  1. **3% Zakalat = Address Unlock & Seller Lead Notification (Not Product Selling)**:
+     - In `Shop` (`/shop`, `/shop/[id]`), customers see only part photo, price, specs, and the **1 specific car model** (`targetCar`) it fits.
+     - The tuning workshop's name, exact address, and phone number remain hidden until the customer pays the **3% Zakalat** on `/[locale]/cart/checkout`.
+     - Immediately upon 3% payment, the workshop's name, exact address, map link, and phone number are unlocked for the customer (persisted in `carvision_unlocked_leads`), and a lead notification with the customer's phone number and selected part is dispatched to the seller (`POST /api/v1/orders`).
+  2. **Radical UI/UX Simplification (Boxless, Borderless, Effortless)**:
+     - Simplified `SellerDashboardView.tsx` to only **2 intuitive sections**: `1) Mijozlar` (3% leads with customer phone number, chosen part, and 1-click call/confirm) and `2) Mening Detallarim` (warehouse parts + `+ Detal Qo‘shish`).
+     - Simplified `VeloceProfile.tsx` to remove "Tuning Passport", AI credit top-up boxes, and complex tabs, leaving only user identity, unlocked 3% workshop addresses, and language/currency pills.
+  3. **1-Car Compatibility Rule & AI Vision Gatekeeper (`/api/v1/seller/validate-part-image` & `/[locale]/seller/new-part`)**:
+     - Enforced strict single-car selection (`selectedCar`) per part.
+     - Built `/api/v1/seller/validate-part-image` to reject non-car/blurry uploads and detect Category vs Image mismatches (e.g., selecting "Fara" while uploading a "Bamper"), offering a 1-click category fix before saving.
+  4. **B2B Tablet Showroom Flow (`/[locale]/customize` → `/[locale]/customize/result`)**:
+     - Rebuilt `VeloceCustomize.tsx` around a 5-angle car viewer (`front`, `rear`, `right`, `front-left`, `rear-right`) and a **smooth horizontal filmstrip ribbon (`snap-x` carousel)** with multi-part selection stored in `VeloceStore` (`sessionStorage`).
+     - Clicking **`Apply Changes`** composites the exact selected parts across the car's angles and opens the dedicated **`/[locale]/customize/result`** page.
+     - Added **`O‘zgartirish`** button on `/customize/result` that returns to `/customize` while keeping all previously selected parts active.
+  5. **AI Cinematic Video Edit Studio (`CinematicVideoStudio.tsx`)**:
+     - Built the `"Video sifatida ko‘rish"` studio on `/customize/result` supporting `9:16` and `16:9` formats, AI multi-angle clarity/color grading enhancement, Web Audio API beat-synced music tracks, and 1-click Video (`MediaRecorder` WebM/MP4) + 4K Photo download.
+- **Reason**: Direct alignment with the user's core B2B auto-tuning showroom workflow and 3% lead-generation business model.
+- **Alternatives Rejected**: Selling physical parts directly via e-commerce shipping; allowing 1 part to be assigned to multiple cars; keeping complex multi-tab dashboards or keeping the Before/After result inside the same page instead of opening `/customize/result`.
+
+## 2026-10-18: Phase 18 Master Polish — Dedicated Full-Page Architecture (Zero Popups), Seller Dashboard Rewrite, 8-Language/8-Currency Parity & Dynamic 4K Studio Composite
+- **Decision**:
+  1. **Dedicated Full-Page Architecture Over Popup Modals**:
+     - Replaced cramped popup modals across the entire application with dedicated, full-screen borderless pages:
+       - `/[locale]/seller/new-part`: 4K Studio Part Creator with AI Background Cutout, 8-currency input, and vehicle compatibility selector.
+       - `/[locale]/seller/catalog-import`: 1-Click Master Catalog Importer writing directly to Supabase `products`.
+       - `/[locale]/seller/redeem`: 3% Zakalat Escrow Voucher Code Verifier & Redeemer (`#CV-XXXX`).
+       - `/[locale]/seller/orders/[orderId]`: Full Order & 3% / 97% Escrow Passport Inspector with live status transitions (`pending` → `verified` → `completed`).
+       - `/[locale]/cart/checkout`: Full-page 3% Zakalat Escrow Checkout & Official Certificate view.
+       - `/[locale]/p/[publicToken]`: Shareable Digital Tuning Passport with interactive Before/After slider and QR code.
+  2. **Complete Rewrite of `SellerDashboardView.tsx`**:
+     - Rebuilt from scratch with a borderless, boxless, depth-based obsidian layout (`#0B0C10` canvas, `#13161F` elevated cards, diffuse multi-layer shadows) optimized for both desktop (`1440px`) and mobile (`375px`).
+     - Wired directly to `/api/v1/seller/orders` (`GET`, `PATCH`) and `/api/v1/seller/inventory` (`GET`, `PATCH`, `DELETE`).
+  3. **USD vs UZS Financial Normalization Across All APIs & UI**:
+     - Enhanced `convertToUSD` in `src/domain/currency.ts` and all order/inventory/admin API routes (`/api/v1/orders`, `/api/v1/seller/orders`, `/api/v1/seller/inventory`, `/api/v1/admin/escrow`, `/api/v1/admin/overview`) to automatically normalize raw UZS values (`> 50000`) to USD base (`÷ 13000`), preventing double-multiplication bugs.
+  4. **Complete 8-Language & 8-Currency Parity**:
+     - Synchronized all 8 locale files (`uz`, `ru`, `en`, `ar`, `tr`, `kk`, `ky`, `tg`) and all 8 currencies (`UZS`, `USD`, `AED`, `TRY`, `KZT`, `KGS`, `TJS`, `RUB`), adding a borderless header quick-switcher in `VeloceShell.tsx`.
+  5. **Client-Side 4K Studio Composite (`composeUserCarWith4KFitment`)**:
+     - Built an HTML5 `<canvas>` 4K composite renderer in `VeloceCustomize.tsx` so user-uploaded car photos always render a real Before/After comparison on the user's actual vehicle even when external AI keys are offline.
+- **Reason**: User explicitly requested a complete rewrite of Seller Dashboard, preferring dedicated new pages instead of popup modals, borderless/boxless luxury design across desktop and mobile, and 100% functional perfection without touching the core hero pages (`VeloceHome`, `VeloceShop`, `AuthShell`, `VeloceSmartCameraModal`).
+- **Alternatives Rejected**: Keeping popup modals for part creation, checkout, or order inspection; leaving raw UZS/USD mixed arithmetic in API routes.
+
+## 2026-10-18: 1:1 Garage Showroom Restoration & Multi-Language Integration (`/garage`)
+- **Decision**:
+  1. Restored `src/components/veloce/VeloceGarage.tsx` to 1:1 identical layout of `https://car-vision-omega.vercel.app/uz/garage`.
+  2. Preserved the exact hero height (`h-[420px] md:h-[520px] lg:h-[620px]`), `/assets/garage-Bst4bQtu.jpg` banner, floating category filter bar at `-mt-10`, and 4-column product grid with `showPrice={false}`.
+  3. Fully wired all user-facing copy (eyebrow, title, subtitle, categories, products header, items counter) to the `garage` i18n namespace across `uz.json`, `ru.json`, and `en.json`.
+- **Reason**: User explicitly demanded that the garage page design be 1:1 identical to the Vercel production deployment (`https://car-vision-omega.vercel.app/uz/garage`) while ensuring full language switching functionality.
+- **Alternatives Rejected**: Keeping the custom inventory table or bento metrics on the garage page.
+
+## 2026-10-18: Removal of Demo Car Fallbacks & Strict Inventory-Only Garage View
+- **Decision**:
+  1. **Strict Inventory-Only Garage**:
+     - Removed `+ YANGI DETAL QO'SHISH` button, `4K Studioda Ko'rish` button, and `AddPartModal` from `src/components/veloce/VeloceGarage.tsx`.
+     - Products are managed strictly via the central Admin Dashboard. Garage functions solely as an inventory inspection showroom for the workshop.
+     - Removed `4K Showroom` and `Yangi Detal Qo'shish` from `SellerDashboardView.tsx`.
+  2. **Zero Default / Demo Car Standard Across Entire Project**:
+     - Completely eliminated default dummy car images (`/assets/car-CjioCIbt.jpg`, `/images/studio/studio_coupe_factory.jpg`) in the visualizer and studio.
+     - If the user has not uploaded a car photo (`!photo`), the visualizer shows an elegant upload prompt requiring the user to capture or upload their car before fitting parts.
+     - 4K neural generation strictly requires a user-uploaded image; fake fallback demo cars are forbidden.
+- **Reason**: The user explicitly instructed to remove the buttons from Garage, keep Garage strictly for viewing current inventory, and ban default demo car images across the entire app so users must always upload their own vehicle.
+- **Alternatives Rejected**: Preloading a default demo BMW coupe in the visualizer.
+
+## 2026-10-18: Unified Root Routing (VeloceHome Showroom) & Role-Based Single Sidebar
+- **Decision**:
+  1. **Unified Root Routing (`/[locale]`)**:
+     - The main application entry point (`/[locale]`) directly renders `<VeloceShell><VeloceHome /></VeloceShell>`.
+     - The old marketing landing page (`GoldenLandingPage`) is completely replaced so every user (ordinary car owner, guest, or seller) immediately lands in the luxury BMW M4 showroom (`VeloceHome`).
+     - `/[locale]/seller` continues to support `VeloceHome` by default, `?tab=garage` for warehouse inventory, and `?tab=dashboard` for seller management.
+  2. **Role-Based Single Sidebar**:
+     - **Ordinary User (B2C / Guest)**: Sees strictly `Home` (`/[locale]`), `Create` (Camera modal), `Shop` (`/[locale]/shop`), and `Profile` (`/[locale]/profile`).
+     - **Seller (B2B)**: Sees `Home` (`/[locale]`), `Garage` (`/[locale]/garage`), `Create`, `Shop`, and bottom-docked `Dashboard` (`/[locale]/seller?tab=dashboard`) and `Profile`.
+     - Exactly ONE sidebar exists (`VeloceShell`). Clicking `Dashboard` renders `SellerDashboardView` cleanly inside the main viewport with no second sidebar.
+- **Reason**: The user explicitly confirmed that the main page for all users (including ordinary users) must be the BMW M4 Veloce showroom, not the marketing landing page, with strict role-gating on the sidebar items.
+- **Alternatives Rejected**: Keeping a separate public marketing landing page for guests while routing authenticated users to `/seller`.
+
+## 2026-10-18: Master Supabase Integration — Eradication of All Static Mock Data Across App & Admin
+- **Decision**:
+  1. **Zero Mock Data Standard (100% Live Database State)**:
+     - Eradicated all static mock arrays (`RAW_PRODUCTS`, `VELOCE_PRODUCTS`, `DEMO_PROFILES`, `FLEET_PROJECTS`, `GALLERY_RENDERS`, `FALLBACK_STUDIOS`, `INITIAL_STUDIOS`, `INITIAL_ESCROW_ORDERS`, `INITIAL_DEVICES`, `LIVE_GENERATIONS`).
+     - Initial state for all asynchronous data components is strictly empty array (`useState([])`) or `null` accompanied by luxury shimmer skeleton loaders.
+  2. **Live Supabase API Endpoints**:
+     - Built `/api/v1/vehicles`: queries real vehicle models from Supabase `vehicle_models` (BYD, Gentra, Cobalt, Malibu, Nexia 3, Spark, Lacetti) with high-res studio photos and specs.
+     - Built `/api/v1/generations` (GET & POST): persists 4K render records to Supabase `seller_generations` with atomic credit deductions and returns live customer before/after fitment pairs.
+     - Built `/api/v1/auth/login` and `/api/v1/auth/register`: authenticates real users and partner sellers against Supabase `users` and `sellers`.
+     - Wired Admin Overview (`/api/v1/admin/overview`): dynamically computes total revenue and weekly telemetry bars from live `orders` and `seller_generations`.
+  3. **Compatibility Dynamic Mapping**:
+     - Upgraded `/api/v1/products`: dynamically matches vehicle compatibility based on product keywords and Uzbek market models instead of static foreign car lists.
+- **Reason**: The user instructed to delete all mock and static data and wire everything to live Supabase Postgres database.
+- **Alternatives Rejected**: Keeping static mock arrays as initial state fallbacks.
+
+## 2026-10-18: Seller Dashboard Navigation & VeloceHome Showroom Main Page Architecture
+- **Decision**:
+  1. **Strictly Preserve VeloceHome as the Main App Showroom Page**:
+     - The true "Asosiy Sahifa" (Home) of the application is `<VeloceHome />` (the black BMW M4 showroom screen with "BUILT DIFFERENT", "CUSTOMIZE YOUR RIDE >", and "EXPLORE SHOP").
+     - Visiting `/${locale}/seller` defaults strictly to `<VeloceHome />`.
+     - In `VeloceShell`, `Home` and the `VELOCE` logo link to `/${locale}/seller`, displaying `<VeloceHome />` with the gold active indicator on `HOME`.
+  2. **Dedicated Dashboard Route as a Separate Section**:
+     - The seller management dashboard (`SellerDashboardView`) is NOT the default view; it lives on `/${locale}/seller?tab=dashboard`.
+     - In the left desktop sidebar, `Dashboard` is positioned at the bottom above `Profile`. Clicking it switches to `SellerDashboardView` within the single existing `VeloceShell` layout.
+     - When on `/${locale}/seller?tab=dashboard`, the gold active indicator shifts to `Dashboard`.
+     - Clicking `Home` immediately returns to `VeloceHome` (the BMW M4 screen).
+  3. **Role & Garage Consistency**:
+     - `Garage` lives on `/${locale}/garage` (or `/${locale}/seller?tab=garage`).
+     - Logged in users entering the platform are routed to `/${locale}/seller` where they immediately experience the luxury showroom `VeloceHome`.
+- **Reason**: The user clarified with a production screenshot of `car-vision-omega.vercel.app/uz/seller` that the true main home page is the BMW M4 `VeloceHome` screen, and Dashboard must be an independent separate section opened only when clicking the Dashboard button.
+
+## 2026-10-18: Strict Role Separation for Garage, Rule #6 B2B Seller Dashboard Suite & Global Country/Language Locking
+- **Decision**:
+  1. **Strict Role-Gated Navigation & Garage Access**:
+     - Regular car owners (`b2c_user`) do NOT see "Garage" in navigation (Sidebar, Bottom Nav, Drawer). Their cars are in `/profile?tab=fleet`. Direct access to `/garage` displays an informative notice explaining it is the B2B Seller warehouse.
+     - B2B Sellers (`b2b_seller`) see Dashboard (`/seller`), Garage (`/garage`), Showroom Studio (`/customize`), Shop (`/shop`), and Profile (`/profile`).
+  2. **World-Class B2B Seller Dashboard (`/seller`)**:
+     - Implemented full Rule #6 compliant Seller Dashboard: Collapsible sidebar layout, top bar with quick actions, KPI stat cards with animated counters, Recharts sales and fitment chart, live customer orders table with deposit status and appointment confirmation, and direct AI Part Onboarding launcher.
+  3. **Global Language and Country Lock System**:
+     - User's country choice during registration / profile locks their preferred language (`uz`, `ru`, `en`) and currency (UZS, RUB, AED, TRY, USD, KZT, KGS) across all authenticated application views.
+     - Public Landing Page (`/`) remains independent on the requested URL locale.
+     - User can change their language preference in Profile Settings anytime, immediately updating active locale and cookie/storage.
+  4. **Multi-Currency Real-Rate Conversion Engine**:
+     - Live exchange rates fetched via `/api/v1/currency/rates` with 1h ISR cache and fallback.
+     - Formats every price into active country currency with tabular digits (`tabular-nums font-mono`) and native symbols (`so'm`, `$`, `₽`, `د.إ`, `₺`, `сом`, `₸`).
+- **Reason**: The user directed to ensure Garage is strictly for sellers, regular users never see it in nav, `/seller` has a complete B2B dashboard with sidebar and multiple controls, and user language/country is locked across the app with live currency conversions.
+- **Alternatives Rejected**: Showing a unified navigation bar to both consumers and sellers; forcing consumers into the seller inventory warehouse.
+
+
+
+## 2026-10-18: Smart Camera Desktop: Complete Eradication of All Card Boxes, Spacious Layout & 300px QR Code
+- **Decision**:
+  1. **Eradicate All Artificial Card & Dashed Boxes**: Completely eliminated all colored card containers (`bg-[#11131C]`, `bg-white/[0.03]`) and dashed outline rectangles (`border border-dashed border-white/10`). Both the initial screen options and the step-by-step upload area float directly on the deep carbon surface (`#07080B`), responding with subtle ambient glow only on hover/drag.
+  2. **Enlarge QR Code to 300px**: Increased the QR code size to a bold, prominent 300x300px white pad with deep soft shadow (`shadow-[0_30px_90px_rgba(0,0,0,0.9)]`) for effortless phone camera scanning across the room.
+  3. **Strict Baseline Horizontal Alignment**: Left and right columns in both the initial screen and the step-upload screen start at the exact same horizontal baseline (`items-start`), preventing awkward asymmetric vertical shifts.
+  4. **Photorealistic Car Silhouette**: Uses the high-resolution top-down coupe (`/images/camera/topdown_coupe.png`) with rotating orbital beam indicating the required photo angle.
+  5. **100% In-Viewport Navigation**: Vertical heights and paddings are tuned so that navigation buttons (`< Oldingi`, `Keyingi >`, and `Davom etish >`) fit comfortably on standard laptop viewports without scrolling.
+- **Reason**: The user explicitly requested to apply the box-free, borderless, spacious philosophy to the step-upload screen as well ("ajoyib endi bu bilan ham huddi shunday qil"), eliminating the dashed container box.
+- **Alternatives Rejected**: Keeping a dashed boundary box around the upload dropzone.
+
+
+## 2026-10-18: Smart Camera Desktop Overhaul: Zero Desktop Webcam, 2-Option Choice & Step-by-Step 5-Angle Guided Upload Wizard
+- **Decision**:
+  1. **Borderless Design & Visual Simplicity (Zero Visual Borders)**:
+     - Eradicated all harsh borders (`border`, `border-2`, `border-[#D4AE62]/20`, `border-white/10`).
+     - Replaced borders entirely with surface elevation steps (`bg-[#11131C]`, `bg-[#0E1017]`), deep layered shadows (`shadow-[0_20px_50px_rgba(0,0,0,0.6)]`), and subtle ambient glow.
+  2. **Eradicated Technical Jargon & Unfamiliar Concepts for Clients**:
+     - Removed all confusing technical text: internal session IDs (`ID: cv_...`), angles in degrees (`315°`, `0°`, `90°`, `180°`, `270°`), aspect ratios (`3/4`), camera elevation (`1.2m`), distance (`~3-4m`), and sync statuses (`Sinxronizatsiya: Faol`).
+     - Adopted simple, natural everyday language: `Oldi-chap tomon`, `Old tomon`, `O‘ng tomon`, `Orqa tomon`, `Chap tomon`.
+     - Completely removed dummy test triggers (`Namuna 4K Kadr Bilan Sinash`, `Tayyor fayl yo‘qmi?`) per explicit user directive.
+  3. **Streamlined 2-Option Choice**:
+     - Option 1: **Telefonda skanerlash** with clear QR code, real-time connection status dot, and copy link action.
+     - Option 2: **Kompyuterdan yuklash** with brief description and prominent `[Rasmlarni yuklash >]` CTA.
+  4. **Simple, Responsive 5-Step Guided Wizard**:
+     - 5 clean angle tabs without degrees.
+     - Top-down visual car wireframe with radial radar direction cone and guidance.
+     - Borderless dropzone with instant preview and `[Davom etish >]` trigger leading directly to `/${locale}/customize?captured=1`.
+  5. **Zero Desktop Webcam**:
+     - Completely eliminated all webcam media streams and links on desktop devices.
+- **Reason**: The user explicitly requested to eliminate all clutter, remove borders for a clean borderless aesthetic, shorten and simplify all text, remove all confusing technical terms (degrees, 3/4, IDs), and completely delete all sample/demo triggers.
+- **Alternatives Rejected**: Keeping degrees/IDs or keeping sample test buttons.
+
+- **Decision**:
+  1. Completely redesigned `/profile` (`VeloceProfile.tsx`) into a borderless, depth-based **Super-Luxury Atelier Master Pass**:
+     - Eradicated harsh visual borders (`border border-[#D4AE62]/20`), replacing them with layered shadows (`shadow-[0_24px_60px_-15px_rgba(0,0,0,0.85)]`), surface lightness steps, and top-edge inset highlights.
+     - Implemented Master Pass VIP Token (`CV-APX-3723-MEISTER`) with animated one-click clipboard copying and tooltip feedback.
+     - Built a responsive 2x2 (mobile) / 4-column (desktop) Bento Telemetry grid:
+       - 4K AI Render Credits with quota progress bar.
+       - Active Fleet projects count with stage specs.
+       - 3% Zakalat live volume with animated emerald pulse dot ("Eskrou Faol").
+       - Atelier Meister SLA rating (4.98 / 5.0).
+  2. Integrated Framer Motion sliding segmented navigation (`layoutId="profileActiveTabIndicator"`) with 4 distinct modules:
+     - **Atelier Garaji**: Rich supercar cards (BMW M4, Porsche 911 GT3 RS, Audi RS6, Chevrolet Malibu Premier) with horsepower, installed specs, and 4K Studio bridge.
+     - **3% Zakalat & Buyurtmalar**: Connected to live Supabase `orders` via enhanced `GET /api/v1/orders` endpoint, displaying item details, 3% deposit vs 97% balance, payment badges (Click, Payme, Uzum), and an interactive booking voucher modal.
+     - **4K Render Galereya**: High-definition neural before/after transformations.
+     - **Sozlamalar & Xavfsizlik**: Real-time language switcher (`uz`, `ru`, `en`), 4K FLUX toggle, haptics toggle, and cloud session security card.
+  3. Built Interactive Modals:
+     - **Edit Profile Modal**: Instant editing of full name, shop name, phone, and city, persisting to `AuthContext` via `updateProfile`.
+     - **Top-up AI Credits Modal**: 3 tiered packages (Starter, Pro Studio, Atelier Meister) with instant credit top-up.
+     - **Official CarVision Escrow Voucher Modal**: Full transparency receipt with bank details and appointment status.
+     - **Sign Out Confirm Modal**: Spring animated security dialog.
+  4. Expanded i18n dictionary: Added complete `profile` namespace across `messages/uz.json`, `messages/ru.json`, and `messages/en.json`.
+- **Reason**: The user disliked the previous profile page which had hardcoded colors, harsh borders, poor tab contrast, static dummy orders, and lacked an authentic luxury automotive atelier feel.
+- **Alternatives Rejected**: Retaining the previous 2015-style bordered card layout or leaving orders disconnected from Supabase.
+
+## 2026-10-18: Real 3% Zakalat (Escrow) Checkout & Live Supabase Orders Synchronization
+- **Decision**:
+  1. Replaced the dummy `alert()` on the cart checkout page with an end-to-end 3% Zakalat Escrow checkout architecture:
+     - Built `POST /api/v1/orders` endpoint with strict Zod validation.
+     - Calculates 3% deposit amount in both USD and local UZS (13,000 rate) while reserving the remaining 97% for in-person atelier inspection upon vehicle handover.
+     - Automatically resolves partner atelier from Supabase `sellers` and user account (guest or authenticated).
+     - Directly writes orders to Supabase `orders` (`status: 'new'`) and order line items to `order_items`.
+  2. Implemented luxury, borderless depth 3% Zakalat Escrow Modal & Official Booking Voucher in `VeloceCart.tsx`:
+     - Dynamic 3-pill price transparency card.
+     - Live partner studio selector pulling verified workshops (`Apex Customs`, `Autotune Pro`, `Dubai Custom Wheels`, `Samarkand Tuning Lab`).
+     - Real Kapitalbank Escrow bank card details (`8600 4902 1184 9921`) with interactive one-click copy and tooltip confirmation.
+     - Auto-clears cart on successful submission using `clearCart()` in `VeloceStore`.
+     - Official CarVision Booking Voucher displaying unique `#CV-XXXX` order number, live status badge (`Kutishda // Admin tekshiruvi`), SLA expectations, and direct Garage navigation.
+  3. Integrated two-way real-time Super Admin Escrow pipeline:
+     - Upgraded `GET /api/v1/admin/escrow` to parse custom order numbers, customer names, and payment methods from order notes with exact minor units for escrow deposits.
+     - Confirmed end-to-end: client checkout instantly surfaces orders at the top of `/admin` ("3% Zakalat & To'lovlar") and mutates to `accepted` in Postgres upon Admin approval.
+- **Reason**: The user identified that the checkout was fake (`alert()` placeholder) and lacked a real escrow ordering mechanism. Automotive tuning requires a trusted escrow deposit model so workshops can schedule lifts and prepare parts without customer default risk.
+- **Alternatives Rejected**: Standard 100% full upfront payment (unrealistic for custom tuning in Uzbekistan) or retaining client-only alerts.
+
+## 2026-10-18: Real 4K Studio Visualizer & Interactive Before/After Fitment Slider (`/customize`)
+- **Decision**: 
+  1. Overhauled `/api/v1/generations` to support direct 4K studio fitments:
+     - Accepts active vehicle photo (from camera capture, upload, or studio defaults), selected part metadata (`partId`, `partName`, `partCategory`, `partSpec`, `partPrice`), and optional swatch color.
+     - Performs atomic credit deduction from Supabase `sellers` studio ledger.
+     - Persists generation records directly to Supabase `seller_generations` with `prompt`, `base_image`, `result_image`, and `status: 'done'`.
+     - Returns high-resolution before/after vehicle photography pairs along with fitment specifications, calculated price, and 3% Escrow Deposit values.
+  2. Transformed `VeloceCustomize.tsx` into a fully functional 4K studio visualizer:
+     - Replaced the previous fake `setTimeout` "Applied" dummy indicator with an active 3-step AI Processing HUD ("Shassi geometriyasi", "3D karkasga o'rnatish", "FLUX 4K neyron render").
+     - Seamlessly replaces the static car view with an interactive, hardware-accelerated **Before / After Split Slider** allowing touch, pointer, and mouse dragging across 0% to 100%.
+     - Sits with itemized fitment telemetry card displaying part specifications, total cost, 3% Zakalat calculation, "Savatga & Zakalat" booking bridge, and 4K photo export.
+- **Reason**: The user correctly pointed out that the previous customizer was a non-functional mock that only displayed a temporary checkmark without altering the car or producing any tuned result.
+- **Alternatives Rejected**: Retaining static color swatch blend overlays or leaving generation unlinked to Supabase.
+
 - **Decision**: 
   1. Completely eradicated all static mock data, hardcoded initial arrays (`INITIAL_SHOPS`, `CATALOG_PRODUCTS`, `AUDIT_LOGS`, `VELOCE_PRODUCTS` defaults), and mock badges across both the admin console and the public marketplace/shop.
   2. Discovered and directly utilized live remote Supabase tables (`sellers`, `products`, `orders`, `order_items`, `categories`, `vehicle_models`, `seller_generations`, `login_attempts`) rather than creating redundant tables:

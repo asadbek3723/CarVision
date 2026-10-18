@@ -69,7 +69,7 @@ export default function RegisterPage() {
       if (user.role === 'super_admin') {
         router.push(`/${locale}/admin`);
       } else {
-        router.push(`/${locale}/seller`);
+        router.push(`/${locale}`);
       }
     }
   }, [user, locale, router]);
@@ -387,6 +387,7 @@ function DetailsForm({
         password: formData.pwd,
         role: isBusiness ? 'b2b_seller' : 'b2c_user',
         fullName: formData.name.trim(),
+        country: country.name,
         shopName: isBusiness ? formData.name.trim() : undefined,
         city: country.name,
         district: isBusiness ? formData.address.trim() : undefined,

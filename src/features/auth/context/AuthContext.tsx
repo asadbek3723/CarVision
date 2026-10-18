@@ -14,45 +14,9 @@ export interface AuthContextValue {
   signIn: (identifier: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   signUp: (payload: SignUpPayload) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
-  switchDemoProfile: (role: UserRole) => void;
+  updateProfile: (updates: Partial<UserProfile>) => void;
 }
 
-export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
-  b2b_seller: {
-    id: 'a0000001-0000-0000-0000-000000000001',
-    email: 'master@apexcustoms.uz',
-    phone: '+998 90 123 45 67',
-    full_name: 'Sanjar Usmonov (Apex Customs)',
-    role: 'b2b_seller',
-    credits_balance: 40,
-    shop: {
-      id: '7f8b919d-6484-4827-86c3-16279f6bb123',
-      shop_name: 'Apex Customs Studio',
-      city: 'Tashkent',
-      district: 'Yunusobod',
-      phone: '+998 90 123 45 67',
-      address: 'Amir Temur ko‘chasi, 42',
-    },
-  },
-  b2c_user: {
-    id: 'a0000002-0000-0000-0000-000000000002',
-    email: 'bobur.malibu@gmail.com',
-    phone: '+998 97 765 43 21',
-    full_name: 'Bobur Karimov',
-    role: 'b2c_user',
-    credits_balance: 5,
-    shop: null,
-  },
-  super_admin: {
-    id: 'a0000000-0000-0000-0000-000000000000',
-    email: 'kursant410@gmail.com',
-    phone: '+998 99 999 99 99',
-    full_name: 'Chief Administrator',
-    role: 'super_admin',
-    credits_balance: 9999,
-    shop: null,
-  },
-};
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
 
@@ -120,40 +84,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthModalOpen(false);
   }, []);
 
-  const signIn = React.useCallback(async (identifier: string, _password?: string) => {
+  const signIn = React.useCallback(async (identifier: string, password?: string) => {
     setIsLoading(true);
     try {
-      // 1. Check if user typed email matching any known profile or demo
-      const idLower = identifier.toLowerCase().trim();
-      let matched: UserProfile | null = null;
-
-      if (idLower.includes('admin') || idLower.includes('kursant')) {
-        matched = DEMO_PROFILES.super_admin;
-      } else if (idLower.includes('owner') || idLower.includes('b2c') || idLower.includes('malibu')) {
-        matched = DEMO_PROFILES.b2c_user;
-      } else if (idLower.includes('apex') || idLower.includes('master') || idLower.includes('b2b') || idLower.includes('sanjar')) {
-        matched = DEMO_PROFILES.b2b_seller;
-      } else {
-        // Create authenticated profile for the given email/phone
-        const isShop = !idLower.includes('owner');
-        matched = {
-          id: `u-${Date.now()}`,
-          email: idLower.includes('@') ? idLower : `${idLower}@carvision.uz`,
-          phone: idLower.startsWith('+') ? idLower : `+998 ${idLower}`,
-          full_name: isShop ? 'Verified Tuning Master' : 'Car Owner',
-          role: isShop ? 'b2b_seller' : 'b2c_user',
-          credits_balance: isShop ? 40 : 5,
-          shop: isShop ? {
-            id: `shop-${Date.now()}`,
-            shop_name: 'Partner Workshop',
-            city: 'Tashkent',
-            district: 'Yunusobod',
-          } : null,
-        };
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'Sign in failed' };
       }
 
-      setUser(matched);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(matched));
+      setUser(data.user);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
       setIsAuthModalOpen(false);
       return { success: true };
     } catch (err: unknown) {
@@ -166,23 +111,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = React.useCallback(async (payload: SignUpPayload) => {
     setIsLoading(true);
     try {
-      const newProfile: UserProfile = {
-        id: `u-${Date.now()}`,
-        email: payload.identifier.includes('@') ? payload.identifier : `${payload.identifier}@carvision.uz`,
-        phone: payload.identifier.startsWith('+') ? payload.identifier : `+998 ${payload.identifier}`,
-        full_name: payload.fullName || 'New Tuning Partner',
-        role: payload.role,
-        credits_balance: payload.role === 'b2b_seller' ? 40 : 10,
-        shop: payload.role === 'b2b_seller' ? {
-          id: `shop-${Date.now()}`,
-          shop_name: payload.shopName || 'Customs Workshop',
-          city: payload.city || 'Tashkent',
-          district: payload.district || 'Yunusobod',
-        } : null,
-      };
+      const res = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'Registration failed' };
+      }
 
-      setUser(newProfile);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newProfile));
+      if (typeof document !== 'undefined' && data.user.preferred_language) {
+        document.cookie = `NEXT_LOCALE=${data.user.preferred_language}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+
+      setUser(data.user);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
       setIsAuthModalOpen(false);
       return { success: true };
     } catch (err: unknown) {
@@ -203,10 +147,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const switchDemoProfile = React.useCallback((role: UserRole) => {
-    const target = DEMO_PROFILES[role];
-    setUser(target);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(target));
+  const updateProfile = React.useCallback((updates: Partial<UserProfile>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated: UserProfile = {
+        ...prev,
+        ...updates,
+        shop: updates.shop !== undefined ? updates.shop : (prev.shop ?? null),
+      };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      }
+      if (updates.preferred_language && typeof document !== 'undefined') {
+        document.cookie = `NEXT_LOCALE=${updates.preferred_language}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+      return updated;
+    });
   }, []);
 
   return (
@@ -221,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signUp,
         signOut,
-        switchDemoProfile,
+        updateProfile,
       }}
     >
       {children}

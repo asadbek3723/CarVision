@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Smartphone, Check, Copy } from 'lucide-react';
+import { LuxuryQrCode } from '@/components/ui/LuxuryQrCode';
 
 export interface QrCameraBridgeModalProps {
   isOpen: boolean;
@@ -24,11 +25,6 @@ export function QrCameraBridgeModal({
     ? `${window.location.origin}/camera-bridge/${bridgeToken}?session=${sessionId}`
     : `/camera-bridge/${bridgeToken}`;
 
-  // Simple pure SVG QR code placeholder generator
-  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-    bridgeUrl
-  )}&bgcolor=12-14-1A&color=19-D3-FF`;
-
   const handleCopy = () => {
     navigator.clipboard.writeText(bridgeUrl);
     setCopied(true);
@@ -44,11 +40,11 @@ export function QrCameraBridgeModal({
     >
       <div className="flex flex-col items-center justify-center p-4">
         {/* QR Code Container */}
-        <div className="p-4 rounded-2xl bg-[#0A0B0F] border border-[#232733] mb-6 flex items-center justify-center shadow-lg">
-          <img
-            src={qrApiUrl}
-            alt="Camera Bridge QR Code"
-            className="w-48 h-48 rounded-lg"
+        <div className="p-4 rounded-2xl bg-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 flex items-center justify-center">
+          <LuxuryQrCode
+            value={bridgeUrl}
+            size={192}
+            className="rounded-xl"
           />
         </div>
 

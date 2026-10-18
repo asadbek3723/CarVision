@@ -8,51 +8,282 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronRight,
+  Check,
+  Sparkles,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCameraStream } from '../hooks/useCameraStream';
 import { compressFrameToWebP, type CompressResult } from '../lib/image-compressor';
-import { playShutter, vibrate } from '../lib/fx';
+import { playShutter, playLock, vibrate } from '../lib/fx';
 
 export interface ScanAngle {
   id: number;
-  key: string;
-  label: string;
-  name: string;
-  deg: number;
+  key: 'front' | 'right' | 'rear' | 'left';
+  shortTitle: string;
+  title: string;
+  instruction: string;
+  direction: 'top' | 'right' | 'bottom' | 'left';
+  coneAngle: number;
 }
 
-// Exactly 4 cardinal directions matching reference mockup 1:1 (Front, Side, Rear, Driver Profile) + 3/4
+/**
+ * 4 Mandatory Cardinal Angles strictly matching the 4-way 3D/top-down Car Compass
+ * in the reference design (Top = Front, Right = Right Side, Bottom = Rear, Left = Left Side).
+ * The user MUST capture all 4 angles in strict program-controlled sequence.
+ */
 export const SCAN_5_ANGLES: ScanAngle[] = [
-  { id: 1, key: 'front', label: '0°', name: 'Old tomon (Front)', deg: 0 },
-  { id: 2, key: 'side', label: '90°', name: 'O‘ng tomon (Side)', deg: 90 },
-  { id: 3, key: 'rear', label: '180°', name: 'Orqa tomon (Rear)', deg: 180 },
-  { id: 4, key: 'left', label: '270°', name: 'Chap tomon (Left)', deg: 270 },
-  { id: 5, key: 'front-left', label: '315°', name: 'Oldi-chap 3/4', deg: 315 },
+  {
+    id: 1,
+    key: 'front',
+    shortTitle: 'Oldi',
+    title: 'Old tomon',
+    instruction: 'Mashinaning OLD TOMONINI oltin yo‘riqnoma ichiga to‘g‘rilab suratga oling',
+    direction: 'top',
+    coneAngle: 0,
+  },
+  {
+    id: 2,
+    key: 'right',
+    shortTitle: 'O‘ng',
+    title: 'O‘ng tomon',
+    instruction: 'Mashinaning O‘NG YON TOMONINI ramka markaziga to‘g‘rilab suratga oling',
+    direction: 'right',
+    coneAngle: 90,
+  },
+  {
+    id: 3,
+    key: 'rear',
+    shortTitle: 'Orqa',
+    title: 'Orqa tomon',
+    instruction: 'Mashinaning ORQA TOMONINI oltin yo‘riqnoma ichiga to‘g‘rilab suratga oling',
+    direction: 'bottom',
+    coneAngle: 180,
+  },
+  {
+    id: 4,
+    key: 'left',
+    shortTitle: 'Chap',
+    title: 'Chap tomon',
+    instruction: 'Mashinaning CHAP YON TOMONINI ramka markaziga to‘g‘rilab suratga oling',
+    direction: 'left',
+    coneAngle: 270,
+  },
 ];
 
+export interface LuxuryCarCompassProps {
+  activeAngleId: number;
+  completedAngles: number[];
+  size?: 'sm' | 'md' | 'lg';
+}
+
+/**
+ * 1:1 Reference Program-Driven 3D/Top-Down Car Compass.
+ * IMPORTANT: Directional indicators (^, >, v, <) are strictly non-clickable (pointer-events-none).
+ * The program dictates which side of the vehicle must be photographed next.
+ */
+export function LuxuryCarCompass({
+  activeAngleId,
+  completedAngles,
+  size = 'md',
+}: LuxuryCarCompassProps) {
+  const activeAngle =
+    SCAN_5_ANGLES.find((a) => a.id === activeAngleId) || SCAN_5_ANGLES[0]!;
+
+  const isTopActive = activeAngle.direction === 'top';
+  const isRightActive = activeAngle.direction === 'right';
+  const isBottomActive = activeAngle.direction === 'bottom';
+  const isLeftActive = activeAngle.direction === 'left';
+
+  const isTopDone = completedAngles.includes(1);
+  const isRightDone = completedAngles.includes(2);
+  const isBottomDone = completedAngles.includes(3);
+  const isLeftDone = completedAngles.includes(4);
+
+  const containerSizeClass =
+    size === 'lg'
+      ? 'h-56 w-56 sm:h-64 sm:w-64'
+      : size === 'sm'
+      ? 'h-32 w-32 sm:h-36 sm:w-36'
+      : 'h-40 w-40 sm:h-48 sm:w-48 md:h-56 md:w-56 lg:h-64 lg:w-64';
+
+  const carSizeClass =
+    size === 'lg'
+      ? 'h-40 w-24 sm:h-44 sm:w-28'
+      : size === 'sm'
+      ? 'h-22 w-14 sm:h-24 sm:w-16'
+      : 'h-28 w-18 sm:h-34 sm:w-22 md:h-40 md:w-26 lg:h-44 lg:w-28';
+
+  return (
+    <div
+      className={`relative ${containerSizeClass} flex items-center justify-center select-none pointer-events-none`}
+      aria-label={`Kompas yo‘riqnomasi: ${activeAngle.title}`}
+    >
+      {/* Concentric Orbital Rings Matching Reference Image 1:1 */}
+      <svg
+        viewBox="0 0 240 240"
+        className="absolute inset-0 h-full w-full overflow-visible pointer-events-none"
+        fill="none"
+      >
+        <defs>
+          <radialGradient id="compass-center-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#D4AE62" stopOpacity="0.12" />
+            <stop offset="65%" stopColor="#D4AE62" stopOpacity="0.03" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Subtle Ambient Center Halo */}
+        <circle cx="120" cy="120" r="108" fill="url(#compass-center-glow)" />
+
+        {/* Outer Fine Orbital Ring passing cleanly through the 4 directional badges */}
+        <circle
+          cx="120"
+          cy="120"
+          r="92"
+          stroke="rgba(255, 255, 255, 0.07)"
+          strokeWidth="1"
+        />
+
+        {/* Inner Fine Orbital Ring */}
+        <circle
+          cx="120"
+          cy="120"
+          r="72"
+          stroke="rgba(212, 174, 98, 0.12)"
+          strokeWidth="1"
+        />
+      </svg>
+
+      {/* Directional Golden Bloom Behind Active Badge (Matches Reference Top Gold Halo 1:1) */}
+      <div
+        className={`absolute pointer-events-none transition-all duration-500 rounded-full blur-xl ${
+          isTopActive
+            ? '-top-1 start-1/2 -translate-x-1/2 w-24 h-12 bg-[#E5C175]/45'
+            : isRightActive
+            ? 'top-1/2 -end-1 -translate-y-1/2 w-12 h-24 bg-[#E5C175]/45'
+            : isBottomActive
+            ? '-bottom-1 start-1/2 -translate-x-1/2 w-24 h-12 bg-[#E5C175]/45'
+            : 'top-1/2 -start-1 -translate-y-1/2 w-12 h-24 bg-[#E5C175]/45'
+        }`}
+      />
+
+      {/* Center Top-Down Photorealistic Luxury Coupe (Fixed Upright so Arrows Match Car Sides 1:1) */}
+      <div className={`relative z-10 ${carSizeClass} flex items-center justify-center`}>
+        <img
+          src="/images/camera/topdown_coupe.png"
+          alt="3D Avtomobil Kompas Modeli"
+          className="h-full w-full object-contain drop-shadow-[0_18px_36px_rgba(0,0,0,0.98)] select-none pointer-events-none"
+        />
+      </div>
+
+      {/* 1. TOP INDICATOR (FRONT / OLDI) — Strictly Non-Clickable */}
+      <div
+        className={`absolute top-1.5 start-1/2 -translate-x-1/2 h-7 w-12 sm:h-8 sm:w-14 md:h-9 md:w-16 rounded-2xl flex items-center justify-center transition-all duration-500 pointer-events-none ${
+          isTopActive
+            ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_-4px_22px_rgba(229,193,117,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-105'
+            : isTopDone
+            ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
+            : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
+        }`}
+      >
+        {isTopDone && !isTopActive ? (
+          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
+        ) : (
+          <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.6]" />
+        )}
+      </div>
+
+      {/* 2. RIGHT INDICATOR (RIGHT SIDE / O'NG) — Strictly Non-Clickable */}
+      <div
+        className={`absolute top-1/2 end-1.5 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-11 md:w-11 rounded-full flex items-center justify-center transition-all duration-500 pointer-events-none ${
+          isRightActive
+            ? 'bg-gradient-to-s from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[4px_0_22px_rgba(229,193,117,0.85),inset_-1.5px_0_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-105'
+            : isRightDone
+            ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
+            : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
+        }`}
+      >
+        {isRightDone && !isRightActive ? (
+          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
+        ) : (
+          <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.4]" />
+        )}
+      </div>
+
+      {/* 3. BOTTOM INDICATOR (REAR / ORQA) — Strictly Non-Clickable */}
+      <div
+        className={`absolute bottom-1.5 start-1/2 -translate-x-1/2 h-7 w-10 sm:h-8 sm:w-12 md:h-9 md:w-13 rounded-2xl flex items-center justify-center transition-all duration-500 pointer-events-none ${
+          isBottomActive
+            ? 'bg-gradient-to-t from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_4px_22px_rgba(229,193,117,0.85),inset_0_-1.5px_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-105'
+            : isBottomDone
+            ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
+            : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
+        }`}
+      >
+        {isBottomDone && !isBottomActive ? (
+          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
+        ) : (
+          <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.4]" />
+        )}
+      </div>
+
+      {/* 4. LEFT INDICATOR (LEFT SIDE / CHAP) — Strictly Non-Clickable */}
+      <div
+        className={`absolute top-1/2 start-1.5 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-11 md:w-11 rounded-full flex items-center justify-center transition-all duration-500 pointer-events-none ${
+          isLeftActive
+            ? 'bg-gradient-to-e from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[-4px_0_22px_rgba(229,193,117,0.85),inset_1.5px_0_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-105'
+            : isLeftDone
+            ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
+            : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
+        }`}
+      >
+        {isLeftDone && !isLeftActive ? (
+          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
+        ) : (
+          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.4]" />
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface SmartCameraLandscapeViewProps {
-  onPhotoCaptured: (result: CompressResult, angleId: number) => void;
+  onPhotoCaptured: (
+    result: CompressResult,
+    angleId: number,
+    allCaptured?: Record<number, CompressResult>
+  ) => void;
+  onAllPhotosCaptured?: (allCaptured: Record<number, CompressResult>) => void;
   onClose?: () => void;
   className?: string;
 }
 
 export function SmartCameraLandscapeView({
   onPhotoCaptured,
+  onAllPhotosCaptured,
   onClose,
   className = '',
 }: SmartCameraLandscapeViewProps) {
   const { videoRef, isReady, permissionDenied, startCamera } = useCameraStream();
-  const [activeAngleId, setActiveAngleId] = React.useState<number>(1);
-  const [completedAngles, setCompletedAngles] = React.useState<number[]>([]);
+
+  // Strictly sequential program-controlled step index (0 -> 1 -> 2 -> 3)
+  const [currentStepIndex, setCurrentStepIndex] = React.useState<number>(0);
+  const [capturedResults, setCapturedResults] = React.useState<Record<number, CompressResult>>({});
   const [isCapturing, setIsCapturing] = React.useState(false);
   const [flash, setFlash] = React.useState(false);
+  const [stepFeedback, setStepFeedback] = React.useState<string | null>(null);
 
-  const activeAngle = SCAN_5_ANGLES.find((a) => a.id === activeAngleId) || (SCAN_5_ANGLES[0] as ScanAngle);
+  const completedAngles = React.useMemo(
+    () => Object.keys(capturedResults).map(Number),
+    [capturedResults]
+  );
 
-  // Orientation detection
+  const activeAngle =
+    SCAN_5_ANGLES[currentStepIndex] || SCAN_5_ANGLES[0]!;
+
+  // Orientation detection: Portrait vs Landscape
   const [isPortrait, setIsPortrait] = React.useState<boolean>(false);
 
-  // Start real live camera stream on mount
   React.useEffect(() => {
     startCamera();
   }, [startCamera]);
@@ -68,14 +299,24 @@ export function SmartCameraLandscapeView({
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
+    const mediaQuery =
+      typeof window !== 'undefined' && window.matchMedia
+        ? window.matchMedia('(orientation: portrait)')
+        : null;
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      setIsPortrait(e.matches);
+    };
+    mediaQuery?.addEventListener?.('change', handleMediaChange);
+
     return () => {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
+      mediaQuery?.removeEventListener?.('change', handleMediaChange);
     };
   }, []);
 
   const handleShutterClick = async () => {
-    if (isCapturing) return;
+    if (isCapturing || isPortrait) return;
     setIsCapturing(true);
     setFlash(true);
 
@@ -89,39 +330,63 @@ export function SmartCameraLandscapeView({
     setTimeout(async () => {
       setFlash(false);
       try {
-        if (videoRef.current) {
-          const result = await compressFrameToWebP(videoRef.current, 2048, 0.88);
-          setCompletedAngles((prev) => (prev.includes(activeAngleId) ? prev : [...prev, activeAngleId]));
-          onPhotoCaptured(result, activeAngleId);
+        let frameResult: CompressResult | null = null;
+
+        if (videoRef.current && videoRef.current.videoWidth > 0) {
+          frameResult = await compressFrameToWebP(videoRef.current, 2048, 0.88);
         } else {
-          // Direct canvas frame fallback
           const canvas = document.createElement('canvas');
           canvas.width = 1920;
           canvas.height = 1080;
           const ctx = canvas.getContext('2d');
           if (ctx) {
-            ctx.fillStyle = '#07080B';
+            const grad = ctx.createRadialGradient(960, 540, 120, 960, 540, 960);
+            grad.addColorStop(0, '#1B1E28');
+            grad.addColorStop(1, '#07080B');
+            ctx.fillStyle = grad;
             ctx.fillRect(0, 0, 1920, 1080);
           }
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const frame: CompressResult = {
-                  blob,
-                  width: 1920,
-                  height: 1080,
-                  sizeBytes: blob.size,
-                };
-                setCompletedAngles((prev) => (prev.includes(activeAngleId) ? prev : [...prev, activeAngleId]));
-                onPhotoCaptured(frame, activeAngleId);
-              }
-            },
-            'image/webp',
-            0.88
+          const blob = await new Promise<Blob | null>((res) =>
+            canvas.toBlob((b) => res(b), 'image/webp', 0.88)
           );
+          if (blob) {
+            frameResult = {
+              blob,
+              width: 1920,
+              height: 1080,
+              sizeBytes: blob.size,
+            };
+          }
+        }
+
+        if (frameResult) {
+          const updatedMap: Record<number, CompressResult> = {
+            ...capturedResults,
+            [activeAngle.id]: frameResult,
+          };
+          setCapturedResults(updatedMap);
+
+          // Notify parent of this single angle capture
+          onPhotoCaptured(frameResult, activeAngle.id, updatedMap);
+
+          const nextStepIndex = currentStepIndex + 1;
+          if (nextStepIndex < SCAN_5_ANGLES.length) {
+            const nextAngle = SCAN_5_ANGLES[nextStepIndex]!;
+            setStepFeedback(
+              `${activeAngle.title} olindi (${nextStepIndex}/${SCAN_5_ANGLES.length}) — Endi: ${nextAngle.title}`
+            );
+            setCurrentStepIndex(nextStepIndex);
+            setTimeout(() => setStepFeedback(null), 2200);
+          } else {
+            // All 4 required angles have been captured!
+            playLock();
+            vibrate([40, 60, 40]);
+            setStepFeedback('Barcha 4 ta majburiy rakurs olindi!');
+            onAllPhotosCaptured?.(updatedMap);
+          }
         }
       } catch {
-        // Fallback
+        // Ignore capture error
       } finally {
         setIsCapturing(false);
       }
@@ -130,295 +395,352 @@ export function SmartCameraLandscapeView({
 
   return (
     <div
-      className={`relative w-full h-full min-h-0 bg-black select-none overflow-hidden text-white ${className}`}
+      className={`relative w-full h-full min-h-0 bg-[#050507] select-none overflow-hidden text-white ${className}`}
     >
-      {/* 1. REAL LIVE CAMERA VIEWPORT (100% Real Live Stream, Zero Fake Images) */}
-      <div className="absolute inset-0 z-0 bg-black">
-        {/* Real Live Video Stream */}
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover"
-        />
+      {/* =====================================================================
+          MANDATORY HORIZONTAL (LANDSCAPE) LOCK OVERLAY (WHEN PHONE IS VERTICAL)
+          - Strictly buttonless ("tugma bo'lmasin")
+          - Automatically disappears when phone rotates to landscape
+          - Automatically reappears if phone rotates back to portrait
+          ===================================================================== */}
+      <AnimatePresence>
+        {isPortrait && (
+          <motion.div
+            key="mandatory-landscape-lock"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.04 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-[#050507] px-7 py-10 text-center select-none overflow-hidden"
+          >
+            {/* Ambient Luxury Gold Radial Glow */}
+            <div className="pointer-events-none absolute top-1/2 start-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-[#D4AE62]/12 blur-[110px]" />
 
-        {/* Loading / Initializing Indicator */}
-        {!isReady && !permissionDenied && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/90 p-6 text-center">
-            <div className="relative mb-4">
-              <div className="h-14 w-14 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin" />
+            {/* Animated 3D-Style Phone Rotation Stage */}
+            <div className="relative mb-10 flex h-56 w-56 items-center justify-center">
+              <div className="absolute inset-0 rounded-full border border-[#D4AE62]/15 animate-pulse" />
+              <div className="absolute inset-5 rounded-full border border-dashed border-[#D4AE62]/25" />
+
+              <svg
+                viewBox="0 0 220 220"
+                className="absolute inset-0 h-full w-full pointer-events-none"
+                fill="none"
+              >
+                <path
+                  d="M 110 22 A 88 88 0 0 0 22 110"
+                  stroke="url(#rotate-trail-grad)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray="6 6"
+                />
+                <path
+                  d="M 198 110 A 88 88 0 0 1 110 198"
+                  stroke="url(#rotate-trail-grad)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray="6 6"
+                />
+                <defs>
+                  <linearGradient id="rotate-trail-grad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#F2D79E" stopOpacity="0.9" />
+                    <stop offset="100%" stopColor="#D4AE62" stopOpacity="0.1" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Animated Rotating Smartphone Frame (0deg Portrait -> -90deg Landscape) */}
+              <motion.div
+                animate={{
+                  rotate: [0, -90, -90, 0],
+                  scale: [0.96, 1.04, 1.04, 0.96],
+                }}
+                transition={{
+                  duration: 3.4,
+                  times: [0, 0.42, 0.78, 1],
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="relative z-10 flex h-36 w-20 flex-col items-center justify-between rounded-[22px] bg-gradient-to-b from-[#1C1E26] to-[#0B0C10] p-2 ring-2 ring-[#E5C175] shadow-[0_0_40px_rgba(212,174,98,0.45)]"
+              >
+                <div className="h-1 w-6 rounded-full bg-[#E5C175]/50" />
+                <div className="relative flex h-full w-full items-center justify-center my-1.5 rounded-xl bg-[#07080B] overflow-hidden">
+                  <div className="absolute top-1.5 start-1.5 h-3 w-3 border-t-2 border-s-2 border-[#E5C175] rounded-ss-sm" />
+                  <div className="absolute top-1.5 end-1.5 h-3 w-3 border-t-2 border-e-2 border-[#E5C175] rounded-se-sm" />
+                  <div className="absolute bottom-1.5 start-1.5 h-3 w-3 border-b-2 border-s-2 border-[#E5C175] rounded-es-sm" />
+                  <div className="absolute bottom-1.5 end-1.5 h-3 w-3 border-b-2 border-e-2 border-[#E5C175] rounded-ee-sm" />
+                  <Camera className="h-5 w-5 text-[#E5C175]" />
+                </div>
+                <div className="h-1 w-8 rounded-full bg-white/30" />
+              </motion.div>
             </div>
-            <p className="font-display text-sm tracking-widest text-[#EDE8DF] uppercase">
-              Kamera ishga tushirilmoqda...
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Brauzerda kameraga ruxsat bering
-            </p>
-          </div>
-        )}
 
-        {/* Permission Denied Fallback */}
-        {permissionDenied && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/95 p-6 text-center">
-            <div className="h-14 w-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4 text-red-400">
-              <Camera className="h-7 w-7" />
+            {/* Luxury Typography Prompt (Zero Buttons!) */}
+            <div className="relative z-10 max-w-xs space-y-3">
+              <p className="font-display text-[10px] font-semibold tracking-[0.35em] text-[#E5C175] uppercase">
+                Smart Camera · Majburiy Rejim
+              </p>
+
+              <h2 className="font-display text-xl sm:text-2xl font-light tracking-wide text-white leading-snug">
+                Telefonni gorizontal holatga aylantiring
+              </h2>
+
+              <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
+                Avtomobilni to‘liq va aniq o‘lchamda suratga olish uchun telefoningizni yotiq (gorizontal) holatga burang. Aylantirganingizda kamera avtomatik ochiladi.
+              </p>
             </div>
-            <p className="font-display text-sm font-semibold tracking-wider text-white uppercase">
-              Kameraga ruxsat berilmadi
-            </p>
-            <p className="mt-1 max-w-xs text-xs text-neutral-400 leading-relaxed">
-              Kamera tasvirini ko‘rish uchun brauzer sozlamalarida kameraga ruxsat bering.
-            </p>
-            <button
-              type="button"
-              onClick={startCamera}
-              className="mt-4 rounded-xl bg-gold-gradient px-5 py-2.5 text-xs font-semibold text-black uppercase tracking-wider shadow-gold hover:brightness-110 active:scale-95 transition cursor-pointer"
-            >
-              Qayta urinish
-            </button>
-          </div>
+
+            {/* Passive Status Indicator (Non-clickable) */}
+            <div className="relative z-10 mt-8 inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium text-[#E5C175] ring-1 ring-[#D4AE62]/25 pointer-events-none">
+              <span className="h-2 w-2 rounded-full bg-[#E5C175] animate-ping" />
+              <span>Gorizontal holatga aylanishi kutilmoqda...</span>
+            </div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* Subtle Vignette on edges only so HUD elements pop */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/35" />
-      </div>
-
-      {/* 2. Flash Shutter Effect */}
+      {/* =====================================================================
+          2. FLASH SHUTTER EFFECT
+          ===================================================================== */}
       {flash && (
         <div className="pointer-events-none absolute inset-0 z-50 bg-white transition-opacity duration-200" />
       )}
 
-      {/* 3. ADAPTIVE HUD: LANDSCAPE (Desktop / Laptops / Landscape Phones) vs PORTRAIT (Smartphones) */}
-      {!isPortrait ? (
-        /* LANDSCAPE MODE (3-Column Layout: Left Compass | Center Viewport | Right Shutter) */
-        <div className="relative z-20 w-full h-full flex flex-col justify-between">
-          {/* Top-Left Minimal Back Button */}
-          <div className="absolute top-3 start-3 sm:top-5 sm:start-6 z-40">
+      {/* =====================================================================
+          3. 1:1 REFERENCE LANDSCAPE ARCHITECTURE (3-ZONE PURE BLACK MATTE LAYOUT)
+          Left: Back Button + Program-Driven 3D Car Compass
+          Center: Golden Framed Camera Viewport + 4 Corner Brackets + Perspective Floor Grid
+          Right: Luxury White & Gold Ring Shutter Button
+          ===================================================================== */}
+      <div className="relative z-20 flex h-full w-full items-center justify-between gap-2 sm:gap-4 md:gap-6 px-3 sm:px-5 md:px-7 py-2.5 sm:py-4">
+        {/* LEFT COLUMN: Top-Start Back Button & Center 3D Car Compass */}
+        <div className="relative flex h-full w-[20%] min-w-[138px] max-w-[220px] shrink-0 flex-col items-center justify-center">
+          {/* Top-Start Back Button (Matches Reference Image 1:1) */}
+          <div className="absolute top-1 start-1 z-30">
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Orqaga"
-                className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/45 backdrop-blur-xl text-white border border-white/10 hover:bg-black/70 active:scale-95 transition cursor-pointer shadow-lg"
+                className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-[#15161B] text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_24px_rgba(0,0,0,0.8)] hover:bg-[#1E2028] hover:text-white active:scale-95 transition cursor-pointer"
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             )}
           </div>
 
-          <div className="relative w-full h-full flex items-center justify-between px-2 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4 gap-2 sm:gap-4">
-            {/* LEFT CONTROLLER: 360° Car Alignment Compass (Dynamically Scaled) */}
-            <div className="flex flex-col items-center justify-center shrink-0">
-              <div className="relative h-36 w-36 sm:h-44 sm:w-44 md:h-56 md:w-56 lg:h-64 lg:w-64 flex items-center justify-center">
-                {/* Subtle Outer Orbital Ring */}
-                <div className="absolute inset-1 sm:inset-2 rounded-full border border-white/10" />
+          {/* Center: Program-Controlled 3D Car Compass (Non-clickable arrows!) */}
+          <div className="mt-6 flex items-center justify-center">
+            <LuxuryCarCompass
+              activeAngleId={activeAngle.id}
+              completedAngles={completedAngles}
+            />
+          </div>
+        </div>
 
-                {/* Glowing Golden Arc behind active direction at the top */}
-                {activeAngleId === 1 && (
-                  <div className="absolute top-1 sm:top-2 start-1/2 -translate-x-1/2 w-20 sm:w-24 md:w-28 lg:w-32 h-10 sm:h-12 md:h-14 lg:h-16 border-t-[2.5px] border-[#D4AE62] rounded-t-full shadow-[0_-6px_24px_rgba(212,174,98,0.85)] pointer-events-none transition-all duration-300" />
-                )}
+        {/* CENTER COLUMN: Framed Camera Viewport with Golden Corner Brackets & Perspective Floor Grid */}
+        <div className="relative flex-1 h-[90%] sm:h-[92%] min-w-0 flex items-center justify-center">
+          <div className="relative w-full h-full rounded-[22px] sm:rounded-[28px] md:rounded-[32px] overflow-hidden bg-[#0A0B0F] ring-[1.5px] ring-[#D4AE62]/65 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_24px_rgba(212,174,98,0.14)]">
+            {/* Live Camera Stream Contained Strictly Inside Center Frame */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
 
-                {/* Top-Down Photorealistic Sedan (100% Transparent PNG, Animated Rotation) */}
-                <div className="relative z-10 h-24 w-16 sm:h-32 sm:w-22 md:h-44 md:w-28 lg:h-52 lg:w-34 flex items-center justify-center">
-                  <img
-                    src="/images/camera/topdown_coupe.png"
-                    alt="Top-down Sedan"
-                    style={{
-                      transform: `rotate(${activeAngle.deg}deg)`,
-                      transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                    className="h-full w-full object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.95)] select-none pointer-events-none"
-                  />
+            {/* Camera Initializing Overlay */}
+            {!isReady && !permissionDenied && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#08090C]/90 p-6 text-center">
+                <div className="h-12 w-12 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin mb-3" />
+                <p className="font-display text-xs sm:text-sm tracking-widest text-[#EDE8DF] uppercase">
+                  Kamera ishga tushirilmoqda...
+                </p>
+              </div>
+            )}
+
+            {/* Permission Denied Fallback */}
+            {permissionDenied && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#08090C]/95 p-6 text-center">
+                <div className="h-12 w-12 rounded-2xl bg-red-500/10 ring-1 ring-red-500/25 flex items-center justify-center mb-3 text-red-400">
+                  <Camera className="h-6 w-6" />
                 </div>
-
-                {/* 1. Top Direction Button (Front - 0°) */}
+                <p className="font-display text-xs sm:text-sm font-semibold tracking-wider text-white uppercase">
+                  Kameraga ruxsat berilmadi
+                </p>
+                <p className="mt-1 max-w-xs text-[11px] sm:text-xs text-neutral-400 leading-relaxed">
+                  Avtomobilni suratga olish uchun brauzerda kameraga ruxsat bering.
+                </p>
                 <button
                   type="button"
-                  onClick={() => setActiveAngleId(1)}
-                  aria-label="Old tomon (Front)"
-                  className={`absolute top-0.5 sm:top-1 start-1/2 -translate-x-1/2 -translate-y-1/2 h-7 w-12 sm:h-8 sm:w-14 md:h-9 md:w-16 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 cursor-pointer ${
-                    activeAngleId === 1
-                      ? 'bg-neutral-900/90 border border-[#D4AE62]/80 text-[#E5C175] shadow-[0_0_20px_rgba(212,174,98,0.75)] scale-105'
-                      : 'bg-neutral-900/80 text-neutral-400 border border-white/10 backdrop-blur-md hover:border-[#D4AE62]/40'
-                  }`}
+                  onClick={startCamera}
+                  className="mt-4 rounded-xl bg-gold-gradient px-5 py-2 text-xs font-semibold text-black uppercase tracking-wider shadow-gold hover:brightness-110 active:scale-95 transition cursor-pointer"
                 >
-                  <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 stroke-[2.5] sm:stroke-[3]" />
-                </button>
-
-                {/* 2. Left Direction Button (Driver Profile - 270°) */}
-                <button
-                  type="button"
-                  onClick={() => setActiveAngleId(4)}
-                  aria-label="Chap tomon (Left)"
-                  className={`absolute top-1/2 start-0.5 sm:start-1 -translate-x-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 md:h-11 md:w-11 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer ${
-                    activeAngleId === 4
-                      ? 'bg-neutral-900/90 border border-[#D4AE62]/80 text-[#E5C175] shadow-[0_0_20px_rgba(212,174,98,0.75)] scale-105'
-                      : 'bg-neutral-900/80 text-neutral-400 border border-white/10 backdrop-blur-md hover:text-white'
-                  }`}
-                >
-                  <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2] sm:stroke-[2.5]" />
-                </button>
-
-                {/* 3. Right Direction Button (Passenger Profile - 90°) */}
-                <button
-                  type="button"
-                  onClick={() => setActiveAngleId(2)}
-                  aria-label="O‘ng tomon (Right)"
-                  className={`absolute top-1/2 end-0.5 sm:end-1 translate-x-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 md:h-11 md:w-11 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer ${
-                    activeAngleId === 2
-                      ? 'bg-neutral-900/90 border border-[#D4AE62]/80 text-[#E5C175] shadow-[0_0_20px_rgba(212,174,98,0.75)] scale-105'
-                      : 'bg-neutral-900/80 text-neutral-400 border border-white/10 backdrop-blur-md hover:text-white'
-                  }`}
-                >
-                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2] sm:stroke-[2.5]" />
-                </button>
-
-                {/* 4. Bottom Direction Button (Rear - 180°) */}
-                <button
-                  type="button"
-                  onClick={() => setActiveAngleId(3)}
-                  aria-label="Orqa tomon (Rear)"
-                  className={`absolute bottom-0.5 sm:bottom-1 start-1/2 -translate-x-1/2 translate-y-1/2 h-7 w-10 sm:h-8 sm:w-11 md:h-9 md:w-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 cursor-pointer ${
-                    activeAngleId === 3
-                      ? 'bg-neutral-900/90 border border-[#D4AE62]/80 text-[#E5C175] shadow-[0_4px_20px_rgba(212,174,98,0.75)] scale-105'
-                      : 'bg-neutral-900/80 text-neutral-400 border border-white/10 backdrop-blur-md hover:text-white'
-                  }`}
-                >
-                  <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2] sm:stroke-[2.5]" />
+                  Qayta urinish
                 </button>
               </div>
-            </div>
+            )}
 
-            {/* CENTER VIEWPORT: Golden Rounded Outer Frame & 4 Corner Brackets (OCCUPIES MAXIMUM SPACE!) */}
-            <div className="relative flex-1 h-[90%] sm:h-[94%] md:h-[96%] mx-1 sm:mx-3 md:mx-6 flex items-center justify-center">
-              <div className="relative w-full h-full rounded-[24px] sm:rounded-[32px] md:rounded-[40px] border-[1.5px] sm:border-2 border-[#D4AE62]/65 shadow-[0_0_32px_rgba(212,174,98,0.18)] flex items-center justify-center overflow-hidden">
-                {/* 4 Bright Gold Corner Brackets */}
-                <div className="absolute top-2 start-2 sm:top-3 sm:start-3 h-8 w-8 sm:h-12 sm:w-12 border-t-[3px] sm:border-t-[4px] border-s-[3px] sm:border-s-[4px] border-[#F2D79E] rounded-ss-xl sm:rounded-ss-2xl drop-shadow-[0_0_12px_rgba(242,215,158,0.9)] pointer-events-none" />
-                <div className="absolute top-2 end-2 sm:top-3 sm:end-3 h-8 w-8 sm:h-12 sm:w-12 border-t-[3px] sm:border-t-[4px] border-e-[3px] sm:border-e-[4px] border-[#F2D79E] rounded-se-xl sm:rounded-se-2xl drop-shadow-[0_0_12px_rgba(242,215,158,0.9)] pointer-events-none" />
-                <div className="absolute bottom-2 start-2 sm:bottom-3 sm:start-3 h-8 w-8 sm:h-12 sm:w-12 border-b-[3px] sm:border-b-[4px] border-s-[3px] sm:border-s-[4px] border-[#F2D79E] rounded-es-xl sm:rounded-es-2xl drop-shadow-[0_0_12px_rgba(242,215,158,0.9)] pointer-events-none" />
-                <div className="absolute bottom-2 end-2 sm:bottom-3 sm:end-3 h-8 w-8 sm:h-12 sm:w-12 border-b-[3px] sm:border-b-[4px] border-e-[3px] sm:border-e-[4px] border-[#F2D79E] rounded-ee-xl sm:rounded-ee-2xl drop-shadow-[0_0_12px_rgba(242,215,158,0.9)] pointer-events-none" />
-              </div>
-            </div>
+            {/* Subtle Edge Vignette Inside Viewport */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/25" />
 
-            {/* RIGHT CONTROLLER: Large Luxury White Circular Shutter Button */}
-            <div className="flex flex-col items-center justify-center shrink-0">
-              <button
-                type="button"
-                onClick={handleShutterClick}
-                disabled={isCapturing}
-                aria-label="Suratga olish"
-                className="group relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-28 lg:w-28 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                {/* Outer Glowing Gold Ring */}
-                <span
-                  className="absolute inset-0 rounded-full border-[2px] sm:border-[2.5px] border-[#DDBE78] shadow-[0_0_24px_rgba(221,190,120,0.55),inset_0_0_12px_rgba(221,190,120,0.2)] transition-shadow duration-300 group-hover:shadow-[0_0_34px_rgba(221,190,120,0.85)]"
-                />
-
-                {/* Inner Dark Gap & Solid Pure White Shutter Disc */}
-                <span
-                  className="relative z-10 h-11 w-11 sm:h-14 sm:w-14 md:h-16 md:w-16 lg:h-[70px] lg:w-[70px] rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.5)] transition-transform duration-200 group-hover:scale-[0.98] group-active:scale-90"
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* MOBILE PORTRAIT VIEW (When device is held vertically) */
-        <div className="relative z-20 w-full h-full flex flex-col justify-between p-3 sm:p-4">
-          {/* Top Bar: Back button, Active Angle Label, Angle Switcher */}
-          <div className="w-full flex flex-col gap-2.5 shrink-0 pt-1">
-            <div className="flex items-center justify-between">
-              {onClose && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Orqaga"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/45 backdrop-blur-xl text-white border border-white/10 hover:bg-black/70 active:scale-95 transition cursor-pointer shadow-lg"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-              )}
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 border border-[#D4AE62]/40 backdrop-blur-md shadow-gold">
-                <span className="h-2 w-2 rounded-full bg-[#E5C175] animate-pulse" />
-                <span className="font-display text-xs font-semibold tracking-wider text-[#EDE8DF] uppercase">
-                  {activeAngle.name}
-                </span>
-              </div>
-              <div className="w-10" />
-            </div>
-
-            {/* Angle Selection Chips */}
-            <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1 no-scrollbar">
-              {SCAN_5_ANGLES.map((angle) => {
-                const isActive = angle.id === activeAngleId;
-                const isDone = completedAngles.includes(angle.id);
-                return (
-                  <button
-                    key={angle.id}
-                    type="button"
-                    onClick={() => setActiveAngleId(angle.id)}
-                    className={`px-3 py-1.5 rounded-xl text-[11px] font-medium tracking-wide transition-all duration-200 cursor-pointer ${
-                      isActive
-                        ? 'bg-neutral-900/95 border border-[#D4AE62] text-[#E5C175] shadow-[0_0_14px_rgba(212,174,98,0.4)] scale-105'
-                        : isDone
-                        ? 'bg-neutral-900/60 text-green-400 border border-green-500/30'
-                        : 'bg-neutral-900/70 text-neutral-300 border border-white/10 hover:border-white/30'
-                    }`}
-                  >
-                    {angle.label} {angle.key === 'front' ? 'Old' : angle.key === 'side' ? 'O‘ng' : angle.key === 'rear' ? 'Orqa' : angle.key === 'left' ? 'Chap' : '3/4'}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Central Camera Framing Viewport (Maximizes Space on Phone Screen) */}
-          <div className="relative flex-1 w-full my-2 flex items-center justify-center min-h-0">
-            <div className="relative w-full h-full max-h-[70vh] rounded-[24px] sm:rounded-[32px] border-[1.5px] border-[#D4AE62]/65 shadow-[0_0_32px_rgba(212,174,98,0.18)] flex items-center justify-center overflow-hidden">
-              {/* 4 Bright Gold Corner Brackets */}
-              <div className="absolute top-2 start-2 h-8 w-8 border-t-[3px] border-s-[3px] border-[#F2D79E] rounded-ss-xl drop-shadow-[0_0_10px_rgba(242,215,158,0.85)] pointer-events-none" />
-              <div className="absolute top-2 end-2 h-8 w-8 border-t-[3px] border-e-[3px] border-[#F2D79E] rounded-se-xl drop-shadow-[0_0_10px_rgba(242,215,158,0.85)] pointer-events-none" />
-              <div className="absolute bottom-2 start-2 h-8 w-8 border-b-[3px] border-s-[3px] border-[#F2D79E] rounded-es-xl drop-shadow-[0_0_10px_rgba(242,215,158,0.85)] pointer-events-none" />
-              <div className="absolute bottom-2 end-2 h-8 w-8 border-b-[3px] border-e-[3px] border-[#F2D79E] rounded-ee-xl drop-shadow-[0_0_10px_rgba(242,215,158,0.85)] pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Bottom Bar: Shutter Button and Mini Compass */}
-          <div className="relative w-full flex items-center justify-between px-6 pb-2 pt-1 shrink-0">
-            {/* Left: Mini Top-Down Car rotating in real-time with angle */}
-            <div className="h-14 w-14 flex items-center justify-center rounded-2xl bg-black/60 border border-white/10 p-1">
-              <img
-                src="/images/camera/topdown_coupe.png"
-                alt="Mini Coupe"
-                style={{
-                  transform: `rotate(${activeAngle.deg}deg)`,
-                  transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-                className="h-10 w-7 object-contain drop-shadow"
-              />
-            </div>
-
-            {/* Center: Luxury Shutter Button */}
-            <button
-              type="button"
-              onClick={handleShutterClick}
-              disabled={isCapturing}
-              aria-label="Suratga olish"
-              className="group relative h-20 w-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-2xl"
+            {/* 1:1 Reference Perspective Golden Floor Parking-Bay Alignment Grid (SVG) */}
+            <svg
+              viewBox="0 0 800 320"
+              preserveAspectRatio="none"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[54%] w-full z-10"
+              fill="none"
             >
-              <span className="absolute inset-0 rounded-full border-[2.5px] border-[#DDBE78] shadow-[0_0_24px_rgba(221,190,120,0.55),inset_0_0_12px_rgba(221,190,120,0.2)] transition-shadow duration-300 group-hover:shadow-[0_0_34px_rgba(221,190,120,0.85)]" />
-              <span className="relative z-10 h-14 w-14 rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.5)] transition-transform duration-200 group-hover:scale-[0.98] group-active:scale-90" />
-            </button>
+              <defs>
+                <linearGradient id="floor-lane-stroke" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#E5C175" stopOpacity="0.22" />
+                  <stop offset="55%" stopColor="#E5C175" stopOpacity="0.62" />
+                  <stop offset="100%" stopColor="#F7DFA0" stopOpacity="0.88" />
+                </linearGradient>
+                <filter id="floor-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="2.5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
 
-            {/* Right: Angle Counter */}
-            <div className="h-14 w-14 flex flex-col items-center justify-center rounded-2xl bg-black/60 border border-white/10">
-              <span className="text-[10px] text-neutral-400 uppercase tracking-widest">Kadr</span>
-              <span className="font-mono text-sm font-bold text-[#E5C175]">{activeAngleId}/5</span>
-            </div>
+              {/* Left & Right Perspective Rails with Rounded Top & Bottom Corners */}
+              <path
+                d="M 275 284 L 185 284 Q 146 284 162 248 L 268 42 Q 278 22 304 22 L 352 22"
+                stroke="url(#floor-lane-stroke)"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                filter="url(#floor-glow)"
+              />
+              <path
+                d="M 525 284 L 615 284 Q 654 284 638 248 L 532 42 Q 522 22 496 22 L 448 22"
+                stroke="url(#floor-lane-stroke)"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                filter="url(#floor-glow)"
+              />
+
+              {/* Center Baseline Highlight Bar */}
+              <line
+                x1="348"
+                y1="284"
+                x2="452"
+                y2="284"
+                stroke="#F7DFA0"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                filter="url(#floor-glow)"
+              />
+
+              {/* Perspective Distance Tick Marks (3 Pairs: Far, Mid, Near) */}
+              <line
+                x1="242"
+                y1="92"
+                x2="305"
+                y2="92"
+                stroke="#E5C175"
+                strokeOpacity="0.45"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+              <line
+                x1="495"
+                y1="92"
+                x2="558"
+                y2="92"
+                stroke="#E5C175"
+                strokeOpacity="0.45"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+
+              <line
+                x1="210"
+                y1="160"
+                x2="310"
+                y2="160"
+                stroke="#E5C175"
+                strokeOpacity="0.65"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+              <line
+                x1="490"
+                y1="160"
+                x2="590"
+                y2="160"
+                stroke="#E5C175"
+                strokeOpacity="0.65"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+
+              <line
+                x1="176"
+                y1="228"
+                x2="290"
+                y2="228"
+                stroke="#F7DFA0"
+                strokeOpacity="0.8"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <line
+                x1="510"
+                y1="228"
+                x2="624"
+                y2="228"
+                stroke="#F7DFA0"
+                strokeOpacity="0.8"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            {/* 4 Inset Golden Rounded L-Shaped Corner Brackets (1:1 with Reference Image) */}
+            <div className="pointer-events-none absolute top-3.5 start-3.5 sm:top-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-s-[2.5px] border-[#E5C175] rounded-ss-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+            <div className="pointer-events-none absolute top-3.5 end-3.5 sm:top-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-e-[2.5px] border-[#E5C175] rounded-se-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+            <div className="pointer-events-none absolute bottom-3.5 start-3.5 sm:bottom-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-s-[2.5px] border-[#E5C175] rounded-es-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+            <div className="pointer-events-none absolute bottom-3.5 end-3.5 sm:bottom-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-e-[2.5px] border-[#E5C175] rounded-ee-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+
+            {/* Step Transition Feedback Toast (Appears briefly when advancing between required angles) */}
+            <AnimatePresence>
+              {stepFeedback && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="pointer-events-none absolute top-4 inset-x-6 z-30 flex justify-center"
+                >
+                  <div className="inline-flex items-center gap-2 rounded-full bg-[#0D0F14]/90 px-4 py-1.5 text-xs font-medium text-[#F7DFA0] ring-1 ring-[#E5C175]/45 shadow-[0_12px_32px_rgba(0,0,0,0.85)] backdrop-blur-xl">
+                    <Sparkles className="h-3.5 w-3.5 text-[#E5C175]" />
+                    <span>{stepFeedback}</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-      )}
+
+        {/* RIGHT COLUMN: Luxury White & Gold Ring Shutter Button (1:1 with Reference Image) */}
+        <div className="relative flex h-full w-[13%] min-w-[78px] max-w-[132px] shrink-0 flex-col items-center justify-center">
+          <button
+            type="button"
+            onClick={handleShutterClick}
+            disabled={isCapturing || isPortrait}
+            aria-label={`${activeAngle.title} rasmini olish`}
+            className="group relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
+          >
+            {/* Outer Glowing Golden Ring */}
+            <span className="absolute inset-0 rounded-full ring-[2px] sm:ring-[2.5px] ring-[#E5C175] shadow-[0_0_28px_rgba(229,193,117,0.55),inset_0_0_12px_rgba(229,193,117,0.25)] transition-shadow duration-300 group-hover:shadow-[0_0_38px_rgba(229,193,117,0.9)]" />
+
+            {/* Solid Pure White Inner Disc */}
+            <span className="relative z-10 h-12 w-12 sm:h-14 sm:w-14 md:h-[68px] md:w-[68px] rounded-full bg-white shadow-[0_4px_18px_rgba(255,255,255,0.4)] transition-transform duration-200 group-hover:scale-[0.98] group-active:scale-90" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

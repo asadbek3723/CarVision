@@ -16,72 +16,25 @@ interface GenerationFeedItem {
   timeAgo: string;
 }
 
-const LIVE_GENERATIONS: GenerationFeedItem[] = [
-  {
-    id: 'gen-01',
-    studioName: 'Apex Customs Studio',
-    vehicle: 'Chevrolet Malibu 2',
-    angle: 'Front 3/4 (45°)',
-    partsApplied: '20" Forged Wheels + Gloss Black Shadowline',
-    status: 'COMPLETED',
-    imageUrl: '/images/car-after.jpg',
-    resolution: '3840 × 2160 (4K)',
-    durationSeconds: 1.28,
-    timeAgo: 'Hozirgina',
-  },
-  {
-    id: 'gen-02',
-    studioName: 'Dubai Custom Wheels',
-    vehicle: 'BMW M4 Competition',
-    angle: 'Side Stance (90°)',
-    partsApplied: 'Carbon Aerokit + 21" Bronze Wheels',
-    status: 'COMPLETED',
-    imageUrl: '/assets/car-CjioCIbt.jpg',
-    resolution: '3840 × 2160 (4K)',
-    durationSeconds: 1.42,
-    timeAgo: '18 soniya oldin',
-  },
-  {
-    id: 'gen-03',
-    studioName: 'Autotune Pro Tashkent',
-    vehicle: 'Chevrolet Malibu OEM',
-    angle: 'Original Kadr (Before)',
-    partsApplied: 'Asl zavod holati skaneri',
-    status: 'COMPLETED',
-    imageUrl: '/images/car-before.jpg',
-    resolution: '1920 × 1080 (HD)',
-    durationSeconds: 0.95,
-    timeAgo: '45 soniya oldin',
-  },
-  {
-    id: 'gen-04',
-    studioName: 'Samarkand Tuning Lab',
-    vehicle: 'Veloce Super Coupe',
-    angle: 'Showroom Angled View',
-    partsApplied: 'Dark Titanium Body + Lowered Suspension',
-    status: 'COMPLETED',
-    imageUrl: '/images/veloce_black_coupe.jpg',
-    resolution: '3840 × 2160 (4K)',
-    durationSeconds: 1.34,
-    timeAgo: '1 daqiqa oldin',
-  },
-];
-
 export function AdminLiveStreamView() {
-  const [items, setItems] = React.useState<GenerationFeedItem[]>(LIVE_GENERATIONS);
+  const [items, setItems] = React.useState<GenerationFeedItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [selectedImage, setSelectedImage] = React.useState<GenerationFeedItem | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
     const fetchLiveGens = async () => {
       try {
+        setIsLoading(true);
         const res = await fetch('/api/v1/admin/live-stream');
         const data = await res.json();
-        if (isMounted && data.success && Array.isArray(data.items) && data.items.length > 0) {
+        if (isMounted && data.success && Array.isArray(data.items)) {
           setItems(data.items);
         }
-      } catch {
-        // keep fallback
+      } catch (err) {
+        console.error('Failed to load live generations from Supabase:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     };
     fetchLiveGens();
@@ -145,8 +98,15 @@ export function AdminLiveStreamView() {
       </div>
 
       {/* Grid of Renders */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {items.map((item) => (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-64 rounded-2xl bg-[#0D0F15] animate-pulse border border-[#D4AE62]/10" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {items.map((item) => (
           <div
             key={item.id}
             className="rounded-2xl bg-[#0D0F15] border border-[#D4AE62]/15 overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.5)] group hover:border-[#D4AE62]/40 transition-all"
@@ -205,6 +165,7 @@ export function AdminLiveStreamView() {
           </div>
         ))}
       </div>
+    )}
 
       {/* Lightbox Modal */}
       {selectedImage && (

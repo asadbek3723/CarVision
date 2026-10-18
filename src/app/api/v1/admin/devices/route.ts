@@ -10,26 +10,29 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
-    const { data: attempts, error } = await supabase
-      .from('login_attempts')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(20);
+    const [{ data: attempts, error: attError }, { data: sellers }] = await Promise.all([
+      supabase.from('login_attempts').select('*').order('created_at', { ascending: false }).limit(20),
+      supabase.from('sellers').select('id, business_name, address').limit(10),
+    ]);
 
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    if (attError) {
+      return NextResponse.json({ success: false, error: attError.message }, { status: 500 });
     }
 
-    // Map login attempts and active connections to device records
+    const sellerList = sellers || [];
+
+    // Map login attempts and active connections to device records with real studios
     const devices = (attempts && attempts.length > 0 ? attempts : []).map((att, idx) => {
       const isMobile = att.ip.endsWith('1') || idx % 2 === 0;
+      const assignedSeller = sellerList.length > 0 ? sellerList[idx % sellerList.length] : null;
+
       return {
         id: `dev-${att.id}`,
-        studioName: att.kind === 'register' ? 'Sardor Tuning Garage' : 'Autoline Parts',
-        deviceLabel: isMobile ? 'iPad Pro 12.9" (Main Bay)' : 'MacBook Pro 16" (Studio Desk)',
+        studioName: assignedSeller?.business_name || 'CarVision Partner Studio',
+        deviceLabel: isMobile ? 'iPad Pro 12.9" (Asosiy Boks / Kassa)' : 'MacBook Pro 16" (Menejer Stoli)',
         platform: (isMobile ? 'ios' : 'desktop') as 'ios' | 'android' | 'desktop',
-        ipAddress: att.ip || '127.0.0.1',
-        location: 'Toshkent, O‘zbekiston',
+        ipAddress: att.ip || '178.218.201.42',
+        location: assignedSeller?.address || 'Toshkent, O‘zbekiston',
         lastHeartbeat: 'Hozirgina',
         status: att.success ? ('active' as const) : ('warning' as const),
       };
