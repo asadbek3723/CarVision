@@ -1,10 +1,5 @@
-import { VeloceShell } from '@/components/veloce/VeloceShell';
-import { VeloceHome } from '@/components/veloce/VeloceHome';
+import GoldenLandingPage from '@/components/landing/GoldenLandingPage';
 
 export default function HomePage() {
-  return (
-    <VeloceShell>
-      <VeloceHome />
-    </VeloceShell>
-  );
+  return <GoldenLandingPage />;
 }

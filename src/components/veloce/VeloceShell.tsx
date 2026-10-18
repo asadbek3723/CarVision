@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname, useParams, useSearchParams } from 'next/navigation';
+import { usePathname, useParams, useSearchParams, useRouter } from 'next/navigation';
 import {
   House,
   Car,
@@ -49,18 +49,26 @@ interface VeloceShellProps {
 }
 
 export function VeloceShell({ children }: VeloceShellProps) {
+  const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
   const searchParams = useSearchParams();
   const currentTab = searchParams ? searchParams.get('tab') : null;
   const locale = (params?.['locale'] as string) || 'uz';
   const { count, openCamera } = useVeloceStore();
-  const { user, signOut } = useAuth();
+  const { user, isLoading, signOut } = useAuth();
   const { currency, setCurrency } = useCurrency();
   const isSeller = user?.role === 'b2b_seller';
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [localeMenuOpen, setLocaleMenuOpen] = React.useState(false);
+
+  // Require authentication to access the Veloce App; redirect guests to Landing / Sign In
+  React.useEffect(() => {
+    if (!isLoading && !user) {
+      router.push(`/${locale}`);
+    }
+  }, [isLoading, user, locale, router]);
 
   const buildLocalizedHref = (targetLocale: string) => {
     const base = pathname.replace(/^\/(uz|ru|en|ar|tr|kk|ky|tg)(?=\/|$)/, `/${targetLocale}`);
@@ -83,15 +91,15 @@ export function VeloceShell({ children }: VeloceShellProps) {
       <aside className="fixed inset-y-0 start-0 z-40 hidden w-24 lg:w-28 flex-col items-center justify-between border-e border-[#D4AE62]/15 bg-[#0D0E12]/80 py-8 backdrop-blur-xl md:flex">
         <div className="flex flex-col items-center gap-10">
           <Link
-            href={`/${locale}`}
+            href={`/${locale}/seller`}
             className="font-display text-2xl font-extralight text-gold-gradient transition hover:opacity-90"
           >
             V
           </Link>
           <nav className="flex flex-col items-center gap-8">
-            {/* Home (Always Home for everyone) */}
+            {/* Home (App Home Showroom) */}
             <Link
-              href={`/${locale}`}
+              href={`/${locale}/seller`}
               data-status={isHome ? 'active' : 'inactive'}
               className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
             >
@@ -192,7 +200,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
           <Menu className="h-6 w-6" />
         </button>
 
-        <Link href={`/${locale}`} className="text-center leading-none">
+        <Link href={`/${locale}/seller`} className="text-center leading-none">
           <div className="font-display text-lg font-light tracking-[0.6em] ps-[0.6em] text-foreground">
             VELOCE
           </div>
@@ -320,7 +328,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
       >
         {/* 1. Home */}
         <Link
-          href={`/${locale}`}
+          href={`/${locale}/seller`}
           data-status={isHome ? 'active' : 'inactive'}
           className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
         >
@@ -446,7 +454,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
               <div className="space-y-3 pt-4">
                 <Link
-                  href={`/${locale}`}
+                  href={`/${locale}/seller`}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
                     isHome ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'

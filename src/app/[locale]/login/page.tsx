@@ -40,13 +40,13 @@ export default function LoginPage() {
   const [shake, setShake] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
 
-  // If already authenticated, redirect
+  // If already authenticated, redirect to the Veloce App
   React.useEffect(() => {
     if (user) {
       if (user.role === 'super_admin') {
         router.push(`/${locale}/admin`);
       } else {
-        router.push(`/${locale}`);
+        router.push(`/${locale}/seller`);
       }
     }
   }, [user, locale, router]);

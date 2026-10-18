@@ -1,6 +1,6 @@
 # CarVision — Master Implementation Plan (`plan.md`)
 
-> **Status:** Completed & Verified — Phase 20: Smart Camera 1:1 Luxury Redesign, Mandatory Landscape Gate & Strict Program-Driven 4-Angle Flow (Mobile & Desktop).
+> **Status:** Active Execution — Phase 20: Public Golden Landing Page (`/[locale]`) → Sign In (`/login` / `/register`) → Authenticated Veloce App (`VeloceShell` + `VeloceHome`) & 1:1 Smart Camera.
 > **Normative References:** User's Direct Product Vision & CTO Alignment (2026-10-18), `.agents/rules/design.md`, `.agents/rules/design-components.md`, `.agents/rules/design-carvision.md`, `DECISIONS.md`.
 
 ---
@@ -8,6 +8,9 @@
 ## Completed Foundation Phases (Phases 1–18)
 - [x] **Phase 1–17:** Next.js 15 App Router, TypeScript strict, Tailwind CSS, 8-locale routing (`uz`, `ru`, `en`, `ar`, `tr`, `kk`, `ky`, `tg`), 8-currency engine, Supabase schema & RLS, Smart Camera 5-angle wizard, Auth, Veloce Home/Shop, and Admin Vault.
 - [x] **Phase 18:** Full-page routing foundations and USD/UZS currency normalization.
+- [x] **Public Landing Page → Sign In → App Flow (`/[locale]`):**
+  - Ro‘yxatdan o‘tmagan (Sign In qilmagan) foydalanuvchi `/[locale]` ga kirganda **`GoldenLandingPage`** (asosiy marketing landing sahifasi) ochiladi.
+  - Landing sahifadan **Kirish (`/[locale]/login`)** yoki **Ro‘yxatdan o‘tish (`/[locale]/register`)** orqali tizimga kirilgandan keyingina asosiy Veloce ilovasiga (`VeloceShell` + `VeloceHome`) kiriladi.
 
 ---
 
