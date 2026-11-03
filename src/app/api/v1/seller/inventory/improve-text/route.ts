@@ -28,7 +28,7 @@ NAME: ${i.name}
 DESCRIPTION: ${i.description}`;
 
 function localClean(text: string): string {
-  const t = text.replace(/\s+/g, ' ').replace(/\s+([,.!?;:])/g, '$1').trim();
+  const t = text.replace(/\s+/g, ' ').replace(/\s+([,.!?;:])/g, '$1').replace(/,(?=[A-Za-z\u0400-\u04FF])/g, ', ').trim();
   return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
 }
 
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
   const db = createAdminClient();
   const since = new Date(Date.now() - 3600_000).toISOString();
   const { count } = await db
-    .from('login_attempts')
+    .from('auth_attempts')
     .select('id', { count: 'exact', head: true })
     .eq('kind', 'improve_text')
     .eq('login_key', guard.value.session.userId)
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   if ((count ?? 0) >= HOURLY_LIMIT) {
     return NextResponse.json({ success: false, error: 'Soatiga 30 martadan ko‘p yaxshilab bo‘lmaydi' }, { status: 429 });
   }
-  await db.from('login_attempts').insert({ kind: 'improve_text', login_key: guard.value.session.userId, success: true });
+  await db.from('auth_attempts').insert({ kind: 'improve_text', login_key: guard.value.session.userId, success: true });
 
   const prompt = PROMPT(input);
   const gemini = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();

@@ -17,35 +17,38 @@ export async function GET(request: NextRequest) {
     const q = (params.get('q') || '').replace(/[%,()]/g, ' ').trim();
 
     if (q.length >= 2) {
-      const { data: models } = await db
+      // Every word must match the make or the model ("toyota cam" -> Toyota Camry)
+      const tokens = q.toLowerCase().split(/\s+/).filter(Boolean).slice(0, 4);
+      const first = tokens[0]!;
+
+      const { data: matchedMakes } = await db.from('vehicle_makes').select('id, name').eq('is_active', true).ilike('name', `%${first}%`).limit(8);
+      const { data: byName } = await db
         .from('vehicle_models')
         .select('id, name, make_id, body_type')
         .eq('is_active', true)
-        .ilike('name', `%${q}%`)
-        .limit(40);
-      const makeIds = [...new Set((models ?? []).map((m) => m.make_id as string))];
+        .ilike('name', `%${first}%`)
+        .limit(120);
+      const makeIdsFromMake = (matchedMakes ?? []).map((m) => m.id as string);
+      const { data: byMake } = makeIdsFromMake.length
+        ? await db.from('vehicle_models').select('id, name, make_id, body_type').eq('is_active', true).in('make_id', makeIdsFromMake).limit(400)
+        : { data: [] as Array<{ id: string; name: string; make_id: string; body_type: string }> };
+
+      const pool = [...(byMake ?? []), ...(byName ?? [])] as Array<{ id: string; name: string; make_id: string; body_type: string }>;
+      const makeIds = [...new Set(pool.map((m) => m.make_id))];
       const { data: makes } = makeIds.length ? await db.from('vehicle_makes').select('id, name').in('id', makeIds) : { data: [] };
       const makeName = new Map((makes ?? []).map((m) => [m.id as string, m.name as string]));
 
-      // Also match by make name ("toyota" -> its models)
-      const { data: matchedMakes } = await db.from('vehicle_makes').select('id, name').ilike('name', `%${q}%`).limit(5);
-      let byMake: Array<{ id: string; name: string; make_id: string; body_type: string }> = [];
-      if (matchedMakes?.length) {
-        const { data } = await db
-          .from('vehicle_models')
-          .select('id, name, make_id, body_type')
-          .eq('is_active', true)
-          .in('make_id', matchedMakes.map((m) => m.id as string))
-          .limit(60);
-        byMake = (data ?? []) as typeof byMake;
-        for (const m of matchedMakes) makeName.set(m.id as string, m.name as string);
-      }
-
       const seen = new Set<string>();
-      const results = [...byMake, ...((models ?? []) as typeof byMake)]
+      const results = pool
         .filter((m) => (seen.has(m.id) ? false : (seen.add(m.id), true)))
+        .map((m) => ({ id: m.id, makeId: m.make_id, make: makeName.get(m.make_id) ?? '', name: m.name, bodyType: m.body_type }))
+        .filter((m) => {
+          const hay = `${m.make} ${m.name}`.toLowerCase();
+          return tokens.every((t) => hay.includes(t));
+        })
+        .sort((a, b) => a.make.localeCompare(b.make) || a.name.localeCompare(b.name))
         .slice(0, 60)
-        .map((m) => ({ id: m.id, makeId: m.make_id, make: makeName.get(m.make_id) ?? '', name: m.name, bodyType: m.body_type, label: `${makeName.get(m.make_id) ?? ''} ${m.name}`.trim() }));
+        .map((m) => ({ ...m, label: `${m.make} ${m.name}`.trim() }));
       return NextResponse.json({ success: true, models: results });
     }
 

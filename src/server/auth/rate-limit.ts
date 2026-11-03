@@ -21,7 +21,7 @@ export async function recentFailures(
   const db = createAdminClient();
   const since = new Date(Date.now() - windowMs).toISOString();
   const { count } = await db
-    .from('login_attempts')
+    .from('auth_attempts')
     .select('id', { count: 'exact', head: true })
     .eq(column, value)
     .eq('kind', kind)
@@ -33,8 +33,9 @@ export async function recentFailures(
 export async function recordAttempt(kind: string, loginKey: string, ip: string, success: boolean): Promise<void> {
   try {
     const db = createAdminClient();
-    await db.from('login_attempts').insert({ kind, login_key: loginKey, ip, success });
+    const { error } = await db.from('auth_attempts').insert({ kind, login_key: loginKey, ip, success });
+    if (error) console.error('auth_attempts insert failed (rate limiting degraded):', error.message);
   } catch {
-    // Logging must never break the request.
+    // Logging must never break the request, but a failure must be visible (it disables rate limiting).
   }
 }

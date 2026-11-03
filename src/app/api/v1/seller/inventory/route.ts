@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireSeller } from '@/server/auth/guards';
+import { getServerRates } from '@/server/rates';
 import { coverFor, itemBodySchema, loadItems, replaceItemRelations } from '@/server/catalog';
 import { toUsdCents, veloceCategory, type CatalogItemDTO } from '@/domain/catalog';
 
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest) {
     const body = parsed.data;
     const db = createAdminClient();
     const shopId = guard.value.shopId;
+    const rates = await getServerRates();
 
     const { count } = await db.from('catalog_items').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).neq('status', 'ARCHIVED');
     const { data: plan } = await db.from('pricing_plans').select('max_custom_items').eq('code', guard.value.session.shop?.current_plan_code ?? 'FREE_TRIAL').maybeSingle();
@@ -87,12 +89,12 @@ export async function POST(request: NextRequest) {
         name: body.name,
         brand: body.brand || null,
         description: body.description || null,
-        price_cents: toUsdCents(body.price, body.currency),
+        price_cents: toUsdCents(body.price, body.currency, rates),
         input_currency: body.currency,
         input_price: body.price,
         stock: body.stock,
         install_available: body.installAvailable,
-        install_price_cents: toUsdCents(body.installPrice ?? 0, body.currency),
+        install_price_cents: toUsdCents(body.installPrice ?? 0, body.currency, rates),
         attributes: body.attributes,
         status: body.publish ? 'PUBLISHED' : 'DRAFT',
         cover_image_url: coverFor(body),
@@ -165,6 +167,7 @@ export async function PATCH(request: NextRequest) {
       return fail(400, parsed.error.issues[0]?.message ?? 'Ma’lumotlar noto‘g‘ri', { details: parsed.error.flatten() });
     }
     const body = parsed.data;
+    const rates = await getServerRates();
 
     const { data: existing } = await db.from('catalog_items').select('id, status').eq('id', id as string).eq('shop_id', shopId).maybeSingle();
     if (!existing || existing.status === 'ARCHIVED') return fail(404, 'Mahsulot topilmadi');
@@ -176,12 +179,12 @@ export async function PATCH(request: NextRequest) {
         name: body.name,
         brand: body.brand || null,
         description: body.description || null,
-        price_cents: toUsdCents(body.price, body.currency),
+        price_cents: toUsdCents(body.price, body.currency, rates),
         input_currency: body.currency,
         input_price: body.price,
         stock: body.stock,
         install_available: body.installAvailable,
-        install_price_cents: toUsdCents(body.installPrice ?? 0, body.currency),
+        install_price_cents: toUsdCents(body.installPrice ?? 0, body.currency, rates),
         attributes: body.attributes,
         status: body.publish ? 'PUBLISHED' : 'DRAFT',
         cover_image_url: coverFor(body),

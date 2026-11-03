@@ -232,7 +232,11 @@ export function SellerDashboardView() {
                   {item.isUniversal ? 'Barcha mashinalarga' : item.fitment.map((f) => f.label).slice(0, 3).join(', ')}
                   {!item.isUniversal && item.fitment.length > 3 ? ` +${item.fitment.length - 3}` : ''}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#D4AE62]">{formatPrice(item.priceUSD, 'USD')}</p>
+                <p className="mt-1 text-sm font-semibold text-[#D4AE62]">
+                  {item.inputPrice !== null
+                    ? `${new Intl.NumberFormat('uz-UZ').format(item.inputPrice)} ${item.inputCurrency}`
+                    : formatPrice(item.priceUSD, 'USD')}
+                </p>
               </div>
 
               <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">

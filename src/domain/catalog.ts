@@ -33,8 +33,8 @@ export type PriceCurrency = (typeof PRICE_CURRENCIES)[number];
 export const MAX_ITEM_IMAGES = 5;
 
 /** Converts an amount in `currency` to integer USD cents (prices are stored in USD cents). */
-export function toUsdCents(amount: number, currency: string): number {
-  const rate = DEFAULT_RATES[currency.toUpperCase()] || 1;
+export function toUsdCents(amount: number, currency: string, rates: Record<string, number | undefined> = DEFAULT_RATES): number {
+  const rate = rates[currency.toUpperCase()] || DEFAULT_RATES[currency.toUpperCase()] || 1;
   return Math.max(0, Math.round((amount / rate) * 100));
 }
 
