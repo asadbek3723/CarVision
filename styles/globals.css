@@ -1,0 +1,873 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===================================================================
+   VELOCE Luxury Black-Gold Design System Tokens (1:1 with Reference)
+   =================================================================== */
+:root {
+  --radius: 1rem;
+  --background: oklch(10% .004 70);
+  --foreground: oklch(95% .01 85);
+  --card: oklch(15% .005 70);
+  --card-foreground: oklch(95% .01 85);
+  --popover: oklch(17% .006 70);
+  --popover-foreground: oklch(95% .01 85);
+  --primary: oklch(80% .12 82);
+  --primary-foreground: oklch(15% .01 70);
+  --secondary: oklch(21% .008 70);
+  --secondary-foreground: oklch(95% .01 85);
+  --muted: oklch(21% .008 70);
+  --muted-foreground: oklch(65% .02 80);
+  --accent: oklch(25% .02 80);
+  --accent-foreground: oklch(85% .1 85);
+  --destructive: oklch(60% .2 25);
+  --destructive-foreground: oklch(98% 0 0);
+  --border: oklch(80% .12 82 / .16);
+  --input: oklch(80% .12 82 / .22);
+  --ring: oklch(80% .12 82);
+  --gold: oklch(80% .12 82);
+  --gold-soft: oklch(88% .08 88);
+  --success: oklch(75% .15 150);
+  --gradient-gold: linear-gradient(135deg, oklch(88% .09 88), oklch(72% .12 75) 55%, oklch(60% .1 65));
+  --gradient-card: linear-gradient(160deg, oklch(20% .008 70), oklch(14% .005 70));
+  --gradient-fade: linear-gradient(to top, var(--background), transparent);
+  --shadow-gold: 0 10px 40px -10px oklch(80% .12 82 / .45);
+  --shadow-card: 0 20px 50px -20px oklch(0% 0 0 / .8);
+}
+
+.font-display {
+  font-family: 'Montserrat', sans-serif;
+}
+.tracking-luxe {
+  letter-spacing: 0.35em;
+}
+.bg-gold-gradient {
+  background-image: var(--gradient-gold);
+}
+.text-gold-gradient {
+  background-image: var(--gradient-gold);
+  color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+.bg-card-gradient {
+  background-image: var(--gradient-card);
+}
+.shadow-gold {
+  box-shadow: var(--shadow-gold);
+}
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, oklch(100% 0 0 / .35) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: 3.2s ease-in-out infinite shimmer;
+}
+@keyframes shimmer {
+  60%, 100% {
+    transform: translateX(100%);
+  }
+}
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both rise;
+}
+@keyframes float {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.float-slow {
+  animation: 6s ease-in-out infinite float;
+}
+@keyframes glowPulse {
+  50% {
+    box-shadow: 0 0 0 6px oklch(80% .12 82 / .15), var(--shadow-gold);
+  }
+}
+.glow-pulse {
+  animation: 2.4s ease-in-out infinite glowPulse;
+}
+@keyframes flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.flash {
+  animation: 0.6s ease-out both flash;
+}
+@keyframes reveal {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+.reveal {
+  animation: 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both reveal;
+}
+
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
+
+  html,
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-outfit), var(--font-jakarta), system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+  }
+
+  /* Support for Arabic RTL typography */
+  [dir="rtl"] body {
+    font-family: var(--font-noto-arabic), system-ui, sans-serif;
+  }
+}
+
+/* Luxury Glassmorphism Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-panel-dense {
+  background: var(--glass-bg-dense);
+  backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-panel-dock {
+  background: linear-gradient(180deg, rgba(18, 20, 26, 0.72) 0%, rgba(10, 11, 15, 0.92) 100%);
+  backdrop-filter: blur(var(--glass-blur-heavy)) saturate(190%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Luxury Glow Effects */
+.glow-cyan {
+  box-shadow: 0 0 25px var(--accent-glow);
+}
+
+.glow-cyan-lg {
+  box-shadow: 0 0 35px var(--accent-glow-strong);
+}
+
+.glow-green {
+  box-shadow: 0 0 25px var(--accent-green-glow);
+}
+
+.glow-gold {
+  box-shadow: 0 0 25px var(--accent-gold-glow);
+}
+
+/* Tabular Numerals for Price Ticker & Telemetry */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ===================================================================
+   Capture & 3D HUD Keyframe Animations (from autovision2)
+   =================================================================== */
+
+/* 3D panel atrofidagi qizil "nafas" */
+@keyframes cv-guide-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 61, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(255, 77, 61, 0);
+  }
+}
+
+/* Ko'rsatma strelkalari */
+@keyframes cv-bob-y {
+  0%, 100% {
+    transform: translateY(-4px);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+@keyframes cv-bob-x {
+  0%, 100% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes cv-zoom-in {
+  0%, 100% {
+    transform: scale(0.88);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes cv-zoom-out {
+  0%, 100% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(0.88);
+  }
+}
+
+@keyframes cv-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Ko'rsatma matni almashishi */
+@keyframes cv-swap {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Suratga olish flashi */
+@keyframes cv-flash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Miniatura paydo bo'lishi */
+@keyframes cv-thumb-in {
+  from {
+    opacity: 0;
+    transform: scale(0.55) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Reticle burchaklari "nafas" oladi (SEEKING) */
+@keyframes cv-reticle {
+  0%, 100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.015);
+  }
+}
+
+/* Tugash: chek chiziladi */
+@keyframes cv-check-draw {
+  from {
+    stroke-dashoffset: 30;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 2D zaxira: nishon segment yonib-o'chadi */
+@keyframes cv-seg-blink {
+  0%, 100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Pastdan yumshoq ko'tarilib chiqish */
+@keyframes cv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Orbitada aylanuvchi skaner */
+@keyframes cv-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Orbit nuqtalarining navbatma-navbat yonishi */
+@keyframes cv-node {
+  0%, 100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Juda sekin nafas olayotgan fon nuri */
+@keyframes cv-breathe {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.06);
+  }
+}
+
+/* Telefonni yon holatga burish */
+@keyframes cv-turn {
+  0%, 16% {
+    transform: rotate(0deg);
+  }
+  44%, 84% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Sahna bo'ylab sekin suzuvchi nur */
+@keyframes cv-scan {
+  0% {
+    transform: translateX(-38%);
+    opacity: 0;
+  }
+  22%, 60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(38%);
+    opacity: 0;
+  }
+}
+
+/* Desktop hero float */
+@keyframes cv-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* CTA ustidan bir marta o'tadigan yorug'lik */
+@keyframes cv-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  60%, 100% {
+    transform: translateX(220%);
+  }
+}
+
+/* Shimmer */
+@keyframes cv-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Laser Scanner Beam */
+@keyframes laser-sweep {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(1000%);
+    opacity: 0.1;
+  }
+}
+
+/* CSS Animation Classes */
+.cv-guide-pulse {
+  animation: cv-guide-pulse 0.9s ease-out infinite;
+}
+
+.cv-arrow-y {
+  animation: cv-bob-y 0.7s ease-in-out infinite;
+}
+
+.cv-arrow-x {
+  animation: cv-bob-x 0.7s ease-in-out infinite;
+}
+
+.cv-arrow-zin {
+  animation: cv-zoom-in 0.9s ease-in-out infinite;
+}
+
+.cv-arrow-zout {
+  animation: cv-zoom-out 0.9s ease-in-out infinite;
+}
+
+.cv-arrow-spin {
+  animation: cv-spin-slow 2.4s linear infinite;
+}
+
+.cv-swap {
+  animation: cv-swap 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cv-flash {
+  animation: cv-flash 0.22s ease-out forwards;
+}
+
+.cv-thumb-in {
+  animation: cv-thumb-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cv-reticle {
+  transform-origin: center;
+  animation: cv-reticle 1.1s ease-in-out infinite;
+}
+
+.cv-check-draw {
+  stroke-dasharray: 30;
+  animation: cv-check-draw 0.3s ease-out forwards;
+}
+
+.cv-seg-blink {
+  animation: cv-seg-blink 0.9s ease-in-out infinite;
+}
+
+.cv-rise {
+  animation: cv-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.cv-orbit {
+  transform-origin: center;
+  animation: cv-orbit 14s linear infinite;
+}
+
+.cv-breathe {
+  animation: cv-breathe 7s ease-in-out infinite;
+}
+
+.cv-turn {
+  transform-origin: center;
+  animation: cv-turn 3.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.cv-float {
+  animation: cv-float 9s ease-in-out infinite;
+}
+
+.animate-laser {
+  animation: laser-sweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Premium Automotive CTA button */
+.cv-cta {
+  background: linear-gradient(180deg, #19D3FF 0%, #00BEEA 58%, #0090B3 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 10px 28px -10px rgba(25, 211, 255, 0.75),
+    0 2px 6px -2px rgba(0, 0, 0, 0.5);
+}
+
+.cv-cta:active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 4px 14px -8px rgba(25, 211, 255, 0.7);
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  animation: cv-shimmer 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-guide-pulse,
+  .cv-seg-blink,
+  .cv-arrow-y,
+  .cv-arrow-x,
+  .cv-arrow-zin,
+  .cv-arrow-zout,
+  .cv-arrow-spin,
+  .cv-reticle,
+  .cv-thumb-in,
+  .cv-rise,
+  .cv-orbit,
+  .cv-float,
+  .cv-breathe,
+  .cv-turn,
+  .shimmer::after {
+    animation: none !important;
+  }
+
+  .cv-swap {
+    animation-duration: 0.01s;
+  }
+
+  .cv-flash {
+    animation-duration: 0.12s;
+  }
+}
+
+/* Neon Electric-Cyan Button Glow */
+.neon-cyan-button {
+  background: linear-gradient(135deg, rgba(25, 211, 255, 0.08) 0%, rgba(10, 14, 22, 0.72) 48%, rgba(0, 102, 255, 0.08) 100%);
+  border: 1.5px solid rgba(25, 211, 255, 0.85);
+  box-shadow: 0 0 24px rgba(25, 211, 255, 0.45), 0 0 55px rgba(25, 211, 255, 0.2), inset 0 0 16px rgba(25, 211, 255, 0.18);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neon-cyan-button:hover {
+  border-color: #19d3ff;
+  box-shadow: 0 0 42px rgba(25, 211, 255, 0.75), 0 0 85px rgba(25, 211, 255, 0.4), inset 0 0 24px rgba(25, 211, 255, 0.3);
+  transform: scale(1.03);
+}
+
+.neon-cyan-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 20px rgba(25, 211, 255, 0.5), inset 0 0 12px rgba(25, 211, 255, 0.3);
+}
+
+@keyframes cv-neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 22px rgba(25, 211, 255, 0.45), 0 0 50px rgba(25, 211, 255, 0.18), inset 0 0 14px rgba(25, 211, 255, 0.16);
+  }
+  50% {
+    box-shadow: 0 0 34px rgba(25, 211, 255, 0.65), 0 0 70px rgba(25, 211, 255, 0.28), inset 0 0 20px rgba(25, 211, 255, 0.25);
+  }
+}
+
+.animate-neon-pulse {
+  animation: cv-neon-pulse 3.6s ease-in-out infinite;
+}
+
+/* ===================================================================
+   Lovable Auth Luxury Styles (1:1 with step-up-welcome.lovable.app)
+   =================================================================== */
+
+.gold-btn {
+  background: var(--gradient-gold);
+  color: var(--ink);
+  box-shadow: var(--shadow-gold);
+  position: relative;
+  overflow: hidden;
+}
+
+.gold-btn:after {
+  content: "";
+  background: linear-gradient(110deg, transparent 30%, oklch(100% 0 0 / 0.55) 50%, transparent 70%);
+  animation: 3.2s ease-in-out infinite shine;
+  position: absolute;
+  inset: 0;
+  transform: translate(-120%);
+}
+
+@keyframes shine {
+  0%, 60% {
+    transform: translate(-120%);
+  }
+  100% {
+    transform: translate(120%);
+  }
+}
+
+.glass-card {
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 30px 80px -20px oklch(0% 0 0 / 0.8), inset 0 1px 0 oklch(100% 0 0 / 0.08), 0 0 40px -18px var(--gold);
+  background: linear-gradient(160deg, oklch(22% 0.01 70 / 0.55), oklch(8% 0.004 60 / 0.7));
+}
+
+.auth-input {
+  background: oklch(10% 0.004 60 / 0.6);
+  border: 1px solid oklch(100% 0 0 / 0.14);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.auth-input:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px oklch(86% 0.07 85 / 0.12), 0 0 24px -8px var(--gold);
+}
+
+.auth-input.auth-input-error {
+  border-color: rgb(239 68 68 / 0.85);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 0.15), 0 0 20px -6px rgb(239 68 68 / 0.5);
+}
+
+.animate-beam {
+  animation: 5s ease-in-out infinite beam;
+}
+
+@keyframes beam {
+  0%, 100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-aurora {
+  animation: 12s ease-in-out infinite aurora;
+}
+
+@keyframes aurora {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.12) translate(15px, -15px);
+    opacity: 1;
+  }
+}
+
+/* ===================================================================
+   Golden Flow Scroll Luxury Styles (1:1 with golden-flow-scroll.lovable.app)
+   =================================================================== */
+
+.text-gold-gradient,
+.text-gold {
+  background: var(--gradient-gold-text);
+  color: transparent !important;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.btn-gold {
+  background: var(--gradient-gold);
+  color: #121316;
+  box-shadow: var(--shadow-gold);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s, filter 0.4s;
+}
+
+.btn-gold:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 26px 70px -18px oklch(80% 0.11 80 / 0.6);
+}
+
+.btn-ghost-gold {
+  color: var(--text-primary);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  background: oklch(80% 0.11 80 / 0.05);
+  border: 1px solid oklch(80% 0.11 80 / 0.45);
+  transition: all 0.4s;
+}
+
+.btn-ghost-gold:hover {
+  border-color: var(--gold);
+  background: oklch(80% 0.11 80 / 0.12);
+  box-shadow: 0 0 40px -8px oklch(80% 0.11 80 / 0.5);
+}
+
+.grain:before {
+  content: "";
+  pointer-events: none;
+  opacity: 0.06;
+  z-index: 1;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  position: absolute;
+  inset: 0;
+}
+
+.reveal {
+  opacity: 0;
+  filter: blur(6px);
+  transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.9s;
+  transform: translateY(30px);
+}
+
+.reveal.in,
+.reveal[data-revealed="true"] {
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+.mask-fade-x {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 15% 85%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 15% 85%, transparent);
+}
+
+.bg-card-lux {
+  background: var(--gradient-card);
+}
+
+.shadow-lux {
+  box-shadow: var(--shadow-card);
+}
+
+.tracking-lux {
+  letter-spacing: 0.35em;
+}
+
+.glass-nav {
+  -webkit-backdrop-filter: blur(60px) saturate(180%);
+  backdrop-filter: blur(60px) saturate(180%);
+  background: oklch(9% 0.004 70 / 0.93);
+}
+
+.glass {
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  background: oklch(13% 0.006 70 / 0.65);
+}
+
+.shimmer-text {
+  color: transparent;
+  background: linear-gradient(90deg, oklch(66% 0.11 66), oklch(97% 0.05 92), oklch(66% 0.11 66)) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: 6s linear infinite shimmer;
+}
+
+.sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.sweep:after {
+  content: "";
+  background: linear-gradient(90deg, transparent, oklch(100% 0 0 / 0.35), transparent);
+  animation: 2.8s ease-in-out infinite sweep;
+  position: absolute;
+  inset: 0;
+}
+
+.animate-marquee {
+  animation: 40s linear infinite marquee;
+}
+
+.animate-rise {
+  animation: 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both rise;
+}
+
+.animate-scrollline {
+  animation: 2.4s ease-in-out infinite scrollline;
+}
+
+.animate-float {
+  animation: 7s ease-in-out infinite float;
+}
+
+.animate-slowzoom {
+  animation: 10s cubic-bezier(0.2, 0.8, 0.2, 1) both slowzoom;
+}
+
+@keyframes marquee {
+  0% { transform: translate(0); }
+  100% { transform: translate(-50%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes sweep {
+  0% { transform: translate(-100%); }
+  100% { transform: translate(100%); }
+}
+
+@keyframes rise {
+  0% { opacity: 0; filter: blur(8px); transform: translateY(30px); }
+  100% { opacity: 1; filter: none; transform: none; }
+}
+
+@keyframes scrollline {
+  0% { transform-origin: top; transform: scaleY(0); }
+  50% { transform-origin: top; transform: scaleY(1); }
+  51% { transform-origin: bottom; }
+  100% { transform-origin: bottom; transform: scaleY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-18px); }
+}
+
+@keyframes slowzoom {
+  0% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* Hide Next.js dev overlay badge */
+nextjs-portal,
+[data-nextjs-dev-overlay],
+[data-nextjs-toast],
+div[data-nextjs-route-announcer] {
+  display: none !important;
+}
+

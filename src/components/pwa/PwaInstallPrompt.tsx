@@ -1,0 +1,183 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Download, Share2, PlusSquare, X } from 'lucide-react';
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+interface PwaCopy {
+  eyebrow: string;
+  title: string;
+  desc: string;
+  iosDesc: string;
+  installBtn: string;
+  iosStep1: string;
+  iosStep2: string;
+}
+
+const DEFAULT_COPY: PwaCopy = {
+  eyebrow: 'TEZKOR ILOVA',
+  title: "CarVision Ilovasini O'rnatish",
+  desc: "Tezkor 4K kamera va to'liq ekranli avto-studiya uchun asosiy ekranga qo'shing.",
+  iosDesc: "Tezkor kamera va to'liq ekranli studiya uchun asosiy ekranga qo'shing.",
+  installBtn: "ASOSIY EKRANGA O'RNATISH",
+  iosStep1: 'Brauzerning "Ulashish" (Share) belgisini bosing',
+  iosStep2: '"Asosiy ekranga qo\'shish" bandini tanlang',
+};
+
+const LOCALIZED_COPY: Record<string, PwaCopy> = {
+  uz: DEFAULT_COPY,
+  ru: {
+    eyebrow: 'ПРИЛОЖЕНИЕ PWA',
+    title: 'Установить CarVision',
+    desc: 'Добавьте на домашний экран для мгновенной 4K камеры и полноэкранной студии.',
+    iosDesc: 'Установите для быстрого доступа к полноэкранной 4K авто-студии.',
+    installBtn: 'ДОБАВИТЬ НА ЭКРАН',
+    iosStep1: 'Нажмите иконку «Поделиться» в браузере',
+    iosStep2: 'Выберите «На экран Домой»',
+  },
+  en: {
+    eyebrow: 'WEB APPLICATION',
+    title: 'Install CarVision App',
+    desc: 'Add to your home screen for low-latency 4K camera scan and full-screen studio.',
+    iosDesc: 'Install for high-speed camera access and full-screen atelier workflow.',
+    installBtn: 'INSTALL TO HOME SCREEN',
+    iosStep1: 'Tap the Share icon in your browser',
+    iosStep2: 'Select "Add to Home Screen"',
+  },
+};
+
+export const PwaInstallPrompt: React.FC = () => {
+  const params = useParams();
+  const rawLocale = (params?.locale as string) || 'uz';
+  const copy: PwaCopy = LOCALIZED_COPY[rawLocale] ?? DEFAULT_COPY;
+
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isIos, setIsIos] = useState<boolean>(false);
+  const [isStandalone, setIsStandalone] = useState<boolean>(false);
+  const [dismissed, setDismissed] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Check if running in standalone mode already
+    const isStandaloneMode =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      ('standalone' in window.navigator && Boolean((window.navigator as unknown as { standalone: boolean }).standalone));
+
+    setIsStandalone(isStandaloneMode);
+    if (isStandaloneMode) return;
+
+    // Check dismissed in session
+    const isDismissed = sessionStorage.getItem('cv_pwa_dismissed') === 'true';
+    if (isDismissed) return;
+
+    // Detect iOS
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIosDevice = /iphone|ipad|ipod/.test(ua) && !('MSStream' in window);
+    setIsIos(isIosDevice);
+
+    if (isIosDevice) {
+      setDismissed(false);
+      return;
+    }
+
+    // Android / Desktop Chrome handler
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setDismissed(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    await deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      setDismissed(true);
+    }
+    setDeferredPrompt(null);
+  };
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    sessionStorage.setItem('cv_pwa_dismissed', 'true');
+  };
+
+  if (isStandalone || dismissed) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ y: 35, opacity: 0, scale: 0.96 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 25, opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed bottom-5 start-4 end-4 sm:start-auto sm:end-6 sm:w-[420px] z-50 bg-[#0B0C10]/95 backdrop-blur-2xl border border-[#D4AE62]/20 rounded-3xl p-5 sm:p-6 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85),0_0_35px_rgba(212,174,98,0.1)] text-white"
+      >
+        <div className="flex items-start justify-between gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#D4AE62]/20 via-[#D4AE62]/10 to-transparent border border-[#D4AE62]/30 flex items-center justify-center shrink-0 text-[#E5C378] shadow-[0_4px_16px_rgba(212,174,98,0.15)]">
+            <Download className="w-5 h-5 stroke-[2]" />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AE62]">
+              {copy.eyebrow}
+            </span>
+            <h4 className="text-sm sm:text-base font-bold text-white tracking-wide mt-0.5">
+              {copy.title}
+            </h4>
+            <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
+              {isIos ? copy.iosDesc : copy.desc}
+            </p>
+
+            {isIos ? (
+              <div className="mt-4 bg-[#12141A]/90 rounded-2xl p-3 border border-white/5 space-y-2 text-xs text-neutral-300">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#D4AE62]/20 text-[#E5C378] flex items-center justify-center font-bold text-[10px] shrink-0">
+                    1
+                  </span>
+                  <span>{copy.iosStep1}</span>
+                  <Share2 className="w-3.5 h-3.5 text-[#E5C378] ms-auto shrink-0" />
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#D4AE62]/20 text-[#E5C378] flex items-center justify-center font-bold text-[10px] shrink-0">
+                    2
+                  </span>
+                  <span>{copy.iosStep2}</span>
+                  <PlusSquare className="w-3.5 h-3.5 text-neutral-400 ms-auto shrink-0" />
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="btn-gold mt-4 w-full py-3 px-4 rounded-full text-xs font-bold tracking-[0.16em] flex items-center justify-center gap-2.5 transition-all shadow-gold hover:scale-[1.01] active:scale-[0.98]"
+              >
+                <Download className="w-4 h-4 stroke-[2.2]" />
+                <span>{copy.installBtn}</span>
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 transition-colors shrink-0 -me-1 -mt-1 cursor-pointer"
+            aria-label="Dismiss install prompt"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
