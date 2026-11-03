@@ -43,6 +43,45 @@ END;
 $$;
 
 -- ---------------------------------------------------------------------------
+-- 1b. Heal tables created by an older/different schema.
+-- If a table with the same name exists but lacks the columns the app needs, it is
+-- renamed to <name>_legacy_20261104 (data preserved) and recreated below.
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE
+    spec RECORD;
+    col TEXT;
+    missing BOOLEAN;
+BEGIN
+    FOR spec IN
+        SELECT * FROM (VALUES
+            ('pricing_plans',   ARRAY['code','name','price_cents','credits','duration_days','watermark_enabled','max_devices','max_custom_items','is_active']),
+            ('profiles',        ARRAY['id','role','full_name','phone','preferred_locale','credits_balance','is_banned']),
+            ('shops',           ARRAY['id','owner_id','shop_name','city','district','exact_address','phone','is_verified','current_plan_code','credits_balance','referral_code']),
+            ('generations',     ARRAY['id','user_id','shop_id','status','idempotency_key','credits_charged']),
+            ('credit_ledger',   ARRAY['id','user_id','shop_id','amount','balance_after','action_type','generation_id']),
+            ('admin_audit_log', ARRAY['id','admin_id','action','target_entity','payload_before'])
+        ) AS v(tbl, cols)
+    LOOP
+        IF to_regclass('public.' || spec.tbl) IS NOT NULL THEN
+            missing := FALSE;
+            FOREACH col IN ARRAY spec.cols LOOP
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                     WHERE table_schema = 'public' AND table_name = spec.tbl AND column_name = col
+                ) THEN
+                    missing := TRUE;
+                END IF;
+            END LOOP;
+            IF missing THEN
+                EXECUTE format('ALTER TABLE public.%I RENAME TO %I', spec.tbl, spec.tbl || '_legacy_20261104');
+                RAISE NOTICE 'Table % had an incompatible shape: renamed to %_legacy_20261104', spec.tbl, spec.tbl;
+            END IF;
+        END IF;
+    END LOOP;
+END $$;
+
+-- ---------------------------------------------------------------------------
 -- 2. Tables (created only when missing)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.pricing_plans (
@@ -165,6 +204,12 @@ CREATE TABLE IF NOT EXISTS public.otp_codes (
 -- ---------------------------------------------------------------------------
 -- 3. Column additions / relaxations on pre-existing tables
 -- ---------------------------------------------------------------------------
+ALTER TABLE public.login_attempts ADD COLUMN IF NOT EXISTS kind VARCHAR(30) NOT NULL DEFAULT 'login';
+ALTER TABLE public.login_attempts ADD COLUMN IF NOT EXISTS login_key TEXT NOT NULL DEFAULT '';
+ALTER TABLE public.login_attempts ADD COLUMN IF NOT EXISTS ip VARCHAR(64);
+ALTER TABLE public.login_attempts ADD COLUMN IF NOT EXISTS success BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.login_attempts ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS free_credits_granted_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 ALTER TABLE public.shops    ADD COLUMN IF NOT EXISTS free_credits_granted_at TIMESTAMPTZ NOT NULL DEFAULT NOW();

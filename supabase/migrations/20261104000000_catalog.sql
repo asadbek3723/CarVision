@@ -2,6 +2,27 @@
 -- Migration: 20261104000000_catalog.sql   (idempotent)
 -- Replaces the legacy `products / sellers / categories` tables the old code expected.
 
+DO $$
+BEGIN
+    IF to_regclass('public.shops') IS NULL OR NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'shops' AND column_name = 'exact_address') THEN
+        RAISE EXCEPTION 'Avval 20261103000000_secure_credits_auth.sql migratsiyasini ishga tushiring';
+    END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.current_user_role()
+RETURNS TEXT LANGUAGE sql STABLE SET search_path = public, pg_temp
+AS $$ SELECT COALESCE((auth.jwt() -> 'app_metadata' ->> 'role'), 'anonymous'); $$;
+
+CREATE OR REPLACE FUNCTION public.is_super_admin()
+RETURNS BOOLEAN LANGUAGE sql STABLE SET search_path = public, pg_temp
+AS $$ SELECT public.current_user_role() = 'super_admin'; $$;
+
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql SET search_path = public, pg_temp
+AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $$;
+
 CREATE OR REPLACE FUNCTION public.current_user_shop_id()
 RETURNS UUID
 LANGUAGE sql STABLE SECURITY DEFINER

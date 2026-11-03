@@ -1,6 +1,14 @@
 -- CarVision: large vehicle reference database (makes + models), incl. rare cars sold in Uzbekistan
 -- Migration: 20261104000001_vehicle_database.sql   (idempotent: skips rows that already exist)
 
+-- The existing check constraint only allowed a few body types. Replace it with a wider list
+-- (NOT VALID: rows that already exist are not re-checked).
+ALTER TABLE public.vehicle_models DROP CONSTRAINT IF EXISTS vehicle_models_body_type_check;
+ALTER TABLE public.vehicle_models ADD CONSTRAINT vehicle_models_body_type_check CHECK (body_type IN (
+    'sedan', 'hatchback', 'suv', 'crossover', 'coupe', 'minivan', 'van', 'pickup', 'wagon',
+    'convertible', 'truck', 'bus', 'liftback', 'roadster', 'sports', 'limousine', 'other'
+)) NOT VALID;
+
 INSERT INTO public.vehicle_makes (id, slug, name, is_active)
 SELECT gen_random_uuid(), v.slug, v.name, TRUE FROM (VALUES
   ('chevrolet', 'Chevrolet'),
