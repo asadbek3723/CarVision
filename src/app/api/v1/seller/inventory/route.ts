@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { requireSeller } from '@/server/auth/guards';
+import { requirePaidSeller } from '@/server/auth/guards';
 import { getServerRates } from '@/server/rates';
 import { coverFor, itemBodySchema, loadItems, replaceItemRelations } from '@/server/catalog';
 import { toUsdCents, veloceCategory, type CatalogItemDTO } from '@/domain/catalog';
@@ -34,7 +34,7 @@ function toVeloceProduct(i: CatalogItemDTO) {
 /** The signed-in workshop's own items (all statuses except archived). */
 export async function GET(request: NextRequest) {
   try {
-    const guard = await requireSeller();
+    const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const id = new URL(request.url).searchParams.get('id');
 
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 /** Creates an item. It is published immediately unless `publish: false` (draft). */
 export async function POST(request: NextRequest) {
   try {
-    const guard = await requireSeller();
+    const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
 
     const parsed = itemBodySchema.safeParse(await request.json().catch(() => null));
@@ -132,7 +132,7 @@ const quickSchema = z
 /** Full edit (`name` present) or a quick update of stock / visibility. */
 export async function PATCH(request: NextRequest) {
   try {
-    const guard = await requireSeller();
+    const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const shopId = guard.value.shopId;
     const db = createAdminClient();
@@ -208,7 +208,7 @@ export async function PATCH(request: NextRequest) {
 /** Soft delete: the item disappears from the shop but order history stays intact. */
 export async function DELETE(request: NextRequest) {
   try {
-    const guard = await requireSeller();
+    const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const id = new URL(request.url).searchParams.get('productId') ?? new URL(request.url).searchParams.get('id');
     if (!id || !z.string().uuid().safeParse(id).success) return fail(400, 'id kerak');

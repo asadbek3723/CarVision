@@ -8,6 +8,7 @@ import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import type { CatalogItemDTO } from '@/domain/catalog';
+import { StudioLock } from '@/features/seller/components/StudioLock';
 
 /** Workshop garage: the studio's own published parts, ready to try on a customer's car. */
 export function VeloceGarage() {
@@ -22,7 +23,7 @@ export function VeloceGarage() {
   const [error, setError] = React.useState(false);
   const [activeCategory, setActiveCategory] = React.useState('Barchasi');
 
-  const isSeller = user?.role === 'b2b_seller';
+  const isSeller = user?.role === 'b2b_seller' && user.plan?.isPaid === true;
 
   React.useEffect(() => {
     if (authLoading) return;
@@ -59,10 +60,12 @@ export function VeloceGarage() {
     );
   }
 
-  if (!isSeller) {
+  if (user && !isSeller) return <StudioLock title="Garaj" />;
+
+  if (!user) {
     return (
       <div className="mx-auto mt-16 max-w-md px-5 text-center">
-        <p className="text-sm text-white/70">Garaj faqat studiya akkauntlari uchun.</p>
+        <p className="text-sm text-white/70">Garajni ko‘rish uchun tizimga kiring.</p>
         <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
           Kirish
         </Link>

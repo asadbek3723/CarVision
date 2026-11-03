@@ -1,5 +1,5 @@
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase/server';
-import type { UserProfile, UserRole, SupportedLocale } from '@/features/auth/types';
+import type { UserProfile, UserRole, SupportedLocale, PlanState } from '@/features/auth/types';
 import type { CurrencyCode } from '@/domain/currency';
 
 export interface ShopRow {
@@ -15,12 +15,21 @@ export interface ShopRow {
   is_verified: boolean;
 }
 
+/** Free plan is the default for everyone; only an unexpired paid plan counts as active. */
+export function planStateOf(shop: ShopRow | null): PlanState {
+  const code = shop?.current_plan_code ?? 'FREE_TRIAL';
+  const expires = shop?.plan_expires_at ?? null;
+  const isPaid = Boolean(shop) && code !== 'FREE_TRIAL' && Boolean(expires) && new Date(expires as string).getTime() > Date.now();
+  return { code, isPaid, expiresAt: expires };
+}
+
 export interface Session {
   userId: string;
   role: UserRole;
   isBanned: boolean;
   /** Shop owned by the user (b2b_seller only). */
   shop: ShopRow | null;
+  plan: PlanState;
   profile: UserProfile;
 }
 
@@ -62,6 +71,7 @@ export async function loadSession(userId: string): Promise<Session | null> {
     preferred_language: locale,
     preferred_currency: CURRENCY_BY_LOCALE[locale] ?? 'USD',
     created_at: p.created_at as string,
+    plan: planStateOf(shop),
     shop: shop
       ? {
           id: shop.id,
@@ -74,7 +84,7 @@ export async function loadSession(userId: string): Promise<Session | null> {
       : null,
   };
 
-  return { userId, role, isBanned: Boolean(p.is_banned), shop, profile };
+  return { userId, role, isBanned: Boolean(p.is_banned), shop, plan: planStateOf(shop), profile };
 }
 
 /** Returns the signed-in user's session, validated against Supabase Auth, or null. */

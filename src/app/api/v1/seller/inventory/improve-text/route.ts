@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { requireSeller } from '@/server/auth/guards';
+import { requirePaidSeller } from '@/server/auth/guards';
 import { categoryLabel } from '@/domain/catalog';
 
 const schema = z.object({
@@ -79,7 +79,7 @@ function parseJson(text: string | undefined): { name: string; description: strin
  * sees the suggestion and accepts or discards it. Free of credits (rate limited).
  */
 export async function POST(request: NextRequest) {
-  const guard = await requireSeller();
+  const guard = await requirePaidSeller();
   if (!guard.ok) return guard.response;
 
   const parsed = schema.safeParse(await request.json().catch(() => null));

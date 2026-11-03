@@ -8,6 +8,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import type { CatalogItemDTO } from '@/domain/catalog';
+import { StudioLock } from './StudioLock';
 
 interface SellerLead {
   id: string;
@@ -51,7 +52,7 @@ export function SellerDashboardView() {
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
-  const isSeller = user?.role === 'b2b_seller';
+  const isSeller = user?.role === 'b2b_seller' && user.plan?.isPaid === true;
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -122,7 +123,9 @@ export function SellerDashboardView() {
     );
   }
 
-  if (!user || !isSeller) {
+  if (user && !isSeller) return <StudioLock title="Dashboard" />;
+
+  if (!user) {
     return (
       <div className="mx-auto mt-10 max-w-md rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-6 text-center">
         <p className="text-sm text-white/80">Dashboard faqat studiya akkauntlari uchun.</p>

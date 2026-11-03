@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import crypto from 'node:crypto';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { requireSeller } from '@/server/auth/guards';
+import { requirePaidSeller } from '@/server/auth/guards';
 import { shopImagePrefix } from '@/server/catalog';
 
 export const maxDuration = 60;
@@ -20,7 +20,7 @@ const fail = (status: number, code: string, error: string, extra: Record<string,
  * Costs 1 credit, refunded automatically if the provider fails.
  */
 export async function POST(request: NextRequest) {
-  const guard = await requireSeller();
+  const guard = await requirePaidSeller();
   if (!guard.ok) return guard.response;
   const { session, shopId } = guard.value;
 

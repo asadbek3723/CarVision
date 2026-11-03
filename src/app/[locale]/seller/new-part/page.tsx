@@ -2,33 +2,26 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
-import { AlertTriangle, ArrowLeft, Camera, Check, ImagePlus, Loader2, Sparkles, Star, Trash2 } from 'lucide-react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { AlertTriangle, ArrowLeft, Camera, Check, ChevronDown, Loader2, Plus, Sparkles, X } from 'lucide-react';
 import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { VehiclePicker, type PickedVehicle } from '@/features/seller/components/VehiclePicker';
-import {
-  analyzeQuality,
-  compressForUpload,
-  composeStudioImage,
-  loadImage,
-  loadImageFromBlob,
-} from '@/features/seller/lib/image-tools';
+import { ProductPhotoModal } from '@/features/seller/components/ProductPhotoModal';
+import { StudioLock } from '@/features/seller/components/StudioLock';
+import { analyzeQuality, compressForUpload, composeStudioImage, loadImage, loadImageFromBlob } from '@/features/seller/lib/image-tools';
+import { dataUrlToBlob } from '@/features/seller/lib/photo-input';
 import { CATALOG_CATEGORIES, MAX_ITEM_IMAGES, PRICE_CURRENCIES, type CatalogCategory, type CatalogItemDTO } from '@/domain/catalog';
-import { DEFAULT_RATES } from '@/domain/currency';
 
 interface PhotoEntry {
   id: string;
   url: string;
-  preview: string;
   kind: 'ORIGINAL' | 'STUDIO' | 'ANGLE';
-  warnings: string[];
 }
 
 const fieldCls =
-  'w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
-const labelCls = 'mb-1.5 block text-xs font-semibold tracking-wide text-white/60';
-const sectionCls = 'rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5 md:p-6';
+  'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-base text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
+const labelCls = 'mb-2 block text-xs font-semibold text-white/55';
 
 async function uploadBlob(blob: Blob): Promise<string> {
   const form = new FormData();
@@ -41,51 +34,47 @@ async function uploadBlob(blob: Blob): Promise<string> {
 
 export default function SellerNewPartPage() {
   const params = useParams();
+  const router = useRouter();
   const search = useSearchParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const editId = search?.get('id') ?? null;
   const { user, isLoading, refreshProfile } = useAuth();
-
-  const fileRef = React.useRef<HTMLInputElement>(null);
+  const unlocked = user?.role === 'b2b_seller' && user.plan?.isPaid === true;
 
   const [photos, setPhotos] = React.useState<PhotoEntry[]>([]);
   const [uploading, setUploading] = React.useState(0);
-  const [photoError, setPhotoError] = React.useState<string | null>(null);
+  const [photoNotice, setPhotoNotice] = React.useState<string | null>(null);
+  const [photoModal, setPhotoModal] = React.useState(false);
+  const autoOpened = React.useRef(false);
 
   const [category, setCategory] = React.useState<CatalogCategory>('wheels');
   const [name, setName] = React.useState('');
-  const [brand, setBrand] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [diameter, setDiameter] = React.useState('');
-  const [width, setWidth] = React.useState('');
-  const [pcd, setPcd] = React.useState('');
-  const [offset, setOffset] = React.useState('');
-  const [swatch, setSwatch] = React.useState('#D4AE62');
-  const [universal, setUniversal] = React.useState(false);
-  const [vehicles, setVehicles] = React.useState<PickedVehicle[]>([]);
   const [price, setPrice] = React.useState('');
   const [currency, setCurrency] = React.useState<(typeof PRICE_CURRENCIES)[number]>('UZS');
+  const [universal, setUniversal] = React.useState(false);
+  const [vehicles, setVehicles] = React.useState<PickedVehicle[]>([]);
+  const [pickCars, setPickCars] = React.useState(false);
+
+  const [more, setMore] = React.useState(false);
+  const [brand, setBrand] = React.useState('');
+  const [description, setDescription] = React.useState('');
   const [stock, setStock] = React.useState('1');
-  const [install, setInstall] = React.useState(true);
-  const [installPrice, setInstallPrice] = React.useState('');
+  const [diameter, setDiameter] = React.useState('');
+  const [swatch, setSwatch] = React.useState('#D4AE62');
 
-  const [suggestion, setSuggestion] = React.useState<{ name: string; description: string; ai: boolean } | null>(null);
+  const [suggestion, setSuggestion] = React.useState<{ name: string; description: string } | null>(null);
   const [improvingText, setImprovingText] = React.useState(false);
-
   const [improvingImage, setImprovingImage] = React.useState(false);
-  const [imageNotice, setImageNotice] = React.useState<string | null>(null);
   const [studioCandidate, setStudioCandidate] = React.useState<{ url: string; preview: string } | null>(null);
 
   const [saving, setSaving] = React.useState(false);
-  const [formError, setFormError] = React.useState<string | null>(null);
-  const [savedAs, setSavedAs] = React.useState<'PUBLISHED' | 'DRAFT' | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [done, setDone] = React.useState(false);
   const [loadingItem, setLoadingItem] = React.useState(Boolean(editId));
 
-  const isSeller = user?.role === 'b2b_seller';
-
-  // ---- edit mode: load the item -----------------------------------------------------------
+  // ---- edit mode ------------------------------------------------------------------------------
   React.useEffect(() => {
-    if (!editId || !isSeller) return;
+    if (!editId || !unlocked) return;
     let cancelled = false;
     (async () => {
       try {
@@ -93,19 +82,13 @@ export default function SellerNewPartPage() {
         const data = await res.json();
         const item: CatalogItemDTO | undefined = data.items?.[0];
         if (cancelled) return;
-        if (!item) {
-          setFormError('Mahsulot topilmadi');
-          return;
-        }
+        if (!item) return setError('Mahsulot topilmadi');
         const a = item.attributes;
         setCategory(item.category);
         setName(item.name);
         setBrand(item.brand);
         setDescription(item.description);
         setDiameter(a['diameter'] ? String(a['diameter']) : '');
-        setWidth(a['width'] ? String(a['width']) : '');
-        setPcd(typeof a['pcd'] === 'string' ? a['pcd'] : '');
-        setOffset(a['offset'] !== undefined ? String(a['offset']) : '');
         if (typeof a['swatch'] === 'string') setSwatch(a['swatch']);
         setUniversal(item.isUniversal);
         setVehicles(
@@ -121,11 +104,10 @@ export default function SellerNewPartPage() {
         setCurrency((PRICE_CURRENCIES as readonly string[]).includes(item.inputCurrency) ? (item.inputCurrency as (typeof PRICE_CURRENCIES)[number]) : 'USD');
         setPrice(item.inputPrice !== null ? String(item.inputPrice) : String(item.priceUSD));
         setStock(String(item.stock));
-        setInstall(item.installAvailable);
-        setInstallPrice(item.installPriceUSD > 0 ? String(item.installPriceUSD) : '');
-        setPhotos(item.images.map((g) => ({ id: g.id, url: g.url, preview: g.url, kind: g.kind, warnings: [] })));
+        setPhotos(item.images.map((g) => ({ id: g.id, url: g.url, kind: g.kind })));
+        setMore(true);
       } catch {
-        if (!cancelled) setFormError('Mahsulotni yuklab bo‘lmadi');
+        if (!cancelled) setError('Mahsulotni yuklab bo‘lmadi');
       } finally {
         if (!cancelled) setLoadingItem(false);
       }
@@ -133,51 +115,36 @@ export default function SellerNewPartPage() {
     return () => {
       cancelled = true;
     };
-  }, [editId, isSeller]);
+  }, [editId, unlocked]);
 
-  // ---- photos ----------------------------------------------------------------------------------
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setPhotoError(null);
-    const room = MAX_ITEM_IMAGES - photos.length;
-    const picked = Array.from(files).slice(0, Math.max(0, room));
-    if (picked.length === 0) {
-      setPhotoError(`Eng ko‘pi bilan ${MAX_ITEM_IMAGES} ta rasm`);
-      return;
+  // New product: the camera opens right away
+  React.useEffect(() => {
+    if (!editId && unlocked && !autoOpened.current) {
+      autoOpened.current = true;
+      setPhotoModal(true);
     }
-    for (const file of picked) {
-      setUploading((n) => n + 1);
-      try {
-        if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
-          throw new Error('Faqat JPEG, PNG yoki WebP rasm yuklang');
-        }
-        const img = await loadImageFromBlob(file);
-        const report = analyzeQuality(img);
-        if (!report.ok) throw new Error(report.blocking[0]);
-        const blob = await compressForUpload(img);
-        const url = await uploadBlob(blob);
-        setPhotos((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), url, preview: URL.createObjectURL(blob), kind: 'ORIGINAL', warnings: report.warnings },
-        ]);
-      } catch (err) {
-        setPhotoError(err instanceof Error ? err.message : 'Rasmni yuklab bo‘lmadi');
-      } finally {
-        setUploading((n) => n - 1);
-      }
+  }, [editId, unlocked]);
+
+  // ---- photos -----------------------------------------------------------------------------------
+  const addPhoto = React.useCallback(async (dataUrl: string) => {
+    setPhotoModal(false);
+    setPhotoNotice(null);
+    setUploading((n) => n + 1);
+    try {
+      const img = await loadImageFromBlob(await dataUrlToBlob(dataUrl));
+      const report = analyzeQuality(img);
+      if (!report.ok) throw new Error(report.blocking[0]);
+      if (report.warnings[0]) setPhotoNotice(report.warnings[0]);
+      const url = await uploadBlob(await compressForUpload(img));
+      setPhotos((prev) => (prev.length >= MAX_ITEM_IMAGES ? prev : [...prev, { id: crypto.randomUUID(), url, kind: 'ORIGINAL' }]));
+    } catch (err) {
+      setPhotoNotice(err instanceof Error ? err.message : 'Rasmni yuklab bo‘lmadi');
+    } finally {
+      setUploading((n) => n - 1);
     }
-    if (fileRef.current) fileRef.current.value = '';
-  };
+  }, []);
 
-  const makeMain = (id: string) =>
-    setPhotos((prev) => {
-      const target = prev.find((p) => p.id === id);
-      return target ? [target, ...prev.filter((p) => p.id !== id)] : prev;
-    });
-
-  const removePhoto = (id: string) => setPhotos((prev) => prev.filter((p) => p.id !== id));
-
-  // ---- AI: text -----------------------------------------------------------------------------------
+  // ---- AI helpers -------------------------------------------------------------------------------
   const improveText = async () => {
     setImprovingText(true);
     setSuggestion(null);
@@ -189,78 +156,50 @@ export default function SellerNewPartPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Yaxshilab bo‘lmadi');
-      setSuggestion({ name: data.name, description: data.description, ai: Boolean(data.ai) });
+      setSuggestion({ name: data.name, description: data.description });
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Yaxshilab bo‘lmadi');
+      setError(err instanceof Error ? err.message : 'Yaxshilab bo‘lmadi');
     } finally {
       setImprovingText(false);
     }
   };
 
-  // ---- AI: image (cut-out + studio background) ----------------------------------------------------
-  const mainPhoto = photos[0];
-  const canImproveImage = Boolean(mainPhoto) && mainPhoto!.kind !== 'STUDIO' && !improvingImage;
-
+  const main = photos[0];
   const improveImage = async () => {
-    if (!mainPhoto) return;
+    if (!main) return;
     setImprovingImage(true);
-    setImageNotice(null);
+    setPhotoNotice(null);
     setStudioCandidate(null);
     try {
       const res = await fetch('/api/v1/seller/inventory/improve-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: mainPhoto.url }),
+        body: JSON.stringify({ imageUrl: main.url }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.error || 'Rasmni yaxshilab bo‘lmadi');
-      const cutout = await loadImage(data.cutoutUrl as string);
-      const composed = await composeStudioImage(cutout);
-      const url = await uploadBlob(composed);
-      setStudioCandidate({ url, preview: URL.createObjectURL(composed) });
-      void refreshProfile();
+      const composed = await composeStudioImage(await loadImage(data.cutoutUrl as string));
+      setStudioCandidate({ url: await uploadBlob(composed), preview: URL.createObjectURL(composed) });
     } catch (err) {
-      setImageNotice(err instanceof Error ? err.message : 'Rasmni yaxshilab bo‘lmadi');
-      void refreshProfile();
+      setPhotoNotice(err instanceof Error ? err.message : 'Rasmni yaxshilab bo‘lmadi');
     } finally {
       setImprovingImage(false);
+      void refreshProfile();
     }
   };
 
-  const acceptStudio = () => {
-    if (!studioCandidate) return;
-    const studio: PhotoEntry = { id: crypto.randomUUID(), url: studioCandidate.url, preview: studioCandidate.preview, kind: 'STUDIO', warnings: [] };
-    setPhotos((prev) => [studio, ...prev].slice(0, MAX_ITEM_IMAGES));
-    setStudioCandidate(null);
-  };
-
-  // ---- submit -----------------------------------------------------------------------------------------
+  // ---- save ----------------------------------------------------------------------------------------
   const priceNum = Number(price.replace(/\s/g, ''));
-  const approxUsd = priceNum > 0 ? priceNum / (DEFAULT_RATES[currency] || 1) : 0;
 
-  const validate = (): string | null => {
-    if (photos.length === 0) return 'Kamida 1 ta rasm yuklang';
-    if (name.trim().length < 2) return 'Mahsulot nomini kiriting';
-    if (!(priceNum > 0)) return 'Narxni kiriting';
-    if (!universal && vehicles.length === 0) return 'Qaysi mashinaga mosligini tanlang yoki "Barcha mashinalarga" ni belgilang';
-    if (category === 'wheels' && !diameter) return 'Disk diametrini kiriting';
-    return null;
-  };
+  const save = async () => {
+    setError(null);
+    if (photos.length === 0) return setError('Avval rasm oling');
+    if (name.trim().length < 2) return setError('Nomini yozing');
+    if (!(priceNum > 0)) return setError('Narxni yozing');
+    if (!universal && vehicles.length === 0) return setError('Qaysi mashinaga mosligini tanlang');
 
-  const save = async (publish: boolean) => {
-    setFormError(null);
-    const problem = publish ? validate() : photos.length === 0 ? 'Kamida 1 ta rasm yuklang' : name.trim().length < 2 ? 'Mahsulot nomini kiriting' : !(priceNum > 0) ? 'Narxni kiriting' : null;
-    if (problem) {
-      setFormError(problem);
-      return;
-    }
     const attributes: Record<string, unknown> = {};
-    if (category === 'wheels') {
-      if (diameter) attributes['diameter'] = Number(diameter);
-      if (width) attributes['width'] = Number(width);
-      if (pcd.trim()) attributes['pcd'] = pcd.trim();
-      if (offset !== '') attributes['offset'] = Number(offset);
-    }
+    if (category === 'wheels' && diameter) attributes['diameter'] = Number(diameter);
     if (category === 'wrap_paint') attributes['swatch'] = swatch;
     if (universal) attributes['universal'] = true;
 
@@ -272,14 +211,11 @@ export default function SellerNewPartPage() {
       price: priceNum,
       currency,
       stock: Math.max(0, Math.floor(Number(stock) || 0)),
-      installAvailable: install,
-      installPrice: install && installPrice ? Number(installPrice) : undefined,
+      installAvailable: true,
       attributes,
       images: photos.map((p) => ({ url: p.url, kind: p.kind })),
-      fitment: universal
-        ? []
-        : vehicles.map((v) => ({ modelId: v.modelId, customModel: v.modelId ? undefined : v.customModel, yearFrom: v.yearFrom, yearTo: v.yearTo })),
-      publish,
+      fitment: universal ? [] : vehicles.map((v) => ({ modelId: v.modelId, customModel: v.modelId ? undefined : v.customModel, yearFrom: v.yearFrom, yearTo: v.yearTo })),
+      publish: true,
     };
 
     setSaving(true);
@@ -291,36 +227,34 @@ export default function SellerNewPartPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.error || 'Saqlab bo‘lmadi');
-      setSavedAs(publish ? 'PUBLISHED' : 'DRAFT');
+      setDone(true);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Saqlab bo‘lmadi');
+      setError(err instanceof Error ? err.message : 'Saqlab bo‘lmadi');
     } finally {
       setSaving(false);
     }
   };
 
-  const resetForm = () => {
+  const reset = () => {
     setPhotos([]);
     setName('');
-    setBrand('');
-    setDescription('');
-    setDiameter('');
-    setWidth('');
-    setPcd('');
-    setOffset('');
     setPrice('');
-    setStock('1');
     setVehicles([]);
     setUniversal(false);
+    setBrand('');
+    setDescription('');
+    setStock('1');
+    setDiameter('');
     setSuggestion(null);
     setStudioCandidate(null);
-    setSavedAs(null);
+    setDone(false);
+    setPhotoModal(true);
   };
 
-  // ---- guards -----------------------------------------------------------------------------------------
+  // ---- screens -------------------------------------------------------------------------------------
   const shell = (children: React.ReactNode) => (
     <VeloceShell>
-      <div className="mx-auto max-w-3xl px-4 pb-32 pt-4 md:px-8">{children}</div>
+      <div className="mx-auto max-w-xl px-4 pb-40 pt-4 md:px-8">{children}</div>
     </VeloceShell>
   );
 
@@ -331,303 +265,267 @@ export default function SellerNewPartPage() {
       </div>
     );
   }
-  if (!user || !isSeller) {
+  if (!user) {
     return shell(
-      <div className={`${sectionCls} mt-10 text-center`}>
-        <p className="text-sm text-white/80">Mahsulot qo‘shish uchun studiya akkaunti bilan kiring.</p>
-        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
-          Kirish
-        </Link>
+      <div className="mt-10 text-center">
+        <Link href={`/${locale}/login`} className="inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">Kirish</Link>
       </div>
     );
   }
+  if (!unlocked) return shell(<StudioLock title="Mahsulot qo‘shish" />);
 
-  if (savedAs) {
+  if (done) {
     return shell(
-      <div className={`${sectionCls} mt-10 text-center`}>
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
-          <Check className="h-7 w-7" />
+      <div className="mt-16 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+          <Check className="h-8 w-8" />
         </div>
-        <h1 className="mt-4 text-xl font-bold text-white">{savedAs === 'PUBLISHED' ? 'Mahsulot do‘konda chiqdi' : 'Qoralama saqlandi'}</h1>
-        <p className="mt-1 text-sm text-white/60">
-          {savedAs === 'PUBLISHED' ? 'Mijozlar uni hozirdan ko‘ra oladi.' : 'Tayyor bo‘lganda dashboarddan nashr qilasiz.'}
-        </p>
-        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+        <h1 className="mt-5 text-xl font-bold text-white">{editId ? 'Saqlandi' : 'Mahsulot do‘konda chiqdi'}</h1>
+        <div className="mt-7 flex flex-col gap-3">
           {!editId && (
-            <button type="button" onClick={resetForm} className="rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/15">
+            <button type="button" onClick={reset} className="rounded-full bg-[#D4AE62] px-6 py-3.5 text-sm font-bold text-black">
               Yana mahsulot qo‘shish
             </button>
           )}
-          <Link href={`/${locale}/seller?tab=dashboard`} className="rounded-full bg-[#D4AE62] px-6 py-3 text-sm font-bold text-black">
-            Dashboardga qaytish
+          <Link href={`/${locale}/seller?tab=dashboard`} className="rounded-full bg-white/10 px-6 py-3.5 text-sm font-semibold text-white">
+            Dashboard
           </Link>
         </div>
       </div>
     );
   }
 
-  const cat = CATALOG_CATEGORIES.find((c) => c.slug === category)!;
-
   return shell(
     <>
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <Link href={`/${locale}/seller?tab=dashboard`} className="inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-          Orqaga
+      <ProductPhotoModal
+        isOpen={photoModal}
+        onClose={() => {
+          setPhotoModal(false);
+          if (photos.length === 0 && !editId) router.push(`/${locale}/seller?tab=dashboard`);
+        }}
+        onPhoto={(d) => void addPhoto(d)}
+      />
+
+      <div className="mb-4 flex items-center justify-between">
+        <Link href={`/${locale}/seller?tab=dashboard`} aria-label="Orqaga" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
+          <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Link>
-        <h1 className="text-base font-bold text-white md:text-lg">{editId ? 'Mahsulotni tahrirlash' : 'Yangi mahsulot'}</h1>
-        <span className="w-20" />
+        <h1 className="text-base font-bold text-white">{editId ? 'Tahrirlash' : 'Yangi mahsulot'}</h1>
+        <span className="w-10" />
       </div>
 
-      <div className="space-y-4">
-        {/* 1. PHOTOS */}
-        <section className={sectionCls}>
-          <h2 className="text-sm font-bold text-white">1. Rasm</h2>
-          <p className="mt-1 text-xs text-white/50">Detalni yaxshi yorug‘likda, ravshan va to‘liq ko‘rinadigan qilib oling. Birinchi rasm asosiy bo‘ladi.</p>
+      {/* Photo */}
+      <section>
+        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#0B0D13]">
+          {main ? (
+            <>
+              <img src={main.url} alt="" className="h-full w-full object-cover" />
+              <button type="button" onClick={() => setPhotoModal(true)} className="absolute bottom-3 end-3 flex items-center gap-2 rounded-full bg-black/70 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur">
+                <Camera className="h-4 w-4" />
+                Qayta olish
+              </button>
+              {main.kind === 'STUDIO' && <span className="absolute start-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[11px] font-semibold text-[#D4AE62]">Studiya</span>}
+            </>
+          ) : (
+            <button type="button" onClick={() => setPhotoModal(true)} className="flex h-full w-full flex-col items-center justify-center gap-3 text-[#D4AE62]">
+              {uploading > 0 ? <Loader2 className="h-9 w-9 animate-spin" /> : <Camera className="h-9 w-9" />}
+              <span className="text-sm font-semibold">{uploading > 0 ? 'Yuklanmoqda…' : 'Rasm olish'}</span>
+            </button>
+          )}
+        </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-5">
-            {photos.map((p, i) => (
-              <div key={p.id} className="group relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-black">
-                <img src={p.preview} alt="" className="h-full w-full object-cover" />
-                {i === 0 && <span className="absolute start-1.5 top-1.5 rounded-full bg-[#D4AE62] px-2 py-0.5 text-[10px] font-bold text-black">Asosiy</span>}
-                {p.kind === 'STUDIO' && <span className="absolute start-1.5 bottom-1.5 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-[#D4AE62]">Studiya</span>}
-                <div className="absolute end-1.5 top-1.5 flex flex-col gap-1">
-                  {i !== 0 && (
-                    <button type="button" aria-label="Asosiy qilish" onClick={() => makeMain(p.id)} className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black">
-                      <Star className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                  <button type="button" aria-label="O‘chirish" onClick={() => removePhoto(p.id)} className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-red-600">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+        {main && (
+          <div className="mt-3 flex gap-2">
+            {photos.slice(1).map((p) => (
+              <div key={p.id} className="relative h-16 w-16 overflow-hidden rounded-xl bg-black">
+                <img src={p.url} alt="" className="h-full w-full object-cover" />
+                <button type="button" aria-label="O‘chirish" onClick={() => setPhotos((prev) => prev.filter((x) => x.id !== p.id))} className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/75 text-white">
+                  <X className="h-3 w-3" />
+                </button>
               </div>
             ))}
-            {Array.from({ length: uploading }).map((_, i) => (
-              <div key={`u${i}`} className="flex aspect-square items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03]">
-                <Loader2 className="h-5 w-5 animate-spin text-[#D4AE62]" />
-              </div>
-            ))}
-            {photos.length + uploading < MAX_ITEM_IMAGES && (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#D4AE62]/40 bg-[#D4AE62]/[0.05] text-[#D4AE62] transition hover:bg-[#D4AE62]/10"
-              >
-                {photos.length === 0 ? <Camera className="h-6 w-6" /> : <ImagePlus className="h-6 w-6" />}
-                <span className="text-[11px] font-semibold">{photos.length === 0 ? 'Rasm qo‘shish' : 'Yana'}</span>
+            {uploading > 0 && <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/[0.05]"><Loader2 className="h-4 w-4 animate-spin text-[#D4AE62]" /></div>}
+            {photos.length < MAX_ITEM_IMAGES && (
+              <button type="button" onClick={() => setPhotoModal(true)} aria-label="Yana rasm" className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-white/25 text-white/60 hover:text-white">
+                <Plus className="h-5 w-5" />
               </button>
             )}
           </div>
-          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => void handleFiles(e.target.files)} />
-
-          {photoError && <p role="alert" className="mt-3 text-xs text-red-300">{photoError}</p>}
-          {photos.flatMap((p) => p.warnings).slice(0, 3).map((w) => (
-            <p key={w} className="mt-2 flex items-start gap-2 text-xs text-amber-300">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              {w}
-            </p>
-          ))}
-
-          {mainPhoto && mainPhoto.kind !== 'STUDIO' && (
-            <div className="mt-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-white">Rasmni studiya ko‘rinishiga keltirish</p>
-                  <p className="text-xs text-white/50">Detal o‘zgarmaydi: faqat orqa fon toza studiyaga almashadi. 1 kredit.</p>
-                </div>
-                <button
-                  type="button"
-                  disabled={!canImproveImage}
-                  onClick={() => void improveImage()}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#D4AE62] px-4 py-2 text-xs font-bold text-black transition hover:brightness-110 disabled:opacity-50"
-                >
-                  {improvingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  {improvingImage ? 'Tayyorlanmoqda…' : 'Yaxshilash'}
-                </button>
-              </div>
-              {imageNotice && <p role="alert" className="mt-3 text-xs text-amber-300">{imageNotice}</p>}
-              {studioCandidate && (
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <figure>
-                    <img src={mainPhoto.preview} alt="Asl rasm" className="aspect-[4/3] w-full rounded-xl object-cover" />
-                    <figcaption className="mt-1 text-center text-[11px] text-white/50">Asl</figcaption>
-                  </figure>
-                  <figure>
-                    <img src={studioCandidate.preview} alt="Yaxshilangan rasm" className="aspect-[4/3] w-full rounded-xl object-cover" />
-                    <figcaption className="mt-1 text-center text-[11px] text-[#D4AE62]">Studiya</figcaption>
-                  </figure>
-                  <button type="button" onClick={() => setStudioCandidate(null)} className="rounded-full bg-white/10 py-2.5 text-xs font-semibold text-white hover:bg-white/15">
-                    Asl rasmni qoldirish
-                  </button>
-                  <button type="button" onClick={acceptStudio} className="rounded-full bg-[#D4AE62] py-2.5 text-xs font-bold text-black">
-                    Yaxshilanganini ishlatish
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
-
-        {/* 2. WHAT IS IT */}
-        <section className={sectionCls}>
-          <h2 className="text-sm font-bold text-white">2. Bu nima?</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {CATALOG_CATEGORIES.map((c) => (
-              <button
-                key={c.slug}
-                type="button"
-                onClick={() => setCategory(c.slug)}
-                className={`rounded-full px-3.5 py-2 text-xs font-semibold transition ${category === c.slug ? 'bg-[#D4AE62] text-black' : 'bg-white/[0.06] text-white/75 hover:bg-white/10'}`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-[11px] text-white/40">{cat.hint}</p>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelCls} htmlFor="p-name">Nomi *</label>
-              <input id="p-name" value={name} maxLength={150} onChange={(e) => setName(e.target.value)} placeholder="Masalan: BBS CI-R 20 dyuym" className={fieldCls} />
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="p-brand">Brend</label>
-              <input id="p-brand" value={brand} maxLength={100} onChange={(e) => setBrand(e.target.value)} placeholder="Masalan: BBS" className={fieldCls} />
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-xs font-semibold tracking-wide text-white/60" htmlFor="p-desc">Tavsif</label>
-              {(name.trim() || description.trim()) && (
-                <button
-                  type="button"
-                  onClick={() => void improveText()}
-                  disabled={improvingText}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-white/40 transition hover:text-[#D4AE62] disabled:opacity-50"
-                >
-                  {improvingText ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                  Yaxshilash
-                </button>
-              )}
-            </div>
-            <textarea id="p-desc" value={description} maxLength={1500} rows={4} onChange={(e) => setDescription(e.target.value)} placeholder="Detal haqida qisqacha: material, holati, nimasi bilan yaxshi…" className={`${fieldCls} resize-y`} />
-
-            {suggestion && (
-              <div className="mt-3 rounded-2xl border border-[#D4AE62]/30 bg-[#D4AE62]/[0.06] p-4">
-                <p className="text-[11px] font-semibold text-[#D4AE62]">{suggestion.ai ? 'Taklif' : 'Tozalangan variant'}</p>
-                <p className="mt-2 text-sm font-semibold text-white">{suggestion.name}</p>
-                <p className="mt-1 whitespace-pre-line text-sm text-white/75">{suggestion.description}</p>
-                <div className="mt-3 flex gap-2">
-                  <button type="button" onClick={() => setSuggestion(null)} className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">Bekor qilish</button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (suggestion.name) setName(suggestion.name);
-                      setDescription(suggestion.description);
-                      setSuggestion(null);
-                    }}
-                    className="rounded-full bg-[#D4AE62] px-4 py-2 text-xs font-bold text-black"
-                  >
-                    Qabul qilish
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {category === 'wheels' && (
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div>
-                <label className={labelCls} htmlFor="w-d">Diametr (R) *</label>
-                <input id="w-d" type="number" inputMode="numeric" min={10} max={30} value={diameter} onChange={(e) => setDiameter(e.target.value)} placeholder="17" className={fieldCls} />
-              </div>
-              <div>
-                <label className={labelCls} htmlFor="w-w">Eni (J)</label>
-                <input id="w-w" type="number" inputMode="decimal" step="0.5" value={width} onChange={(e) => setWidth(e.target.value)} placeholder="7.5" className={fieldCls} />
-              </div>
-              <div>
-                <label className={labelCls} htmlFor="w-p">PCD</label>
-                <input id="w-p" value={pcd} onChange={(e) => setPcd(e.target.value)} placeholder="5x114.3" className={fieldCls} />
-              </div>
-              <div>
-                <label className={labelCls} htmlFor="w-o">Offset (ET)</label>
-                <input id="w-o" type="number" inputMode="numeric" value={offset} onChange={(e) => setOffset(e.target.value)} placeholder="35" className={fieldCls} />
-              </div>
-            </div>
-          )}
-          {category === 'wrap_paint' && (
-            <div className="mt-4 flex items-center gap-3">
-              <label className="text-xs font-semibold text-white/60" htmlFor="sw">Rang</label>
-              <input id="sw" type="color" value={swatch} onChange={(e) => setSwatch(e.target.value)} className="h-10 w-16 cursor-pointer rounded-lg border border-white/10 bg-transparent" />
-              <span className="text-xs text-white/50">{swatch.toUpperCase()}</span>
-            </div>
-          )}
-        </section>
-
-        {/* 3. FITMENT */}
-        <section className={sectionCls}>
-          <h2 className="text-sm font-bold text-white">3. Qaysi mashinaga mos?</h2>
-          <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm text-white/80">
-            <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-[#D4AE62]" />
-            Barcha mashinalarga mos (universal)
-          </label>
-          {!universal && (
-            <div className="mt-4">
-              <VehiclePicker value={vehicles} onChange={setVehicles} />
-              <p className="mt-2 text-[11px] text-white/40">Bazada minglab model bor. Yil oralig‘i ixtiyoriy.</p>
-            </div>
-          )}
-        </section>
-
-        {/* 4. PRICE */}
-        <section className={sectionCls}>
-          <h2 className="text-sm font-bold text-white">4. Narx va soni</h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-3">
-            <div className="sm:col-span-2">
-              <label className={labelCls} htmlFor="pr">Narxi *</label>
-              <div className="flex gap-2">
-                <input id="pr" type="number" inputMode="decimal" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" className={fieldCls} />
-                <select value={currency} onChange={(e) => setCurrency(e.target.value as (typeof PRICE_CURRENCIES)[number])} className="rounded-xl border border-white/10 bg-[#11141b] px-3 text-sm text-white outline-none" aria-label="Valyuta">
-                  {PRICE_CURRENCIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-              {approxUsd > 0 && currency !== 'USD' && <p className="mt-1 text-[11px] text-white/40">≈ ${approxUsd.toFixed(2)}</p>}
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="st">Soni</label>
-              <input id="st" type="number" inputMode="numeric" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={fieldCls} />
-            </div>
-          </div>
-
-          <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm text-white/80">
-            <input type="checkbox" checked={install} onChange={(e) => setInstall(e.target.checked)} className="h-4 w-4 accent-[#D4AE62]" />
-            O‘rnatib berish xizmati bor
-          </label>
-          {install && (
-            <div className="mt-3 max-w-xs">
-              <label className={labelCls} htmlFor="ip">O‘rnatish narxi ({currency})</label>
-              <input id="ip" type="number" inputMode="decimal" min={0} value={installPrice} onChange={(e) => setInstallPrice(e.target.value)} placeholder="0" className={fieldCls} />
-            </div>
-          )}
-        </section>
-
-        {formError && (
-          <p role="alert" className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{formError}</p>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <button type="button" disabled={saving} onClick={() => void save(false)} className="rounded-full bg-white/10 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/15 disabled:opacity-50">
-            Qoralama sifatida saqlash
+        {photoNotice && (
+          <p className="mt-3 flex items-start gap-2 text-xs text-amber-300">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            {photoNotice}
+          </p>
+        )}
+
+        {main && main.kind !== 'STUDIO' && !studioCandidate && (
+          <button type="button" onClick={() => void improveImage()} disabled={improvingImage} className="mt-3 inline-flex items-center gap-1.5 text-xs text-white/45 transition hover:text-[#D4AE62] disabled:opacity-50">
+            {improvingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            Rasmni studiya fonida yaxshilash · 1 kredit
           </button>
-          <button type="button" disabled={saving || uploading > 0} onClick={() => void save(true)} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-8 py-3.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50">
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            {editId ? 'Saqlash va nashr qilish' : 'Do‘konda chiqarish'}
-          </button>
+        )}
+        {studioCandidate && (
+          <div className="mt-3 rounded-2xl border border-[#D4AE62]/30 bg-[#D4AE62]/[0.06] p-3">
+            <img src={studioCandidate.preview} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
+            <div className="mt-3 flex gap-2">
+              <button type="button" onClick={() => setStudioCandidate(null)} className="flex-1 rounded-full bg-white/10 py-2.5 text-xs font-semibold text-white">Asl rasm</button>
+              <button
+                type="button"
+                onClick={() => {
+                  const studio: PhotoEntry = { id: crypto.randomUUID(), url: studioCandidate.url, kind: 'STUDIO' };
+                  setPhotos((prev) => [studio, ...prev].slice(0, MAX_ITEM_IMAGES));
+                  setStudioCandidate(null);
+                }}
+                className="flex-1 rounded-full bg-[#D4AE62] py-2.5 text-xs font-bold text-black"
+              >
+                Shuni ishlatish
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Category */}
+      <section className="mt-6">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+          {CATALOG_CATEGORIES.map((c) => (
+            <button
+              key={c.slug}
+              type="button"
+              onClick={() => setCategory(c.slug)}
+              className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold transition ${category === c.slug ? 'bg-[#D4AE62] text-black' : 'bg-white/[0.06] text-white/75'}`}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
+      </section>
+
+      {/* Name + price */}
+      <section className="mt-5 space-y-4">
+        <div>
+          <label className={labelCls} htmlFor="p-name">Nomi</label>
+          <div className="relative">
+            <input id="p-name" value={name} maxLength={150} onChange={(e) => setName(e.target.value)} placeholder="Masalan: BBS CI-R 20" className={`${fieldCls} pe-12`} />
+            {name.trim().length > 1 && (
+              <button type="button" aria-label="Matnni yaxshilash" onClick={() => void improveText()} disabled={improvingText} className="absolute end-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white/35 transition hover:text-[#D4AE62]">
+                {improvingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {suggestion && (
+          <div className="rounded-2xl border border-[#D4AE62]/30 bg-[#D4AE62]/[0.06] p-4">
+            <p className="text-sm font-semibold text-white">{suggestion.name}</p>
+            {suggestion.description && <p className="mt-1 whitespace-pre-line text-sm text-white/70">{suggestion.description}</p>}
+            <div className="mt-3 flex gap-2">
+              <button type="button" onClick={() => setSuggestion(null)} className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white">Yo‘q</button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (suggestion.name) setName(suggestion.name);
+                  if (suggestion.description) setDescription(suggestion.description);
+                  setSuggestion(null);
+                }}
+                className="rounded-full bg-[#D4AE62] px-4 py-2 text-xs font-bold text-black"
+              >
+                Qabul qilish
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label className={labelCls} htmlFor="p-price">Narxi</label>
+          <div className="flex gap-2">
+            <input id="p-price" type="number" inputMode="decimal" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" className={fieldCls} />
+            <select value={currency} onChange={(e) => setCurrency(e.target.value as (typeof PRICE_CURRENCIES)[number])} aria-label="Valyuta" className="rounded-2xl border border-white/10 bg-[#11141b] px-3 text-sm text-white outline-none">
+              {PRICE_CURRENCIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {/* Fitment */}
+      <section className="mt-5">
+        <label className={labelCls}>Qaysi mashinaga?</label>
+        {!pickCars && !universal && vehicles.length === 0 ? (
+          <>
+            <button type="button" onClick={() => setPickCars(true)} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-start text-base text-white/50">
+              Mashinani tanlang
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm text-white/75">
+              <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-[#D4AE62]" />
+              Barcha mashinalarga mos
+            </label>
+          </>
+        ) : (
+          <div className="space-y-3">
+            {!universal && <VehiclePicker value={vehicles} onChange={setVehicles} />}
+            <label className="flex cursor-pointer items-center gap-3 text-sm text-white/75">
+              <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-[#D4AE62]" />
+              Barcha mashinalarga mos
+            </label>
+          </div>
+        )}
+      </section>
+
+      {/* More */}
+      <section className="mt-5">
+        <button type="button" onClick={() => setMore((m) => !m)} className="flex items-center gap-2 text-sm font-semibold text-white/55 hover:text-white">
+          <ChevronDown className={`h-4 w-4 transition ${more ? 'rotate-180' : ''}`} />
+          Qo‘shimcha
+        </button>
+        {more && (
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls} htmlFor="p-brand">Brend</label>
+                <input id="p-brand" value={brand} maxLength={100} onChange={(e) => setBrand(e.target.value)} className={fieldCls} />
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="p-stock">Soni</label>
+                <input id="p-stock" type="number" inputMode="numeric" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={fieldCls} />
+              </div>
+            </div>
+            {category === 'wheels' && (
+              <div>
+                <label className={labelCls} htmlFor="p-diam">Diametr (R)</label>
+                <input id="p-diam" type="number" inputMode="numeric" min={10} max={30} value={diameter} onChange={(e) => setDiameter(e.target.value)} placeholder="17" className={fieldCls} />
+              </div>
+            )}
+            {category === 'wrap_paint' && (
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-semibold text-white/55" htmlFor="sw">Rang</label>
+                <input id="sw" type="color" value={swatch} onChange={(e) => setSwatch(e.target.value)} className="h-10 w-16 cursor-pointer rounded-lg border border-white/10 bg-transparent" />
+              </div>
+            )}
+            <div>
+              <label className={labelCls} htmlFor="p-desc">Tavsif</label>
+              <textarea id="p-desc" value={description} maxLength={1500} rows={3} onChange={(e) => setDescription(e.target.value)} className={`${fieldCls} resize-y`} />
+            </div>
+          </div>
+        )}
+      </section>
+
+      {error && <p role="alert" className="mt-5 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
+
+      <div className="fixed inset-x-0 bottom-[84px] z-30 px-4 md:bottom-6 md:ps-28">
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={saving || uploading > 0}
+          className="mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-4 text-base font-bold text-black shadow-[0_12px_40px_rgba(0,0,0,0.6)] transition hover:brightness-110 disabled:opacity-60"
+        >
+          {saving && <Loader2 className="h-5 w-5 animate-spin" />}
+          {editId ? 'Saqlash' : 'Do‘konda chiqarish'}
+        </button>
       </div>
     </>
   );

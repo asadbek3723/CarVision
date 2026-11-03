@@ -14,6 +14,7 @@ import {
   LogOut,
   Sparkles,
   LayoutDashboard,
+  Lock,
   Globe,
   Check,
 } from 'lucide-react';
@@ -59,6 +60,10 @@ export function VeloceShell({ children }: VeloceShellProps) {
   const { user, isLoading, signOut } = useAuth();
   const { currency, setCurrency } = useCurrency();
   const isSeller = user?.role === 'b2b_seller';
+  // Everyone starts on the Free plan: Garage and Dashboard are visible but locked until a paid plan is active.
+  const studioUnlocked = isSeller && user?.plan?.isPaid === true;
+  const garageHref = studioUnlocked ? `/${locale}/garage` : `/${locale}/plans`;
+  const dashboardHref = studioUnlocked ? `/${locale}/seller?tab=dashboard` : `/${locale}/plans`;
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [localeMenuOpen, setLocaleMenuOpen] = React.useState(false);
@@ -84,6 +89,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
   const isShop = pathname.includes('/shop') || pathname.includes('/marketplace');
   const isCart = pathname.includes('/cart');
   const isProfile = pathname.includes('/profile');
+  const isPlans = pathname.includes('/plans');
 
   return (
     <div className="min-h-screen md:ps-24 lg:ps-28 bg-[#0D0E12] text-foreground">
@@ -112,15 +118,16 @@ export function VeloceShell({ children }: VeloceShellProps) {
               />
             </Link>
 
-            {/* Garage (B2B Seller Only) */}
-            {isSeller && (
+            {/* Garage (locked on the Free plan) */}
+            {(
               <Link
-                href={`/${locale}/garage`}
+                href={garageHref}
                 data-status={isGarage ? 'active' : 'inactive'}
                 className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
               >
                 <Car className="h-5 w-5 transition-transform group-hover:-translate-y-0.5" />
                 <span>Garage</span>
+                {!studioUnlocked && <Lock className="absolute -end-2 -top-1 h-3 w-3 text-[#D4AE62]" />}
                 <span
                   className={`absolute -start-[30px] top-1/2 h-8 w-0.5 -translate-y-1/2 bg-gold-gradient transition-transform duration-300 ${
                     isGarage ? 'scale-y-100' : 'scale-y-0'
@@ -157,14 +164,15 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
         {/* Bottom Section (Dashboard for seller + Profile for all) */}
         <div className="flex flex-col items-center gap-8">
-          {isSeller && (
+          {(
             <Link
-              href={`/${locale}/seller?tab=dashboard`}
+              href={dashboardHref}
               data-status={isDashboard ? 'active' : 'inactive'}
               className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
             >
               <LayoutDashboard className="h-5 w-5 transition-transform group-hover:-translate-y-0.5" />
               <span>Dashboard</span>
+              {!studioUnlocked && <Lock className="absolute -end-2 -top-1 h-3 w-3 text-[#D4AE62]" />}
               <span
                 className={`absolute -start-[30px] top-1/2 h-8 w-0.5 -translate-y-1/2 bg-gold-gradient transition-transform duration-300 ${
                   isDashboard ? 'scale-y-100' : 'scale-y-0'
@@ -320,115 +328,48 @@ export function VeloceShell({ children }: VeloceShellProps) {
       {/* Main Content */}
       <main className="pb-28 md:pb-12">{children}</main>
 
-      {/* Mobile Fixed Bottom Nav Dock (4 columns for B2C, 5 columns for B2B Seller) */}
-      <nav
-        className={`fixed inset-x-0 bottom-0 z-40 grid ${
-          isSeller ? 'grid-cols-5' : 'grid-cols-4'
-        } border-t border-[#D4AE62]/15 bg-[#0D0E12]/90 px-1 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur-xl md:hidden`}
-      >
-        {/* 1. Home */}
-        <Link
-          href={`/${locale}/seller`}
-          data-status={isHome ? 'active' : 'inactive'}
-          className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
-        >
-          <House className="h-6 w-6" />
-          <span>Home</span>
-          <span
-            className={`mt-1 h-0.5 w-10 rounded-full bg-gold-gradient transition-transform duration-300 ${
-              isHome ? 'scale-x-100' : 'scale-x-0'
-            }`}
-          />
-        </Link>
-
-        {/* 2. For Seller: Garage | For Consumer: Create */}
-        {isSeller ? (
-          <Link
-            href={`/${locale}/garage`}
-            data-status={isGarage ? 'active' : 'inactive'}
-            className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
-          >
-            <Car className="h-6 w-6" />
-            <span>Garage</span>
-            <span
-              className={`mt-1 h-0.5 w-10 rounded-full bg-gold-gradient transition-transform duration-300 ${
-                isGarage ? 'scale-x-100' : 'scale-x-0'
-              }`}
-            />
+      {/* Mobile Fixed Bottom Nav Dock (same for everyone; Garage/Dashboard locked on Free) */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-[#D4AE62]/15 bg-[#0D0E12]/90 px-1 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur-xl md:hidden">
+        {[
+          { key: 'home', href: `/${locale}/seller`, icon: House, label: 'Home', active: isHome, locked: false },
+          { key: 'garage', href: garageHref, icon: Car, label: 'Garage', active: isGarage, locked: !studioUnlocked },
+        ].map((it) => (
+          <Link key={it.key} href={it.href} data-status={it.active ? 'active' : 'inactive'} className="group relative flex flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary">
+            <span className="relative">
+              <it.icon className="h-6 w-6" />
+              {it.locked && <Lock className="absolute -end-1.5 -top-1 h-3 w-3 text-[#D4AE62]" />}
+            </span>
+            <span>{it.label}</span>
+            <span className={`mt-1 h-0.5 w-8 rounded-full bg-gold-gradient transition-transform duration-300 ${it.active ? 'scale-x-100' : 'scale-x-0'}`} />
           </Link>
-        ) : (
-          <button
-            onClick={openCamera}
-            className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-primary transition-colors hover:brightness-125 cursor-pointer"
-          >
-            <CirclePlus className="h-6 w-6 transition-transform group-hover:rotate-90 duration-300" />
-            <span>Create</span>
-            <span className="mt-1 h-0.5 w-10" />
-          </button>
-        )}
+        ))}
 
-        {/* 3. Shop (Both Seller and Consumer) */}
-        <Link
-          href={`/${locale}/shop`}
-          data-status={isShop ? 'active' : 'inactive'}
-          className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
-        >
+        <button onClick={openCamera} className="group relative flex cursor-pointer flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-primary transition-colors hover:brightness-125">
+          <CirclePlus className="h-6 w-6 transition-transform duration-300 group-hover:rotate-90" />
+          <span>{isSeller ? 'Showroom' : 'Create'}</span>
+          <span className="mt-1 h-0.5 w-8" />
+        </button>
+
+        <Link href={`/${locale}/shop`} data-status={isShop ? 'active' : 'inactive'} className="group relative flex flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary">
           <ShoppingCart className="h-6 w-6" />
           <span>Shop</span>
-          <span
-            className={`mt-1 h-0.5 w-10 rounded-full bg-gold-gradient transition-transform duration-300 ${
-              isShop ? 'scale-x-100' : 'scale-x-0'
-            }`}
-          />
+          <span className={`mt-1 h-0.5 w-8 rounded-full bg-gold-gradient transition-transform duration-300 ${isShop ? 'scale-x-100' : 'scale-x-0'}`} />
         </Link>
 
-        {/* 4. For Seller: Dashboard | For Consumer: Profile */}
-        {isSeller ? (
-          <Link
-            href={`/${locale}/seller?tab=dashboard`}
-            data-status={isDashboard ? 'active' : 'inactive'}
-            className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
-          >
+        <Link href={dashboardHref} data-status={isDashboard ? 'active' : 'inactive'} className="group relative flex flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary">
+          <span className="relative">
             <LayoutDashboard className="h-6 w-6" />
-            <span>Dashboard</span>
-            <span
-              className={`mt-1 h-0.5 w-10 rounded-full bg-gold-gradient transition-transform duration-300 ${
-                isDashboard ? 'scale-x-100' : 'scale-x-0'
-              }`}
-            />
-          </Link>
-        ) : (
-          <Link
-            href={`/${locale}/profile`}
-            data-status={isProfile ? 'active' : 'inactive'}
-            className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
-          >
-            <User className="h-6 w-6" />
-            <span>Profile</span>
-            <span
-              className={`mt-1 h-0.5 w-10 rounded-full bg-gold-gradient transition-transform duration-300 ${
-                isProfile ? 'scale-x-100' : 'scale-x-0'
-              }`}
-            />
-          </Link>
-        )}
+            {!studioUnlocked && <Lock className="absolute -end-1.5 -top-1 h-3 w-3 text-[#D4AE62]" />}
+          </span>
+          <span>Panel</span>
+          <span className={`mt-1 h-0.5 w-8 rounded-full bg-gold-gradient transition-transform duration-300 ${isDashboard ? 'scale-x-100' : 'scale-x-0'}`} />
+        </Link>
 
-        {/* 5. For Seller: Profile */}
-        {isSeller && (
-          <Link
-            href={`/${locale}/profile`}
-            data-status={isProfile ? 'active' : 'inactive'}
-            className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary"
-          >
-            <User className="h-6 w-6" />
-            <span>Profile</span>
-            <span
-              className={`mt-1 h-0.5 w-10 rounded-full bg-gold-gradient transition-transform duration-300 ${
-                isProfile ? 'scale-x-100' : 'scale-x-0'
-              }`}
-            />
-          </Link>
-        )}
+        <Link href={`/${locale}/profile`} data-status={isProfile || isPlans ? 'active' : 'inactive'} className="group relative flex flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary">
+          <User className="h-6 w-6" />
+          <span>Profile</span>
+          <span className={`mt-1 h-0.5 w-8 rounded-full bg-gold-gradient transition-transform duration-300 ${isProfile || isPlans ? 'scale-x-100' : 'scale-x-0'}`} />
+        </Link>
       </nav>
 
       {/* Mobile Slide-Over Drawer */}
@@ -463,9 +404,9 @@ export function VeloceShell({ children }: VeloceShellProps) {
                   <House className="h-4 w-4" />
                   <span>Home</span>
                 </Link>
-                {isSeller && (
+                {(
                   <Link
-                    href={`/${locale}/garage`}
+                    href={garageHref}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
                       isGarage ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'
@@ -473,6 +414,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
                   >
                     <Car className="h-4 w-4" />
                     <span>Garage</span>
+                    {!studioUnlocked && <Lock className="h-3 w-3 text-[#D4AE62]" />}
                   </Link>
                 )}
                 <Link
@@ -495,9 +437,9 @@ export function VeloceShell({ children }: VeloceShellProps) {
                   <ShoppingCart className="h-4 w-4" />
                   <span>Cart ({count})</span>
                 </Link>
-                {isSeller && (
+                {(
                   <Link
-                    href={`/${locale}/seller?tab=dashboard`}
+                    href={dashboardHref}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
                       isDashboard ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'
@@ -505,6 +447,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     <span>Dashboard</span>
+                    {!studioUnlocked && <Lock className="h-3 w-3 text-[#D4AE62]" />}
                   </Link>
                 )}
                 <Link

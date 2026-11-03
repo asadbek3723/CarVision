@@ -87,7 +87,7 @@ export function VeloceCustomize() {
     const fetchCatalog = async () => {
       try {
         setIsLoadingCatalog(true);
-        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120${filterQuery ? `&${filterQuery}` : ''}`;
+        const endpoint = isSeller && user?.plan?.isPaid ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120${filterQuery ? `&${filterQuery}` : ''}`;
         const res = await fetch(endpoint, { cache: 'no-store' });
         const data = await res.json();
         if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
@@ -104,7 +104,7 @@ export function VeloceCustomize() {
     return () => {
       isMounted = false;
     };
-  }, [isSeller, filterQuery]);
+  }, [isSeller, user?.plan?.isPaid, filterQuery]);
 
   // Pre-select requestedPartId if passed in URL and not yet selected
   React.useEffect(() => {
@@ -314,7 +314,7 @@ export function VeloceCustomize() {
       {/* Top Minimal Header */}
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link
-          href={isSeller ? `/${locale}/seller/dashboard` : `/${locale}/shop`}
+          href={isSeller ? `/${locale}/seller?tab=dashboard` : `/${locale}/shop`}
           className="inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/[0.1] hover:text-white transition"
         >
           <ChevronLeft className="h-4 w-4" />

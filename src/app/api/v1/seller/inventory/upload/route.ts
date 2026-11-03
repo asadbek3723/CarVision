@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import crypto from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/server';
-import { requireSeller } from '@/server/auth/guards';
+import { requirePaidSeller } from '@/server/auth/guards';
 import { CATALOG_BUCKET } from '@/server/catalog';
 
 export const maxDuration = 30;
@@ -17,7 +17,7 @@ function sniff(buf: Buffer): { type: 'image/jpeg' | 'image/png' | 'image/webp'; 
 
 /** Uploads one product photo into the shop's folder and returns its public URL. */
 export async function POST(request: NextRequest) {
-  const guard = await requireSeller();
+  const guard = await requirePaidSeller();
   if (!guard.ok) return guard.response;
 
   try {

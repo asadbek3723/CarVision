@@ -1,59 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCameraSession, updateCameraSession } from '@/lib/camera-session';
+import { MAX_SESSION_UPLOADS, getCameraSession, getSessionRow, isValidSessionId, updateCameraSession } from '@/lib/camera-session';
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
-) {
+export const dynamic = 'force-dynamic';
+
+const MAX_DATA_URL_CHARS = 4_600_000; // ~3.4MB of image data
+const IMAGE_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
     const { sessionId } = await params;
-    const session = getCameraSession(sessionId);
-
-    if (!session) {
-      return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
-    }
-
+    const session = await getCameraSession(sessionId);
+    if (!session) return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
     return NextResponse.json({ success: true, session });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Internal error' },
-      { status: 500 }
-    );
+    console.error('camera-session get error:', error);
+    return NextResponse.json({ success: false, error: 'Internal error' }, { status: 500 });
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
-) {
+/** The phone posts status changes and captured photos. The session id is an unguessable capability. */
+export async function POST(request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
     const { sessionId } = await params;
-    const body = await request.json();
+    if (!isValidSessionId(sessionId)) return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
+    const body = (await request.json().catch(() => null)) as { status?: string; imageUrl?: string; angleId?: number } | null;
+    if (!body) return NextResponse.json({ success: false, error: 'Invalid body' }, { status: 400 });
 
-    const { status, imageUrl, angleId } = body;
-
-    const existing = getCameraSession(sessionId);
-    if (!existing) {
-      return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
-    }
+    const existing = await getSessionRow(sessionId);
+    if (!existing) return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
 
     const updates: Parameters<typeof updateCameraSession>[1] = {};
-    if (status) updates.status = status;
-    if (imageUrl) updates.imageUrl = imageUrl;
-    if (angleId && imageUrl) {
-      updates.angles = {
-        ...(existing.angles || {}),
-        [angleId]: imageUrl,
-      };
+    if (body.status === 'waiting' || body.status === 'connected' || body.status === 'captured') updates.status = body.status;
+
+    if (typeof body.imageUrl === 'string' && body.imageUrl) {
+      if (body.imageUrl.length > MAX_DATA_URL_CHARS || !IMAGE_DATA_URL.test(body.imageUrl)) {
+        return NextResponse.json({ success: false, error: 'Rasm formati yoki hajmi noto‘g‘ri' }, { status: 400 });
+      }
+      if (existing.uploads >= MAX_SESSION_UPLOADS) {
+        return NextResponse.json({ success: false, error: 'Sessiya limiti tugadi' }, { status: 429 });
+      }
+      updates.imageUrl = body.imageUrl;
+      if (typeof body.angleId === 'number' && Number.isInteger(body.angleId) && body.angleId >= 0 && body.angleId <= 20) {
+        updates.angleId = body.angleId;
+      }
     }
 
-    const updated = updateCameraSession(sessionId, updates);
-
+    const updated = await updateCameraSession(sessionId, updates);
+    if (!updated) return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
     return NextResponse.json({ success: true, session: updated });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Internal error' },
-      { status: 500 }
-    );
+    console.error('camera-session post error:', error);
+    return NextResponse.json({ success: false, error: 'Internal error' }, { status: 500 });
   }
 }

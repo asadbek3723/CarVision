@@ -23,3 +23,19 @@ export async function requireSeller(): Promise<GuardResult<{ session: Session; s
   }
   return { ok: true, value: { session, shopId: session.shop.id } };
 }
+
+/** A workshop owner with an ACTIVE paid plan. Free workshops get 402 and are sent to the plans page. */
+export async function requirePaidSeller(): Promise<GuardResult<{ session: Session; shopId: string }>> {
+  const base = await requireSeller();
+  if (!base.ok) return base;
+  if (!base.value.session.plan.isPaid) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { success: false, code: 'PLAN_REQUIRED', error: 'Bu bo‘lim pullik tarifda ochiladi. Tarifni faollashtiring' },
+        { status: 402 }
+      ),
+    };
+  }
+  return base;
+}

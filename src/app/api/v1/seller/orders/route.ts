@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { requireSeller } from '@/server/auth/guards';
+import { requirePaidSeller } from '@/server/auth/guards';
 import { getServerRates } from '@/server/rates';
 import { fetchBookingItems, fetchBookingRows, type BookingRow } from '@/server/bookings';
 import { centsToUsd } from '@/domain/catalog';
@@ -54,7 +54,7 @@ async function toSellerOrders(rows: BookingRow[], shopName: string, shopAddress:
 
 export async function GET(request: NextRequest) {
   try {
-    const guard = await requireSeller();
+    const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const { session, shopId } = guard.value;
     const orderId = new URL(request.url).searchParams.get('orderId');
@@ -81,7 +81,7 @@ const redeemSchema = z.object({ code: z.string().trim().min(3).max(20), action: 
 /** Look up or redeem a customer's voucher code (booking number or 123-456 code). */
 export async function POST(request: NextRequest) {
   try {
-    const guard = await requireSeller();
+    const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const { session, shopId } = guard.value;
     const parsed = redeemSchema.safeParse(await request.json().catch(() => null));
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 /** Order detail page "mark completed" = redeem the voucher. */
 export async function PATCH(request: NextRequest) {
   try {
-    const guard = await requireSeller();
+    const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const { session, shopId } = guard.value;
     const parsed = z.object({ orderId: z.string().uuid(), status: z.string() }).safeParse(await request.json().catch(() => null));

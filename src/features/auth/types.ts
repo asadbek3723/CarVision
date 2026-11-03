@@ -13,6 +13,13 @@ export interface ShopData {
 
 export type SupportedLocale = 'uz' | 'ru' | 'en' | 'ar' | 'tr' | 'kk' | 'ky' | 'tg';
 
+export interface PlanState {
+  code: string;
+  /** true only for an active (not expired) paid plan: unlocks Garage and Dashboard */
+  isPaid: boolean;
+  expiresAt: string | null;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -24,6 +31,7 @@ export interface UserProfile {
   preferred_language?: SupportedLocale;
   preferred_currency?: CurrencyCode;
   shop?: ShopData | null;
+  plan?: PlanState;
   created_at?: string;
 }
 

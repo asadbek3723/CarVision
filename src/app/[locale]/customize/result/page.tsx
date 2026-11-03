@@ -60,7 +60,7 @@ export default function CustomizeResultPage() {
     let isMounted = true;
     const fetchCatalog = async () => {
       try {
-        const endpoint = isSeller ? '/api/v1/seller/inventory' : '/api/v1/products';
+        const endpoint = isSeller && user?.plan?.isPaid ? '/api/v1/seller/inventory' : '/api/v1/products';
         const res = await fetch(endpoint);
         const data = await res.json();
         if (isMounted && data.success && Array.isArray(data.products)) {
@@ -74,7 +74,7 @@ export default function CustomizeResultPage() {
     return () => {
       isMounted = false;
     };
-  }, [isSeller]);
+  }, [isSeller, user?.plan?.isPaid]);
 
   const selectedParts = React.useMemo(() => {
     if (catalogProducts.length === 0) return [];
