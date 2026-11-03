@@ -12,8 +12,25 @@ declare const self: WorkerGlobalScope & {
   __SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
 };
 
+const LOCALES = ['uz', 'ru', 'en', 'ar', 'tr', 'kk', 'ky', 'tg'] as const;
+// Bump when the offline page content changes so installed apps refresh their copy.
+const OFFLINE_REVISION = '2026-11-04-1';
+
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST ?? [],
+  precacheEntries: [
+    ...(self.__SW_MANIFEST ?? []),
+    ...LOCALES.map((l) => ({ url: `/${l}/offline`, revision: OFFLINE_REVISION })),
+  ],
+  // A navigation that fails offline shows the localized offline page, not a browser error
+  fallbacks: {
+    entries: [
+      ...LOCALES.map((l) => ({
+        url: `/${l}/offline`,
+        matcher: ({ request }: { request: Request }) => request.destination === 'document' && new URL(request.url).pathname.startsWith(`/${l}`),
+      })),
+      { url: '/uz/offline', matcher: ({ request }: { request: Request }) => request.destination === 'document' },
+    ],
+  },
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
