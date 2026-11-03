@@ -1,10 +1,11 @@
 'use client';
 
+import * as React from 'react';
 import { useTranslations } from 'next-intl';
 
 export interface ApiErrorBody {
-  code?: string;
-  error?: string;
+  code?: string | undefined;
+  error?: string | undefined;
   [key: string]: unknown;
 }
 
@@ -15,7 +16,7 @@ export interface ApiErrorBody {
  */
 export function useApiError() {
   const t = useTranslations('apiErrors');
-  return (body: ApiErrorBody | null | undefined, fallback: string): string => {
+  return React.useCallback((body: ApiErrorBody | null | undefined, fallback: string): string => {
     const code = body?.code;
     if (typeof code === 'string' && t.has(code)) {
       const values: Record<string, string | number> = {};
@@ -23,5 +24,5 @@ export function useApiError() {
       return t(code, values);
     }
     return (typeof body?.error === 'string' && body.error) || fallback;
-  };
+  }, [t]);
 }

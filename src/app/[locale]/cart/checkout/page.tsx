@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -17,6 +18,7 @@ const fieldCls =
 
 export default function CheckoutPage() {
   const t = useTranslations('checkout');
+  const apiError = useApiError();
   const params = useParams();
   const search = useSearchParams();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -116,7 +118,7 @@ export default function CheckoutPage() {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || t('errCreate'));
+      if (!res.ok || !data.success) throw new Error(apiError(data, t('errCreate')));
       setPayment(data.payment);
       setBookings(data.bookings);
       clearCart();

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
+import { useApiError } from '@/lib/api-error';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { AlertTriangle, ArrowRight, Check, Loader2, RefreshCw, Sparkles, X } from 'lucide-react';
@@ -29,6 +30,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 /** Full-screen render progress: one ring per car side, a scan beam, honest states (no fake results). */
 export function RenderProgress({ states, running, fatal, percent, backdrop, locale, demo, onRetry, onContinue, onClose }: Props) {
   const t = useTranslations('render');
+  const apiError = useApiError();
   const reduce = useReducedMotion();
   const [stage, setStage] = React.useState(0);
   const done = states.filter((s) => s.status === 'done').length;
@@ -121,7 +123,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
         {/* Problems and actions */}
         {fatal && (
           <div role="alert" className="mt-5 w-full rounded-2xl bg-red-500/10 p-4 text-center">
-            <p className="text-sm text-red-200">{fatal.message}</p>
+            <p className="text-sm text-red-200">{apiError({ code: fatal.code, error: fatal.message }, t('errorFallback'))}</p>
             {(fatal.code === 'INSUFFICIENT_CREDITS' || fatal.code === 'PLAN_EXPIRED') && (
               <Link href={`/${locale}/plans`} className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-6 py-3 text-sm font-bold text-black">
                 {t('viewPlans')}
@@ -138,7 +140,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           <div className="mt-5 w-full space-y-2">
             {failed.map((f) => (
               <div key={f.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.05] px-4 py-3">
-                <span className="min-w-0 text-sm text-white/80">{f.label}: <span className="text-red-300">{f.error || t('errorFallback')}</span></span>
+                <span className="min-w-0 text-sm text-white/80">{f.label}: <span className="text-red-300">{apiError({ code: f.errorCode, error: f.error }, t('errorFallback'))}</span></span>
                 <button type="button" onClick={() => onRetry(f.id)} className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">
                   <RefreshCw className="h-3.5 w-3.5" />
                   {t('retry')}

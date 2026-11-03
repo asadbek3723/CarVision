@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -339,6 +340,7 @@ function DetailsForm({
   onError: () => void;
 }) {
   const t = useTranslations('register');
+  const apiError = useApiError();
   const isBusiness = role === 'business';
   const { signUp } = useAuth();
   const [formData, setFormData] = React.useState({
@@ -400,7 +402,7 @@ function DetailsForm({
         setTimeout(onDone, 500);
       } else {
         setErrors({
-          phone: res.error || t('errFailed'),
+          phone: apiError(res, t('errFailed')),
         });
         onError();
       }

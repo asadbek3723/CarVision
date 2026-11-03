@@ -18,6 +18,7 @@ export type FatalCode = 'UNAUTHENTICATED' | 'INSUFFICIENT_CREDITS' | 'PLAN_EXPIR
 
 export interface RenderFatal {
   code: FatalCode;
+  /** Server text (may be empty); prefer translating `code`. */
   message: string;
 }
 
@@ -81,7 +82,7 @@ async function renderAngle(angle: PlanAngle, parts: BuildPart[], reference?: str
       await sleep(4000 * (attempt + 1));
       continue;
     }
-    throw new RenderError(data.error || "Rasm yaratib bo'lmadi", res.status, code);
+    throw new RenderError(typeof data.error === 'string' ? data.error : '', res.status, code);
   }
 }
 
@@ -114,14 +115,14 @@ export function useRenderBuild(onCreditsChanged?: () => void) {
         onCreditsChanged?.();
         return true;
       } catch (e) {
-        const err = e instanceof RenderError ? e : new RenderError("Tarmoq xatosi. Qayta urinib ko'ring", 0, 'NETWORK');
+        const err = e instanceof RenderError ? e : new RenderError('', 0, 'NETWORK');
         onCreditsChanged?.();
         if ((FATAL_CODES as string[]).includes(err.code)) {
           setFatal({ code: err.code as FatalCode, message: err.message });
-          patch(angle.id, { status: 'failed', error: err.message });
+          patch(angle.id, { status: 'failed', error: err.message, errorCode: err.code });
           throw err;
         }
-        patch(angle.id, { status: 'failed', error: err.message });
+        patch(angle.id, { status: 'failed', error: err.message, errorCode: err.code });
         return false;
       }
     },

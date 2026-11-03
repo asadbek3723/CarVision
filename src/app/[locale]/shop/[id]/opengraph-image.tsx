@@ -34,7 +34,6 @@ export default async function ProductOpengraphImage({ params }: { params: Promis
           {price ? <div style={{ fontSize: 64, fontWeight: 700, color: '#E6C687' }}>{price}</div> : <div />}
         </div>
         {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={cover} alt="" width={560} height={630} style={{ width: 560, height: 630, objectFit: 'cover' }} />
         ) : null}
       </div>

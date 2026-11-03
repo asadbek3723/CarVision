@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -41,6 +42,7 @@ async function patchItem(body: Record<string, unknown>): Promise<boolean> {
 
 export function SellerDashboardView() {
   const t = useTranslations('sellerDash');
+  const apiError = useApiError();
   const tCat = useTranslations('catalogCat');
   const intlLocale = useLocale();
   const params = useParams();
@@ -67,7 +69,7 @@ export function SellerDashboardView() {
         fetch('/api/v1/seller/orders', { cache: 'no-store' }).catch(() => null),
       ]);
       const inv = await invRes.json().catch(() => ({}));
-      if (!invRes.ok || !inv.success) throw new Error(inv.error || t('errLoad'));
+      if (!invRes.ok || !inv.success) throw new Error(apiError(inv, t('errLoad')));
       setItems(inv.items ?? []);
       const ord = ordRes && ordRes.ok ? await ordRes.json().catch(() => null) : null;
       setLeads(ord?.success && Array.isArray(ord.orders) ? ord.orders : []);
@@ -76,7 +78,7 @@ export function SellerDashboardView() {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, apiError]);
 
   React.useEffect(() => {
     if (isSeller) void load();

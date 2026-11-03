@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import { ChevronDown, KeyRound, Loader2, Receipt } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -104,6 +105,7 @@ function CreditHistory() {
 
 function PasswordForm() {
   const t = useTranslations('profileExtras');
+  const apiError = useApiError();
   const [current, setCurrent] = React.useState('');
   const [next, setNext] = React.useState('');
   const [again, setAgain] = React.useState('');
@@ -118,7 +120,7 @@ function PasswordForm() {
     try {
       const res = await fetch('/api/v1/auth/password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: current, newPassword: next }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || t('errChange'));
+      if (!res.ok || !data.success) throw new Error(apiError(data, t('errChange')));
       setMsg({ ok: true, text: t('changed') });
       setCurrent('');
       setNext('');

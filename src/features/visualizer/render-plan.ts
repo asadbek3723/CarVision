@@ -47,6 +47,8 @@ export interface AngleState {
   /** Result image (permanent URL when AI is live). */
   url?: string;
   error?: string;
+  /** API error code of the failure; the UI translates it (`apiErrors.<code>`). */
+  errorCode?: string;
 }
 
 export function summarize(states: AngleState[]): { done: number; failed: number; total: number; percent: number } {

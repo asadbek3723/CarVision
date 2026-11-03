@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -13,6 +14,7 @@ import { LeadDetail, formatDate, type SellerLeadOrder } from '@/features/seller/
 /** Voucher terminal: the customer shows a code, the workshop looks it up and accepts it. */
 export default function SellerRedeemVoucherPage() {
   const t = useTranslations('sellerOrders');
+  const apiError = useApiError();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { user, isLoading } = useAuth();
@@ -52,7 +54,7 @@ export default function SellerRedeemVoucherPage() {
     try {
       const res = await fetch('/api/v1/seller/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: value, action: 'lookup' }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success || !data.order) throw new Error(data.error || t('errVoucherNotFound'));
+      if (!res.ok || !data.success || !data.order) throw new Error(apiError(data, t('errVoucherNotFound')));
       setMatch(data.order);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errGeneric'));
@@ -65,7 +67,7 @@ export default function SellerRedeemVoucherPage() {
     try {
       const res = await fetch('/api/v1/seller/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: order.voucherCode, action: 'redeem' }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) return data.error || t('errAccept');
+      if (!res.ok || !data.success) return apiError(data, t('errAccept'));
       setMatch(data.order);
       setRecent((prev) => prev.map((o) => (o.id === data.order.id ? data.order : o)));
       return null;

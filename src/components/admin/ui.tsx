@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useLocale, useTranslations } from 'next-intl';
 import { AlertCircle, Loader2, RefreshCw, Search, X } from 'lucide-react';
 
@@ -16,6 +17,7 @@ export function AdminSessionProvider({ onExpired, children }: { onExpired: () =>
 /** fetch for admin APIs: returns parsed JSON, throws a readable Error, and reports an expired session. */
 export function useAdminApi() {
   const t = useTranslations('adm.common');
+  const apiError = useApiError();
   const { onExpired } = React.useContext(AdminSessionContext);
   return React.useCallback(
     async <T,>(url: string, init?: RequestInit): Promise<T> => {
@@ -25,10 +27,10 @@ export function useAdminApi() {
         onExpired();
         throw new Error(t('sessionExpired'));
       }
-      if (!res.ok || data.success === false) throw new Error(data.error || t('errGeneric'));
+      if (!res.ok || data.success === false) throw new Error(apiError(data, t('errGeneric')));
       return data as T;
     },
-    [onExpired, t]
+    [onExpired, t, apiError]
   );
 }
 

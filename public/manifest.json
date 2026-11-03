@@ -1,7 +1,7 @@
 {
   "name": "CarVision — AI Tuning",
   "short_name": "CarVision",
-  "description": "Mashinangizni suratga oling va tuning detallarni o‘zingizning avtomobilingizda sinab ko‘ring.",
+  "description": "Take a photo of your car and try tuning parts on it before you buy.",
   "start_url": "/uz/seller",
   "display": "standalone",
   "background_color": "#07080B",

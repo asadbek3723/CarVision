@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -12,6 +13,7 @@ import { LeadDetail, type SellerLeadOrder } from '@/features/seller/components/L
 
 export default function SellerOrderDetailPage() {
   const t = useTranslations('sellerOrders');
+  const apiError = useApiError();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const orderId = params?.['orderId'] as string;
@@ -46,7 +48,7 @@ export default function SellerOrderDetailPage() {
     try {
       const res = await fetch('/api/v1/seller/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: o.id, status: 'completed' }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) return data.error || t('errAccept');
+      if (!res.ok || !data.success) return apiError(data, t('errAccept'));
       setOrder(data.order);
       return null;
     } catch {

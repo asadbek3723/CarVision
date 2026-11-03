@@ -10,8 +10,8 @@ export interface AuthContextValue {
   authModalMode: 'signin' | 'signup';
   openAuthModal: (mode?: 'signin' | 'signup') => void;
   closeAuthModal: () => void;
-  signIn: (identifier: string, password?: string) => Promise<{ success: boolean; error?: string }>;
-  signUp: (payload: SignUpPayload) => Promise<{ success: boolean; error?: string }>;
+  signIn: (identifier: string, password?: string) => Promise<{ success: boolean; error?: string; code?: string }>;
+  signUp: (payload: SignUpPayload) => Promise<{ success: boolean; error?: string; code?: string }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => void;
   /** Re-reads the profile (credits, plan) from the server. */
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        return { success: false, error: data.error || '' };
+        return { success: false, error: data.error || '', code: typeof data.code === 'string' ? data.code : undefined };
       }
 
       setUser(data.user);
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        return { success: false, error: data.error || '' };
+        return { success: false, error: data.error || '', code: typeof data.code === 'string' ? data.code : undefined };
       }
 
       if (typeof document !== 'undefined' && data.user.preferred_language) {

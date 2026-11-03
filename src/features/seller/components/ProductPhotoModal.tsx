@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Check, Copy, ImagePlus, Loader2, X } from 'lucide-react';
@@ -29,6 +30,7 @@ function detectMobile(): boolean {
  */
 export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
   const t = useTranslations('photoModal');
+  const apiError = useApiError();
   const tImg = useTranslations('imageErrors');
   const imgText = useImageErrorText();
   const params = useParams();
@@ -57,13 +59,13 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled && d.success) setSessionId(d.session.id);
-        else if (!cancelled) setError(d.error || t('qrError'));
+        else if (!cancelled) setError(apiError(d, t('qrError')));
       })
       .catch(() => !cancelled && setError(t('qrError')));
     return () => {
       cancelled = true;
     };
-  }, [isOpen, mobile, t]);
+  }, [isOpen, mobile, t, apiError]);
 
   React.useEffect(() => {
     if (!isOpen || mobile !== false || !sessionId) return;

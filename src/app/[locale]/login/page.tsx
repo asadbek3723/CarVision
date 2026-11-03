@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -30,6 +31,7 @@ function formatPhone(val: string): string {
 
 export default function LoginPage() {
   const t = useTranslations('login');
+  const apiError = useApiError();
   const router = useRouter();
   const params = useParams();
   const locale = (params['locale'] as string) || 'uz';
@@ -80,7 +82,7 @@ export default function LoginPage() {
         vibrate(25);
       } else {
         setErrors({
-          phone: res.error || t('errFailed'),
+          phone: apiError(res, t('errFailed')),
         });
         setShake((prev) => prev + 1);
       }

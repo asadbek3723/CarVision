@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, ArrowLeft, Loader2, Lock, Shield } from 'lucide-react';
 import { Link } from '@/i18n/routing';
@@ -13,6 +14,7 @@ interface Props {
 /** Second factor: the admin PIN (any length 4-32). Works with the phone keyboard and the Enter key. */
 export function AdminPinGate({ onSuccess, adminName }: Props) {
   const t = useTranslations('adm.gate');
+  const apiError = useApiError();
   const tn = useTranslations('adm.nav');
   const [pin, setPin] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
@@ -43,7 +45,11 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
       }
       setPin('');
       if (data.error?.code === 'RATE_LIMIT_EXCEEDED') setLockedFor(Number(data.error.retryAfterSeconds) || 900);
-      setError(data.error?.message || t('wrong'));
+      setError(
+        data.error?.code === 'INVALID_PIN' && typeof data.error?.remainingAttempts === 'number'
+          ? t('wrongLeft', { remaining: data.error.remainingAttempts })
+          : apiError({ code: data.error?.code, error: data.error?.message }, t('wrong'))
+      );
     } catch {
       setError(t('network'));
     } finally {

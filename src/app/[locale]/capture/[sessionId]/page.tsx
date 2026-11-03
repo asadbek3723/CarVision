@@ -2,12 +2,18 @@
 
 import * as React from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useApiError } from '@/lib/api-error';
+import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { Check } from 'lucide-react';
 import { LiveCamera } from '@/features/seller/components/LiveCamera';
 import { fileToPhotoDataUrl } from '@/features/seller/lib/photo-input';
 
 /** Phone side of the QR bridge: take a photo, it appears on the computer. */
 export default function PhoneCapturePage() {
+  const t = useTranslations('capturePage');
+  const apiError = useApiError();
+  const imgText = useImageErrorText();
   const params = useParams();
   const sessionId = params?.['sessionId'] as string;
   const [sent, setSent] = React.useState(0);
@@ -33,11 +39,11 @@ export default function PhoneCapturePage() {
         body: JSON.stringify({ status: 'captured', imageUrl: dataUrl }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || 'Yuborib bo‘lmadi. Havola eskirgan bo‘lishi mumkin');
+      if (!res.ok || !data.success) throw new Error(apiError(data, t('errSend')));
       setSent((n) => n + 1);
       setLastShot(dataUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Yuborib bo‘lmadi');
+      setError(err instanceof Error ? err.message : t('errSend'));
     } finally {
       setBusy(false);
     }
@@ -49,10 +55,10 @@ export default function PhoneCapturePage() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
           <Check className="h-8 w-8" />
         </div>
-        <h1 className="text-xl font-bold text-white">Rasm kompyuterga yuborildi</h1>
+        <h1 className="text-xl font-bold text-white">{t('sent')}</h1>
         <img src={lastShot} alt="" className="max-h-64 rounded-2xl" />
         <button type="button" onClick={() => setLastShot(null)} className="rounded-full bg-[#D4AE62] px-8 py-3 text-sm font-bold text-black">
-          Yana rasm olish ({sent})
+          {t('again', { count: sent })}
         </button>
       </div>
     );
@@ -64,7 +70,7 @@ export default function PhoneCapturePage() {
         busy={busy}
         onShot={(d) => void send(d)}
         onFile={(f) => {
-          fileToPhotoDataUrl(f).then(send).catch((e: Error) => setError(e.message));
+          fileToPhotoDataUrl(f).then(send).catch((e: unknown) => setError(imgText.error(e, t('errSend'))));
         }}
       />
       {error && <p role="alert" className="absolute inset-x-4 top-4 rounded-xl bg-red-500/90 px-4 py-3 text-center text-sm text-white">{error}</p>}

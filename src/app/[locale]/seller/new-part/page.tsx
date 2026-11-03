@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -26,17 +27,18 @@ const fieldCls =
 const labelCls = 'mb-2 block text-xs font-semibold text-white/55';
 
 /** Throws an Error whose message is the server's text, or '' when there is none (the caller supplies a translated fallback). */
-async function uploadBlob(blob: Blob): Promise<string> {
+async function uploadBlob(blob: Blob, apiError: (b: { code?: string; error?: string }, fallback: string) => string): Promise<string> {
   const form = new FormData();
   form.append('file', new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' }));
   const res = await fetch('/api/v1/seller/inventory/upload', { method: 'POST', body: form });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.success) throw new Error(data.error || '');
+  if (!res.ok || !data.success) throw new Error(apiError(data, ''));
   return data.url as string;
 }
 
 export default function SellerNewPartPage() {
   const t = useTranslations('newPart');
+  const apiError = useApiError();
   const tc = useTranslations('catalogCat');
   const imgText = useImageErrorText();
   const tImg = useTranslations('imageErrors');
@@ -145,7 +147,7 @@ export default function SellerNewPartPage() {
         return;
       }
       if (report.warnings[0]) setPhotoNotice(imgText.issue(report.warnings[0]));
-      const url = await uploadBlob(await compressForUpload(img));
+      const url = await uploadBlob(await compressForUpload(img), apiError);
       setPhotos((prev) => (prev.length >= MAX_ITEM_IMAGES ? prev : [...prev, { id: crypto.randomUUID(), url, kind: 'ORIGINAL' }]));
     } catch (err) {
       setPhotoNotice(imgText.error(err, tImg('upload')));
@@ -166,7 +168,7 @@ export default function SellerNewPartPage() {
         body: JSON.stringify({ name, description, brand, category }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || t('errImprove'));
+      if (!res.ok || !data.success) throw new Error(apiError(data, t('errImprove')));
       setSuggestion({ name: data.name, description: data.description });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errImprove'));
@@ -188,9 +190,9 @@ export default function SellerNewPartPage() {
         body: JSON.stringify({ imageUrl: main.url }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || t('errImproveImage'));
+      if (!res.ok || !data.success) throw new Error(apiError(data, t('errImproveImage')));
       const composed = await composeStudioImage(await loadImage(data.cutoutUrl as string));
-      setStudioCandidate({ url: await uploadBlob(composed), preview: URL.createObjectURL(composed) });
+      setStudioCandidate({ url: await uploadBlob(composed, apiError), preview: URL.createObjectURL(composed) });
     } catch (err) {
       setPhotoNotice(imgText.error(err, t('errImproveImage')));
     } finally {
@@ -237,7 +239,7 @@ export default function SellerNewPartPage() {
         body: JSON.stringify(editId ? { id: editId, ...body } : body),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || t('errSave'));
+      if (!res.ok || !data.success) throw new Error(apiError(data, t('errSave')));
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errSave'));

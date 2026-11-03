@@ -93,8 +93,13 @@ export async function POST(request: NextRequest) {
       const { data } = await db.rpc('redeem_booking', { p_shop_id: shopId, p_code: code });
       const r = data as { success?: boolean; error?: string; bookingId?: string } | null;
       if (!r?.success) {
-        const msg = r?.error === 'ALREADY_REDEEMED' ? 'Bu vaucher avval qabul qilingan' : r?.error === 'NOT_PAID' ? 'Zakalat hali tasdiqlanmagan' : 'Bunday vaucher kodi topilmadi';
-        return fail(r?.error === 'NOT_FOUND' || !r ? 404 : 409, msg);
+        const [msg, code] =
+          r?.error === 'ALREADY_REDEEMED'
+            ? ['Bu vaucher avval qabul qilingan', 'ALREADY_REDEEMED']
+            : r?.error === 'NOT_PAID'
+            ? ['Zakalat hali tasdiqlanmagan', 'NOT_PAID']
+            : ['Bunday vaucher kodi topilmadi', 'VOUCHER_NOT_FOUND'];
+        return fail(r?.error === 'NOT_FOUND' || !r ? 404 : 409, msg as string, code as string);
       }
       const rows = await fetchBookingRows(db, { shopId, id: r.bookingId, limit: 1 });
       const shop = session.shop!;

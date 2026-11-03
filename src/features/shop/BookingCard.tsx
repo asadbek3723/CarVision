@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useApiError } from '@/lib/api-error';
 import { useLocale, useTranslations } from 'next-intl';
 import { Check, Clock, Loader2, MapPin, Phone, Upload, XCircle } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -45,6 +46,7 @@ interface Props {
 /** One booking: payment instructions, receipt upload, approval status and (after approval) the workshop. */
 export function BookingCard({ booking, payment, onChanged }: Props) {
   const t = useTranslations('checkout.booking');
+  const apiError = useApiError();
   const locale = useLocale();
   const { formatPrice } = useCurrency();
   const fileRef = React.useRef<HTMLInputElement>(null);
@@ -72,7 +74,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
       form.append('file', new File([blob], 'receipt.jpg', { type: 'image/jpeg' }));
       const res = await fetch(`/api/v1/bookings/${booking.id}/receipt`, { method: 'POST', body: form });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || t('errUpload'));
+      if (!res.ok || !data.success) throw new Error(apiError(data, t('errUpload')));
       onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errUpload'));

@@ -1374,6 +1374,23 @@
     "SESSION_LIMIT": "Oturum sınırına ulaşıldı.",
     "NETWORK": "Ağ hatası. Lütfen tekrar deneyin.",
     "FAILED": "Görsel oluşturulamadı.",
-    "ITEM_LIMIT": "Planınız en fazla {limit} ürün eklemeye izin veriyor. Planınızı yükseltin."
+    "ITEM_LIMIT": "Planınız en fazla {limit} ürün eklemeye izin veriyor. Planınızı yükseltin.",
+    "INTERNAL_SERVER_ERROR": "Sunucuda bir hata oluştu.",
+    "RESOURCE_NOT_FOUND": "Bulunamadı.",
+    "UNAUTHORIZED_ADMIN_SESSION": "Yönetici oturumu sona erdi.",
+    "ALREADY_REDEEMED": "Bu kupon daha önce kabul edilmiş.",
+    "NOT_PAID": "Kapora henüz onaylanmadı.",
+    "TOO_SOON": "Yeni kod istemeden önce biraz bekleyin.",
+    "SEND_FAILED": "SMS gönderilemedi.",
+    "SMS_DISABLED": "SMS doğrulaması şu anda kullanılamıyor."
+  },
+  "capturePage": {
+    "sent": "Fotoğraf bilgisayara gönderildi",
+    "again": "Bir fotoğraf daha çek ({count})",
+    "errSend": "Gönderilemedi. Bağlantının süresi dolmuş olabilir."
+  },
+  "notFound": {
+    "title": "Sayfa bulunamadı",
+    "home": "Ana sayfaya dön"
   }
 }
