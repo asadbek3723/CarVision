@@ -103,7 +103,12 @@ cp .env.example .env.local
 ```
 Fill in your credentials or leave `FAL_KEY` empty to run on the built-in zero-cost high-fidelity mock engine.
 
-### 4. Supabase Setup
+### 4. Supabase Setup (first run, in this order)
+1. Run `supabase/migrations/20261103000000_secure_credits_auth.sql` in the SQL Editor. It is idempotent and creates/hardens everything auth, credits and image storage need.
+2. Register an account in the app, then make it super admin (SQL at the top of that migration file).
+3. In Vercel set `ADMIN_MASTER_PIN` and `ADMIN_SESSION_SECRET` (see `.env.example`).
+
+Older notes, kept for reference:
 Run the SQL migrations located in `supabase/migrations/` in your Supabase SQL Editor:
 1. `20261016000000_core_schema.sql` (Creates 13 core tables & views)
 2. `20261016000001_rls_policies.sql` (Enforces Row Level Security on every table)

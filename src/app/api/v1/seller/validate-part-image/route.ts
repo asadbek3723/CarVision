@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { requireSeller } from '@/server/auth/guards';
 
 const validatePartSchema = z.object({
   imageUrl: z.string().min(3),
@@ -136,6 +137,8 @@ function inferCategoryFromSignals(
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
     const body = await request.json();
     const parsed = validatePartSchema.safeParse(body);
 

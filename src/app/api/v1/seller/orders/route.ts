@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireSeller } from '@/server/auth/guards';
 
 interface RawOrderRow {
   id: string;
@@ -109,8 +110,9 @@ function mapOrderRow(o: RawOrderRow) {
 
 export async function GET(request: NextRequest) {
   try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
     const { searchParams } = new URL(request.url);
-    const sellerId = searchParams.get('sellerId');
     const orderId = searchParams.get('orderId');
 
     const supabase = createAdminClient();
@@ -142,10 +144,10 @@ export async function GET(request: NextRequest) {
       `)
       .order('created_at', { ascending: false });
 
+    // Always scoped to the signed-in studio.
+    queryBuilder = queryBuilder.eq('seller_id', guard.value.shopId);
     if (orderId) {
       queryBuilder = queryBuilder.eq('id', orderId);
-    } else if (sellerId) {
-      queryBuilder = queryBuilder.eq('seller_id', sellerId);
     }
 
     const { data: orders, error } = await queryBuilder.limit(50);
@@ -171,6 +173,8 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
     const body = await request.json();
     const { orderId, status } = body as {
       orderId?: string;
@@ -192,6 +196,7 @@ export async function PATCH(request: NextRequest) {
       .from('orders')
       .update({ status: dbStatus })
       .eq('id', orderId)
+      .eq('seller_id', guard.value.shopId)
       .select(`
         id,
         user_id,
@@ -233,6 +238,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
     const body = await request.json();
     const { code, action } = body as {
       code?: string;
@@ -275,6 +282,7 @@ export async function POST(request: NextRequest) {
           phone
         )
       `)
+      .eq('seller_id', guard.value.shopId)
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -290,7 +298,7 @@ export async function POST(request: NextRequest) {
           o.voucherCode.toUpperCase() === normalized ||
           o.id.toUpperCase().startsWith(strippedHex) ||
           (o.note && o.note.toUpperCase().includes(normalized))
-      ) || mappedOrders[0];
+      );
 
     if (!matched) {
       return NextResponse.json(
@@ -304,6 +312,7 @@ export async function POST(request: NextRequest) {
         .from('orders')
         .update({ status: 'completed' })
         .eq('id', matched.id)
+        .eq('seller_id', guard.value.shopId)
         .select(`
           id,
           user_id,

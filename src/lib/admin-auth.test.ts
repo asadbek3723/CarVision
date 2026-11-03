@@ -1,94 +1,67 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   verifyPinConstantTime,
-  checkPinRateLimit,
-  recordFailedPinAttempt,
-  clearPinRateLimit,
   createAdminSessionToken,
   verifyAdminSessionToken,
+  getAdminIdFromToken,
+  isAdminConfigured,
 } from './admin-auth';
 
-describe('Admin Security & PIN Authentication', () => {
-  const testIp = '192.168.1.99';
+const SECRET = 'x'.repeat(40);
+const ADMIN_ID = 'a0000000-0000-4000-8000-000000000001';
+
+describe('Admin security (fails closed, no default secrets)', () => {
+  const saved = { pin: process.env.ADMIN_MASTER_PIN, secret: process.env.ADMIN_SESSION_SECRET };
 
   beforeEach(() => {
-    clearPinRateLimit(testIp);
+    process.env.ADMIN_MASTER_PIN = '482913';
+    process.env.ADMIN_SESSION_SECRET = SECRET;
   });
 
-  describe('verifyPinConstantTime', () => {
-    it('should return true for the master pin 3723', () => {
-      expect(verifyPinConstantTime('3723')).toBe(true);
-    });
-
-    it('should return false for incorrect pins', () => {
-      expect(verifyPinConstantTime('1234')).toBe(false);
-      expect(verifyPinConstantTime('0000')).toBe(false);
-      expect(verifyPinConstantTime('3724')).toBe(false);
-    });
-
-    it('should return false for mismatched lengths or invalid inputs', () => {
-      expect(verifyPinConstantTime('')).toBe(false);
-      expect(verifyPinConstantTime('372')).toBe(false);
-      expect(verifyPinConstantTime('37230')).toBe(false);
-    });
+  afterEach(() => {
+    if (saved.pin === undefined) delete process.env.ADMIN_MASTER_PIN;
+    else process.env.ADMIN_MASTER_PIN = saved.pin;
+    if (saved.secret === undefined) delete process.env.ADMIN_SESSION_SECRET;
+    else process.env.ADMIN_SESSION_SECRET = saved.secret;
   });
 
-  describe('Rate Limiting & Brute-Force Protection', () => {
-    it('should start with 5 allowed attempts', () => {
-      const status = checkPinRateLimit(testIp);
-      expect(status.allowed).toBe(true);
-      expect(status.remainingAttempts).toBe(5);
-    });
-
-    it('should decrement remaining attempts upon recording failure', () => {
-      const attempt1 = recordFailedPinAttempt(testIp);
-      expect(attempt1.isLocked).toBe(false);
-      expect(attempt1.remainingAttempts).toBe(4);
-
-      const status = checkPinRateLimit(testIp);
-      expect(status.remainingAttempts).toBe(4);
-    });
-
-    it('should lock out after 5 consecutive failures', () => {
-      recordFailedPinAttempt(testIp);
-      recordFailedPinAttempt(testIp);
-      recordFailedPinAttempt(testIp);
-      recordFailedPinAttempt(testIp);
-      const attempt5 = recordFailedPinAttempt(testIp);
-
-      expect(attempt5.isLocked).toBe(true);
-      expect(attempt5.remainingAttempts).toBe(0);
-      expect(attempt5.retryAfterSeconds).toBeGreaterThan(0);
-
-      const status = checkPinRateLimit(testIp);
-      expect(status.allowed).toBe(false);
-    });
-
-    it('should clear rate limit on success', () => {
-      recordFailedPinAttempt(testIp);
-      recordFailedPinAttempt(testIp);
-      clearPinRateLimit(testIp);
-
-      const status = checkPinRateLimit(testIp);
-      expect(status.allowed).toBe(true);
-      expect(status.remainingAttempts).toBe(5);
-    });
+  it('accepts only the configured PIN', () => {
+    expect(verifyPinConstantTime('482913')).toBe(true);
+    expect(verifyPinConstantTime('3723')).toBe(false);
+    expect(verifyPinConstantTime('')).toBe(false);
+    expect(verifyPinConstantTime('4829133')).toBe(false);
   });
 
-  describe('Admin Session Tokens (HMAC-SHA256)', () => {
-    it('should create and verify a valid admin session token', () => {
-      const token = createAdminSessionToken();
-      expect(token).toBeDefined();
-      expect(typeof token).toBe('string');
-      expect(verifyAdminSessionToken(token)).toBe(true);
-    });
+  it('is closed when env is missing', () => {
+    delete process.env.ADMIN_MASTER_PIN;
+    delete process.env.ADMIN_SESSION_SECRET;
+    expect(isAdminConfigured()).toBe(false);
+    expect(verifyPinConstantTime('3723')).toBe(false);
+    expect(() => createAdminSessionToken(ADMIN_ID)).toThrow();
+    expect(verifyAdminSessionToken('a.1.b')).toBe(false);
+  });
 
-    it('should reject tampered or invalid tokens', () => {
-      expect(verifyAdminSessionToken(undefined)).toBe(false);
-      expect(verifyAdminSessionToken(null)).toBe(false);
-      expect(verifyAdminSessionToken('')).toBe(false);
-      expect(verifyAdminSessionToken('fake.token')).toBe(false);
-      expect(verifyAdminSessionToken('123456789.badhash')).toBe(false);
-    });
+  it('rejects a too-short session secret', () => {
+    process.env.ADMIN_SESSION_SECRET = 'short';
+    expect(isAdminConfigured()).toBe(false);
+  });
+
+  it('round-trips a token bound to the admin id', () => {
+    const token = createAdminSessionToken(ADMIN_ID);
+    expect(verifyAdminSessionToken(token)).toBe(true);
+    expect(getAdminIdFromToken(token)).toBe(ADMIN_ID);
+  });
+
+  it('rejects tampered, swapped-user, expired and malformed tokens', () => {
+    const token = createAdminSessionToken(ADMIN_ID);
+    const [, ts, sig] = token.split('.') as [string, string, string];
+    expect(verifyAdminSessionToken(`other-user.${ts}.${sig}`)).toBe(false);
+    expect(verifyAdminSessionToken(`${ADMIN_ID}.${Number(ts) + 1}.${sig}`)).toBe(false);
+    expect(verifyAdminSessionToken(`${ADMIN_ID}.${ts}.${'0'.repeat(64)}`)).toBe(false);
+    expect(verifyAdminSessionToken('garbage')).toBe(false);
+    expect(verifyAdminSessionToken(undefined)).toBe(false);
+
+    const old = createAdminSessionToken(ADMIN_ID, Date.now() - 5 * 60 * 60 * 1000);
+    expect(verifyAdminSessionToken(old)).toBe(false);
   });
 });

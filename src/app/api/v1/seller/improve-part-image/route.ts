@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { requireSeller } from '@/server/auth/guards';
 
 const improveImageSchema = z.object({
   imageUrl: z.string().min(5),
@@ -9,6 +10,8 @@ const improveImageSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
     const body = await request.json();
     const validated = improveImageSchema.safeParse(body);
 

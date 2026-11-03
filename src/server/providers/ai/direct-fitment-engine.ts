@@ -24,45 +24,98 @@ export interface DirectFitmentResponse {
   afterImageUrl: string | null;
   promptUsed: string;
   durationMs: number;
+  outcome?: 'no_provider' | 'failed' | 'invalid_image' | undefined;
+}
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const LOCAL_EXT_MIME: Record<string, string> = {
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+};
+
+/** Hosts the server may fetch images from (never arbitrary URLs: SSRF protection). */
+function allowedRemoteHosts(): string[] {
+  const hosts = ['fal.media', 'v3.fal.media', 'v3b.fal.media', 'storage.googleapis.com'];
+  for (const raw of [process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_APP_URL]) {
+    try {
+      if (raw) hosts.push(new URL(raw).hostname);
+    } catch {
+      // ignore malformed env
+    }
+  }
+  for (const extra of (process.env.AI_IMAGE_HOST_ALLOWLIST || '').split(',')) {
+    if (extra.trim()) hosts.push(extra.trim());
+  }
+  return hosts;
+}
+
+export function isAllowedRemoteImageUrl(raw: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'https:') return false;
+  if (url.username || url.password) return false;
+  const host = url.hostname.toLowerCase();
+  return allowedRemoteHosts().some((h) => host === h || host.endsWith(`.${h}`));
+}
+
+/** Validates a data URI: allowed image mime, valid base64, size cap. */
+function validDataUri(uri: string): string | null {
+  const match = uri.match(/^data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!match) return null;
+  const mime = (match[1] || '').toLowerCase();
+  if (!ALLOWED_MIME.has(mime)) return null;
+  const approxBytes = Math.floor(((match[2] || '').length * 3) / 4);
+  if (approxBytes > MAX_IMAGE_BYTES || approxBytes < 4) return null;
+  return uri;
 }
 
 /**
- * Resolves any image source (data URI, remote https URL, or local /public path)
- * into a Data URI (`data:image/jpeg;base64,...`) so external AI APIs (Fal, Gemini, OpenAI)
- * can process images even when the app runs on localhost.
+ * Resolves an image source (data URI, allow-listed https URL, or a file under /public)
+ * into a Data URI so external AI APIs can process it. Anything else resolves to null.
  */
 export async function resolveImageToDataUri(src: string | undefined): Promise<string | null> {
   if (!src || src.trim().length === 0) return null;
   const trimmed = src.trim();
 
-  if (trimmed.startsWith('data:image/')) {
-    return trimmed;
+  if (trimmed.startsWith('data:')) {
+    return validDataUri(trimmed);
   }
 
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+  if (trimmed.startsWith('https://')) {
+    if (!isAllowedRemoteImageUrl(trimmed)) return null;
     try {
-      const res = await fetch(trimmed, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) return trimmed;
-      const contentType = res.headers.get('content-type') || 'image/jpeg';
+      const res = await fetch(trimmed, { signal: AbortSignal.timeout(8000), redirect: 'error' });
+      if (!res.ok) return null;
+      const contentType = (res.headers.get('content-type') || '').split(';')[0]!.trim().toLowerCase();
+      if (!ALLOWED_MIME.has(contentType)) return null;
+      const declared = Number(res.headers.get('content-length') || 0);
+      if (declared > MAX_IMAGE_BYTES) return null;
       const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length > MAX_IMAGE_BYTES) return null;
       return `data:${contentType};base64,${buf.toString('base64')}`;
     } catch {
-      return trimmed;
+      return null;
     }
   }
 
-  if (trimmed.startsWith('/')) {
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
     try {
-      const cleanRel = trimmed.replace(/^\/+/, '').split('?')[0] || '';
-      const fullPath = path.join(process.cwd(), 'public', cleanRel);
+      const publicDir = path.resolve(process.cwd(), 'public');
+      const rel = decodeURIComponent(trimmed.split('?')[0] || '').replace(/^\/+/, '');
+      const fullPath = path.resolve(publicDir, rel);
+      // Path traversal guard: must stay inside /public
+      if (fullPath !== publicDir && !fullPath.startsWith(publicDir + path.sep)) return null;
+      const mime = LOCAL_EXT_MIME[path.extname(fullPath).toLowerCase()];
+      if (!mime) return null;
       const buf = await fs.readFile(fullPath);
-      const ext = path.extname(cleanRel).toLowerCase();
-      const mime =
-        ext === '.png'
-          ? 'image/png'
-          : ext === '.webp'
-            ? 'image/webp'
-            : 'image/jpeg';
+      if (buf.length > MAX_IMAGE_BYTES) return null;
       return `data:${mime};base64,${buf.toString('base64')}`;
     } catch {
       return null;
@@ -125,60 +178,49 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
 
 /**
  * 1. FAL.AI Engine (`FAL_KEY` or `FAL_API_KEY`)
- * Supports `fal-ai/flux-pro/kontext` (reference-aware editing) and `fal-ai/flux/dev/image-to-image`.
+ * Reference-aware editors first (car + exact part photos), then single-image Kontext.
+ * `FAL_MODEL` may force a specific endpoint id (e.g. "fal-ai/nano-banana/edit").
  */
 async function runFalAiFitment(
   apiKey: string,
   carDataUri: string,
+  partDataUris: string[],
   prompt: string,
   mode: 'fitment' | 'enhance_for_video'
 ): Promise<string | null> {
-  const endpoints =
-    mode === 'enhance_for_video'
-      ? [
-          'https://fal.run/fal-ai/flux-pro/kontext',
-          'https://fal.run/fal-ai/flux/dev/image-to-image',
-        ]
-      : [
-          'https://fal.run/fal-ai/flux-pro/kontext',
-          'https://fal.run/fal-ai/flux/dev/image-to-image',
-        ];
+  const forced = (process.env.FAL_MODEL || '').trim();
+  const refs = [carDataUri, ...partDataUris.slice(0, 3)];
+  const endpoints: Array<{ id: string; body: Record<string, unknown> }> = [];
 
-  for (const endpoint of endpoints) {
+  if (partDataUris.length > 0 && mode === 'fitment') {
+    endpoints.push({
+      id: 'fal-ai/nano-banana/edit',
+      body: { prompt, image_urls: refs, num_images: 1, output_format: 'jpeg' },
+    });
+    endpoints.push({
+      id: 'fal-ai/flux-pro/kontext/multi',
+      body: { prompt, image_urls: refs, guidance_scale: 3.5, num_images: 1, output_format: 'jpeg' },
+    });
+  }
+  endpoints.push({
+    id: 'fal-ai/flux-pro/kontext',
+    body: { prompt, image_url: carDataUri, guidance_scale: 3.5, num_images: 1, output_format: 'jpeg' },
+  });
+
+  const ordered = forced
+    ? [...endpoints.filter((e) => e.id === forced), ...endpoints.filter((e) => e.id !== forced)]
+    : endpoints;
+
+  for (const endpoint of ordered) {
     try {
-      const isKontext = endpoint.includes('kontext');
-      const payload = isKontext
-        ? {
-            prompt,
-            image_url: carDataUri,
-            guidance_scale: 3.5,
-            num_inference_steps: 28,
-            output_format: 'jpeg',
-          }
-        : {
-            prompt,
-            image_url: carDataUri,
-            strength: mode === 'enhance_for_video' ? 0.35 : 0.65,
-            guidance_scale: 3.5,
-            num_inference_steps: 28,
-            output_format: 'jpeg',
-          };
-
-      const res = await fetch(endpoint, {
+      const res = await fetch(`https://fal.run/${endpoint.id}`, {
         method: 'POST',
-        headers: {
-          Authorization: `Key ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(35000),
+        headers: { Authorization: `Key ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(endpoint.body),
+        signal: AbortSignal.timeout(55_000),
       });
-
       if (!res.ok) continue;
-      const data = (await res.json()) as {
-        images?: Array<{ url?: string }>;
-        image?: { url?: string };
-      };
+      const data = (await res.json()) as { images?: Array<{ url?: string }>; image?: { url?: string } };
       const outputUrl = data.images?.[0]?.url || data.image?.url;
       if (outputUrl) return outputUrl;
     } catch {
@@ -222,24 +264,21 @@ async function runGeminiMultimodalFitment(
     }
   }
 
-  const models = [
-    'gemini-2.0-flash-exp-image-generation',
-    'gemini-2.5-flash-image-preview',
-  ];
+  const models = ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview'];
 
   for (const model of models) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: contentParts }],
           generationConfig: {
             responseModalities: ['TEXT', 'IMAGE'],
           },
         }),
-        signal: AbortSignal.timeout(35000),
+        signal: AbortSignal.timeout(55_000),
       });
 
       if (!res.ok) continue;
@@ -308,6 +347,12 @@ async function runOpenAiFitment(
   return null;
 }
 
+/** True when at least one AI provider key is present in the environment. */
+export function hasAiProvider(): boolean {
+  const k = (v: string | undefined) => (v ?? '').trim().length > 8;
+  return k(process.env.FAL_KEY) || k(process.env.FAL_API_KEY) || k(process.env.GEMINI_API_KEY) || k(process.env.GOOGLE_API_KEY) || k(process.env.OPENAI_API_KEY);
+}
+
 /**
  * Master Drop-in AI Execution Router:
  * Automatically checks `.env` / `.env.local` for `FAL_KEY`, `GEMINI_API_KEY`, or `OPENAI_API_KEY`
@@ -324,6 +369,12 @@ export async function executeDirectAiFitment(
   const openAiKey = (process.env.OPENAI_API_KEY || '').trim();
 
   const carDataUri = await resolveImageToDataUri(req.carPhoto);
+  const partDataUris = carDataUri
+    ? (await Promise.all(req.parts.map((p) => resolveImageToDataUri(p.angleImage || p.image)))).filter(
+        (u): u is string => Boolean(u)
+      )
+    : [];
+  const providerConfigured = falKey.length > 8 || geminiKey.length > 8 || openAiKey.length > 8;
 
   if (carDataUri) {
     // Priority 1: Fal.ai FLUX Kontext / Dev
@@ -331,6 +382,7 @@ export async function executeDirectAiFitment(
       const falUrl = await runFalAiFitment(
         falKey,
         carDataUri,
+        partDataUris,
         promptUsed,
         req.mode || 'fitment'
       );
@@ -347,12 +399,6 @@ export async function executeDirectAiFitment(
 
     // Priority 2: Google Gemini Multimodal Image Editing (Car + Exact Part Reference Images)
     if (geminiKey.length > 8) {
-      const partDataUris = (
-        await Promise.all(
-          req.parts.map((p) => resolveImageToDataUri(p.angleImage || p.image))
-        )
-      ).filter((u): u is string => Boolean(u));
-
       const geminiUrl = await runGeminiMultimodalFitment(
         geminiKey,
         carDataUri,
@@ -391,5 +437,8 @@ export async function executeDirectAiFitment(
     afterImageUrl: null,
     promptUsed,
     durationMs: Date.now() - startMs,
+    // 'no_provider' = no API key configured (demo mode); 'failed' = providers were tried and all failed;
+    // 'invalid_image' = the car photo was rejected by validation.
+    outcome: !carDataUri ? 'invalid_image' : providerConfigured ? 'failed' : 'no_provider',
   };
 }

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireSeller } from '@/server/auth/guards';
 import { convertToUSD, SupportedCurrency } from '@/domain/currency';
 
 const addPartSchema = z.object({
@@ -39,7 +40,7 @@ const bulkImportSchema = z.object({
 });
 
 async function resolveSellerAndCategories(supabase: ReturnType<typeof createAdminClient>, sellerId?: string | null) {
-  let resolvedSellerId = sellerId || undefined;
+  const resolvedSellerId = sellerId || undefined;
   let sellerInfo: { id: string; business_name: string; address?: string | null; phone?: string | null; credits?: number | null } | null = null;
 
   if (resolvedSellerId) {
@@ -49,19 +50,6 @@ async function resolveSellerAndCategories(supabase: ReturnType<typeof createAdmi
       .eq('id', resolvedSellerId)
       .maybeSingle();
     if (data) sellerInfo = data;
-  }
-
-  if (!sellerInfo) {
-    const { data: defaultSeller } = await supabase
-      .from('sellers')
-      .select('id, business_name, address, phone, credits')
-      .order('verified', { ascending: false })
-      .limit(1)
-      .single();
-    if (defaultSeller) {
-      sellerInfo = defaultSeller;
-      resolvedSellerId = defaultSeller.id;
-    }
   }
 
   const { data: categories } = await supabase
@@ -76,10 +64,11 @@ async function resolveSellerAndCategories(supabase: ReturnType<typeof createAdmi
   };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const sellerId = searchParams.get('sellerId');
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
+    const sellerId = guard.value.shopId;
 
     const supabase = createAdminClient();
     const { sellerId: resolvedSellerId, seller, categories } = await resolveSellerAndCategories(
@@ -198,6 +187,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
     const body = await request.json();
     const supabase = createAdminClient();
 
@@ -213,7 +204,7 @@ export async function POST(request: NextRequest) {
 
       const { sellerId: resolvedSellerId, categories } = await resolveSellerAndCategories(
         supabase,
-        parsedBulk.data.sellerId
+        guard.value.shopId
       );
 
       if (!resolvedSellerId) {
@@ -286,12 +277,11 @@ export async function POST(request: NextRequest) {
       imageUrl,
       installationAvailable,
       installationPrice,
-      sellerId,
     } = validated.data;
 
     const { sellerId: resolvedSellerId, categories } = await resolveSellerAndCategories(
       supabase,
-      sellerId
+      guard.value.shopId
     );
 
     if (!resolvedSellerId) {
@@ -365,6 +355,8 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
     const body = await request.json();
     const { productId, stock, priceUSD, name, isActive } = body as {
       productId?: string;
@@ -389,6 +381,7 @@ export async function PATCH(request: NextRequest) {
       .from('products')
       .update(updates)
       .eq('id', productId)
+      .eq('seller_id', guard.value.shopId)
       .select('id, name, price, stock, is_active')
       .single();
 
@@ -405,6 +398,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get('productId');
 
@@ -416,7 +411,8 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase
       .from('products')
       .update({ is_active: false })
-      .eq('id', productId);
+      .eq('id', productId)
+      .eq('seller_id', guard.value.shopId);
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { verifyAdminSessionToken, ADMIN_COOKIE_NAME } from '@/lib/admin-auth';
+import { verifyAdminSessionToken, getAdminIdFromToken, ADMIN_COOKIE_NAME } from '@/lib/admin-auth';
 
 const adminAssignPlanSchema = z.object({
   shopId: z.string().uuid(),
@@ -49,79 +49,49 @@ export async function POST(request: NextRequest) {
     }
 
     const { shopId, planCode, creditsToAdd, paidAmountCents, paymentCurrency, paymentMethod, durationDays, adminNotes } = validated.data;
-    const adminSupabase = createAdminClient();
+    const adminId = getAdminIdFromToken(token);
+    if (!adminId) {
+      return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED_ADMIN_SESSION' } }, { status: 401 });
+    }
 
-    // 1. Fetch current shop details
-    const { data: shop, error: shopError } = await adminSupabase
-      .from('shops')
-      .select('id, owner_id, credits_balance, plan_expires_at')
-      .eq('id', shopId)
-      .single();
+    // One database transaction: balance + ledger + audit log (see admin_assign_plan SQL function).
+    const { data, error: rpcError } = await createAdminClient().rpc('admin_assign_plan', {
+      p_admin_id: adminId,
+      p_shop_id: shopId,
+      p_plan_code: planCode,
+      p_credits: creditsToAdd,
+      p_duration_days: durationDays,
+      p_paid_cents: paidAmountCents,
+      p_currency: paymentCurrency,
+      p_method: paymentMethod,
+      p_notes: adminNotes,
+      p_ip: (request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown').slice(0, 45),
+    });
 
-    if (shopError || !shop) {
+    const result = data as { success?: boolean; error?: string; newCreditsBalance?: number; planExpiresAt?: string; auditLogId?: string } | null;
+    if (rpcError || !result?.success) {
+      const notFound = result?.error === 'SHOP_NOT_FOUND';
+      if (rpcError) console.error('admin_assign_plan failed:', rpcError.message);
       return NextResponse.json(
         {
           success: false,
           error: {
-            code: 'RESOURCE_NOT_FOUND',
-            messageKey: 'errors.shop.not_found',
+            code: notFound ? 'RESOURCE_NOT_FOUND' : 'INTERNAL_SERVER_ERROR',
+            messageKey: notFound ? 'errors.shop.not_found' : 'errors.common.server_error',
           },
           meta: { requestId: crypto.randomUUID(), timestamp: new Date().toISOString() },
         },
-        { status: 404 }
+        { status: notFound ? 404 : 500 }
       );
     }
-
-    const newCredits = shop.credits_balance + creditsToAdd;
-    const newExpiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
-
-    // 2. Update shop plan and credits
-    await adminSupabase
-      .from('shops')
-      .update({
-        credits_balance: newCredits,
-        current_plan_code: planCode,
-        plan_expires_at: newExpiresAt,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', shopId);
-
-    // 3. Write to credit_ledger
-    await adminSupabase.from('credit_ledger').insert({
-      user_id: shop.owner_id,
-      shop_id: shop.id,
-      amount: creditsToAdd,
-      balance_after: newCredits,
-      action_type: 'PLAN_ASSIGNED',
-      description: `Manual billing: ${planCode} (+${creditsToAdd} credits, ${paidAmountCents / 100} ${paymentCurrency})`,
-    });
-
-    // 4. Write immutable record to admin_audit_log
-    const auditLogId = crypto.randomUUID();
-    await adminSupabase.from('admin_audit_log').insert({
-      id: auditLogId,
-      admin_id: shop.owner_id, // Default to admin profile
-      action: 'ASSIGN_PLAN',
-      target_entity: 'shops',
-      target_id: shopId,
-      payload_before: { credits: shop.credits_balance, expiresAt: shop.plan_expires_at },
-      payload_after: {
-        credits: newCredits,
-        expiresAt: newExpiresAt,
-        paidAmountCents,
-        currency: paymentCurrency,
-        method: paymentMethod,
-        notes: adminNotes,
-      },
-    });
 
     return NextResponse.json({
       success: true,
       data: {
         shopId,
-        newCreditsBalance: newCredits,
-        planExpiresAt: newExpiresAt,
-        auditLogId,
+        newCreditsBalance: result.newCreditsBalance,
+        planExpiresAt: result.planExpiresAt,
+        auditLogId: result.auditLogId,
       },
       meta: { requestId: crypto.randomUUID(), timestamp: new Date().toISOString() },
     });

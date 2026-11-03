@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase/server';
+import crypto from 'node:crypto';
+import { createAdminClient } from '@/lib/supabase/server';
+import { requireUser } from '@/server/auth/guards';
 import { calculateDepositCents } from '@/domain/money';
 
 const createBookingSchema = z.object({
@@ -13,6 +15,8 @@ const createBookingSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireUser();
+    if (!guard.ok) return guard.response;
     const body = await request.json();
     const validated = createBookingSchema.safeParse(body);
 
@@ -33,27 +37,35 @@ export async function POST(request: NextRequest) {
 
     const { sessionId, shopId, selectedInventoryIds, preferredAppointmentDate } = validated.data;
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id ?? '00000000-0000-0000-0000-000000000001';
+    const userId = guard.value.userId;
+    const adminSupabase = createAdminClient();
 
-    // Fetch items total price
-    const { data: items } = await supabase
+    // Prices come from the database only: never from the client, never a fallback amount.
+    const { data: items } = await adminSupabase
       .from('shop_inventory')
       .select('price_cents, labor_cost_cents')
-      .in('id', selectedInventoryIds);
+      .in('id', selectedInventoryIds)
+      .eq('shop_id', shopId)
+      .eq('is_active', true);
 
-    const totalPriceCents = (items ?? []).reduce(
-      (sum, item) => sum + item.price_cents + item.labor_cost_cents,
-      0
-    ) || 145000; // Fallback to $1450 if testing
+    if (!items || items.length !== new Set(selectedInventoryIds).size) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: 'INVENTORY_NOT_FOUND', messageKey: 'errors.validation.invalid_input' },
+          meta: { requestId: crypto.randomUUID(), timestamp: new Date().toISOString() },
+        },
+        { status: 400 }
+      );
+    }
+
+    const totalPriceCents = items.reduce((sum, item) => sum + item.price_cents + item.labor_cost_cents, 0);
 
     const depositAmountCents = calculateDepositCents(totalPriceCents);
     const bookingId = crypto.randomUUID();
-    const bookingNumber = `CV-BKG-${Math.floor(1000 + Math.random() * 9000)}`;
-    const redemptionCode = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}`;
+    const bookingNumber = `CV-BKG-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    const redemptionCode = `${crypto.randomInt(100, 1000)}-${crypto.randomInt(100, 1000)}`;
 
-    const adminSupabase = createAdminClient();
     await adminSupabase.from('bookings').insert({
       id: bookingId,
       booking_number: bookingNumber,

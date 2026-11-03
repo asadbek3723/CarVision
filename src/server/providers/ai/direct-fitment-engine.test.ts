@@ -1,8 +1,31 @@
 import { describe, it, expect } from 'vitest';
 import {
+  isAllowedRemoteImageUrl,
   resolveImageToDataUri,
   executeDirectAiFitment,
 } from './direct-fitment-engine';
+
+describe('direct-fitment-engine input safety', () => {
+  it('blocks path traversal out of /public', async () => {
+    expect(await resolveImageToDataUri('/../package.json')).toBeNull();
+    expect(await resolveImageToDataUri('/../../etc/passwd')).toBeNull();
+    expect(await resolveImageToDataUri('/%2e%2e/package.json')).toBeNull();
+    expect(await resolveImageToDataUri('//evil.example/x.jpg')).toBeNull();
+  });
+
+  it('only allows non-image extensions to resolve to null', async () => {
+    expect(await resolveImageToDataUri('/manifest.json')).toBeNull();
+  });
+
+  it('rejects non-image data URIs and arbitrary remote hosts (SSRF)', async () => {
+    expect(await resolveImageToDataUri('data:text/html;base64,PGgxPg==')).toBeNull();
+    expect(await resolveImageToDataUri('http://169.254.169.254/latest/meta-data')).toBeNull();
+    expect(await resolveImageToDataUri('https://evil.example/car.jpg')).toBeNull();
+    expect(isAllowedRemoteImageUrl('https://v3.fal.media/files/a.jpg')).toBe(true);
+    expect(isAllowedRemoteImageUrl('https://fal.media.evil.example/a.jpg')).toBe(false);
+    expect(isAllowedRemoteImageUrl('http://v3.fal.media/a.jpg')).toBe(false);
+  });
+});
 
 describe('direct-fitment-engine', () => {
   it('passes through data:image URIs unchanged', async () => {

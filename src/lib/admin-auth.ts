@@ -1,158 +1,80 @@
 import crypto from 'crypto';
 
-const MASTER_PIN = process.env.ADMIN_MASTER_PIN || '3723';
-const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'carvision_admin_secret_hmac_key_99812_secure';
+/**
+ * Admin second factor. An admin must (1) be signed in with a Supabase account whose
+ * server-set app_metadata.role is `super_admin` and (2) enter the PIN. There are NO
+ * default secrets: if ADMIN_MASTER_PIN / ADMIN_SESSION_SECRET are missing the admin
+ * area is closed (fails closed).
+ */
+
 export const ADMIN_COOKIE_NAME = 'cv_admin_session';
 const SESSION_DURATION_SECONDS = 4 * 60 * 60; // 4 hours
+const MIN_SECRET_LENGTH = 32;
 
-// Rate limiter for brute-force protection
-interface RateLimitEntry {
-  attempts: number;
-  lockedUntil: number;
-}
-const rateLimitMap = new Map<string, RateLimitEntry>();
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-
-/**
- * Checks rate limiting for PIN verification attempts.
- */
-export function checkPinRateLimit(ip: string): {
-  allowed: boolean;
-  remainingAttempts: number;
-  retryAfterSeconds?: number;
-} {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (entry && entry.lockedUntil > now) {
-    const retryAfterSeconds = Math.ceil((entry.lockedUntil - now) / 1000);
-    return {
-      allowed: false,
-      remainingAttempts: 0,
-      retryAfterSeconds,
-    };
-  }
-
-  if (entry && entry.lockedUntil <= now) {
-    rateLimitMap.delete(ip);
-  }
-
-  const currentAttempts = entry ? entry.attempts : 0;
-  return {
-    allowed: true,
-    remainingAttempts: Math.max(0, MAX_ATTEMPTS - currentAttempts),
-  };
+function sessionSecret(): string | null {
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  return secret && secret.length >= MIN_SECRET_LENGTH ? secret : null;
 }
 
-/**
- * Records a failed attempt for the given IP.
- */
-export function recordFailedPinAttempt(ip: string): {
-  isLocked: boolean;
-  remainingAttempts: number;
-  retryAfterSeconds?: number;
-} {
-  const now = Date.now();
-  let entry = rateLimitMap.get(ip);
-
-  if (!entry || (entry.lockedUntil > 0 && entry.lockedUntil <= now)) {
-    entry = { attempts: 1, lockedUntil: 0 };
-  } else {
-    entry.attempts += 1;
-  }
-
-  if (entry.attempts >= MAX_ATTEMPTS) {
-    entry.lockedUntil = now + LOCKOUT_DURATION_MS;
-    rateLimitMap.set(ip, entry);
-    return {
-      isLocked: true,
-      remainingAttempts: 0,
-      retryAfterSeconds: Math.ceil(LOCKOUT_DURATION_MS / 1000),
-    };
-  }
-
-  rateLimitMap.set(ip, entry);
-  return {
-    isLocked: false,
-    remainingAttempts: MAX_ATTEMPTS - entry.attempts,
-  };
+export function isAdminConfigured(): boolean {
+  return Boolean(process.env.ADMIN_MASTER_PIN && process.env.ADMIN_MASTER_PIN.length >= 4 && sessionSecret());
 }
 
-/**
- * Clears rate limiting on successful PIN verification.
- */
-export function clearPinRateLimit(ip: string): void {
-  rateLimitMap.delete(ip);
+function sha256(value: string): Buffer {
+  return crypto.createHash('sha256').update(value).digest();
 }
 
-/**
- * Verifies candidate PIN against server master PIN using constant-time comparison.
- */
+/** Constant-time PIN check against ADMIN_MASTER_PIN (false when not configured). */
 export function verifyPinConstantTime(candidatePin: string): boolean {
-  if (typeof candidatePin !== 'string' || candidatePin.length !== MASTER_PIN.length) {
-    return false;
-  }
-
-  const candidateBuf = Buffer.from(candidatePin);
-  const masterBuf = Buffer.from(MASTER_PIN);
-
-  try {
-    return crypto.timingSafeEqual(candidateBuf, masterBuf);
-  } catch {
-    return false;
-  }
+  const master = process.env.ADMIN_MASTER_PIN;
+  if (!master || master.length < 4 || typeof candidatePin !== 'string') return false;
+  return crypto.timingSafeEqual(sha256(candidatePin), sha256(master));
 }
 
-/**
- * Generates signed HMAC token for the session.
- */
-export function createAdminSessionToken(): string {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const payload = `carvision_admin:${timestamp}`;
-  const hmac = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
-  return `${timestamp}.${hmac}`;
+function sign(payload: string, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }
 
-/**
- * Verifies signed session token.
- */
-export function verifyAdminSessionToken(token: string | undefined | null): boolean {
-  if (!token || typeof token !== 'string') return false;
+/** Signed token bound to the admin's user id: `<userId>.<issuedAt>.<hmac>`. */
+export function createAdminSessionToken(adminUserId: string, nowMs: number = Date.now()): string {
+  const secret = sessionSecret();
+  if (!secret) throw new Error('ADMIN_SESSION_SECRET is not configured');
+  const issuedAt = Math.floor(nowMs / 1000);
+  const payload = `carvision_admin:${adminUserId}:${issuedAt}`;
+  return `${adminUserId}.${issuedAt}.${sign(payload, secret)}`;
+}
+
+/** Returns the admin user id when the token is valid and unexpired, else null. */
+export function getAdminIdFromToken(token: string | undefined | null, nowMs: number = Date.now()): string | null {
+  const secret = sessionSecret();
+  if (!secret || !token || typeof token !== 'string') return null;
 
   const parts = token.split('.');
-  if (parts.length !== 2) return false;
+  if (parts.length !== 3) return null;
+  const [adminUserId, tsStr, signature] = parts as [string, string, string];
+  if (!adminUserId || !signature || !/^\d+$/.test(tsStr)) return null;
 
-  const [tsStr, signature] = parts;
-  if (!tsStr || !signature) return false;
+  const issuedAt = parseInt(tsStr, 10);
+  const now = Math.floor(nowMs / 1000);
+  if (now - issuedAt > SESSION_DURATION_SECONDS || issuedAt > now + 60) return null;
 
-  const timestamp = parseInt(tsStr, 10);
-  if (isNaN(timestamp)) return false;
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now - timestamp > SESSION_DURATION_SECONDS || timestamp > now + 60) {
-    return false; // Expired or future timestamp
-  }
-
-  const expectedPayload = `carvision_admin:${timestamp}`;
-  const expectedHmac = crypto.createHmac('sha256', SESSION_SECRET).update(expectedPayload).digest('hex');
-
-  try {
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedHmac));
-  } catch {
-    return false;
-  }
+  const expected = sign(`carvision_admin:${adminUserId}:${issuedAt}`, secret);
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  return adminUserId;
 }
 
-/**
- * Standard cookie options for setting the admin session cookie.
- */
+export function verifyAdminSessionToken(token: string | undefined | null): boolean {
+  return getAdminIdFromToken(token) !== null;
+}
+
 export function getAdminCookieOptions() {
   return {
     name: ADMIN_COOKIE_NAME,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
+    sameSite: 'strict' as const,
     path: '/',
     maxAge: SESSION_DURATION_SECONDS,
   };

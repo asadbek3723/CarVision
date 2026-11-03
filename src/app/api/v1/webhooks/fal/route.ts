@@ -1,21 +1,26 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { timingSafeEqual } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const secretHeader = request.headers.get('x-fal-webhook-secret');
+    // Fail closed: the webhook is unusable until a shared secret is configured.
     const expectedSecret = process.env.FAL_WEBHOOK_SECRET;
-
-    // Verify webhook secret in production
-    if (expectedSecret && secretHeader !== expectedSecret) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized webhook caller' },
-        { status: 401 }
-      );
+    if (!expectedSecret) {
+      return NextResponse.json({ success: false, error: 'Webhook not configured' }, { status: 503 });
+    }
+    const provided = Buffer.from(request.headers.get('x-fal-webhook-secret') ?? '');
+    const expected = Buffer.from(expectedSecret);
+    if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized webhook caller' }, { status: 401 });
     }
 
     const payload = await request.json();
     const { request_id, status, error, image, preview_image } = payload;
+
+    if (typeof request_id !== 'string' || !/^[0-9a-fA-F-]{36}$/.test(request_id)) {
+      return NextResponse.json({ received: true });
+    }
 
     const adminSupabase = createAdminClient();
 

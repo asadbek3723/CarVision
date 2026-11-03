@@ -60,7 +60,7 @@ export function VeloceCustomize() {
     setGeneratedAngles,
     openCamera,
   } = useVeloceStore();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { formatPrice } = useCurrency();
 
   const isSeller = user?.role === 'b2b_seller';
@@ -71,6 +71,7 @@ export function VeloceCustomize() {
   const [isLoadingCatalog, setIsLoadingCatalog] = React.useState(true);
   const [isApplying, setIsApplying] = React.useState(false);
   const [applyStepText, setApplyStepText] = React.useState('');
+  const [applyError, setApplyError] = React.useState<string | null>(null);
 
   // Filmstrip horizontal drag / scroll state
   const filmstripRef = React.useRef<HTMLDivElement | null>(null);
@@ -202,6 +203,12 @@ export function VeloceCustomize() {
     }
     if (partsToApply.length === 0) return;
 
+    if (!user) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+    setApplyError(null);
+
     const basePhoto = photo || '/assets/hero-car-1-Bi4wq3bK.jpg';
     if (!photo) {
       setPhoto(basePhoto);
@@ -251,13 +258,25 @@ export function VeloceCustomize() {
             })),
           }),
         });
-        const data = await res.json();
-        if (data.success && data.generation?.afterImageUrl) {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          router.push(`/${locale}/login`);
+          return;
+        }
+        if (!res.ok || !data.success) {
+          // Real failure (no credits, provider error, ...): show it, never fake a result.
+          setApplyError(data.error || "Rasm yaratib bo'lmadi. Qayta urinib ko'ring");
+          void refreshProfile();
+          return;
+        }
+        if (data.generation?.afterImageUrl) {
           apiAfterUrl = data.generation.afterImageUrl;
           isLiveAi = Boolean(data.generation.liveApiActive);
         }
+        void refreshProfile();
       } catch {
-        // Fallback to local 4K composite below
+        setApplyError("Tarmoq xatosi. Internetni tekshirib qayta urinib ko'ring");
+        return;
       }
 
       setApplyStepText('3/3 · Natija sahifasi tayyorlanmoqda...');
@@ -392,6 +411,18 @@ export function VeloceCustomize() {
           </div>
         )}
       </div>
+
+      {applyError && (
+        <div
+          role="alert"
+          className="mt-4 flex items-start justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+        >
+          <span>{applyError}</span>
+          <button type="button" onClick={() => setApplyError(null)} className="shrink-0 text-xs font-semibold text-red-100/80 hover:text-white">
+            Yopish
+          </button>
+        </div>
+      )}
 
       {/* 2. CATEGORY FILTER PILLS */}
       <div className="mt-8 flex items-center justify-between gap-4">

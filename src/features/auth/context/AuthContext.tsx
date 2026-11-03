@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import type { UserProfile, UserRole, SignUpPayload } from '../types';
-import { createClient } from '@/lib/supabase/client';
+import type { UserProfile, SignUpPayload } from '../types';
 
 export interface AuthContextValue {
   user: UserProfile | null;
@@ -15,6 +14,8 @@ export interface AuthContextValue {
   signUp: (payload: SignUpPayload) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => void;
+  /** Re-reads the profile (credits, plan) from the server. */
+  refreshProfile: () => Promise<void>;
 }
 
 
@@ -28,49 +29,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = React.useState(false);
   const authModalMode: 'signin' | 'signup' = 'signin';
 
-  // Load stored profile or sync with Supabase session on mount
+  // The server session cookie is the single source of truth. The cached copy is only
+  // used to avoid a flash of the signed-out UI and is replaced as soon as /me answers.
+  const refreshProfile = React.useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/auth/me', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+          return;
+        }
+      }
+      if (res.status === 401) {
+        setUser(null);
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // Offline: keep the cached profile
+    }
+  }, []);
+
   React.useEffect(() => {
     const initAuth = async () => {
       try {
-        if (typeof window !== 'undefined') {
-          const cached = localStorage.getItem(STORAGE_KEY);
-          if (cached) {
-            try {
-              setUser(JSON.parse(cached));
-            } catch {
-              localStorage.removeItem(STORAGE_KEY);
-            }
-          }
-        }
-
-        // Check active Supabase auth session
         try {
-          const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            const role = (session.user.user_metadata?.['role'] as UserRole) || 'b2b_seller';
-            const profile: UserProfile = {
-              id: session.user.id,
-              email: session.user.email || 'user@carvision.uz',
-              phone: session.user.phone || session.user.user_metadata?.['phone'] || '+998 90 000 00 00',
-              full_name: session.user.user_metadata?.['full_name'] || 'Authenticated Master',
-              role,
-              credits_balance: Number(session.user.user_metadata?.['credits_balance'] ?? 40),
-              shop: session.user.user_metadata?.['shop'] || null,
-            };
-            setUser(profile);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-          }
+          const cached = localStorage.getItem(STORAGE_KEY);
+          if (cached) setUser(JSON.parse(cached));
         } catch {
-          // Supabase offline or credentials pending
+          localStorage.removeItem(STORAGE_KEY);
         }
+        await refreshProfile();
       } finally {
         setIsLoading(false);
       }
     };
 
     initAuth();
-  }, []);
+  }, [refreshProfile]);
 
   const openAuthModal = React.useCallback((mode: 'signin' | 'signup' = 'signin') => {
     if (typeof window !== 'undefined') {
@@ -140,8 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     localStorage.removeItem(STORAGE_KEY);
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
     } catch {
       // ignore
     }
@@ -178,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signOut,
         updateProfile,
+        refreshProfile,
       }}
     >
       {children}

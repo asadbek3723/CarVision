@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
+import { requireUser } from '@/server/auth/guards';
 
 const createOrderSchema = z
   .object({
@@ -29,6 +30,8 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireUser();
+    if (!guard.ok) return guard.response;
     const body = await request.json();
     const validated = createOrderSchema.safeParse(body);
 
@@ -92,51 +95,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Resolve user ID (authenticated user or guest client user)
-    let resolvedUserId: string | null = null;
-    try {
-      const serverAuth = await createServerSupabaseClient();
-      const { data: authData } = await serverAuth.auth.getUser();
-      if (authData?.user?.id) {
-        resolvedUserId = authData.user.id;
-      }
-    } catch {
-      // Guest flow
-    }
-
-    if (!resolvedUserId) {
-      const { data: guestUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('role', 'user')
-        .limit(1)
-        .maybeSingle();
-
-      if (guestUser) {
-        resolvedUserId = guestUser.id;
-      } else {
-        const { data: anyUser } = await supabase
-          .from('users')
-          .select('id')
-          .limit(1)
-          .single();
-        resolvedUserId = anyUser?.id ?? null;
-      }
-    }
-
-    if (!resolvedUserId) {
-      return NextResponse.json(
-        { success: false, error: 'User registration error' },
-        { status: 500 }
-      );
-    }
+    // 2. The order always belongs to the signed-in user
+    const resolvedUserId = guard.value.userId;
 
     // 3. Financial calculations (USD & UZS 3% Escrow deposit)
     const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const depositUSD = Math.round(totalPrice * 0.03 * 100) / 100;
     const uzsRate = 13000;
     const depositUZS = Math.round(depositUSD * uzsRate);
-    const orderNumber = `CV-${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderNumber = `CV-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
 
     // Build structured note for Admin Escrow audit
     const itemsSummary = items.map((i) => `${i.name} (x${i.quantity})`).join(', ');
@@ -225,6 +192,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const guard = await requireUser();
+    if (!guard.ok) return guard.response;
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get('id');
     const limit = Math.min(Number(searchParams.get('limit') || 20), 50);
@@ -256,6 +225,7 @@ export async function GET(request: NextRequest) {
           )
         `)
         .eq('id', orderId)
+        .eq('user_id', guard.value.userId)
         .single();
 
       if (error || !order) {
@@ -294,6 +264,7 @@ export async function GET(request: NextRequest) {
           phone
         )
       `)
+      .eq('user_id', guard.value.userId)
       .order('created_at', { ascending: false })
       .limit(limit);
 

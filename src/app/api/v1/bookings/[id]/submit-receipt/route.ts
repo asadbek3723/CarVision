@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireUser } from '@/server/auth/guards';
 
 const submitReceiptSchema = z.object({
   receiptStoragePath: z.string().min(5),
@@ -12,6 +13,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const guard = await requireUser();
+    if (!guard.ok) return guard.response;
     const { id: bookingId } = await params;
     const body = await request.json();
     const validated = submitReceiptSchema.safeParse(body);
@@ -59,8 +62,9 @@ export async function POST(
     // Fetch booking & associated shop
     const { data: booking, error: bkgError } = await adminSupabase
       .from('bookings')
-      .select('id, shop_id, redemption_code, shops(shop_name, phone, exact_address, geo_lat, geo_lng)')
+      .select('id, status')
       .eq('id', bookingId)
+      .eq('user_id', guard.value.userId)
       .single();
 
     if (bkgError || !booking) {
@@ -77,35 +81,28 @@ export async function POST(
       );
     }
 
-    // Autonomous AI OCR verification: unlock booking
+    if (booking.status !== 'AWAITING_PAYMENT') {
+      return NextResponse.json(
+        { success: false, error: { code: 'BOOKING_STATE_INVALID', messageKey: 'errors.booking.invalid_state' } },
+        { status: 409 }
+      );
+    }
+
+    // A receipt only moves the booking to the admin approval queue. The shop's contact
+    // details are released after approval, never by the client's own upload.
     await adminSupabase
       .from('bookings')
       .update({
-        status: 'UNLOCKED',
+        status: 'PENDING_ADMIN_APPROVAL',
         receipt_image_path: receiptStoragePath,
         receipt_image_hash: receiptSha256,
-        unlocked_at: new Date().toISOString(),
       })
-      .eq('id', bookingId);
-
-    const shop = Array.isArray(booking.shops) ? booking.shops[0] : booking.shops;
+      .eq('id', bookingId)
+      .eq('user_id', guard.value.userId);
 
     return NextResponse.json({
       success: true,
-      data: {
-        bookingId,
-        status: 'UNLOCKED',
-        verificationMethod: 'AUTO_OCR',
-        unlockedShop: {
-          shopName: shop?.shop_name ?? 'Autotune Pro Tashkent',
-          phone: shop?.phone ?? '+998 90 123 45 67',
-          exactAddress: shop?.exact_address ?? 'Amir Temur ko‘chasi 108A, Yunusobod tumani',
-          geoLat: shop?.geo_lat ?? 41.3521,
-          geoLng: shop?.geo_lng ?? 69.2891,
-          bookingRedemptionCode: booking.redemption_code,
-          qrVoucherUrl: `https://carvision.app/vouchers/${booking.redemption_code}.svg`,
-        },
-      },
+      data: { bookingId, status: 'PENDING_ADMIN_APPROVAL', verificationMethod: 'ADMIN_REVIEW' },
       meta: { requestId: crypto.randomUUID(), timestamp: new Date().toISOString() },
     });
   } catch (error) {

@@ -2,146 +2,86 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import {
-  checkPinRateLimit,
-  recordFailedPinAttempt,
-  clearPinRateLimit,
+  isAdminConfigured,
   verifyPinConstantTime,
   createAdminSessionToken,
   getAdminCookieOptions,
 } from '@/lib/admin-auth';
+import { getSuperAdminId } from '@/server/auth/session';
+import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 
-const verifyPinSchema = z.object({
-  pin: z.string().min(4).max(8),
-});
+const verifyPinSchema = z.object({ pin: z.string().min(4).max(32) });
+
+const WINDOW_MS = 15 * 60 * 1000;
+const MAX_ATTEMPTS = 5;
+
+function fail(status: number, code: string, message: string, extra: Record<string, unknown> = {}) {
+  return NextResponse.json({ success: false, error: { code, message, ...extra } }, { status });
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      request.headers.get('x-real-ip') ||
-      '127.0.0.1';
-
-    // 1. Check rate limit
-    const rateCheck = checkPinRateLimit(ip);
-    if (!rateCheck.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'RATE_LIMIT_EXCEEDED',
-            message: `Ko'p marta xato terildi. Iltimos, ${rateCheck.retryAfterSeconds} soniyadan keyin qayta urinib ko'ring.`,
-            retryAfterSeconds: rateCheck.retryAfterSeconds,
-          },
-        },
-        { status: 429 }
-      );
+    if (!isAdminConfigured()) {
+      return fail(503, 'ADMIN_NOT_CONFIGURED', 'Admin paneli sozlanmagan (ADMIN_MASTER_PIN / ADMIN_SESSION_SECRET).');
     }
 
-    // 2. Validate input format
-    const body = await request.json().catch(() => ({}));
-    const validated = verifyPinSchema.safeParse(body);
-
-    if (!validated.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_INPUT',
-            message: 'PIN kod formati noto‘g‘ri.',
-          },
-        },
-        { status: 400 }
-      );
+    // Factor 1: signed-in Supabase account with the server-set super_admin role.
+    const adminId = await getSuperAdminId();
+    if (!adminId) {
+      return fail(403, 'NOT_ADMIN', 'Avval admin akkaunti bilan tizimga kiring.');
     }
 
-    const { pin } = validated.data;
-
-    // 3. Constant-time PIN verification on server
-    const isMatch = verifyPinConstantTime(pin);
-
-    if (!isMatch) {
-      const failure = recordFailedPinAttempt(ip);
-
-      // Log failed attempt to Supabase
-      try {
-        const supabase = createAdminClient();
-        await supabase.from('login_attempts').insert([
-          {
-            kind: 'login',
-            login_key: 'admin_pin_failed:invalid_pin',
-            ip,
-            success: false,
-          },
-        ]);
-      } catch {
-        // Non-blocking log
-      }
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'INVALID_PIN',
-            message: failure.isLocked
-              ? `Xavfsizlik tizimi bloklandi. ${failure.retryAfterSeconds} soniyadan so'ng urinib ko'ring.`
-              : `PIN kod noto‘g‘ri. Qolgan urinishlar soni: ${failure.remainingAttempts}`,
-            remainingAttempts: failure.remainingAttempts,
-            retryAfterSeconds: failure.retryAfterSeconds,
-          },
-        },
-        { status: 401 }
-      );
+    const ip = clientIp(request);
+    const key = `admin:${adminId}`;
+    const [byAdmin, byIp] = await Promise.all([
+      recentFailures('login_key', key, 'admin_pin', WINDOW_MS),
+      recentFailures('ip', ip, 'admin_pin', WINDOW_MS),
+    ]);
+    if (byAdmin >= MAX_ATTEMPTS || byIp >= MAX_ATTEMPTS * 2) {
+      return fail(429, 'RATE_LIMIT_EXCEEDED', "Ko'p marta xato terildi. 15 daqiqadan keyin urinib ko'ring.", {
+        retryAfterSeconds: WINDOW_MS / 1000,
+      });
     }
 
-    // 4. Verification successful - clear rate limit
-    clearPinRateLimit(ip);
+    const parsed = verifyPinSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) return fail(400, 'INVALID_INPUT', "PIN kod formati noto'g'ri.");
 
-    // Log successful attempt to Supabase
+    // Factor 2: PIN
+    if (!verifyPinConstantTime(parsed.data.pin)) {
+      await recordAttempt('admin_pin', key, ip, false);
+      const remaining = Math.max(0, MAX_ATTEMPTS - byAdmin - 1);
+      return fail(401, 'INVALID_PIN', `PIN kod noto'g'ri. Qolgan urinishlar: ${remaining}`, {
+        remainingAttempts: remaining,
+      });
+    }
+
+    await recordAttempt('admin_pin', key, ip, true);
+
     try {
-      const supabase = createAdminClient();
-      await supabase.from('login_attempts').insert([
-        {
-          kind: 'login',
-          login_key: 'admin_pin:kursant410@gmail.com',
-          ip,
-          success: true,
-        },
-      ]);
+      await createAdminClient().from('admin_audit_log').insert({
+        admin_id: adminId,
+        action: 'ADMIN_LOGIN',
+        target_entity: 'admin_session',
+        ip_address: ip.slice(0, 45),
+      });
     } catch {
-      // Non-blocking log
+      // Non-blocking
     }
 
-    // 5. Issue signed admin session token
-    const token = createAdminSessionToken();
-    const cookieOptions = getAdminCookieOptions();
-
-    const response = NextResponse.json({
-      success: true,
-      message: 'Admin xavfsizlik ruxsati berildi.',
-    });
-
+    const options = getAdminCookieOptions();
+    const response = NextResponse.json({ success: true, message: 'Admin xavfsizlik ruxsati berildi.' });
     response.cookies.set({
-      name: cookieOptions.name,
-      value: token,
-      httpOnly: cookieOptions.httpOnly,
-      secure: cookieOptions.secure,
-      sameSite: cookieOptions.sameSite,
-      path: cookieOptions.path,
-      maxAge: cookieOptions.maxAge,
+      name: options.name,
+      value: createAdminSessionToken(adminId),
+      httpOnly: options.httpOnly,
+      secure: options.secure,
+      sameSite: options.sameSite,
+      path: options.path,
+      maxAge: options.maxAge,
     });
-
     return response;
   } catch (error) {
     console.error('Admin PIN verification error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Serverda xatolik yuz berdi.',
-        },
-      },
-      { status: 500 }
-    );
+    return fail(500, 'INTERNAL_ERROR', 'Serverda xatolik yuz berdi.');
   }
 }
