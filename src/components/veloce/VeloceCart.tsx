@@ -4,14 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import {
-  ShoppingBag,
-  Plus,
-  Minus,
-  ArrowRight,
-  Lock,
-  Car,
-} from 'lucide-react';
+import { ShoppingBag, Plus, Minus, ArrowRight, Lock, Car, Trash2 } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -21,18 +14,23 @@ export function VeloceCart() {
   const t = useTranslations('shop.cart');
   const locale = (params?.['locale'] as string) || 'uz';
   const { cart, add, remove } = useVeloceStore();
+  const [broken, setBroken] = React.useState<Record<string, boolean>>({});
   const { formatPrice } = useCurrency();
 
   const [productsMap, setProductsMap] = React.useState<Record<string, VeloceProduct>>({});
   const [isLoading, setIsLoading] = React.useState(false);
+  const [loaded, setLoaded] = React.useState(false);
 
   const cartIdsKey = Object.keys(cart).sort().join(',');
 
   React.useEffect(() => {
-    if (!cartIdsKey) return;
+    if (!cartIdsKey) {
+      setLoaded(true);
+      return;
+    }
     let isMounted = true;
     setIsLoading(true);
-    fetch('/api/v1/products?limit=100')
+    fetch(`/api/v1/products?ids=${encodeURIComponent(cartIdsKey)}&limit=100`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
         if (isMounted && data.success && Array.isArray(data.products)) {
@@ -45,12 +43,21 @@ export function VeloceCart() {
       })
       .catch((err) => console.warn('Could not load cart products:', err))
       .finally(() => {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          setLoaded(true);
+        }
       });
     return () => {
       isMounted = false;
     };
   }, [cartIdsKey]);
+
+  // Items in the cart that are no longer sold (unpublished / deleted): tell the customer, let them clear them
+  const missingIds = loaded && !isLoading ? Object.keys(cart).filter((id) => !productsMap[id]) : [];
+  const dropMissing = () => {
+    for (const id of missingIds) for (let i = 0; i < (cart[id] ?? 1); i++) remove(id);
+  };
 
   const items = React.useMemo(() => {
     return Object.entries(cart)
@@ -85,6 +92,13 @@ export function VeloceCart() {
         </p>
       </div>
 
+      {missingIds.length > 0 && (
+        <div role="alert" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-500/10 px-5 py-4 text-sm text-amber-200">
+          <span>Savatdagi {missingIds.length} ta detal endi sotuvda yo‘q.</span>
+          <button type="button" onClick={dropMissing} className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">Olib tashlash</button>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="space-y-4">
           {[1, 2].map((i) => (
@@ -111,26 +125,27 @@ export function VeloceCart() {
           <div className="divide-y divide-white/[0.06]">
             {items.map(({ product: p, quantity: q }) => {
               const unitUSD = p.price;
-              const carName = p.targetCar || p.compatibility?.[0]?.name || 'Chevrolet Gentra';
+              const carName = p.isUniversal ? 'Barcha mashinalar' : p.targetCar || p.compatibility?.[0]?.name || '';
+              const atMax = p.stock > 0 && q >= p.stock;
               return (
                 <div
                   key={p.id}
                   className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex items-center gap-4">
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      onError={(e) => {
-                        e.currentTarget.src = '/assets/wheel-CiWWvvai.jpg';
-                      }}
-                      className="h-20 w-24 shrink-0 rounded-2xl object-cover bg-[#12141C]"
-                    />
+                    {p.image && !broken[p.id] ? (
+                      <img src={p.image} alt={p.name} onError={() => setBroken((b) => ({ ...b, [p.id]: true }))} className="h-20 w-24 shrink-0 rounded-2xl bg-[#12141C] object-cover" />
+                    ) : (
+                      <div className="flex h-20 w-24 shrink-0 items-center justify-center rounded-2xl bg-[#12141C] text-[10px] uppercase tracking-widest text-white/30">Rasm yo‘q</div>
+                    )}
                     <div>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D4AE62]">
-                        <Car className="h-3.5 w-3.5" />
-                        <span>{t('forCar', { car: carName })}</span>
-                      </span>
+                      {carName && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D4AE62]">
+                          <Car className="h-3.5 w-3.5" />
+                          <span>{t('forCar', { car: carName })}</span>
+                        </span>
+                      )}
+                      {p.stock <= 0 && <p className="text-[11px] font-semibold text-red-300">Omborda yo‘q</p>}
                       <h3 className="mt-0.5 text-base font-medium text-white">{p.name}</h3>
                       <p className="mt-1 font-mono text-sm font-semibold text-white/80 tabular-nums">
                         {t('price', { amount: formatPrice(unitUSD) })}
@@ -142,18 +157,21 @@ export function VeloceCart() {
                     <div className="flex items-center gap-2 rounded-xl bg-white/[0.04] p-1.5">
                       <button
                         type="button"
+                        aria-label="Kamaytirish"
                         onClick={() => remove(p.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08] cursor-pointer"
+                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08]"
                       >
-                        <Minus className="h-3.5 w-3.5" />
+                        {q <= 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
                       </button>
                       <span className="min-w-[24px] text-center font-mono text-xs font-bold text-white">
                         {q}
                       </span>
                       <button
                         type="button"
+                        aria-label="Ko‘paytirish"
+                        disabled={atMax}
                         onClick={() => add(p.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08] cursor-pointer"
+                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08] disabled:opacity-30"
                       >
                         <Plus className="h-3.5 w-3.5" />
                       </button>
@@ -184,6 +202,7 @@ export function VeloceCart() {
               </div>
 
               <Link
+                aria-disabled={items.some(({ product }) => product.stock <= 0)}
                 href={`/${locale}/cart/checkout`}
                 className="shimmer inline-flex items-center justify-center gap-3 rounded-2xl bg-gold-gradient px-8 py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110"
               >

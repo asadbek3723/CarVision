@@ -123,7 +123,7 @@ export function SellerDashboardView() {
     );
   }
 
-  if (user && !isSeller) return <StudioLock title="Dashboard" />;
+  if (user && !isSeller) return <StudioLock feature="dashboard" />;
 
   if (!user) {
     return (
@@ -271,6 +271,10 @@ export function SellerDashboardView() {
 
       {tab === 'leads' && (
         <div className="mt-4 space-y-3">
+          <Link href={`/${locale}/seller/redeem`} className="flex items-center justify-between rounded-3xl bg-[#D4AE62]/15 px-5 py-4 text-sm font-bold text-[#D4AE62] hover:bg-[#D4AE62]/25">
+            Vaucher qabul qilish
+            <span aria-hidden>→</span>
+          </Link>
           {leads.length === 0 && (
             <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-sm text-white/60">
               Hali buyurtma yo‘q. Mijozlar bron qilganda shu yerda ko‘rinadi.
@@ -278,11 +282,11 @@ export function SellerDashboardView() {
           )}
           {leads.map((lead) => (
             <article key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-4">
-              <div>
+              <Link href={`/${locale}/seller/orders/${lead.id}`} className="block min-w-0 hover:opacity-80">
                 <p className="text-sm font-bold text-white">{lead.customerName}</p>
                 <p className="text-xs text-white/50">{lead.partName}</p>
                 <p className="mt-1 text-xs text-white/40">Kod: {lead.voucherCode}</p>
-              </div>
+              </Link>
               <div className="text-end">
                 <p className="text-sm font-semibold text-[#D4AE62]">{formatPrice(lead.totalPriceUSD, 'USD')}</p>
                 <p className="text-[11px] text-white/45">Zakalat: {formatPrice(lead.depositUSD, 'USD')}</p>
