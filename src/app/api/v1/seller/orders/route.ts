@@ -1,361 +1,150 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireSeller } from '@/server/auth/guards';
+import { getServerRates } from '@/server/rates';
+import { fetchBookingItems, fetchBookingRows, type BookingRow } from '@/server/bookings';
+import { centsToUsd } from '@/domain/catalog';
 
-interface RawOrderRow {
-  id: string;
-  user_id?: string | null;
-  seller_id?: string | null;
-  total?: number | string | null;
-  status?: string | null;
-  phone?: string | null;
-  note?: string | null;
-  created_at?: string | null;
-  order_items?: Array<{
-    id: string;
-    product_name: string;
-    price: number;
-    quantity: number;
-    product_image_url?: string | null;
-  }> | null;
-  sellers?:
-    | {
-        id: string;
-        business_name?: string | null;
-        address?: string | null;
-        phone?: string | null;
-      }
-    | Array<{
-        id: string;
-        business_name?: string | null;
-        address?: string | null;
-        phone?: string | null;
-      }>
-    | null;
-}
+const fail = (status: number, error: string) => NextResponse.json({ success: false, error }, { status });
 
-function mapOrderRow(o: RawOrderRow) {
-  const items = o.order_items || [];
-  const primaryItem = items[0];
-  const seller = Array.isArray(o.sellers) ? o.sellers[0] : o.sellers;
+type SellerStatus = 'pending' | 'verified' | 'completed' | 'cancelled';
+const STATUS_MAP: Record<string, SellerStatus> = { UNLOCKED: 'verified', REDEEMED: 'completed' };
 
-  const rawNote = o.note || '';
-  const codeMatch = rawNote.match(/#((?:CV|ORD)-[0-9A-Z]+)/i);
-  const shortHex = o.id.slice(0, 4).toUpperCase();
-  const orderNumber = codeMatch && codeMatch[1] ? codeMatch[1].toUpperCase() : `ORD-${shortHex}`;
-
-  let customerName = 'Mijoz';
-  let cleanNote = rawNote;
-
-  if (rawNote.includes('•')) {
-    const bulletParts = rawNote.split('•').map((s) => s.trim());
-    if (bulletParts[1] && !bulletParts[1].startsWith('[')) {
-      customerName = bulletParts[1];
-    }
-    cleanNote = bulletParts[bulletParts.length - 1] || rawNote;
-  } else if (rawNote.includes(':')) {
-    const colonParts = rawNote.split(':');
-    customerName = colonParts[0]?.trim() || 'Mijoz';
-    cleanNote = colonParts.slice(1).join(':').trim();
-  }
-
-  const paymentMatch = rawNote.match(/\[(Click|Payme|Uzum|Bank)\]/i);
-  const paymentMethod = paymentMatch ? paymentMatch[1] : 'Click';
-
-  const rawTotal = Number(o.total) || 0;
-  const totalUSD = rawTotal > 50000 ? Math.round(rawTotal / 13000) : rawTotal;
-  const totalUZS = rawTotal > 50000 ? rawTotal : Math.round(rawTotal * 13000);
-  const depositUSD = totalUSD > 0 ? Math.max(1, Math.round(totalUSD * 0.03)) : 0;
-  const depositUZS = Math.round(totalUZS * 0.03);
-  const remainingUSD = Math.max(0, totalUSD - depositUSD);
-  const remainingUZS = Math.max(0, totalUZS - depositUZS);
-
-  let mappedStatus: 'pending' | 'verified' | 'completed' | 'cancelled' = 'pending';
-  if (o.status === 'accepted' || o.status === 'verified') mappedStatus = 'verified';
-  else if (o.status === 'completed') mappedStatus = 'completed';
-  else if (o.status === 'cancelled') mappedStatus = 'cancelled';
-
-  return {
-    id: o.id,
-    orderNumber,
-    voucherCode: `CV-${shortHex}`,
-    customerName,
-    customerPhone: o.phone || '+998 90 000 00 00',
-    totalPriceUSD: totalUSD,
-    totalPriceUZS: totalUZS,
-    depositUSD,
-    depositUZS,
-    remainingUSD,
-    remainingUZS,
-    paymentMethod,
-    status: mappedStatus,
-    appointmentDate: o.created_at
-      ? new Date(o.created_at).toLocaleDateString('uz-UZ', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        })
-      : 'Yaqin kunlarda',
-    itemsCount: items.length || 1,
-    primaryItemName: primaryItem?.product_name || cleanNote || '4K Custom Tuning Fitment',
-    primaryItemImage: primaryItem?.product_image_url || '/images/garage/bbs_wheel.jpg',
-    studioName: seller?.business_name || 'Apex Customs Atelier',
-    studioAddress: seller?.address || 'Tashkent, Sergeli',
-    studioPhone: seller?.phone || '+998 90 123 45 67',
-    note: rawNote,
-    createdAt: o.created_at,
-    items,
-  };
+/**
+ * Workshop leads. A workshop only sees a booking once the customer's deposit was approved
+ * (UNLOCKED) or the voucher was already redeemed: customer contact is never shown earlier.
+ */
+async function toSellerOrders(rows: BookingRow[], shopName: string, shopAddress: string, shopPhone: string) {
+  const db = createAdminClient();
+  const items = await fetchBookingItems(db, rows.map((r) => r.id));
+  const uzs = (await getServerRates())['UZS'] ?? 13000;
+  return rows.map((r) => {
+    const its = items.filter((i) => i.booking_id === r.id);
+    const total = centsToUsd(r.total_cents);
+    const deposit = centsToUsd(r.deposit_cents);
+    return {
+      id: r.id,
+      orderNumber: r.booking_number,
+      voucherCode: r.redemption_code,
+      customerName: r.customer_name,
+      customerPhone: r.customer_phone,
+      totalPriceUSD: total,
+      totalPriceUZS: Math.round(total * uzs),
+      depositUSD: deposit,
+      depositUZS: Math.round(deposit * uzs),
+      remainingUSD: Math.max(0, total - deposit),
+      remainingUZS: Math.round(Math.max(0, total - deposit) * uzs),
+      paymentMethod: 'Bank',
+      status: STATUS_MAP[r.status] ?? ('cancelled' as SellerStatus),
+      appointmentDate: r.unlocked_at ?? r.created_at,
+      itemsCount: its.length,
+      primaryItemName: its[0]?.name ?? '',
+      primaryItemImage: its[0]?.image_url ?? '',
+      partName: its.map((i) => i.name).join(', '),
+      studioName: shopName,
+      studioAddress: shopAddress,
+      studioPhone: shopPhone,
+      note: r.customer_note ?? '',
+      createdAt: r.created_at,
+      items: its.map((i, idx) => ({ id: `${r.id}-${idx}`, product_name: i.name, price: centsToUsd(i.unit_cents), quantity: i.quantity, product_image_url: i.image_url })),
+    };
+  });
 }
 
 export async function GET(request: NextRequest) {
   try {
     const guard = await requireSeller();
     if (!guard.ok) return guard.response;
-    const { searchParams } = new URL(request.url);
-    const orderId = searchParams.get('orderId');
+    const { session, shopId } = guard.value;
+    const orderId = new URL(request.url).searchParams.get('orderId');
+    if (orderId && !z.string().uuid().safeParse(orderId).success) return fail(404, 'Topilmadi');
 
-    const supabase = createAdminClient();
-
-    let queryBuilder = supabase
-      .from('orders')
-      .select(`
-        id,
-        user_id,
-        seller_id,
-        total,
-        status,
-        phone,
-        note,
-        created_at,
-        order_items (
-          id,
-          product_name,
-          price,
-          quantity,
-          product_image_url
-        ),
-        sellers (
-          id,
-          business_name,
-          address,
-          phone
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    // Always scoped to the signed-in studio.
-    queryBuilder = queryBuilder.eq('seller_id', guard.value.shopId);
-    if (orderId) {
-      queryBuilder = queryBuilder.eq('id', orderId);
-    }
-
-    const { data: orders, error } = await queryBuilder.limit(50);
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    const mapped = (orders || []).map((o) => mapOrderRow(o as RawOrderRow));
-
+    const rows = await fetchBookingRows(createAdminClient(), { shopId, id: orderId ?? undefined, statuses: ['UNLOCKED', 'REDEEMED'], limit: 100 });
+    const shop = session.shop!;
+    const orders = await toSellerOrders(rows, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
     return NextResponse.json({
       success: true,
-      orders: mapped,
-      order: orderId ? mapped[0] || null : undefined,
-      count: mapped.length,
-      totalDepositUSD: mapped.reduce((s, o) => s + o.depositUSD, 0),
+      orders,
+      order: orderId ? orders[0] ?? null : undefined,
+      count: orders.length,
+      totalDepositUSD: orders.reduce((s, o) => s + o.depositUSD, 0),
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  } catch (err) {
+    console.error('seller orders GET error:', err);
+    return fail(500, 'Serverda xatolik yuz berdi');
   }
 }
 
-export async function PATCH(request: NextRequest) {
-  try {
-    const guard = await requireSeller();
-    if (!guard.ok) return guard.response;
-    const body = await request.json();
-    const { orderId, status } = body as {
-      orderId?: string;
-      status?: 'pending' | 'verified' | 'completed' | 'cancelled';
-    };
+const redeemSchema = z.object({ code: z.string().trim().min(3).max(20), action: z.enum(['lookup', 'redeem']).default('lookup') });
 
-    if (!orderId || !status) {
-      return NextResponse.json(
-        { success: false, error: 'orderId and status are required' },
-        { status: 400 }
-      );
-    }
-
-    // Map frontend status to Supabase orders.status check constraint ('pending' | 'accepted' | 'completed' | 'cancelled')
-    const dbStatus = status === 'verified' ? 'accepted' : status;
-
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from('orders')
-      .update({ status: dbStatus })
-      .eq('id', orderId)
-      .eq('seller_id', guard.value.shopId)
-      .select(`
-        id,
-        user_id,
-        seller_id,
-        total,
-        status,
-        phone,
-        note,
-        created_at,
-        order_items (
-          id,
-          product_name,
-          price,
-          quantity,
-          product_image_url
-        ),
-        sellers (
-          id,
-          business_name,
-          address,
-          phone
-        )
-      `)
-      .single();
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      order: mapOrderRow(data as RawOrderRow),
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
-  }
-}
-
+/** Look up or redeem a customer's voucher code (booking number or 123-456 code). */
 export async function POST(request: NextRequest) {
   try {
     const guard = await requireSeller();
     if (!guard.ok) return guard.response;
-    const body = await request.json();
-    const { code, action } = body as {
-      code?: string;
-      action?: 'lookup' | 'redeem';
-    };
+    const { session, shopId } = guard.value;
+    const parsed = redeemSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) return fail(400, 'Vaucher kodini kiriting');
+    const code = parsed.data.code.replace(/^#/, '');
 
-    if (!code || !code.trim()) {
-      return NextResponse.json(
-        { success: false, error: 'Vaucher kodi kiritilishi shart' },
-        { status: 400 }
-      );
-    }
-
-    const normalized = code.trim().toUpperCase().replace(/^#/, '');
-    const strippedHex = normalized.replace(/^(CV|ORD)-/, '');
-
-    const supabase = createAdminClient();
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select(`
-        id,
-        user_id,
-        seller_id,
-        total,
-        status,
-        phone,
-        note,
-        created_at,
-        order_items (
-          id,
-          product_name,
-          price,
-          quantity,
-          product_image_url
-        ),
-        sellers (
-          id,
-          business_name,
-          address,
-          phone
-        )
-      `)
-      .eq('seller_id', guard.value.shopId)
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    const mappedOrders = (orders || []).map((o) => mapOrderRow(o as RawOrderRow));
-    const matched =
-      mappedOrders.find(
-        (o) =>
-          o.orderNumber.toUpperCase() === normalized ||
-          o.voucherCode.toUpperCase() === normalized ||
-          o.id.toUpperCase().startsWith(strippedHex) ||
-          (o.note && o.note.toUpperCase().includes(normalized))
-      );
-
-    if (!matched) {
-      return NextResponse.json(
-        { success: false, error: 'Bunday vaucher kodi topilmadi' },
-        { status: 404 }
-      );
-    }
-
-    if (action === 'redeem') {
-      const { data: updated, error: updateErr } = await supabase
-        .from('orders')
-        .update({ status: 'completed' })
-        .eq('id', matched.id)
-        .eq('seller_id', guard.value.shopId)
-        .select(`
-          id,
-          user_id,
-          seller_id,
-          total,
-          status,
-          phone,
-          note,
-          created_at,
-          order_items (
-            id,
-            product_name,
-            price,
-            quantity,
-            product_image_url
-          ),
-          sellers (
-            id,
-            business_name,
-            address,
-            phone
-          )
-        `)
-        .single();
-
-      if (updateErr) {
-        return NextResponse.json({ success: false, error: updateErr.message }, { status: 500 });
+    const db = createAdminClient();
+    if (parsed.data.action === 'redeem') {
+      const { data } = await db.rpc('redeem_booking', { p_shop_id: shopId, p_code: code });
+      const r = data as { success?: boolean; error?: string; bookingId?: string } | null;
+      if (!r?.success) {
+        const msg = r?.error === 'ALREADY_REDEEMED' ? 'Bu vaucher avval qabul qilingan' : r?.error === 'NOT_PAID' ? 'Zakalat hali tasdiqlanmagan' : 'Bunday vaucher kodi topilmadi';
+        return fail(r?.error === 'NOT_FOUND' || !r ? 404 : 409, msg);
       }
-
-      return NextResponse.json({
-        success: true,
-        redeemed: true,
-        order: mapOrderRow(updated as RawOrderRow),
-      });
+      const rows = await fetchBookingRows(db, { shopId, id: r.bookingId, limit: 1 });
+      const shop = session.shop!;
+      const [order] = await toSellerOrders(rows, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
+      return NextResponse.json({ success: true, redeemed: true, order });
     }
 
-    return NextResponse.json({
-      success: true,
-      redeemed: false,
-      order: matched,
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    // lookup: exact match on this workshop's own bookings that are paid
+    const { data: hit } = await db
+      .from('bookings')
+      .select('id')
+      .eq('shop_id', shopId)
+      .in('status', ['UNLOCKED', 'REDEEMED'])
+      .or(`booking_number.ilike.${code.replace(/[%,()]/g, '')},redemption_code.eq.${code.replace(/[%,()]/g, '')}`)
+      .limit(1)
+      .maybeSingle();
+    if (!hit) return fail(404, 'Bunday vaucher kodi topilmadi');
+    const rows = await fetchBookingRows(db, { shopId, id: hit.id as string, limit: 1 });
+    const shop = session.shop!;
+    const [order] = await toSellerOrders(rows, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
+    return NextResponse.json({ success: true, redeemed: false, order });
+  } catch (err) {
+    console.error('seller orders POST error:', err);
+    return fail(500, 'Serverda xatolik yuz berdi');
+  }
+}
+
+/** Order detail page "mark completed" = redeem the voucher. */
+export async function PATCH(request: NextRequest) {
+  try {
+    const guard = await requireSeller();
+    if (!guard.ok) return guard.response;
+    const { session, shopId } = guard.value;
+    const parsed = z.object({ orderId: z.string().uuid(), status: z.string() }).safeParse(await request.json().catch(() => null));
+    if (!parsed.success) return fail(400, 'Ma’lumotlar noto‘g‘ri');
+    if (parsed.data.status !== 'completed') return fail(400, 'Faqat "yakunlandi" holati qo‘llab-quvvatlanadi');
+
+    const db = createAdminClient();
+    const rows = await fetchBookingRows(db, { shopId, id: parsed.data.orderId, limit: 1 });
+    const row = rows[0];
+    if (!row) return fail(404, 'Bron topilmadi');
+    const { data } = await db.rpc('redeem_booking', { p_shop_id: shopId, p_code: row.redemption_code });
+    const r = data as { success?: boolean; error?: string } | null;
+    if (!r?.success && r?.error !== 'ALREADY_REDEEMED') return fail(409, 'Holatni o‘zgartirib bo‘lmadi');
+    const fresh = await fetchBookingRows(db, { shopId, id: row.id, limit: 1 });
+    const shop = session.shop!;
+    const [order] = await toSellerOrders(fresh, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
+    return NextResponse.json({ success: true, order });
+  } catch (err) {
+    console.error('seller orders PATCH error:', err);
+    return fail(500, 'Serverda xatolik yuz berdi');
   }
 }

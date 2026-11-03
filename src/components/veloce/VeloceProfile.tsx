@@ -3,20 +3,11 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-import {
-  Phone,
-  MapPin,
-  LogOut,
-  Globe,
-  Car,
-  Check,
-  ArrowRight,
-  Navigation,
-} from 'lucide-react';
+import { LogOut, Globe, Check, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { SupportedCurrency } from '@/domain/currency';
-import type { UnlockedWorkshopLead } from '@/app/[locale]/cart/checkout/page';
+import { BookingCard, type BookingView, type PaymentInfo } from '@/features/shop/BookingCard';
 
 const LANGUAGES = [
   { code: 'uz', name: "O'zbekcha" },
@@ -45,9 +36,11 @@ export function VeloceProfile() {
   const pathname = usePathname();
   const locale = (params?.['locale'] as string) || 'uz';
   const { user, signOut, updateProfile } = useAuth();
-  const { currency, setCurrency, formatPrice } = useCurrency();
+  const { currency, setCurrency } = useCurrency();
 
-  const [unlockedLeads, setUnlockedLeads] = React.useState<UnlockedWorkshopLead[]>([]);
+  const [bookings, setBookings] = React.useState<BookingView[]>([]);
+  const [payment, setPayment] = React.useState<PaymentInfo>({ configured: false });
+  const [bookingsLoading, setBookingsLoading] = React.useState(true);
   const [editingName, setEditingName] = React.useState(false);
   const [nameInput, setNameInput] = React.useState(user?.full_name || '');
   const [phoneInput, setPhoneInput] = React.useState(user?.phone || '+998 90 123 45 67');
@@ -57,66 +50,44 @@ export function VeloceProfile() {
     if (user?.phone) setPhoneInput(user.phone);
   }, [user]);
 
-  React.useEffect(() => {
+  const loadBookings = React.useCallback(async () => {
     try {
-      const saved = localStorage.getItem('carvision_unlocked_leads');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setUnlockedLeads(parsed);
-          return;
-        }
+      const res = await fetch('/api/v1/bookings', { cache: 'no-store' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBookings(data.bookings ?? []);
+        setPayment(data.payment ?? { configured: false });
       }
     } catch {
-      // Ignore
+      // offline: keep what we have
+    } finally {
+      setBookingsLoading(false);
     }
+  }, []);
 
-    // Fetch live orders from API as fallback
-    fetch('/api/v1/orders')
-      .then((r) => r.json())
-      .then((res) => {
-        if (res?.success && Array.isArray(res.orders)) {
-          const mapped: UnlockedWorkshopLead[] = res.orders.slice(0, 6).map(
-            (o: {
-              id: string;
-              voucherCode?: string;
-              partName: string;
-              partImage?: string;
-              totalPriceUSD: number;
-              depositUSD: number;
-              studioName?: string;
-              createdAt?: string;
-            }) => ({
-              id: o.voucherCode || o.id,
-              partName: o.partName,
-              partImage: o.partImage || '/assets/wheel-CiWWvvai.jpg',
-              targetCar: 'Chevrolet Gentra',
-              partPriceUSD: o.totalPriceUSD,
-              depositPaidUSD: o.depositUSD,
-              workshopName: o.studioName || 'Sardor Tuning Garage',
-              workshopAddress: 'Toshkent sh., Sergeli tumani, Avtosalon ko‘chasi 14-ustaxona',
-              workshopPhone: '+998 90 945 12 34',
-              customerPhone: user?.phone || '+998 90 123 45 67',
-              unlockedAt: o.createdAt || 'Bugun',
-            })
-          );
-          setUnlockedLeads(mapped);
-        }
-      })
-      .catch(() => {});
-  }, [user?.phone]);
+  React.useEffect(() => {
+    if (user) void loadBookings();
+    else setBookingsLoading(false);
+  }, [user, loadBookings]);
 
   const buildLocalizedPath = (targetLocale: string) => {
     return pathname.replace(/^\/(uz|ru|en|ar|tr|kk|ky|tg)(?=\/|$)/, `/${targetLocale}`);
   };
 
-  const handleSaveIdentity = (e: React.FormEvent) => {
+  const handleSaveIdentity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (user) {
-      updateProfile({
-        full_name: nameInput.trim() || user.full_name,
-        phone: phoneInput.trim() || user.phone,
-      });
+      const fullName = nameInput.trim() || user.full_name;
+      try {
+        const res = await fetch('/api/v1/auth/me', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName }),
+        });
+        if (res.ok) updateProfile({ full_name: fullName });
+      } catch {
+        // keep the old name
+      }
     }
     setEditingName(false);
   };
@@ -204,90 +175,31 @@ export function VeloceProfile() {
         </div>
       </div>
 
-      {/* 2. Unlocked Workshop Addresses (3% Paid) */}
-      <section className="pt-4 pb-12">
-        <h2 className="font-display text-xl font-light text-white">
-          Ochilgan Ustaxona Manzillari (3% Zakalat)
-        </h2>
-        <p className="mt-1 text-xs text-white/50">
-          Siz 3% zakalat to‘lab manzilini ochgan tuning servislar va jihozlar ro‘yxati.
-        </p>
+      {/* 2. My bookings (3% deposit flow) */}
+      {user && (
+        <section className="pb-12 pt-4">
+          <h2 className="font-display text-xl font-light text-white">Mening bronlarim</h2>
+          <p className="mt-1 text-xs text-white/50">3% zakalat to‘langach ustaxona manzili va telefoni shu yerda ochiladi.</p>
 
-        {unlockedLeads.length === 0 ? (
-          <div className="mt-6 py-10">
-            <p className="text-sm text-white/50">
-              Hozircha ochilgan ustaxona manzillari yo‘q.
-            </p>
-            <Link
-              href={`/${locale}/shop`}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/[0.06] px-5 py-3 text-xs font-semibold uppercase text-[#D4AE62] hover:bg-white/[0.1]"
-            >
-              <span>Detallarni Ko‘rish</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        ) : (
-          <div className="mt-6 divide-y divide-white/[0.06]">
-            {unlockedLeads.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex items-start gap-4">
-                  <img
-                    src={item.partImage}
-                    alt={item.partName}
-                    onError={(e) => {
-                      e.currentTarget.src = '/assets/wheel-CiWWvvai.jpg';
-                    }}
-                    className="h-16 w-20 shrink-0 rounded-2xl object-cover bg-[#12141C]"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-semibold text-white">
-                        {item.workshopName}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-[#D4AE62]">
-                        <Car className="h-3.5 w-3.5" />
-                        <span>{item.targetCar}</span>
-                      </span>
-                    </div>
-
-                    <p className="mt-1 flex items-center gap-1.5 text-sm text-white/85">
-                      <MapPin className="h-4 w-4 shrink-0 text-[#D4AE62]" />
-                      <span>{item.workshopAddress}</span>
-                    </p>
-
-                    <p className="mt-1 text-xs text-white/55">
-                      Jihoz: <strong className="text-white">{item.partName}</strong> · Narxi: {formatPrice(item.partPriceUSD)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5">
-                  <a
-                    href={`tel:${item.workshopPhone}`}
-                    className="flex items-center gap-2 rounded-2xl bg-gold-gradient px-5 py-3 text-xs font-bold uppercase text-black"
-                  >
-                    <Phone className="h-4 w-4" />
-                    <span>{item.workshopPhone}</span>
-                  </a>
-
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.workshopAddress)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.06] text-white/80 hover:bg-white/[0.12]"
-                    title="Xaritada ko‘rish"
-                  >
-                    <Navigation className="h-4 w-4 text-[#D4AE62]" />
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+          {bookingsLoading ? (
+            <p className="mt-6 text-sm text-white/50">Yuklanmoqda…</p>
+          ) : bookings.length === 0 ? (
+            <div className="mt-6 py-6">
+              <p className="text-sm text-white/50">Hozircha bronlar yo‘q.</p>
+              <Link href={`/${locale}/shop`} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/[0.06] px-5 py-3 text-xs font-semibold uppercase text-[#D4AE62] hover:bg-white/[0.1]">
+                <span>Detallarni ko‘rish</span>
+                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4">
+              {bookings.map((b) => (
+                <BookingCard key={b.id} booking={b} payment={payment} onChanged={() => void loadBookings()} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* 3. Simple Language & Currency Switcher */}
       <section className="space-y-6 pt-6">

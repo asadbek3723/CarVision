@@ -16,6 +16,7 @@ interface EscrowOrder {
   transactionRef: string;
   status: 'pending' | 'verified' | 'rejected';
   submittedAt: string;
+  receiptUrl?: string | null;
 }
 
 export function AdminEscrowView() {
@@ -61,34 +62,29 @@ export function AdminEscrowView() {
   });
 
   const handleUpdateStatus = async (id: string, newStatus: 'verified' | 'rejected') => {
-    // Optimistic UI update
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
-    );
-
     const target = orders.find((o) => o.id === id);
-    const text =
-      newStatus === 'verified'
-        ? `Buyurtma #${target?.orderNumber} zakalat cheki tasdiqlandi. Atelye va mijozga SMS yuborildi.`
-        : `Buyurtma #${target?.orderNumber} zakalat cheki bekor qilindi.`;
+    const reason = newStatus === 'rejected' ? window.prompt('Rad etish sababi (mijozga ko‘rsatiladi):', 'Chek o‘qilmadi yoki summa mos emas') : undefined;
+    if (newStatus === 'rejected' && reason === null) return;
 
-    setToastMessage(text);
-    setTimeout(() => setToastMessage(null), 3000);
-    setSelectedOrder(null);
-
-    // Persist to Supabase
     try {
-      await fetch('/api/v1/admin/escrow', {
+      const res = await fetch('/api/v1/admin/escrow', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: id,
-          status: newStatus,
-        }),
+        body: JSON.stringify({ orderId: id, status: newStatus, reason: reason ?? undefined }),
       });
-    } catch {
-      // ignore
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.error || 'Saqlab bo‘lmadi');
+      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
+      setToastMessage(
+        newStatus === 'verified'
+          ? `Bron #${target?.orderNumber} tasdiqlandi. Mijozga ustaxona manzili ochildi.`
+          : `Bron #${target?.orderNumber} rad etildi.`
+      );
+    } catch (err) {
+      setToastMessage(err instanceof Error ? err.message : 'Saqlab bo‘lmadi');
     }
+    setTimeout(() => setToastMessage(null), 3500);
+    setSelectedOrder(null);
   };
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length;
@@ -328,6 +324,12 @@ export function AdminEscrowView() {
                 <p className="text-xs text-[#94A3B8]">{selectedOrder.studioName}</p>
               </div>
             </div>
+
+            {selectedOrder.receiptUrl && (
+              <a href={selectedOrder.receiptUrl} target="_blank" rel="noreferrer" className="mt-4 block overflow-hidden rounded-2xl border border-[#232733] bg-black">
+                <img src={selectedOrder.receiptUrl} alt="To‘lov cheki" className="max-h-72 w-full object-contain" />
+              </a>
+            )}
 
             {/* Receipt Details Box */}
             <div className="mt-5 space-y-4">

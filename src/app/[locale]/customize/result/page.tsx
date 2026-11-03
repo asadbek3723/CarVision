@@ -154,28 +154,7 @@ export default function CustomizeResultPage() {
   const handlePrimaryBuy = async () => {
     vibrate(35);
     if (isSeller) {
-      // B2B Tablet mode: Confirm order directly in workshop
-      try {
-        await fetch('/api/v1/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customerName: 'Planshet Mijozi (Showroom)',
-            customerPhone: '+998 90 000 00 00',
-            totalUSD: totalPriceUSD,
-            depositUSD: deposit3PercentUSD,
-            paymentProvider: 'Showroom Planshet',
-            items: selectedParts.map((p) => ({
-              partId: p.id,
-              name: p.name,
-              qty: 1,
-              priceUSD: getUSDPrice(p.price),
-            })),
-          }),
-        });
-      } catch {
-        // Ignore network error
-      }
+      // Workshop tablet mode: the customer is in the bay, the sale is settled at the counter.
       setWorkshopConfirmed(true);
       return;
     }

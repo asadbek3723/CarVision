@@ -11,7 +11,14 @@ export interface VeloceProduct {
   image: string;
   angleImage?: string | undefined;
   targetCar?: string | undefined;
-  compatibility?: Array<{ id: string; name: string }> | undefined;
+  compatibility?: Array<{ id: string; name: string; yearFrom?: number | null | undefined; yearTo?: number | null | undefined }> | undefined;
+  isUniversal?: boolean | undefined;
+  images?: string[] | undefined;
+  attributes?: Record<string, unknown> | undefined;
+  installAvailable?: boolean | undefined;
+  installPrice?: number | undefined;
+  categoryLabel?: string | undefined;
+  sellerName?: string | undefined;
 }
 
 export const VELOCE_CATEGORIES = [

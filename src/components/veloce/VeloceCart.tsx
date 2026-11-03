@@ -63,7 +63,7 @@ export function VeloceCart() {
   }, [cart, productsMap]);
 
   const totalUSD = items.reduce((sum, { product, quantity }) => {
-    const unitUSD = product.price > 50000 ? Math.round(product.price / 13000) : product.price;
+    const unitUSD = product.price;
     return sum + unitUSD * quantity;
   }, 0);
 
@@ -108,7 +108,7 @@ export function VeloceCart() {
           {/* Clean Boxless List */}
           <div className="divide-y divide-white/[0.06]">
             {items.map(({ product: p, quantity: q }) => {
-              const unitUSD = p.price > 50000 ? Math.round(p.price / 13000) : p.price;
+              const unitUSD = p.price;
               const carName = p.targetCar || p.compatibility?.[0]?.name || 'Chevrolet Gentra';
               return (
                 <div

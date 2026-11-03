@@ -30,6 +30,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
   const [product, setProduct] = React.useState<VeloceProduct | null>(null);
   const [related, setRelated] = React.useState<VeloceProduct[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [activeImg, setActiveImg] = React.useState(0);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -88,13 +89,19 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
     );
   }
 
-  const normalizedUSD = product.price > 50000 ? Math.round(product.price / 13000) : product.price;
+  const normalizedUSD = product.price;
   const deposit3PercentUSD = Math.max(1, Math.round(normalizedUSD * 0.03));
-
-  const singleCarName =
-    product.targetCar ||
-    product.compatibility?.[0]?.name ||
-    'Chevrolet Gentra';
+  const gallery = product.images && product.images.length > 0 ? product.images : product.image ? [product.image] : [];
+  const attrs = product.attributes ?? {};
+  const specChips: string[] = [
+    attrs['diameter'] ? `R${attrs['diameter']}` : '',
+    attrs['width'] ? `${attrs['width']}J` : '',
+    typeof attrs['pcd'] === 'string' ? (attrs['pcd'] as string) : '',
+    attrs['offset'] !== undefined ? `ET${attrs['offset']}` : '',
+  ].filter(Boolean);
+  const outOfStock = (product.stock ?? 0) <= 0;
+  const yearText = (from?: number | null, to?: number | null) =>
+    from && to ? `${from}–${to}` : from ? `${from}+` : to ? `${to} gacha` : '';
 
   const handleUnlockAddress = () => {
     add(product.id);
@@ -117,32 +124,34 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
           {product.swatch ? (
             <div
               className="h-full w-full"
-              style={{
-                background: `radial-gradient(circle at 30% 30%, ${product.swatch}, oklch(0.08 0 0))`,
-              }}
+              style={{ background: `radial-gradient(circle at 30% 30%, ${product.swatch}, oklch(0.08 0 0))` }}
             />
+          ) : gallery.length > 0 ? (
+            <img src={gallery[Math.min(activeImg, gallery.length - 1)]} alt={product.name} className="h-full w-full object-cover" />
           ) : (
-            <img
-              src={product.image}
-              alt={product.name}
-              onError={(e) => {
-                const hint = `${product.category} ${product.name}`.toLowerCase();
-                if (hint.includes('bamper') || hint.includes('lip') || hint.includes('body')) {
-                  e.currentTarget.src = '/assets/bodykit-CjvcnY7y.jpg';
-                } else if (hint.includes('salon') || hint.includes('interior')) {
-                  e.currentTarget.src = '/assets/interior-DWHEsFIZ.jpg';
-                } else {
-                  e.currentTarget.src = '/assets/wheel-CiWWvvai.jpg';
-                }
-              }}
-              className="h-full w-full object-cover"
-            />
+            <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-widest text-white/30">Rasm yo‘q</div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           <span className="absolute bottom-4 start-4 rounded-full bg-black/75 px-3.5 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-[#D4AE62] backdrop-blur-md">
             {product.category}
           </span>
         </div>
+
+        {gallery.length > 1 && !product.swatch && (
+          <div className="-mt-6 flex gap-2 lg:col-span-6 lg:-mt-4">
+            {gallery.map((src, idx) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setActiveImg(idx)}
+                aria-label={`Rasm ${idx + 1}`}
+                className={`h-16 w-16 overflow-hidden rounded-xl border-2 ${idx === activeImg ? 'border-[#D4AE62]' : 'border-transparent opacity-70 hover:opacity-100'}`}
+              >
+                <img src={src} alt="" className="h-full w-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Clean Boxless Info */}
         <div className="space-y-6 lg:col-span-6">
@@ -155,11 +164,31 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
             </h1>
           </div>
 
-          {/* Single Car Model Compatibility */}
-          <div className="inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-xs text-white/90">
-            <Car className="h-4 w-4 text-[#D4AE62]" />
-            <span className="text-white/50">Mos avtomobil:</span>
-            <span className="font-semibold text-[#D4AE62]">{singleCarName}</span>
+          {/* Compatibility, exactly as entered by the workshop */}
+          <div className="space-y-2">
+            <p className="flex items-center gap-2 text-xs text-white/50">
+              <Car className="h-4 w-4 text-[#D4AE62]" />
+              Mos avtomobillar
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {product.isUniversal ? (
+                <span className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-[#D4AE62]">Barcha mashinalar</span>
+              ) : (
+                (product.compatibility ?? []).map((c) => (
+                  <span key={`${c.id}-${c.name}`} className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-[#D4AE62]">
+                    {c.name}
+                    {yearText(c.yearFrom, c.yearTo) ? ` · ${yearText(c.yearFrom, c.yearTo)}` : ''}
+                  </span>
+                ))
+              )}
+            </div>
+            {specChips.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {specChips.map((c) => (
+                  <span key={c} className="rounded-full border border-white/10 px-3 py-1 text-[11px] text-white/70">{c}</span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Price & 3% Lead Unlock Info */}
@@ -173,8 +202,9 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
             </p>
           </div>
 
-          <p className="text-sm leading-relaxed text-white/65">
-            {product.spec}. Ushbu jihoz aynan <strong className="text-white">{singleCarName}</strong> avtomobili uchun mo‘ljallangan va hamkor tuning servis omborida mavjud.
+          {product.spec && <p className="whitespace-pre-line text-sm leading-relaxed text-white/65">{product.spec}</p>}
+          <p className={`text-xs font-semibold ${outOfStock ? 'text-red-300' : 'text-emerald-400'}`}>
+            {outOfStock ? 'Hozircha omborda yo‘q' : `Omborda mavjud: ${product.stock} ta`}
           </p>
 
           {/* Locked Workshop Explanation (Boxless soft surface) */}
@@ -199,7 +229,8 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
             <button
               type="button"
               onClick={handleUnlockAddress}
-              className="shimmer flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-gold-gradient px-6 py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110 cursor-pointer"
+              disabled={outOfStock}
+              className="shimmer flex flex-1 items-center justify-center gap-2.5 rounded-2xl disabled:cursor-not-allowed disabled:opacity-40 bg-gold-gradient px-6 py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110 cursor-pointer"
             >
               <MapPin className="h-4 w-4" />
               <span>3% To‘lab Manzilni Olish ({formatPrice(deposit3PercentUSD)})</span>

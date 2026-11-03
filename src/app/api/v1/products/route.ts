@@ -17,6 +17,9 @@ export async function GET(request: NextRequest) {
     const query = params.get('query')?.trim() || undefined;
     const categoryParam = params.get('category');
     const limit = Math.min(parseInt(params.get('limit') || '60', 10) || 60, 200);
+    const modelId = params.get('model');
+    const year = parseInt(params.get('year') || '', 10) || null;
+    const brandFilter = params.get('brand')?.trim().toLowerCase() || null;
 
     // Accept both catalog slugs and the shop's display categories (Wheels, Body Kit, ...)
     let category: string | undefined;
@@ -35,6 +38,20 @@ export async function GET(request: NextRequest) {
     if (categoryParam && categoryParam !== 'All' && !category) {
       items = items.filter((i) => veloceCategory(i.category).toLowerCase() === categoryParam.toLowerCase()).slice(0, limit);
     }
+
+    // "My car" filter: universal items plus items whose fitment names this model (and year, if given)
+    if (modelId && /^[0-9a-f-]{36}$/i.test(modelId)) {
+      items = items.filter(
+        (i) =>
+          i.isUniversal ||
+          i.fitment.some(
+            (f) =>
+              f.modelId === modelId &&
+              (!year || ((f.yearFrom === null || year >= f.yearFrom) && (f.yearTo === null || year <= f.yearTo)))
+          )
+      );
+    }
+    if (brandFilter) items = items.filter((i) => i.brand.toLowerCase() === brandFilter);
 
     const products = items.map((i) => ({
       id: i.id,
@@ -62,7 +79,12 @@ export async function GET(request: NextRequest) {
       createdAt: i.createdAt,
     }));
 
-    return NextResponse.json({ success: true, products });
+    // Facets for the filter UI (independent of the current filters)
+    const { data: facetRows } = await db.from('catalog_items').select('brand, category').eq('status', 'PUBLISHED').limit(1000);
+    const brands = [...new Set((facetRows ?? []).map((r) => (r.brand as string | null)?.trim()).filter((b): b is string => Boolean(b)))].sort((a, b) => a.localeCompare(b));
+    const categories = [...new Set((facetRows ?? []).map((r) => veloceCategory(r.category as string)))];
+
+    return NextResponse.json({ success: true, products, facets: { brands, categories } });
   } catch (err) {
     console.error('products list error:', err);
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });

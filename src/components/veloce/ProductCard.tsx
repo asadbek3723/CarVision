@@ -20,20 +20,14 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
   const { add } = useVeloceStore();
   const { formatPrice } = useCurrency();
 
-  const carModelName = React.useMemo(() => {
-    if (p.targetCar) return p.targetCar;
-    if (p.compatibility && p.compatibility.length > 0 && p.compatibility[0]?.name) {
-      return p.compatibility[0].name;
-    }
-    const text = `${p.name} ${p.spec || ''}`.toLowerCase();
-    if (text.includes('malibu')) return 'Chevrolet Malibu 2';
-    if (text.includes('cobalt')) return 'Chevrolet Cobalt';
-    if (text.includes('tracker')) return 'Chevrolet Tracker 2';
-    if (text.includes('monza')) return 'Chevrolet Monza';
-    if (text.includes('song')) return 'BYD Song Plus';
-    if (text.includes('chazor') || text.includes('byd')) return 'BYD Chazor';
-    if (text.includes('k5') || text.includes('kia')) return 'Kia K5';
-    return 'Chevrolet Gentra';
+  const [imgFailed, setImgFailed] = React.useState(false);
+
+  // Only what the seller entered: never a guessed car.
+  const carLabel = React.useMemo(() => {
+    if (p.isUniversal) return 'Barcha mashinalar';
+    const names = (p.compatibility ?? []).map((c) => c.name).filter(Boolean);
+    if (names.length === 0) return p.targetCar || '';
+    return names.length > 1 ? `${names[0]} +${names.length - 1}` : (names[0] as string);
   }, [p]);
 
   return (
@@ -51,26 +45,17 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
               }}
             />
           ) : (
-            <img
-              src={p.image}
-              alt={p.name}
-              loading="lazy"
-              onError={(e) => {
-                const hint = `${p.category} ${p.name}`.toLowerCase();
-                if (hint.includes('bamper') || hint.includes('lip') || hint.includes('body') || hint.includes('spoyler') || hint.includes('diffuzor')) {
-                  e.currentTarget.src = '/assets/bodykit-CjvcnY7y.jpg';
-                } else if (hint.includes('salon') || hint.includes('interior') || hint.includes('rul')) {
-                  e.currentTarget.src = '/assets/interior-DWHEsFIZ.jpg';
-                } else if (hint.includes('podveska') || hint.includes('suspension')) {
-                  e.currentTarget.src = '/assets/suspension-BTwmFe87.jpg';
-                } else if (hint.includes('fara') || hint.includes('chiroq') || hint.includes('led') || hint.includes('performance')) {
-                  e.currentTarget.src = '/assets/exhaust-BEQYegnz.jpg';
-                } else {
-                  e.currentTarget.src = '/assets/wheel-CiWWvvai.jpg';
-                }
-              }}
-              className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-            />
+            imgFailed || !p.image ? (
+              <div className="flex h-full w-full items-center justify-center bg-[#0E1016] text-[10px] uppercase tracking-widest text-white/30">Rasm yo‘q</div>
+            ) : (
+              <img
+                src={p.image}
+                alt={p.name}
+                loading="lazy"
+                onError={() => setImgFailed(true)}
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+              />
+            )
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent" />
           <span className="absolute bottom-3 start-3 rounded-full bg-background/80 px-3 py-1 text-[10px] font-semibold tracking-widest text-primary uppercase backdrop-blur">
@@ -83,10 +68,12 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
             <span className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase truncate">
               {p.brand}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-[#D4AE62]">
-              <Car className="h-3 w-3" />
-              <span className="truncate max-w-[110px]">{carModelName}</span>
-            </span>
+            {carLabel && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-[#D4AE62]">
+                <Car className="h-3 w-3" />
+                <span className="max-w-[110px] truncate">{carLabel}</span>
+              </span>
+            )}
           </div>
           <h3 className="truncate font-semibold text-white">{p.name}</h3>
           <p className="truncate text-xs text-muted-foreground">{p.spec}</p>
@@ -105,7 +92,8 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
           </div>
           <button
             onClick={() => add(p.id)}
-            aria-label={`Add ${p.name}`}
+            disabled={p.stock === 0}
+            aria-label={`Savatga qo‘shish: ${p.name}`}
             className="grid h-10 w-10 place-items-center rounded-full bg-gold-gradient text-primary-foreground transition active:scale-90 hover:shadow-gold cursor-pointer"
           >
             <Plus className="h-4 w-4" />

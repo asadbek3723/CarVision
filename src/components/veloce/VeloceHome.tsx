@@ -3,41 +3,23 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import {
-  ChevronRight,
-  ArrowUpRight,
-  Cog,
-  Paintbrush,
-  Activity,
-} from 'lucide-react';
+import { ChevronRight, ArrowUpRight, Cog, Camera, Wrench } from 'lucide-react';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 
-const STATS = [
-  { v: '1,240+', l: 'Premium parts' },
-  { v: '86', l: 'Elite brands' },
-  { v: '24h', l: 'Express fitting' },
-  { v: '4.9', l: 'Client rating' },
+const FEATURES = [
+  { icon: Camera, title: 'Suratga oling', items: ['Mashinangizni 5 rakursda', 'AI tahlil qiladi'] },
+  { icon: Cog, title: 'Mos detal toping', items: ['Faqat sizning mashinangizga', 'Disk, bamper, fara, rang'] },
+  { icon: Wrench, title: 'Ustaxonada o‘rnating', items: ['3% zakalat bilan bron', 'Manzil to‘lovdan so‘ng ochiladi'] },
 ];
 
-const FEATURES = [
-  {
-    icon: Cog,
-    title: 'Performance',
-    items: ['Engine', 'Tuning', 'Exhaust'],
-  },
-  {
-    icon: Paintbrush,
-    title: 'Style',
-    items: ['Wheels', 'Body kits', 'Colors'],
-  },
-  {
-    icon: Activity,
-    title: 'Track',
-    items: ['Lap times', 'Analytics', 'Improve'],
-  },
-];
+interface StoreStats {
+  parts: number;
+  brands: number;
+  workshops: number;
+  vehicleModels: number;
+}
 
 export function VeloceHome() {
   const params = useParams();
@@ -46,6 +28,7 @@ export function VeloceHome() {
 
   const [trendingProducts, setTrendingProducts] = React.useState<VeloceProduct[]>([]);
   const [isLoadingTrending, setIsLoadingTrending] = React.useState(true);
+  const [stats, setStats] = React.useState<StoreStats | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -64,6 +47,28 @@ export function VeloceHome() {
       isMounted = false;
     };
   }, []);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    fetch('/api/v1/catalog/stats')
+      .then((r) => r.json())
+      .then((d) => {
+        if (isMounted && d.success) setStats(d.stats);
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const statItems = stats
+    ? [
+        { v: stats.parts.toLocaleString(), l: 'Detallar' },
+        { v: stats.brands.toLocaleString(), l: 'Brendlar' },
+        { v: stats.workshops.toLocaleString(), l: 'Ustaxonalar' },
+        { v: stats.vehicleModels.toLocaleString(), l: 'Mashina modellari' },
+      ]
+    : [];
 
   return (
     <div>
@@ -87,7 +92,7 @@ export function VeloceHome() {
           <div className="relative z-10 -mt-6 px-6 text-center lg:order-1 lg:col-span-5 lg:mt-0 lg:px-0 lg:text-start">
             <p className="rise mb-6 hidden text-[10px] tracking-[0.5em] text-primary uppercase lg:block">
               <span className="me-3 inline-block h-px w-10 bg-primary align-middle" />
-              Est. 2026 · Atelier
+              CarVision · AI tuning
             </p>
 
             <h1
@@ -111,8 +116,8 @@ export function VeloceHome() {
               className="rise mx-auto mt-6 hidden max-w-sm text-sm leading-relaxed text-muted-foreground lg:mx-0 lg:block"
               style={{ animationDelay: '300ms' }}
             >
-              Photograph your car, then try forged wheels, carbon aero and bespoke paint
-              from our atelier — before a single bolt is turned.
+              Mashinangizni suratga oling va diskni, bamperni, rangni o‘z mashinangizda
+              sinab ko‘ring — hech qanday vint burashdan oldin.
             </p>
 
             <div
@@ -123,7 +128,7 @@ export function VeloceHome() {
                 onClick={openCamera}
                 className="shimmer group inline-flex items-center gap-6 rounded-xl bg-gold-gradient py-4 ps-7 pe-5 font-display text-[11px] font-semibold tracking-[0.25em] text-black uppercase shadow-gold transition hover:brightness-110 active:scale-95 cursor-pointer"
               >
-                Customize your ride
+                Mashinamni sozlash
                 <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
               </button>
 
@@ -131,7 +136,7 @@ export function VeloceHome() {
                 href={`/${locale}/shop`}
                 className="group hidden items-center gap-2 font-display text-[11px] tracking-[0.3em] uppercase text-foreground/80 transition hover:text-primary lg:inline-flex"
               >
-                Explore shop
+                Do‘konga o‘tish
                 <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </Link>
             </div>
@@ -141,7 +146,7 @@ export function VeloceHome() {
         {/* 4 Stats strip (desktop only) */}
         <div className="relative mx-auto hidden max-w-[1500px] px-14 pb-10 lg:block">
           <div className="grid grid-cols-4 border-y border-primary/15">
-            {STATS.map((s, idx) => (
+            {statItems.map((s, idx) => (
               <div
                 key={s.l}
                 className="rise border-e border-primary/15 py-6 ps-8 last:border-e-0"
@@ -194,16 +199,16 @@ export function VeloceHome() {
         <section className="mt-16 lg:mt-24">
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <p className="text-[10px] tracking-[0.5em] text-primary uppercase">Curated</p>
+              <p className="text-[10px] tracking-[0.5em] text-primary uppercase">Yangi</p>
               <h2 className="mt-2 font-display text-lg font-light tracking-[0.3em] uppercase lg:text-2xl text-white">
-                Trending parts
+                Yangi detallar
               </h2>
             </div>
             <Link
               href={`/${locale}/shop`}
               className="flex items-center font-display text-[10px] tracking-[0.3em] text-primary uppercase hover:brightness-125"
             >
-              View all <ChevronRight className="h-4 w-4 ms-1" />
+              Hammasi <ChevronRight className="h-4 w-4 ms-1" />
             </Link>
           </div>
 
@@ -212,10 +217,12 @@ export function VeloceHome() {
               [1, 2, 3, 4].map((i) => (
                 <div key={i} className="h-64 rounded-2xl bg-[#12141C] animate-pulse" />
               ))
-            ) : (
+            ) : trendingProducts.length > 0 ? (
               trendingProducts.map((p, idx) => (
                 <ProductCard key={p.id} p={p} i={idx} />
               ))
+            ) : (
+              <p className="col-span-full py-10 text-center text-sm text-muted-foreground">Hozircha detallar qo‘shilmagan.</p>
             )}
           </div>
         </section>

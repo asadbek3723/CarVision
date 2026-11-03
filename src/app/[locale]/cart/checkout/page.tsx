@@ -3,435 +3,249 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  MapPin,
-  Phone,
-  Lock,
-  Navigation,
-  Car,
-} from 'lucide-react';
+import { ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { BookingCard, type BookingView, type PaymentInfo } from '@/features/shop/BookingCard';
+import type { VeloceProduct } from '@/domain/veloce-catalog';
 
-interface CheckoutProduct {
-  id: string;
-  name: string;
-  brand: string;
-  price: number;
-  image: string;
-  targetCar?: string;
-  seller?: {
-    id: string;
-    business_name: string;
-    phone?: string;
-    address?: string;
-  };
-}
-
-export interface UnlockedWorkshopLead {
-  id: string;
-  partName: string;
-  partImage: string;
-  targetCar: string;
-  partPriceUSD: number;
-  depositPaidUSD: number;
-  workshopName: string;
-  workshopAddress: string;
-  workshopPhone: string;
-  customerPhone: string;
-  unlockedAt: string;
-}
+const fieldCls =
+  'w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
 
 export default function CheckoutPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
+  const search = useSearchParams();
   const locale = (params?.['locale'] as string) || 'uz';
-  const directPartId = searchParams?.get('partId');
-
+  const resumeId = search?.get('booking') ?? null;
   const { cart, clearCart } = useVeloceStore();
   const { formatPrice } = useCurrency();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
 
-  const [productsMap, setProductsMap] = React.useState<Record<string, CheckoutProduct>>({});
-  const [loading, setLoading] = React.useState(true);
-
-  const [customerName, setCustomerName] = React.useState(user?.full_name || '');
-  const [customerPhone, setCustomerPhone] = React.useState(user?.phone || '+998 ');
-  const [paymentMethod, setPaymentMethod] = React.useState<'Click' | 'Payme' | 'Uzum'>('Click');
-
+  const [products, setProducts] = React.useState<VeloceProduct[]>([]);
+  const [loadingProducts, setLoadingProducts] = React.useState(true);
+  const [name, setName] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [note, setNote] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
-  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
-  const [unlockedLead, setUnlockedLead] = React.useState<UnlockedWorkshopLead | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const [bookings, setBookings] = React.useState<BookingView[]>([]);
+  const [payment, setPayment] = React.useState<PaymentInfo>({ configured: false });
+
+  const cartIds = React.useMemo(() => Object.keys(cart), [cart]);
 
   React.useEffect(() => {
-    if (user?.full_name && !customerName) setCustomerName(user.full_name);
-    if (user?.phone && customerPhone === '+998 ') setCustomerPhone(user.phone);
-  }, [user, customerName, customerPhone]);
+    if (user) {
+      setName((n) => n || user.full_name || '');
+      setPhone((p) => p || user.phone || '');
+    }
+  }, [user]);
 
+  // Cart items from the real catalog
   React.useEffect(() => {
-    let mounted = true;
-    fetch('/api/v1/products?limit=100')
+    if (resumeId) {
+      setLoadingProducts(false);
+      return;
+    }
+    if (cartIds.length === 0) {
+      setProducts([]);
+      setLoadingProducts(false);
+      return;
+    }
+    let cancelled = false;
+    setLoadingProducts(true);
+    fetch(`/api/v1/products?ids=${cartIds.join(',')}&limit=100`, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((pRes) => {
-        if (!mounted) return;
-        if (pRes?.success && Array.isArray(pRes.products)) {
-          const map: Record<string, CheckoutProduct> = {};
-          pRes.products.forEach((p: CheckoutProduct) => {
-            map[p.id] = p;
-          });
-          setProductsMap(map);
-        }
+      .then((d) => {
+        if (!cancelled && d.success) setProducts(d.products ?? []);
       })
+      .catch(() => {})
       .finally(() => {
-        if (mounted) setLoading(false);
+        if (!cancelled) setLoadingProducts(false);
       });
     return () => {
-      mounted = false;
+      cancelled = true;
     };
-  }, []);
+  }, [cartIds, resumeId]);
 
-  const items = React.useMemo(() => {
-    const entries = Object.entries(cart);
-    if (entries.length === 0 && directPartId && productsMap[directPartId]) {
-      const p = productsMap[directPartId];
-      const unitUSD = p.price > 50000 ? Math.round(p.price / 13000) : p.price;
-      return [{ product: p, quantity: 1, unitUSD }];
+  const reloadBookings = React.useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/bookings', { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success) {
+        setPayment(data.payment);
+        setBookings((prev) => {
+          const wanted = new Set(prev.length ? prev.map((b) => b.id) : resumeId ? [resumeId] : []);
+          return (data.bookings as BookingView[]).filter((b) => wanted.has(b.id));
+        });
+      }
+    } catch {
+      // keep the last known state
     }
-    return entries
-      .map(([id, quantity]) => {
-        const product = productsMap[id];
-        if (!product) return null;
-        const unitUSD =
-          product.price > 50000 ? Math.round(product.price / 13000) : product.price;
-        return { product, quantity, unitUSD };
-      })
-      .filter(
-        (x): x is { product: CheckoutProduct; quantity: number; unitUSD: number } => x !== null
-      );
-  }, [cart, productsMap, directPartId]);
+  }, [resumeId]);
 
-  const totalUSD = items.reduce((sum, x) => sum + x.unitUSD * x.quantity, 0);
-  const depositUSD = Math.max(1, Math.round(totalUSD * 0.03));
+  React.useEffect(() => {
+    if (resumeId && user) void reloadBookings();
+  }, [resumeId, user, reloadBookings]);
 
-  const primaryItem = items[0]?.product;
-  const targetSeller = primaryItem?.seller || {
-    id: 'seller-1',
-    business_name: 'Sardor Tuning Garage',
-    phone: '+998 90 945 12 34',
-    address: 'Toshkent sh., Sergeli tumani, Avtosalon ko‘chasi 14-ustaxona',
-  };
+  const lines = products.map((p) => ({ p, qty: cart[p.id] ?? 1 }));
+  const total = lines.reduce((s, l) => s + l.p.price * l.qty, 0);
+  const deposit = Math.max(1, Math.round(total * 0.03));
+  const hasUnavailable = lines.some((l) => l.p.stock <= 0);
+  const missing = cartIds.length - products.length;
 
-  const handlePayAndUnlock = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg(null);
-
-    if (!customerName.trim() || customerName.trim().length < 2) {
-      setErrorMsg('Iltimos, ismingizni kiriting.');
-      return;
-    }
-    const cleanDigits = customerPhone.replace(/\D/g, '');
-    if (cleanDigits.length < 9) {
-      setErrorMsg('Iltimos, telefon raqamingizni to‘liq kiriting (ustaxona siz bilan bog‘lanishi uchun).');
-      return;
-    }
-    if (items.length === 0) {
-      setErrorMsg('Detal tanlanmagan.');
-      return;
-    }
-
+    setError(null);
+    if (name.trim().length < 2) return setError('Ismingizni kiriting');
+    if (phone.replace(/\D/g, '').length < 9) return setError('Telefon raqamingizni to‘liq kiriting');
     setSubmitting(true);
     try {
-      const res = await fetch('/api/v1/orders', {
+      const res = await fetch('/api/v1/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerName: customerName.trim(),
-          customerPhone: customerPhone.trim(),
-          preferredDate: new Date().toISOString().slice(0, 10),
-          paymentMethod,
-          studioId: targetSeller.id,
-          studioName: targetSeller.business_name,
-          totalPriceUSD: totalUSD,
-          depositUSD,
-          items: items.map((x) => ({
-            id: x.product.id,
-            name: x.product.name,
-            brand: x.product.brand,
-            price: x.unitUSD,
-            quantity: x.quantity,
-            image: x.product.image,
-          })),
+          items: lines.map((l) => ({ id: l.p.id, quantity: l.qty })),
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          note: note.trim() || undefined,
         }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'To‘lovni tasdiqlashda xatolik yuz berdi');
-      }
-
-      const newLead: UnlockedWorkshopLead = {
-        id: data.order?.voucherCode || `#CV-${Math.floor(1000 + Math.random() * 9000)}`,
-        partName: items.map((i) => i.product.name).join(', '),
-        partImage: primaryItem?.image || '/assets/wheel-CiWWvvai.jpg',
-        targetCar: primaryItem?.targetCar || 'Chevrolet Gentra',
-        partPriceUSD: totalUSD,
-        depositPaidUSD: depositUSD,
-        workshopName: targetSeller.business_name || 'Sardor Tuning Garage',
-        workshopAddress:
-          targetSeller.address || 'Toshkent sh., Sergeli tumani, Avtosalon ko‘chasi 14-ustaxona',
-        workshopPhone: targetSeller.phone || '+998 90 945 12 34',
-        customerPhone: customerPhone.trim(),
-        unlockedAt: new Date().toLocaleDateString('uz-UZ', {
-          day: 'numeric',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      };
-
-      try {
-        const existingRaw = localStorage.getItem('carvision_unlocked_leads');
-        const existing: UnlockedWorkshopLead[] = existingRaw ? JSON.parse(existingRaw) : [];
-        localStorage.setItem(
-          'carvision_unlocked_leads',
-          JSON.stringify([newLead, ...existing.slice(0, 19)])
-        );
-      } catch {
-        // Ignore storage error
-      }
-
-      setUnlockedLead(newLead);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.error || 'Bron yaratib bo‘lmadi');
+      setPayment(data.payment);
+      setBookings(data.bookings);
       clearCart();
-    } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Xatolik yuz berdi');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bron yaratib bo‘lmadi');
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
+  const shell = (children: React.ReactNode) => (
     <VeloceShell>
-      <div className="mx-auto max-w-3xl px-5 pt-6 pb-24 md:px-10 md:pt-10">
-        <div className="mb-8 flex items-center gap-4">
-          <Link
-            href={`/${locale}/shop`}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.05] text-white/80 transition hover:bg-white/[0.1]"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
+      <div className="mx-auto max-w-2xl px-4 pb-32 pt-4 md:px-8">{children}</div>
+    </VeloceShell>
+  );
+
+  if (authLoading || loadingProducts) {
+    return shell(
+      <div className="flex justify-center py-24">
+        <Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return shell(
+      <div className="mt-10 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-6 text-center">
+        <p className="text-sm text-white/80">Bron qilish uchun tizimga kiring.</p>
+        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
+          Kirish
+        </Link>
+      </div>
+    );
+  }
+
+  // After the booking exists: payment + status
+  if (bookings.length > 0) {
+    return shell(
+      <>
+        <h1 className="mb-1 text-xl font-bold text-white">Bron yaratildi</h1>
+        <p className="mb-5 text-sm text-white/55">Zakalatni to‘lab chekni yuklang. Tasdiqlangach ustaxona manzili ochiladi.</p>
+        <div className="space-y-4">
+          {bookings.map((b) => (
+            <BookingCard key={b.id} booking={b} payment={payment} onChanged={() => void reloadBookings()} />
+          ))}
+        </div>
+        <Link href={`/${locale}/profile`} className="mt-6 inline-block text-sm text-[#D4AE62] underline">
+          Barcha bronlarim
+        </Link>
+      </>
+    );
+  }
+
+  if (resumeId) return shell(<p className="py-20 text-center text-sm text-white/60">Bron topilmadi.</p>);
+
+  if (lines.length === 0) {
+    return shell(
+      <div className="mt-10 rounded-3xl border border-dashed border-white/15 p-10 text-center">
+        <p className="text-sm text-white/70">Savat bo‘sh.</p>
+        <Link href={`/${locale}/shop`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
+          Do‘konga o‘tish
+        </Link>
+      </div>
+    );
+  }
+
+  return shell(
+    <>
+      <Link href={`/${locale}/cart`} className="mb-5 inline-flex items-center gap-2 text-xs text-white/55 hover:text-white">
+        <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+        Savatga qaytish
+      </Link>
+      <h1 className="mb-5 text-xl font-bold text-white">Bron qilish</h1>
+
+      <section className="rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5">
+        <ul className="space-y-3">
+          {lines.map(({ p, qty }) => (
+            <li key={p.id} className="flex items-center gap-3">
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-black">{p.image && <img src={p.image} alt="" className="h-full w-full object-cover" />}</div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">{p.name}</p>
+                <p className="text-[11px] text-white/45">{p.brand}{qty > 1 ? ` · ×${qty}` : ''}{p.stock <= 0 ? ' · omborda yo‘q' : ''}</p>
+              </div>
+              <p className="text-sm font-semibold text-white/85">{formatPrice(p.price * qty)}</p>
+            </li>
+          ))}
+        </ul>
+        {missing > 0 && <p className="mt-3 text-xs text-amber-300">Savatdagi {missing} ta detal endi mavjud emas. Savatni yangilang.</p>}
+        <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
           <div>
-            <p className="text-[11px] font-medium tracking-[0.22em] uppercase text-[#D4AE62]">
-              3% Zakalat To‘lovi
-            </p>
-            <h1 className="mt-0.5 font-display text-2xl font-light text-white md:text-3xl">
-              {unlockedLead
-                ? 'Ustaxona Manzili Ochildi!'
-                : 'Tuning Servis Manzilini Ochish'}
-            </h1>
+            <p className="text-[11px] text-white/45">Ustaxonadagi jami narx</p>
+            <p className="text-lg font-bold text-white">{formatPrice(total)}</p>
+          </div>
+          <div className="text-end">
+            <p className="text-[11px] text-white/45">Hozir to‘lanadigan 3% zakalat</p>
+            <p className="text-lg font-bold text-[#D4AE62]">{formatPrice(deposit)}</p>
           </div>
         </div>
+      </section>
 
-        {unlockedLead ? (
-          /* UNLOCKED WORKSHOP ADDRESS SCREEN */
-          <div className="space-y-8 rounded-3xl bg-[#12151E] p-6 sm:p-10 shadow-[0_24px_70px_rgba(0,0,0,0.75)]">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                  3% Zakalat Qabul Qilindi · Ustaxonaga Xabar Yuborildi
-                </span>
-                <h2 className="mt-1 font-display text-2xl font-light text-white sm:text-3xl">
-                  {unlockedLead.workshopName}
-                </h2>
-                <p className="mt-1 text-xs text-white/60 sm:text-sm">
-                  Sizning <strong className="text-white">{unlockedLead.customerPhone}</strong> raqamingiz ustaxonaga yuborildi — xodim sizni kutmoqda.
-                </p>
-              </div>
-            </div>
+      <form onSubmit={submit} className="mt-4 space-y-4 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-name">Ismingiz</label>
+          <input id="c-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className={fieldCls} />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-phone">Telefon raqamingiz</label>
+          <input id="c-phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" className={fieldCls} />
+          <p className="mt-1 text-[11px] text-white/40">Ustaxona zakalatdan keyin siz bilan shu raqam orqali bog‘lanadi.</p>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-note">Izoh (ixtiyoriy)</label>
+          <textarea id="c-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} rows={2} className={`${fieldCls} resize-none`} />
+        </div>
 
-            {/* Revealed Location & Contact */}
-            <div className="space-y-4 rounded-2xl bg-[#0B0C10] p-6">
-              <div>
-                <p className="text-xs text-white/45">Tuning Servis Aniq Manzili</p>
-                <p className="mt-1 flex items-center gap-2 text-base font-medium text-white sm:text-lg">
-                  <MapPin className="h-5 w-5 shrink-0 text-[#D4AE62]" />
-                  <span>{unlockedLead.workshopAddress}</span>
-                </p>
-              </div>
+        <p className="flex items-start gap-2 text-xs text-white/55">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AE62]" />
+          Ustaxona manzili va telefoni 3% zakalat tasdiqlangandan keyin ochiladi. Zakalat ustaxonadagi hisob-kitobdan ayriladi.
+        </p>
 
-              <div className="pt-2">
-                <p className="text-xs text-white/45">Ustaxona Telefoni</p>
-                <p className="mt-1 font-mono text-lg font-bold text-[#D4AE62]">
-                  {unlockedLead.workshopPhone}
-                </p>
-              </div>
+        {error && <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 
-              <div className="pt-2">
-                <p className="text-xs text-white/45">Tanlangan Jihoz</p>
-                <p className="mt-1 text-sm text-white/90">
-                  {unlockedLead.partName} ({unlockedLead.targetCar} uchun)
-                </p>
-              </div>
-            </div>
-
-            {/* Direct Action Buttons */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <a
-                href={`tel:${unlockedLead.workshopPhone}`}
-                className="shimmer flex items-center justify-center gap-2.5 rounded-2xl bg-gold-gradient py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)]"
-              >
-                <Phone className="h-4 w-4" />
-                <span>Ustaxonaga Qo‘ng‘iroq Qilish</span>
-              </a>
-
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(unlockedLead.workshopAddress)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2.5 rounded-2xl bg-white/[0.06] py-4 text-xs font-semibold tracking-wider uppercase text-white transition hover:bg-white/[0.12]"
-              >
-                <Navigation className="h-4 w-4 text-[#D4AE62]" />
-                <span>Xaritada Yo‘lni Ko‘rish</span>
-              </a>
-            </div>
-
-            <div className="pt-2 text-center">
-              <Link
-                href={`/${locale}/profile`}
-                className="text-xs text-white/50 underline hover:text-white"
-              >
-                Barcha ochilgan manzillarimni profilimda ko‘rish
-              </Link>
-            </div>
-          </div>
-        ) : loading ? (
-          <div className="h-72 rounded-3xl bg-white/[0.03] animate-pulse" />
-        ) : items.length === 0 ? (
-          <div className="py-16 text-center">
-            <p className="text-sm text-white/60">Hozircha detal tanlanmagan.</p>
-            <Link
-              href={`/${locale}/shop`}
-              className="mt-5 inline-block rounded-2xl bg-gold-gradient px-6 py-3 text-xs font-bold uppercase text-black"
-            >
-              Katalogga O‘tish
-            </Link>
-          </div>
-        ) : (
-          /* SIMPLE 3% ADDRESS UNLOCK FORM */
-          <form onSubmit={handlePayAndUnlock} className="space-y-8">
-            {/* Selected Part Preview (No Seller Name Shown Yet!) */}
-            <div className="rounded-3xl bg-[#12151E] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.55)]">
-              <div className="space-y-4">
-                {items.map((x) => (
-                  <div key={x.product.id} className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={x.product.image}
-                        alt={x.product.name}
-                        onError={(e) => {
-                          e.currentTarget.src = '/assets/wheel-CiWWvvai.jpg';
-                        }}
-                        className="h-16 w-20 rounded-2xl object-cover bg-[#0B0C10]"
-                      />
-                      <div>
-                        <span className="inline-flex items-center gap-1 text-[11px] text-[#D4AE62]">
-                          <Car className="h-3.5 w-3.5" />
-                          <span>{x.product.targetCar || 'Chevrolet Gentra'} uchun</span>
-                        </span>
-                        <h3 className="text-base font-medium text-white">{x.product.name}</h3>
-                        <p className="text-xs text-white/50">
-                          Ustaxonadagi narxi: {formatPrice(x.unitUSD * x.quantity)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 flex items-center justify-between rounded-2xl bg-[#0B0C10] p-4">
-                <div className="flex items-center gap-2.5 text-xs text-white/75">
-                  <Lock className="h-4 w-4 text-[#D4AE62]" />
-                  <span>Manzilni ochish uchun 3% zakalat:</span>
-                </div>
-                <span className="font-mono text-xl font-bold text-emerald-400 tabular-nums">
-                  {formatPrice(depositUSD)}
-                </span>
-              </div>
-            </div>
-
-            {/* Simple Customer Phone & Payment Input */}
-            <div className="space-y-5 rounded-3xl bg-[#12151E] p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.55)]">
-              <div>
-                <label className="mb-2 block text-xs text-white/60">Ismingiz</label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Masalan: Sardor"
-                  className="w-full rounded-2xl bg-[#0B0C10] px-4 py-3.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#D4AE62]/40"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-xs text-white/60">
-                  Telefon raqamingiz (Ustaxona siz bilan bog‘lanishi uchun)
-                </label>
-                <input
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="+998 90 123 45 67"
-                  className="w-full rounded-2xl bg-[#0B0C10] px-4 py-3.5 font-mono text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#D4AE62]/40"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-xs text-white/60">To‘lov tizimi</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {(['Click', 'Payme', 'Uzum'] as const).map((method) => (
-                    <button
-                      key={method}
-                      type="button"
-                      onClick={() => setPaymentMethod(method)}
-                      className={`rounded-2xl py-3 text-xs font-semibold transition cursor-pointer ${
-                        paymentMethod === method
-                          ? 'bg-[#D4AE62] text-black shadow-[0_6px_20px_rgba(212,174,98,0.3)]'
-                          : 'bg-[#0B0C10] text-white/65 hover:text-white'
-                      }`}
-                    >
-                      {method}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {errorMsg && (
-                <p className="rounded-xl bg-red-500/10 px-4 py-3 text-xs text-red-300">
-                  {errorMsg}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="shimmer flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gold-gradient py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110 disabled:opacity-50 cursor-pointer"
-              >
-                <MapPin className="h-4 w-4" />
-                <span>
-                  {submitting
-                    ? 'Manzil ochilmoqda...'
-                    : `3% To‘lash (${formatPrice(depositUSD)}) va Manzilni Ochish`}
-                </span>
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </VeloceShell>
+        <button
+          type="submit"
+          disabled={submitting || hasUnavailable || missing > 0}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-6 py-3.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
+        >
+          {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          Bron qilish
+        </button>
+      </form>
+    </>
   );
 }

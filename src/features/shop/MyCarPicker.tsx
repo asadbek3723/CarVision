@@ -1,0 +1,124 @@
+'use client';
+
+import * as React from 'react';
+import { Car, Search, X } from 'lucide-react';
+import { useMyCar } from './useMyCar';
+
+interface ModelResult {
+  id: string;
+  label: string;
+}
+
+/** "My car" chip + search. Picking a car filters the shop to parts that fit it. */
+export function MyCarPicker() {
+  const { car, setCar } = useMyCar();
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const [results, setResults] = React.useState<ModelResult[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [year, setYear] = React.useState('');
+
+  React.useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/v1/catalog/vehicles?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!cancelled && data.success) setResults(data.models ?? []);
+      } catch {
+        if (!cancelled) setResults([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [query]);
+
+  if (car && !open) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AE62]/40 bg-[#D4AE62]/10 px-4 py-2 text-xs font-semibold text-[#D4AE62]">
+          <Car className="h-4 w-4" />
+          {car.label}
+          {car.year ? ` · ${car.year}` : ''}
+        </span>
+        <button type="button" onClick={() => setOpen(true)} className="text-xs text-white/60 underline hover:text-white">
+          O‘zgartirish
+        </button>
+        <button type="button" aria-label="Mashinani olib tashlash" onClick={() => setCar(null)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-4 py-2 text-xs font-semibold text-white/85 transition hover:border-primary">
+        <Car className="h-4 w-4 text-[#D4AE62]" />
+        Mening mashinam: faqat mos detallarni ko‘rsat
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0B0D13] p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-white">Mashinangizni tanlang</p>
+        <button type="button" aria-label="Yopish" onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="relative mt-3">
+        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Masalan: Gentra, Toyota Camry, BYD Song"
+          className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2.5 ps-9 pe-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#D4AE62]/60"
+        />
+      </div>
+      <input
+        type="number"
+        inputMode="numeric"
+        min={1950}
+        max={2100}
+        value={year}
+        onChange={(e) => setYear(e.target.value)}
+        placeholder="Ishlab chiqarilgan yili (ixtiyoriy)"
+        className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#D4AE62]/60"
+      />
+      {query.trim().length >= 2 && (
+        <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-white/10">
+          {loading && <p className="px-3 py-3 text-xs text-white/50">Qidirilmoqda…</p>}
+          {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">Topilmadi</p>}
+          {results.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => {
+                const y = Number(year);
+                setCar({ modelId: r.id, label: r.label, year: y >= 1950 && y <= 2100 ? y : undefined });
+                setOpen(false);
+                setQuery('');
+              }}
+              className="block w-full px-3 py-2.5 text-start text-sm text-white/90 transition hover:bg-white/[0.06]"
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

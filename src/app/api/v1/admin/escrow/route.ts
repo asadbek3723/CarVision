@@ -1,141 +1,79 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { verifyAdminSessionToken, ADMIN_COOKIE_NAME } from '@/lib/admin-auth';
+import { verifyAdminSessionToken, getAdminIdFromToken, ADMIN_COOKIE_NAME } from '@/lib/admin-auth';
+import { fetchBookingItems, fetchBookingRows } from '@/server/bookings';
 
+const unauthorized = () => NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
+/** Deposit review queue: bookings whose customer sent a receipt (and the decided ones). */
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-    if (!verifyAdminSessionToken(token)) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!verifyAdminSessionToken(request.cookies.get(ADMIN_COOKIE_NAME)?.value)) return unauthorized();
+    const db = createAdminClient();
+    const rows = await fetchBookingRows(db, { statuses: ['PENDING_ADMIN_APPROVAL', 'UNLOCKED', 'REDEEMED', 'REJECTED'], limit: 200 });
+    const items = await fetchBookingItems(db, rows.map((r) => r.id));
+    const { data: shops } = await db.from('shops').select('id, shop_name').in('id', [...new Set(rows.map((r) => r.shop_id))]);
+    const shopName = new Map((shops ?? []).map((s) => [s.id as string, s.shop_name as string]));
 
-    const supabase = createAdminClient();
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select(`
-        id,
-        user_id,
-        seller_id,
-        total,
-        status,
-        phone,
-        note,
-        created_at,
-        order_items (
-          id,
-          product_name,
-          quantity,
-          price
-        ),
-        sellers (
-          id,
-          business_name
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    const mappedOrders = (orders || []).map((o, idx) => {
-      // Parse custom order number if present in note (e.g. #CV-9825)
-      const orderNumberMatch = o.note?.match(/#(CV-[0-9A-Z]+)/);
-      const orderNumber = orderNumberMatch ? orderNumberMatch[1] : `CV-${9821 - idx}`;
-
-      const firstItem = Array.isArray(o.order_items) && o.order_items[0] ? o.order_items[0] : null;
-      const seller = Array.isArray(o.sellers) ? o.sellers[0] : o.sellers;
-      const studioName = seller?.business_name || 'Partner Atelier';
-      const itemDescription = firstItem?.product_name || o.note || 'Tuning jamlanmasi';
-      const rawTotal = Number(o.total || 0);
-      const totalPrice = rawTotal > 50000 ? Math.round(rawTotal / 13000) : rawTotal;
-      const depositCents = Math.round(totalPrice * 3); // exact 3% in cents (e.g. $1250 * 3 = 3750 cents = $37.50)
-
-      // Parse payment method from note if present
-      const paymentMatch = o.note?.match(/\[(Click|Payme|Uzum|Bank)\]/i);
-      const paymentMethod = paymentMatch
-        ? (paymentMatch[1] as 'Click' | 'Payme' | 'Uzum' | 'Bank')
-        : ((idx % 3 === 0 ? 'Click' : idx % 3 === 1 ? 'Payme' : 'Uzum') as 'Click' | 'Payme' | 'Uzum' | 'Bank');
-
-      // Parse customer name from note
-      let customerName = 'Mijoz';
-      if (o.note) {
-        if (o.note.includes('•')) {
-          const bulletName = o.note.split('•')[1]?.trim();
-          if (bulletName && !bulletName.startsWith('[')) customerName = bulletName;
-        } else {
-          const rawName = o.note.split('(')[0]?.split('[')[0]?.split(':')[0]?.trim();
-          if (rawName && rawName.length > 1) {
-            customerName = rawName;
-          }
+    const orders = await Promise.all(
+      rows.map(async (r) => {
+        let receiptUrl: string | null = null;
+        if (r.receipt_path) {
+          const { data } = await db.storage.from('receipts').createSignedUrl(r.receipt_path, 600);
+          receiptUrl = data?.signedUrl ?? null;
         }
-      }
-
-      let mappedStatus: 'pending' | 'verified' | 'rejected' = 'pending';
-      if (o.status === 'accepted' || o.status === 'installing' || o.status === 'completed') {
-        mappedStatus = 'verified';
-      } else if (o.status === 'cancelled') {
-        mappedStatus = 'rejected';
-      }
-
-      return {
-        id: o.id,
-        orderNumber,
-        customerName,
-        customerPhone: o.phone || '+998 90 000 00 00',
-        studioName,
-        itemDescription,
-        totalPriceCents: totalPrice * 100, // store in cents for UI
-        depositCents,
-        paymentMethod,
-        transactionRef: `TXN-${o.id.substring(0, 8).toUpperCase()}`,
-        status: mappedStatus,
-        submittedAt: new Date(o.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) + ' oldin',
-      };
-    });
-
-    return NextResponse.json({ success: true, orders: mappedOrders });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+        const its = items.filter((i) => i.booking_id === r.id);
+        return {
+          id: r.id,
+          orderNumber: r.booking_number,
+          customerName: r.customer_name,
+          customerPhone: r.customer_phone,
+          studioName: shopName.get(r.shop_id) ?? '',
+          itemDescription: its.map((i) => `${i.name} ×${i.quantity}`).join(', '),
+          totalPriceCents: r.total_cents,
+          depositCents: r.deposit_cents,
+          paymentMethod: 'Bank' as const,
+          transactionRef: r.receipt_hash ? r.receipt_hash.slice(0, 12).toUpperCase() : '—',
+          status: r.status === 'PENDING_ADMIN_APPROVAL' ? ('pending' as const) : r.status === 'REJECTED' ? ('rejected' as const) : ('verified' as const),
+          submittedAt: new Date(r.receipt_submitted_at ?? r.created_at).toLocaleString('uz-UZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          receiptUrl,
+        };
+      })
+    );
+    return NextResponse.json({ success: true, orders });
+  } catch (err) {
+    console.error('admin escrow GET error:', err);
+    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }
 
+const reviewSchema = z.object({ orderId: z.string().uuid(), status: z.enum(['verified', 'rejected']), reason: z.string().trim().max(300).optional() });
+
+/** Approve (unlocks the workshop for the customer) or reject the deposit receipt. */
 export async function PATCH(request: NextRequest) {
   try {
     const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-    if (!verifyAdminSessionToken(token)) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const adminId = getAdminIdFromToken(token);
+    if (!adminId) return unauthorized();
+
+    const parsed = reviewSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) return NextResponse.json({ success: false, error: 'Missing orderId or status' }, { status: 400 });
+
+    const { data } = await createAdminClient().rpc('admin_review_booking', {
+      p_admin_id: adminId,
+      p_booking_id: parsed.data.orderId,
+      p_approve: parsed.data.status === 'verified',
+      p_reason: parsed.data.reason ?? null,
+      p_ip: (request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown').slice(0, 45),
+    });
+    const r = data as { success?: boolean; error?: string; status?: string } | null;
+    if (!r?.success) {
+      return NextResponse.json({ success: false, error: r?.error === 'INVALID_STATE' ? 'Bu bron allaqachon ko‘rib chiqilgan' : 'Bron topilmadi' }, { status: r?.error === 'INVALID_STATE' ? 409 : 404 });
     }
-
-    const body = await request.json();
-    const { orderId, status } = body;
-
-    if (!orderId || !status) {
-      return NextResponse.json({ success: false, error: 'Missing orderId or status' }, { status: 400 });
-    }
-
-    // Map UI status ('verified' | 'rejected') to Supabase order_status ('accepted' | 'cancelled')
-    const dbStatus = status === 'verified' ? 'accepted' : 'cancelled';
-
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from('orders')
-      .update({
-        status: dbStatus,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', orderId)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, order: data });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    return NextResponse.json({ success: true, status: r.status });
+  } catch (err) {
+    console.error('admin escrow PATCH error:', err);
+    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }

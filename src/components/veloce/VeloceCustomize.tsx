@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { useMyCar } from '@/features/shop/useMyCar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { playShutter, playLock, vibrate } from '@/features/camera/lib/fx';
@@ -61,6 +62,7 @@ export function VeloceCustomize() {
     openCamera,
   } = useVeloceStore();
   const { user, refreshProfile } = useAuth();
+  const { filterQuery } = useMyCar();
   const { formatPrice } = useCurrency();
 
   const isSeller = user?.role === 'b2b_seller';
@@ -85,8 +87,8 @@ export function VeloceCustomize() {
     const fetchCatalog = async () => {
       try {
         setIsLoadingCatalog(true);
-        const endpoint = isSeller ? '/api/v1/seller/inventory' : '/api/v1/products';
-        const res = await fetch(endpoint);
+        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120${filterQuery ? `&${filterQuery}` : ''}`;
+        const res = await fetch(endpoint, { cache: 'no-store' });
         const data = await res.json();
         if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
           setCatalogProducts(data.products);
@@ -102,7 +104,7 @@ export function VeloceCustomize() {
     return () => {
       isMounted = false;
     };
-  }, [isSeller]);
+  }, [isSeller, filterQuery]);
 
   // Pre-select requestedPartId if passed in URL and not yet selected
   React.useEffect(() => {

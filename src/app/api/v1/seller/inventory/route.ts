@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       success: true,
       seller: { id: guard.value.shopId, business_name: guard.value.session.shop?.shop_name ?? '' },
       items,
-      products: items.map(toVeloceProduct),
+      products: items.filter((i) => i.status === 'PUBLISHED').map(toVeloceProduct),
       totalCount: items.length,
       inStockCount: items.filter((i) => i.stock > 0 && i.status === 'PUBLISHED').length,
     });
