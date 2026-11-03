@@ -106,10 +106,24 @@ const NAV_LINKS = [
 
 function Header({ locale }: { locale: string }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
+
+  // The navbar stays hidden on the hero and slides in once the visitor scrolls down.
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const visible = scrolled || mobileOpen;
 
   return (
     <header
-      className="fixed inset-x-0 top-3 z-50 px-3 sm:top-4 sm:px-4 transition-all duration-700 translate-y-0 opacity-100"
+      aria-hidden={!visible}
+      className={`fixed inset-x-0 top-3 z-50 px-3 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] sm:top-4 sm:px-4 ${
+        visible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-24 opacity-0'
+      }`}
     >
       <div className="glass-nav mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full border border-border py-2 ps-4 pe-2 sm:gap-4 sm:px-5 sm:py-3 shadow-lux">
         <a href="#top" className="min-w-0 shrink overflow-hidden">
@@ -247,7 +261,7 @@ function Hero() {
 
       <a
         href="#visualizer"
-        className="absolute bottom-10 start-1/2 z-10 flex -translate-x-1/2 rtl:translate-x-1/2 flex-col items-center gap-3 text-[10px] tracking-lux text-muted-foreground"
+        className="absolute bottom-10 start-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-3 text-[10px] tracking-lux text-muted-foreground rtl:translate-x-1/2 [@media(max-height:860px)]:hidden"
       >
         PASTGA
         <span className="relative h-14 w-px overflow-hidden bg-border">
