@@ -82,4 +82,17 @@ describe('direct-fitment-engine', () => {
     expect(res.promptUsed).toContain('Ultra-sharp 8K commercial automotive cinematography');
     expect(res.promptUsed).toContain('Matrix Laser Headlights');
   });
+
+  it('describes every angle and the same-build reference in the prompt', async () => {
+    const res = await executeDirectAiFitment({
+      carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
+      angleId: 'rear-left',
+      referenceAfter: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
+      parts: [{ id: 'w1', name: 'BBS CI-R 20"', category: 'Wheels' }],
+      mode: 'fitment',
+    });
+    expect(res.promptUsed).toContain('rear-left 3/4');
+    expect(res.promptUsed).toContain('LAST input image');
+    expect(res.promptUsed).toContain('Only modify what is actually visible');
+  });
 });

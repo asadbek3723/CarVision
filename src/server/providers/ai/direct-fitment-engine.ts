@@ -16,6 +16,11 @@ export interface DirectFitmentRequest {
   angleId?: string | undefined;
   parts: FitmentPartInput[];
   mode?: 'fitment' | 'enhance_for_video' | undefined;
+  /**
+   * An already-finished render of the SAME car from another angle. Used only as a reference so
+   * paint, wheels and body parts look identical across all angles of one build.
+   */
+  referenceAfter?: string | undefined;
 }
 
 export interface DirectFitmentResponse {
@@ -130,7 +135,10 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     front: 'front 0-degree symmetrical studio view',
     rear: 'rear 180-degree symmetrical view',
     right: 'right side 90-degree profile view',
+    left: 'left side 90-degree profile view',
     'front-left': 'front-left 3/4 dynamic automotive angle',
+    'front-right': 'front-right 3/4 dynamic automotive angle',
+    'rear-left': 'rear-left 3/4 dynamic automotive angle',
     'rear-right': 'rear-right 3/4 dynamic automotive angle',
   };
 
@@ -171,9 +179,15 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
   return [
     `Photorealistic 4K automotive tuning modification on the exact input car (${angleText}).`,
     ...partInstructions,
+    req.referenceAfter
+      ? 'The LAST input image shows this same car already modified, taken from a different angle: use it ONLY as a reference for how the new parts, wheel design and paint look, and reproduce them identically. Never copy its camera angle or background.'
+      : '',
+    `Only modify what is actually visible from this ${angleText}; do not invent parts that are hidden from this viewpoint.`,
     'CRITICAL RULES: Keep the exact same car make/model, exact same camera angle, and exact same background environment.',
     'Do not alter the background or change the vehicle into a different car. Photorealistic shadows, reflections, and OEM+ studio quality.',
-  ].join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 /**
@@ -186,13 +200,15 @@ async function runFalAiFitment(
   carDataUri: string,
   partDataUris: string[],
   prompt: string,
-  mode: 'fitment' | 'enhance_for_video'
+  mode: 'fitment' | 'enhance_for_video',
+  referenceDataUri: string | null
 ): Promise<string | null> {
   const forced = (process.env.FAL_MODEL || '').trim();
-  const refs = [carDataUri, ...partDataUris.slice(0, 3)];
+  // Order matters (the prompt refers to it): 1 = car photo, then exact parts, last = same-build reference
+  const refs = [carDataUri, ...partDataUris.slice(0, 3), ...(referenceDataUri ? [referenceDataUri] : [])];
   const endpoints: Array<{ id: string; body: Record<string, unknown> }> = [];
 
-  if (partDataUris.length > 0 && mode === 'fitment') {
+  if ((partDataUris.length > 0 || referenceDataUri) && mode === 'fitment') {
     endpoints.push({
       id: 'fal-ai/nano-banana/edit',
       body: { prompt, image_urls: refs, num_images: 1, output_format: 'jpeg' },
@@ -239,7 +255,8 @@ async function runGeminiMultimodalFitment(
   apiKey: string,
   carDataUri: string,
   partDataUris: string[],
-  prompt: string
+  prompt: string,
+  referenceDataUri: string | null
 ): Promise<string | null> {
   const parseBase64 = (uri: string) => {
     const match = uri.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
@@ -262,6 +279,10 @@ async function runGeminiMultimodalFitment(
     if (parsed) {
       contentParts.push({ inlineData: parsed });
     }
+  }
+  if (referenceDataUri) {
+    const ref = parseBase64(referenceDataUri);
+    if (ref) contentParts.push({ inlineData: ref });
   }
 
   const models = ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview'];
@@ -374,6 +395,7 @@ export async function executeDirectAiFitment(
         (u): u is string => Boolean(u)
       )
     : [];
+  const referenceDataUri = req.referenceAfter ? await resolveImageToDataUri(req.referenceAfter) : null;
   const providerConfigured = falKey.length > 8 || geminiKey.length > 8 || openAiKey.length > 8;
 
   if (carDataUri) {
@@ -384,7 +406,8 @@ export async function executeDirectAiFitment(
         carDataUri,
         partDataUris,
         promptUsed,
-        req.mode || 'fitment'
+        req.mode || 'fitment',
+        referenceDataUri
       );
       if (falUrl) {
         return {
@@ -403,7 +426,8 @@ export async function executeDirectAiFitment(
         geminiKey,
         carDataUri,
         partDataUris,
-        promptUsed
+        promptUsed,
+        referenceDataUri
       );
       if (geminiUrl) {
         return {

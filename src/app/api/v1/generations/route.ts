@@ -43,6 +43,8 @@ const requestSchema = z.object({
   swatchColor: short(40).optional(),
   parts: z.array(partInputSchema).max(8).optional(),
   idempotencyKey: z.string().uuid().optional(),
+  /** Finished render of the same build from another angle (consistency reference). */
+  referenceAfterUrl: short(2000).optional(),
 });
 
 const meta = () => ({ requestId: crypto.randomUUID(), timestamp: new Date().toISOString() });
@@ -267,6 +269,7 @@ export async function POST(request: NextRequest) {
       angleId: angleKey,
       parts: fitmentParts,
       mode: 'fitment',
+      referenceAfter: input.referenceAfterUrl,
     });
 
     if (!ai.afterImageUrl) {
