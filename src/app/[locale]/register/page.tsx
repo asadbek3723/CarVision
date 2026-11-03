@@ -232,10 +232,8 @@ function CountryPicker({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.025 }}
               onClick={() => onPick(item)}
-              className={`flex w-full items-center gap-3.5 rounded-xl border px-3.5 py-2.5 text-start transition cursor-pointer ${
-                isSelected
-                  ? 'border-gold bg-gold/10'
-                  : 'border-foreground/10 bg-ink/40 hover:border-gold/50 hover:bg-gold/5'
+              className={`flex w-full cursor-pointer items-center gap-3.5 rounded-2xl px-4 py-3 text-start transition ${
+                isSelected ? 'bg-[#D4AE62]/15' : 'bg-white/[0.05] hover:bg-white/[0.09]'
               }`}
             >
               <span className="text-xl">{item.flag}</span>
@@ -244,7 +242,7 @@ function CountryPicker({
               </span>
               <span className="text-xs text-foreground/55">{item.code}</span>
               {isSelected ? (
-                <Check className="h-3.5 w-3.5 text-gold" />
+                <Check className="h-4 w-4 text-[#D4AE62]" />
               ) : (
                 <ChevronRight className="h-3.5 w-3.5 text-foreground/40 rtl:rotate-180" />
               )}
@@ -296,20 +294,16 @@ function RolePicker({
             transition={{ delay: 0.08 + idx * 0.08 }}
             whileHover={{ y: -2 }}
             onClick={() => onPick(item.id)}
-            className={`group flex w-full items-center gap-4 rounded-2xl border p-4 text-start transition cursor-pointer ${
-              isSelected
-                ? 'border-gold bg-gold/10 shadow-[var(--shadow-gold)]'
-                : 'border-foreground/10 bg-ink/40 hover:border-gold/50'
+            className={`group flex w-full cursor-pointer items-center gap-4 rounded-3xl p-5 text-start transition ${
+              isSelected ? 'bg-[#D4AE62]/15' : 'bg-white/[0.05] hover:bg-white/[0.09]'
             }`}
           >
             <span
-              className={`grid h-12 w-12 place-items-center rounded-xl border transition ${
-                isSelected
-                  ? 'border-gold bg-gold text-ink'
-                  : 'border-gold/30 text-gold group-hover:bg-gold/10'
+              className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl transition ${
+                isSelected ? 'bg-[#D4AE62] text-black' : 'bg-[#D4AE62]/15 text-[#D4AE62]'
               }`}
             >
-              <IconComponent className="h-5 w-5" />
+              <IconComponent className="h-6 w-6" strokeWidth={1.8} />
             </span>
             <span className="flex-1">
               <span className="font-display block text-xl text-foreground">
@@ -319,7 +313,7 @@ function RolePicker({
                 {item.desc}
               </span>
             </span>
-            <ChevronRight className="h-4 w-4 text-foreground/40 transition group-hover:translate-x-1 rtl:group-hover:-translate-x-1 group-hover:text-gold rtl:rotate-180" />
+            <ChevronRight className="h-4 w-4 text-white/40 transition group-hover:translate-x-1 group-hover:text-[#D4AE62] rtl:rotate-180 rtl:group-hover:-translate-x-1" />
           </motion.button>
         );
       })}
