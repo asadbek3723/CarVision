@@ -2,425 +2,225 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireSeller } from '@/server/auth/guards';
-import { convertToUSD, SupportedCurrency } from '@/domain/currency';
+import { coverFor, itemBodySchema, loadItems, replaceItemRelations } from '@/server/catalog';
+import { toUsdCents, veloceCategory, type CatalogItemDTO } from '@/domain/catalog';
 
-const addPartSchema = z.object({
-  name: z.string().min(2, 'Mahsulot nomini kiriting').max(150),
-  categoryId: z.string().min(1, 'Kategoriyani tanlang'),
-  brand: z.string().min(1, 'Brend nomini kiriting').max(100),
-  price: z.number().positive('Narx 0 dan katta bo‘lishi kerak'),
-  currency: z
-    .enum(['USD', 'UZS', 'AED', 'TRY', 'KZT', 'KGS', 'TJS', 'RUB'])
-    .default('USD'),
-  stock: z.number().int().nonnegative('Qoldiq sonini kiriting').default(1),
-  compatibility: z.array(z.string()).min(1, 'Kamida 1 ta avtomobil modelini tanlang'),
-  spec: z.string().optional(),
-  imageUrl: z.string().min(5, 'Rasmni yuklang'),
-  installationAvailable: z.boolean().default(true),
-  installationPrice: z.number().nonnegative().optional(),
-  sellerId: z.string().uuid().optional(),
-});
+const fail = (status: number, error: string, extra: Record<string, unknown> = {}) =>
+  NextResponse.json({ success: false, error, ...extra }, { status });
 
-const bulkImportSchema = z.object({
-  sellerId: z.string().uuid().optional(),
-  bulkItems: z
-    .array(
-      z.object({
-        name: z.string().min(2),
-        brand: z.string().default('OEM / Custom'),
-        category: z.string().optional(),
-        priceUSD: z.number().positive(),
-        stock: z.number().int().positive().default(5),
-        imageUrl: z.string().min(5),
-        spec: z.string().optional(),
-        compatibility: z.array(z.string()).optional(),
-      })
-    )
-    .min(1),
-});
-
-async function resolveSellerAndCategories(supabase: ReturnType<typeof createAdminClient>, sellerId?: string | null) {
-  const resolvedSellerId = sellerId || undefined;
-  let sellerInfo: { id: string; business_name: string; address?: string | null; phone?: string | null; credits?: number | null } | null = null;
-
-  if (resolvedSellerId) {
-    const { data } = await supabase
-      .from('sellers')
-      .select('id, business_name, address, phone, credits')
-      .eq('id', resolvedSellerId)
-      .maybeSingle();
-    if (data) sellerInfo = data;
-  }
-
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, slug, name')
-    .order('name');
-
+/** Shape the studio / customize screens already understand (VeloceProduct). */
+function toVeloceProduct(i: CatalogItemDTO) {
   return {
-    sellerId: resolvedSellerId,
-    seller: sellerInfo,
-    categories: categories || [],
+    id: i.id,
+    name: i.name,
+    brand: i.brand || 'CarVision',
+    price: i.priceUSD,
+    priceUSD: i.priceUSD,
+    spec: i.description,
+    category: veloceCategory(i.category),
+    image: i.coverImageUrl ?? i.images[0]?.url ?? '',
+    angleImage: i.images.find((g) => g.kind === 'ANGLE')?.url,
+    swatch: typeof i.attributes['swatch'] === 'string' ? (i.attributes['swatch'] as string) : undefined,
+    stock: i.stock,
+    inStock: i.stock > 0,
+    rating: 5,
+    status: i.status,
+    targetCar: i.fitment[0]?.label,
+    compatibility: i.fitment.map((f) => ({ id: f.modelId ?? f.id, name: f.label })),
   };
 }
 
-export async function GET(_request: NextRequest) {
+/** The signed-in workshop's own items (all statuses except archived). */
+export async function GET(request: NextRequest) {
   try {
     const guard = await requireSeller();
     if (!guard.ok) return guard.response;
-    const sellerId = guard.value.shopId;
+    const id = new URL(request.url).searchParams.get('id');
 
-    const supabase = createAdminClient();
-    const { sellerId: resolvedSellerId, seller, categories } = await resolveSellerAndCategories(
-      supabase,
-      sellerId
-    );
-
-    if (!resolvedSellerId) {
-      return NextResponse.json({ success: false, error: 'Seller not found' }, { status: 404 });
-    }
-
-    const { data: initialProducts, error } = await supabase
-      .from('products')
-      .select(`
-        id,
-        seller_id,
-        category_id,
-        name,
-        description,
-        price,
-        image_url,
-        stock,
-        brand,
-        installation_available,
-        installation_price,
-        is_active,
-        created_at,
-        categories (
-          id,
-          slug,
-          name
-        )
-      `)
-      .eq('seller_id', resolvedSellerId)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-
-    let products = initialProducts;
-
-    if (!error && (!products || products.length === 0)) {
-      const fallbackRes = await supabase
-        .from('products')
-        .select(`
-          id,
-          seller_id,
-          category_id,
-          name,
-          description,
-          price,
-          image_url,
-          stock,
-          brand,
-          installation_available,
-          installation_price,
-          is_active,
-          created_at,
-          categories (
-            id,
-            slug,
-            name
-          )
-        `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(24);
-      if (!fallbackRes.error && fallbackRes.data) {
-        products = fallbackRes.data;
-      }
-    }
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    const mapped = (products || []).map((p) => {
-      const cat = Array.isArray(p.categories) ? p.categories[0] : p.categories;
-      const rawPrice = Number(p.price) || 0;
-      const priceUSD = rawPrice > 50000 ? Math.max(1, Math.round(rawPrice / 13000)) : rawPrice;
-      const priceUZS = rawPrice > 50000 ? rawPrice : Math.round(rawPrice * 13000);
-
-      return {
-        id: p.id,
-        name: p.name,
-        brand: p.brand || 'Custom Studio',
-        price: priceUZS,
-        priceUSD,
-        priceUZS,
-        spec: p.description || '',
-        category: cat?.name || 'Boshqa',
-        categoryId: p.category_id,
-        categorySlug: cat?.slug || 'other',
-        image: p.image_url || '/images/garage/bbs_wheel.jpg',
-        stock: p.stock ?? 1,
-        inStock: (p.stock ?? 1) > 0,
-        rating: 5.0,
-        installationAvailable: p.installation_available ?? true,
-        installationPrice: p.installation_price ?? 0,
-        createdAt: p.created_at,
-      };
+    const items = await loadItems(createAdminClient(), {
+      shopId: guard.value.shopId,
+      statuses: ['DRAFT', 'PUBLISHED'],
+      ids: id ? [id] : undefined,
+      limit: 200,
     });
 
     return NextResponse.json({
       success: true,
-      sellerId: resolvedSellerId,
-      seller,
-      products: mapped,
-      categories,
-      totalCount: mapped.length,
-      inStockCount: mapped.filter((p) => p.inStock).length,
+      seller: { id: guard.value.shopId, business_name: guard.value.session.shop?.shop_name ?? '' },
+      items,
+      products: items.map(toVeloceProduct),
+      totalCount: items.length,
+      inStockCount: items.filter((i) => i.stock > 0 && i.status === 'PUBLISHED').length,
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  } catch (err) {
+    console.error('inventory GET error:', err);
+    return fail(500, 'Serverda xatolik yuz berdi');
   }
 }
 
+/** Creates an item. It is published immediately unless `publish: false` (draft). */
 export async function POST(request: NextRequest) {
   try {
     const guard = await requireSeller();
     if (!guard.ok) return guard.response;
-    const body = await request.json();
-    const supabase = createAdminClient();
 
-    // Check if this is a Bulk Import request from 1-Click Master Catalog Importer
-    if (Array.isArray(body?.bulkItems)) {
-      const parsedBulk = bulkImportSchema.safeParse(body);
-      if (!parsedBulk.success) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid bulk import payload', details: parsedBulk.error.flatten() },
-          { status: 400 }
-        );
-      }
+    const parsed = itemBodySchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
+      return fail(400, parsed.error.issues[0]?.message ?? 'Ma’lumotlar noto‘g‘ri', { details: parsed.error.flatten() });
+    }
+    const body = parsed.data;
+    const db = createAdminClient();
+    const shopId = guard.value.shopId;
 
-      const { sellerId: resolvedSellerId, categories } = await resolveSellerAndCategories(
-        supabase,
-        guard.value.shopId
-      );
-
-      if (!resolvedSellerId) {
-        return NextResponse.json({ success: false, error: 'No active seller found' }, { status: 404 });
-      }
-
-      const defaultCategoryId = categories[0]?.id;
-
-      const rowsToInsert = parsedBulk.data.bulkItems.map((item) => {
-        const matchedCat = categories.find(
-          (c) =>
-            c.slug.toLowerCase().includes((item.category || '').toLowerCase()) ||
-            c.name.toLowerCase().includes((item.category || '').toLowerCase())
-        );
-
-        const compatStr = item.compatibility?.length
-          ? `Mos avtomobillar: ${item.compatibility.join(', ')}`
-          : 'Universal / Chevrolet / BYD / Kia';
-
-        return {
-          seller_id: resolvedSellerId,
-          category_id: matchedCat?.id || defaultCategoryId,
-          name: item.name,
-          brand: item.brand,
-          price: Math.round(item.priceUSD * 13000),
-          description: item.spec ? `${item.spec} · ${compatStr}` : compatStr,
-          image_url: item.imageUrl,
-          stock: item.stock,
-          installation_available: true,
-          installation_price: 0,
-          is_active: true,
-        };
-      });
-
-      const { data: inserted, error } = await supabase
-        .from('products')
-        .insert(rowsToInsert)
-        .select('id, name, price, image_url, stock, brand, description, category_id');
-
-      if (error) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-      }
-
-      return NextResponse.json({
-        success: true,
-        importedCount: inserted?.length || rowsToInsert.length,
-        products: inserted || [],
-        message: `${inserted?.length || rowsToInsert.length} ta ehtiyot qism omborga muvaffaqiyatli qo‘shildi`,
-      });
+    const { count } = await db.from('catalog_items').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).neq('status', 'ARCHIVED');
+    const { data: plan } = await db.from('pricing_plans').select('max_custom_items').eq('code', guard.value.session.shop?.current_plan_code ?? 'FREE_TRIAL').maybeSingle();
+    const limit = (plan?.max_custom_items as number | undefined) ?? 10;
+    if ((count ?? 0) >= limit) {
+      return fail(402, `Tarifingizda ${limit} tagacha mahsulot qo‘shish mumkin. Tarifni yangilang`, { code: 'ITEM_LIMIT' });
     }
 
-    // Single Part Creation
-    const validated = addPartSchema.safeParse(body);
-    if (!validated.success) {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: validated.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const {
-      name,
-      categoryId,
-      brand,
-      price,
-      currency,
-      stock,
-      compatibility,
-      spec,
-      imageUrl,
-      installationAvailable,
-      installationPrice,
-    } = validated.data;
-
-    const { sellerId: resolvedSellerId, categories } = await resolveSellerAndCategories(
-      supabase,
-      guard.value.shopId
-    );
-
-    if (!resolvedSellerId) {
-      return NextResponse.json({ success: false, error: 'No active seller found' }, { status: 404 });
-    }
-
-    // Resolve category UUID (accepts UUID or slug/name)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    let resolvedCategoryId = uuidRegex.test(categoryId) ? categoryId : undefined;
-    if (!resolvedCategoryId) {
-      const foundCat = categories.find(
-        (c) =>
-          c.slug.toLowerCase() === categoryId.toLowerCase() ||
-          c.name.toLowerCase().includes(categoryId.toLowerCase())
-      );
-      resolvedCategoryId = foundCat?.id || categories[0]?.id;
-    }
-
-    const compatibilityStr = compatibility.join(', ');
-    const fullDescription = `${spec ? `${spec} · ` : ''}Mos avtomobillar: ${compatibilityStr}`;
-
-    // Convert input currency to UZS for storage consistency in products table
-    const priceUSD = convertToUSD(price, currency as SupportedCurrency);
-    const priceUZS = Math.max(13000, Math.round(priceUSD * 13000));
-
-    const { data: newProduct, error } = await supabase
-      .from('products')
+    const { data: created, error } = await db
+      .from('catalog_items')
       .insert({
-        seller_id: resolvedSellerId,
-        category_id: resolvedCategoryId,
-        name,
-        brand,
-        price: priceUZS,
-        description: fullDescription,
-        image_url: imageUrl,
-        stock,
-        installation_available: installationAvailable,
-        installation_price: installationPrice || 0,
-        is_active: true,
+        shop_id: shopId,
+        category: body.category,
+        name: body.name,
+        brand: body.brand || null,
+        description: body.description || null,
+        price_cents: toUsdCents(body.price, body.currency),
+        input_currency: body.currency,
+        input_price: body.price,
+        stock: body.stock,
+        install_available: body.installAvailable,
+        install_price_cents: toUsdCents(body.installPrice ?? 0, body.currency),
+        attributes: body.attributes,
+        status: body.publish ? 'PUBLISHED' : 'DRAFT',
+        cover_image_url: coverFor(body),
+        published_at: body.publish ? new Date().toISOString() : null,
       })
-      .select('id, name, price, image_url, stock, brand, description, category_id')
+      .select('id')
       .single();
-
-    if (error || !newProduct) {
-      return NextResponse.json(
-        { success: false, error: error?.message || 'Database insert failed' },
-        { status: 500 }
-      );
+    if (error || !created) {
+      console.error('catalog insert failed:', error?.message);
+      return fail(500, 'Mahsulotni saqlab bo‘lmadi');
     }
 
-    return NextResponse.json({
-      success: true,
-      product: {
-        id: newProduct.id,
-        name: newProduct.name,
-        price: priceUZS,
-        priceUSD: Math.round(priceUSD),
-        priceUZS,
-        image: newProduct.image_url,
-        stock: newProduct.stock,
-        brand: newProduct.brand,
-        spec: newProduct.description,
-      },
-      message: 'Mahsulot muvaffaqiyatli omborga qo‘shildi',
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    const relErr = await replaceItemRelations(db, created.id as string, shopId, body);
+    if (relErr) {
+      await db.from('catalog_items').delete().eq('id', created.id);
+      return fail(400, relErr);
+    }
+
+    const [item] = await loadItems(db, { shopId, ids: [created.id as string], limit: 1 });
+    return NextResponse.json({ success: true, item }, { status: 201 });
+  } catch (err) {
+    console.error('inventory POST error:', err);
+    return fail(500, 'Serverda xatolik yuz berdi');
   }
 }
 
+const quickSchema = z
+  .object({
+    id: z.string().uuid(),
+    stock: z.number().int().min(0).max(100_000).optional(),
+    status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
+  })
+  .strict();
+
+/** Full edit (`name` present) or a quick update of stock / visibility. */
 export async function PATCH(request: NextRequest) {
   try {
     const guard = await requireSeller();
     if (!guard.ok) return guard.response;
-    const body = await request.json();
-    const { productId, stock, priceUSD, name, isActive } = body as {
-      productId?: string;
-      stock?: number;
-      priceUSD?: number;
-      name?: string;
-      isActive?: boolean;
-    };
+    const shopId = guard.value.shopId;
+    const db = createAdminClient();
+    const raw = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+    if (!raw || typeof raw['id'] !== 'string') return fail(400, 'id kerak');
 
-    if (!productId) {
-      return NextResponse.json({ success: false, error: 'productId is required' }, { status: 400 });
+    if (!('name' in raw)) {
+      const quick = quickSchema.safeParse(raw);
+      if (!quick.success) return fail(400, 'Ma’lumotlar noto‘g‘ri');
+      const updates: Record<string, unknown> = {};
+      if (quick.data.stock !== undefined) updates['stock'] = quick.data.stock;
+      if (quick.data.status) {
+        updates['status'] = quick.data.status;
+        if (quick.data.status === 'PUBLISHED') updates['published_at'] = new Date().toISOString();
+      }
+      if (Object.keys(updates).length === 0) return fail(400, 'O‘zgarish yo‘q');
+      const { data, error } = await db
+        .from('catalog_items')
+        .update(updates)
+        .eq('id', quick.data.id)
+        .eq('shop_id', shopId)
+        .neq('status', 'ARCHIVED')
+        .select('id')
+        .maybeSingle();
+      if (error || !data) return fail(404, 'Mahsulot topilmadi');
+      return NextResponse.json({ success: true });
     }
 
-    const updates: Record<string, unknown> = {};
-    if (typeof stock === 'number') updates.stock = Math.max(0, Math.round(stock));
-    if (typeof priceUSD === 'number' && priceUSD > 0) updates.price = Math.round(priceUSD * 13000);
-    if (typeof name === 'string' && name.trim()) updates.name = name.trim();
-    if (typeof isActive === 'boolean') updates.is_active = isActive;
-
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from('products')
-      .update(updates)
-      .eq('id', productId)
-      .eq('seller_id', guard.value.shopId)
-      .select('id, name, price, stock, is_active')
-      .single();
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const { id, ...rest } = raw;
+    const parsed = itemBodySchema.safeParse(rest);
+    if (!parsed.success) {
+      return fail(400, parsed.error.issues[0]?.message ?? 'Ma’lumotlar noto‘g‘ri', { details: parsed.error.flatten() });
     }
+    const body = parsed.data;
 
-    return NextResponse.json({ success: true, product: data });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    const { data: existing } = await db.from('catalog_items').select('id, status').eq('id', id as string).eq('shop_id', shopId).maybeSingle();
+    if (!existing || existing.status === 'ARCHIVED') return fail(404, 'Mahsulot topilmadi');
+
+    const { error } = await db
+      .from('catalog_items')
+      .update({
+        category: body.category,
+        name: body.name,
+        brand: body.brand || null,
+        description: body.description || null,
+        price_cents: toUsdCents(body.price, body.currency),
+        input_currency: body.currency,
+        input_price: body.price,
+        stock: body.stock,
+        install_available: body.installAvailable,
+        install_price_cents: toUsdCents(body.installPrice ?? 0, body.currency),
+        attributes: body.attributes,
+        status: body.publish ? 'PUBLISHED' : 'DRAFT',
+        cover_image_url: coverFor(body),
+        published_at: body.publish ? new Date().toISOString() : null,
+      })
+      .eq('id', id as string)
+      .eq('shop_id', shopId);
+    if (error) return fail(500, 'Mahsulotni saqlab bo‘lmadi');
+
+    const relErr = await replaceItemRelations(db, id as string, shopId, body);
+    if (relErr) return fail(400, relErr);
+
+    const [item] = await loadItems(db, { shopId, ids: [id as string], limit: 1 });
+    return NextResponse.json({ success: true, item });
+  } catch (err) {
+    console.error('inventory PATCH error:', err);
+    return fail(500, 'Serverda xatolik yuz berdi');
   }
 }
 
+/** Soft delete: the item disappears from the shop but order history stays intact. */
 export async function DELETE(request: NextRequest) {
   try {
     const guard = await requireSeller();
     if (!guard.ok) return guard.response;
-    const { searchParams } = new URL(request.url);
-    const productId = searchParams.get('productId');
+    const id = new URL(request.url).searchParams.get('productId') ?? new URL(request.url).searchParams.get('id');
+    if (!id || !z.string().uuid().safeParse(id).success) return fail(400, 'id kerak');
 
-    if (!productId) {
-      return NextResponse.json({ success: false, error: 'productId is required' }, { status: 400 });
-    }
-
-    const supabase = createAdminClient();
-    const { error } = await supabase
-      .from('products')
-      .update({ is_active: false })
-      .eq('id', productId)
-      .eq('seller_id', guard.value.shopId);
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
+    const { data, error } = await createAdminClient()
+      .from('catalog_items')
+      .update({ status: 'ARCHIVED' })
+      .eq('id', id)
+      .eq('shop_id', guard.value.shopId)
+      .select('id')
+      .maybeSingle();
+    if (error || !data) return fail(404, 'Mahsulot topilmadi');
     return NextResponse.json({ success: true });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  } catch (err) {
+    console.error('inventory DELETE error:', err);
+    return fail(500, 'Serverda xatolik yuz berdi');
   }
 }

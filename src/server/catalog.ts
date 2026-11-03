@@ -1,0 +1,222 @@
+import { z } from 'zod';
+import { createAdminClient } from '@/lib/supabase/server';
+import {
+  CATEGORY_SLUGS,
+  MAX_ITEM_IMAGES,
+  PRICE_CURRENCIES,
+  categoryLabel,
+  centsToUsd,
+  type CatalogCategory,
+  type CatalogItemDTO,
+} from '@/domain/catalog';
+
+type Db = ReturnType<typeof createAdminClient>;
+
+export const CATALOG_BUCKET = 'catalog';
+
+/** Public URL prefix every image of a shop must start with (prevents hot-linking arbitrary hosts). */
+export function shopImagePrefix(shopId: string): string {
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
+  return `${base}/storage/v1/object/public/${CATALOG_BUCKET}/${shopId}/`;
+}
+
+const attributesSchema = z
+  .object({
+    diameter: z.number().int().min(10).max(30).optional(),
+    width: z.number().min(3).max(15).optional(),
+    pcd: z.string().trim().max(20).optional(),
+    offset: z.number().int().min(-60).max(100).optional(),
+    swatch: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+    material: z.string().trim().max(60).optional(),
+    color: z.string().trim().max(60).optional(),
+    universal: z.boolean().optional(),
+  })
+  .strict();
+
+const fitmentSchema = z
+  .object({
+    modelId: z.string().uuid().optional(),
+    customModel: z.string().trim().min(2).max(120).optional(),
+    yearFrom: z.number().int().min(1950).max(2100).optional(),
+    yearTo: z.number().int().min(1950).max(2100).optional(),
+  })
+  .refine((f) => Boolean(f.modelId || f.customModel), 'modelId yoki customModel kerak')
+  .refine((f) => !f.yearFrom || !f.yearTo || f.yearFrom <= f.yearTo, 'Yil oralig‘i noto‘g‘ri');
+
+export const itemBodySchema = z
+  .object({
+    name: z.string().trim().min(2, 'Nomini kiriting').max(150),
+    brand: z.string().trim().max(100).optional(),
+    description: z.string().trim().max(1500).optional(),
+    category: z.enum(CATEGORY_SLUGS),
+    price: z.number().positive('Narx 0 dan katta bo‘lishi kerak').max(1_000_000_000),
+    currency: z.enum(PRICE_CURRENCIES).default('USD'),
+    stock: z.number().int().min(0).max(100_000).default(1),
+    installAvailable: z.boolean().default(true),
+    installPrice: z.number().min(0).max(1_000_000_000).optional(),
+    attributes: attributesSchema.default({}),
+    images: z
+      .array(z.object({ url: z.string().url(), kind: z.enum(['ORIGINAL', 'STUDIO', 'ANGLE']).default('ORIGINAL') }))
+      .min(1, 'Kamida 1 ta rasm kerak')
+      .max(MAX_ITEM_IMAGES),
+    fitment: z.array(fitmentSchema).max(60).default([]),
+    publish: z.boolean().default(true),
+  })
+  .strict()
+  .refine((b) => b.attributes.universal === true || b.fitment.length > 0, {
+    message: 'Kamida 1 ta mashinani tanlang yoki "Barcha mashinalarga" ni belgilang',
+    path: ['fitment'],
+  });
+
+export type ItemBody = z.infer<typeof itemBodySchema>;
+
+interface ItemRow {
+  id: string;
+  shop_id: string;
+  category: string;
+  name: string;
+  brand: string | null;
+  description: string | null;
+  price_cents: number;
+  input_currency: string;
+  input_price: number | null;
+  stock: number;
+  install_available: boolean;
+  install_price_cents: number;
+  attributes: Record<string, unknown> | null;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  cover_image_url: string | null;
+  created_at: string;
+}
+
+export interface LoadItemsOptions {
+  shopId?: string | undefined;
+  ids?: string[] | undefined;
+  statuses?: Array<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'> | undefined;
+  category?: string | undefined;
+  query?: string | undefined;
+  limit?: number | undefined;
+}
+
+/** Loads items with their images and fitment (labels resolved from the vehicle database). */
+export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<CatalogItemDTO[]> {
+  let q = db
+    .from('catalog_items')
+    .select(
+      'id, shop_id, category, name, brand, description, price_cents, input_currency, input_price, stock, install_available, install_price_cents, attributes, status, cover_image_url, created_at'
+    )
+    .order('created_at', { ascending: false })
+    .limit(Math.min(opts.limit ?? 100, 200));
+
+  if (opts.shopId) q = q.eq('shop_id', opts.shopId);
+  if (opts.ids?.length) q = q.in('id', opts.ids);
+  if (opts.statuses?.length) q = q.in('status', opts.statuses);
+  if (opts.category) q = q.eq('category', opts.category);
+  if (opts.query) {
+    const safe = opts.query.replace(/[%,()]/g, ' ').trim();
+    if (safe) q = q.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
+  }
+
+  const { data: rows, error } = await q;
+  if (error) throw new Error(error.message);
+  const items = (rows ?? []) as ItemRow[];
+  if (items.length === 0) return [];
+
+  const ids = items.map((i) => i.id);
+  const [{ data: imgs }, { data: fits }] = await Promise.all([
+    db.from('catalog_item_images').select('id, item_id, url, kind, position').in('item_id', ids).order('position'),
+    db.from('catalog_item_fitment').select('id, item_id, model_id, custom_model, year_from, year_to').in('item_id', ids),
+  ]);
+
+  const modelIds = [...new Set((fits ?? []).map((f) => f.model_id as string | null).filter((v): v is string => Boolean(v)))];
+  const modelLabel = new Map<string, string>();
+  if (modelIds.length) {
+    const { data: models } = await db.from('vehicle_models').select('id, name, make_id').in('id', modelIds);
+    const makeIds = [...new Set((models ?? []).map((m) => m.make_id as string))];
+    const { data: makes } = makeIds.length
+      ? await db.from('vehicle_makes').select('id, name').in('id', makeIds)
+      : { data: [] as Array<{ id: string; name: string }> };
+    const makeName = new Map((makes ?? []).map((m) => [m.id as string, m.name as string]));
+    for (const m of models ?? []) {
+      modelLabel.set(m.id as string, `${makeName.get(m.make_id as string) ?? ''} ${m.name as string}`.trim());
+    }
+  }
+
+  return items.map((i) => {
+    const attrs = (i.attributes ?? {}) as Record<string, unknown>;
+    return {
+      id: i.id,
+      shopId: i.shop_id,
+      name: i.name,
+      brand: i.brand ?? '',
+      description: i.description ?? '',
+      category: i.category as CatalogCategory,
+      categoryLabel: categoryLabel(i.category),
+      priceUSD: centsToUsd(i.price_cents),
+      inputPrice: i.input_price,
+      inputCurrency: i.input_currency,
+      stock: i.stock,
+      installAvailable: i.install_available,
+      installPriceUSD: centsToUsd(i.install_price_cents),
+      attributes: attrs,
+      status: i.status,
+      coverImageUrl: i.cover_image_url,
+      images: (imgs ?? [])
+        .filter((g) => g.item_id === i.id)
+        .map((g) => ({ id: g.id as string, url: g.url as string, kind: g.kind as 'ORIGINAL' | 'STUDIO' | 'ANGLE' })),
+      fitment: (fits ?? [])
+        .filter((f) => f.item_id === i.id)
+        .map((f) => ({
+          id: f.id as string,
+          modelId: (f.model_id as string | null) ?? null,
+          customModel: (f.custom_model as string | null) ?? null,
+          label: f.model_id ? modelLabel.get(f.model_id as string) ?? 'Noma’lum model' : (f.custom_model as string),
+          yearFrom: (f.year_from as number | null) ?? null,
+          yearTo: (f.year_to as number | null) ?? null,
+        })),
+      isUniversal: attrs['universal'] === true,
+      createdAt: i.created_at,
+    };
+  });
+}
+
+/** Writes images + fitment of an item (full replace). Returns an error string or null. */
+export async function replaceItemRelations(db: Db, itemId: string, shopId: string, body: ItemBody): Promise<string | null> {
+  const prefix = shopImagePrefix(shopId);
+  if (body.images.some((img) => !img.url.startsWith(prefix))) {
+    return 'Rasm manzili noto‘g‘ri. Rasmlarni qayta yuklang';
+  }
+
+  const modelIds = [...new Set(body.fitment.map((f) => f.modelId).filter((v): v is string => Boolean(v)))];
+  if (modelIds.length) {
+    const { data: found } = await db.from('vehicle_models').select('id').in('id', modelIds);
+    if ((found ?? []).length !== modelIds.length) return 'Tanlangan mashina bazada topilmadi';
+  }
+
+  const { error: delImgErr } = await db.from('catalog_item_images').delete().eq('item_id', itemId);
+  const { error: delFitErr } = await db.from('catalog_item_fitment').delete().eq('item_id', itemId);
+  if (delImgErr || delFitErr) return 'Saqlashda xatolik';
+
+  const { error: imgErr } = await db
+    .from('catalog_item_images')
+    .insert(body.images.map((img, position) => ({ item_id: itemId, url: img.url, kind: img.kind, position })));
+  if (imgErr) return 'Rasmlarni saqlashda xatolik';
+
+  if (body.fitment.length) {
+    const { error: fitErr } = await db.from('catalog_item_fitment').insert(
+      body.fitment.map((f) => ({
+        item_id: itemId,
+        model_id: f.modelId ?? null,
+        custom_model: f.modelId ? null : f.customModel ?? null,
+        year_from: f.yearFrom ?? null,
+        year_to: f.yearTo ?? null,
+      }))
+    );
+    if (fitErr) return 'Mashina moslikni saqlashda xatolik';
+  }
+  return null;
+}
+
+export function coverFor(body: ItemBody): string {
+  return (body.images.find((i) => i.kind === 'STUDIO') ?? body.images[0]!).url;
+}
