@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
           paymentMethod: 'Bank' as const,
           transactionRef: r.receipt_hash ? r.receipt_hash.slice(0, 12).toUpperCase() : '—',
           status: r.status === 'PENDING_ADMIN_APPROVAL' ? ('pending' as const) : r.status === 'REJECTED' ? ('rejected' as const) : ('verified' as const),
-          submittedAt: new Date(r.receipt_submitted_at ?? r.created_at).toLocaleString('uz-UZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          submittedAt: r.receipt_submitted_at ?? r.created_at,
           receiptUrl,
         };
       })

@@ -1,161 +1,79 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { verifyAdminSessionToken, ADMIN_COOKIE_NAME } from '@/lib/admin-auth';
+import { adminOr401, dayKey, lastDays } from '@/server/admin';
+
+export const dynamic = 'force-dynamic';
+
+const count = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
 
 export async function GET(request: NextRequest) {
+  const auth = adminOr401(request);
+  if ('response' in auth) return auth.response;
   try {
-    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-    if (!verifyAdminSessionToken(token)) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
+    const db = createAdminClient();
+    const now = new Date().toISOString();
+    const since30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const head = { count: 'exact' as const, head: true };
 
-    const supabase = createAdminClient();
-
-    // 1. Fetch live metrics from Supabase in parallel
-    const [
-      { count: sellersCount },
-      { count: productsCount },
-      { data: ordersData },
-      { count: generationsCount },
-      { data: recentGenerations },
-      { data: recentOrders },
-    ] = await Promise.all([
-      supabase.from('sellers').select('*', { count: 'exact', head: true }),
-      supabase.from('products').select('*', { count: 'exact', head: true }),
-      supabase.from('orders').select('id, total, status, created_at'),
-      supabase.from('seller_generations').select('*', { count: 'exact', head: true }),
-      supabase
-        .from('seller_generations')
-        .select(`
-          id,
-          prompt,
-          result_image,
-          created_at,
-          sellers (
-            business_name
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(3),
-      supabase
-        .from('orders')
-        .select(`
-          id,
-          total,
-          note,
-          status,
-          created_at,
-          sellers (
-            business_name
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(3),
+    const [users, sellers, shops, paidShops, items, pending, unlocked, redeemed, gensOk, gensFailed, auditRows, signups, gens, books, deposits, committed] = await Promise.all([
+      count(db.from('profiles').select('id', head)),
+      count(db.from('profiles').select('id', head).eq('role', 'b2b_seller')),
+      count(db.from('shops').select('id', head)),
+      count(db.from('shops').select('id', head).neq('current_plan_code', 'FREE_TRIAL').gt('plan_expires_at', now)),
+      count(db.from('catalog_items').select('id', head).eq('status', 'PUBLISHED')),
+      count(db.from('bookings').select('id', head).eq('status', 'PENDING_ADMIN_APPROVAL')),
+      count(db.from('bookings').select('id', head).eq('status', 'UNLOCKED')),
+      count(db.from('bookings').select('id', head).eq('status', 'REDEEMED')),
+      count(db.from('generations').select('id', head).eq('status', 'COMPLETED').gte('created_at', since30)),
+      count(db.from('generations').select('id', head).eq('status', 'FAILED').gte('created_at', since30)),
+      db.from('admin_audit_log').select('id, action, target_entity, created_at, admin_id').order('created_at', { ascending: false }).limit(6),
+      db.from('profiles').select('created_at').gte('created_at', since7).limit(5000),
+      db.from('generations').select('created_at, status').gte('created_at', since7).limit(5000),
+      db.from('bookings').select('created_at').gte('created_at', since7).limit(5000),
+      db.from('bookings').select('deposit_cents, total_cents').in('status', ['UNLOCKED', 'REDEEMED']).limit(5000),
+      db.from('generations').select('credits_charged').eq('credit_state', 'COMMITTED').gte('created_at', since30).limit(10000),
     ]);
 
-    const totalOrders = ordersData?.length || 0;
-    const revenueUSD = (ordersData || []).reduce((acc, o) => {
-      const raw = Number(o.total) || 0;
-      const usd = raw > 50000 ? Math.round(raw / 13000) : raw;
-      return acc + usd;
-    }, 0);
-    const escrowDepositUSD = Math.round(revenueUSD * 0.03);
-
-    // 2. Build live recent activity feed from Supabase
-    const liveActivity: Array<{
-      id: string;
-      studio: string;
-      action: string;
-      time: string;
-      tag: string;
-      tagColor: string;
-    }> = [];
-
-    (recentGenerations || []).forEach((g) => {
-      const seller = Array.isArray(g.sellers) ? g.sellers[0] : g.sellers;
-      const studioName = seller?.business_name || 'CarVision Studio';
-      const promptTitle = g.prompt ? g.prompt.split(':')[0] : 'Avtomobil 4K renderni';
-      liveActivity.push({
-        id: `gen-${g.id}`,
-        studio: studioName,
-        action: `${promptTitle} 4K neyron fitment renderini muvaffaqiyatli yakunladi`,
-        time: 'Hozirgina',
-        tag: '4K Render',
-        tagColor: 'text-[#D4AE62] bg-[#D4AE62]/10',
-      });
-    });
-
-    (recentOrders || []).forEach((o) => {
-      const seller = Array.isArray(o.sellers) ? o.sellers[0] : o.sellers;
-      const studioName = seller?.business_name || 'Tuning Markazi';
-      const orderNote = o.note ? o.note.split(':')[0] : 'Mijoz';
-      const rawTotal = Number(o.total) || 0;
-      const orderUSD = rawTotal > 50000 ? Math.round(rawTotal / 13000) : rawTotal;
-      const depositAmountUSD = Math.max(1, Math.round(orderUSD * 0.03));
-      liveActivity.push({
-        id: `ord-${o.id}`,
-        studio: studioName,
-        action: `${orderNote} uchun $${depositAmountUSD} (3% zakalat depoziti) kafolatlandi`,
-        time: 'Bugun',
-        tag: '3% Zakalat',
-        tagColor: 'text-emerald-400 bg-emerald-500/10',
-      });
-    });
-
-    // 3. Weekly Dynamics calculated from live Supabase orders and generations
-    const daysName = ['Yak', 'Dsh', 'Ssh', 'Chsh', 'Pay', 'Jum', 'Shb'];
-    const liveWeekly = [
-      { day: 'Dsh', amount: 0, renders: 0, height: '15%' },
-      { day: 'Ssh', amount: 0, renders: 0, height: '15%' },
-      { day: 'Chsh', amount: 0, renders: 0, height: '15%' },
-      { day: 'Pay', amount: 0, renders: 0, height: '15%' },
-      { day: 'Jum', amount: 0, renders: 0, height: '15%' },
-      { day: 'Shb', amount: 0, renders: 0, height: '15%' },
-      { day: 'Yak', amount: 0, renders: 0, height: '15%' },
-    ];
-
-    (ordersData || []).forEach((o) => {
-      const d = new Date(o.created_at);
-      const dayIdx = d.getDay(); // 0 is Yak
-      const mappedLabel = daysName[dayIdx];
-      const target = liveWeekly.find((w) => w.day === mappedLabel);
-      if (target) {
-        target.amount += Math.round((Number(o.total) || 0) / 13000);
+    const days = lastDays(7);
+    const series = (rows: Array<{ created_at: string }> | null) => {
+      const m = new Map(days.map((d) => [d, 0]));
+      for (const r of rows ?? []) {
+        const k = dayKey(r.created_at);
+        if (m.has(k)) m.set(k, (m.get(k) ?? 0) + 1);
       }
-    });
+      return days.map((d) => ({ day: d, value: m.get(d) ?? 0 }));
+    };
 
-    (recentGenerations || []).forEach((g) => {
-      const d = new Date(g.created_at);
-      const dayIdx = d.getDay();
-      const mappedLabel = daysName[dayIdx];
-      const target = liveWeekly.find((w) => w.day === mappedLabel);
-      if (target) {
-        target.renders += 1;
-      }
-    });
+    const depositCents = (deposits.data ?? []).reduce((s, b) => s + (b.deposit_cents as number), 0);
+    const dealCents = (deposits.data ?? []).reduce((s, b) => s + (b.total_cents as number), 0);
+    const creditsUsed = (committed.data ?? []).reduce((s, g) => s + (g.credits_charged as number), 0);
 
-    // Compute relative heights for bar visualization
-    const maxVal = Math.max(...liveWeekly.map((w) => w.amount), 1);
-    liveWeekly.forEach((w) => {
-      const pct = Math.max(15, Math.min(100, Math.round((w.amount / maxVal) * 100)));
-      w.height = `${pct}%`;
-    });
+    // Recent admin actions with admin phone
+    const adminIds = [...new Set((auditRows.data ?? []).map((a) => a.admin_id as string))];
+    const { data: admins } = adminIds.length ? await db.from('profiles').select('id, phone, full_name').in('id', adminIds) : { data: [] };
+    const adminName = new Map((admins ?? []).map((a) => [a.id as string, (a.full_name as string) || (a.phone as string)]));
 
     return NextResponse.json({
       success: true,
       metrics: {
-        totalRevenueFormatted: `$${revenueUSD.toLocaleString()}`,
-        sellersCount: sellersCount ?? 0,
-        productsCount: productsCount ?? 0,
-        generationsCount: generationsCount ?? 0,
-        escrowDepositFormatted: `$${escrowDepositUSD.toLocaleString()}`,
-        activeOrdersCount: totalOrders,
+        users, sellers, shops, paidShops, freeShops: shops - paidShops, publishedItems: items,
+        bookings: { pending, unlocked, redeemed },
+        depositUSD: depositCents / 100,
+        dealUSD: dealCents / 100,
+        renders30d: { completed: gensOk, failed: gensFailed, creditsUsed },
       },
-      recentActivity: liveActivity,
-      weeklyData: liveWeekly,
+      charts: { signups: series(signups.data), renders: series(gens.data), bookings: series(books.data) },
+      recentAdminActions: (auditRows.data ?? []).map((a) => ({
+        id: a.id as string,
+        action: a.action as string,
+        entity: a.target_entity as string,
+        admin: adminName.get(a.admin_id as string) ?? '—',
+        at: a.created_at as string,
+      })),
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  } catch (err) {
+    console.error('admin overview error:', err);
+    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }

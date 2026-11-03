@@ -1,176 +1,219 @@
 'use client';
 
 import * as React from 'react';
-import { Tablet, Smartphone, Laptop, LogOut, Search, CheckCircle2 } from 'lucide-react';
+import { Coins, Ban, Phone, ShieldCheck, Undo2 } from 'lucide-react';
+import { EmptyState, ErrorState, Field, PLAN_LABEL, PageHeader, Pill, SearchField, Segmented, Sheet, Spinner, Surface, dateTime, fieldClass, nf, useAdminApi, useAdminData, useToast } from './ui';
 
-interface DeviceSession {
+interface User {
   id: string;
-  studioName: string;
-  deviceLabel: string;
-  platform: 'ios' | 'android' | 'desktop';
-  ipAddress: string;
-  location: string;
-  lastHeartbeat: string;
-  status: 'active' | 'warning';
+  role: string;
+  name: string;
+  phone: string;
+  credits: number;
+  plan: string;
+  shopName: string | null;
+  banned: boolean;
+  bannedReason: string | null;
+  phoneVerified: boolean;
+  createdAt: string;
 }
 
+type RoleFilter = 'all' | 'b2c_user' | 'b2b_seller' | 'super_admin';
+const ROLE_LABEL: Record<string, string> = { b2c_user: 'Mijoz', b2b_seller: 'Usta', super_admin: 'Admin' };
+
 export function AdminUsersView() {
-  const [devices, setDevices] = React.useState<DeviceSession[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [search, setSearch] = React.useState('');
-  const [toast, setToast] = React.useState<string | null>(null);
-
-  // Fetch active sessions from live Supabase
+  const [q, setQ] = React.useState('');
+  const [debounced, setDebounced] = React.useState('');
+  const [role, setRole] = React.useState<RoleFilter>('all');
   React.useEffect(() => {
-    let isMounted = true;
-    const fetchDevices = async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetch('/api/v1/admin/devices');
-        const data = await res.json();
-        if (isMounted && data.success && Array.isArray(data.devices)) {
-          setDevices(data.devices);
-        }
-      } catch (err) {
-        console.error('Failed to load devices from Supabase:', err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-    fetchDevices();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    const t = setTimeout(() => setDebounced(q.trim()), 300);
+    return () => clearTimeout(t);
+  }, [q]);
 
-  const handleEvict = (id: string, name: string) => {
-    setDevices((prev) => prev.filter((d) => d.id !== id));
-    setToast(`"${name}" sessiyasi masofadan yakunlandi.`);
-    setTimeout(() => setToast(null), 3000);
-  };
+  const url = `/api/v1/admin/users?${new URLSearchParams({ ...(debounced ? { q: debounced } : {}), ...(role !== 'all' ? { role } : {}) }).toString()}`;
+  const { data, error, loading, reload } = useAdminData<{ users: User[]; total: number }>(url);
+  const api = useAdminApi();
+  const toast = useToast();
+  const [creditFor, setCreditFor] = React.useState<User | null>(null);
+  const [banFor, setBanFor] = React.useState<User | null>(null);
+  const [busy, setBusy] = React.useState<string | null>(null);
 
-  const filteredDevices = devices.filter(
-    (d) =>
-      d.studioName.toLowerCase().includes(search.toLowerCase()) ||
-      d.deviceLabel.toLowerCase().includes(search.toLowerCase()) ||
-      d.location.toLowerCase().includes(search.toLowerCase()) ||
-      d.ipAddress.includes(search)
-  );
-
-  const getPlatformIcon = (platform: DeviceSession['platform']) => {
-    switch (platform) {
-      case 'ios':
-        return <Tablet className="w-4 h-4 text-[#D4AE62]" />;
-      case 'android':
-        return <Smartphone className="w-4 h-4 text-emerald-400" />;
-      default:
-        return <Laptop className="w-4 h-4 text-sky-400" />;
+  const unban = async (u: User) => {
+    setBusy(u.id);
+    try {
+      await api('/api/v1/admin/users', { method: 'PATCH', body: JSON.stringify({ userId: u.id, banned: false }) });
+      toast.show('Blokdan chiqarildi');
+      await reload();
+    } catch (e) {
+      toast.show(e instanceof Error ? e.message : 'Xatolik', 'err');
+    } finally {
+      setBusy(null);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Toast Alert */}
-      {toast && (
-        <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2 shadow-lg animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 text-amber-400" />
-          <span>{toast}</span>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-white tracking-wide">
-            Faol Qurilmalar va Sessiyalar Nazorati
-          </h2>
-          <p className="text-xs text-[#94A3B8] mt-0.5">
-            Atelyelarning ruxsat etilgan kvotadan tashqari akkaunt bo‘lishishi va firibgarlikni oldini olish
-          </p>
-        </div>
-
-        <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 text-[#94A3B8] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Qurilma, atelye yoki IP..."
-            className="w-full h-10 ps-10 pe-4 rounded-xl bg-[#0D0F15] border border-[#D4AE62]/20 text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#D4AE62]"
-          />
-        </div>
+    <div>
+      {toast.node}
+      <PageHeader title="Foydalanuvchilar" subtitle={data ? `${nf.format(data.total)} ta akkaunt` : undefined} />
+      <div className="space-y-3">
+        <SearchField value={q} onChange={setQ} placeholder="Ism yoki telefon bo‘yicha qidirish" />
+        <Segmented
+          value={role}
+          onChange={setRole}
+          options={[
+            { id: 'all', label: 'Hammasi' },
+            { id: 'b2c_user', label: 'Mijozlar' },
+            { id: 'b2b_seller', label: 'Ustalar' },
+            { id: 'super_admin', label: 'Adminlar' },
+          ]}
+        />
       </div>
 
-      {/* Table */}
-      <div className="rounded-2xl bg-[#0D0F15] shadow-[0_4px_24px_rgba(0,0,0,0.5)] border border-[#D4AE62]/15 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-start border-collapse">
-            <thead>
-              <tr className="border-b border-[#D4AE62]/10 bg-[#12141C] text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">
-                <th className="py-4 px-6 text-start">Qurilma Modeli</th>
-                <th className="py-4 px-4 text-start">Atelye Nomi</th>
-                <th className="py-4 px-4 text-start">IP Manzil</th>
-                <th className="py-4 px-4 text-start">Joylashuv</th>
-                <th className="py-4 px-4 text-start">Oxirgi Faollik</th>
-                <th className="py-4 px-6 text-end">Amal</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#D4AE62]/5 text-xs">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-[#94A3B8] animate-pulse">
-                    Qurilmalar yuklanmoqda...
-                  </td>
-                </tr>
-              ) : filteredDevices.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-[#94A3B8]">
-                    Faol qurilmalar topilmadi.
-                  </td>
-                </tr>
+      <div className="mt-5 space-y-3">
+        {loading && !data ? (
+          <Spinner />
+        ) : error && !data ? (
+          <ErrorState message={error} onRetry={reload} />
+        ) : (data?.users.length ?? 0) === 0 ? (
+          <EmptyState>Foydalanuvchi topilmadi.</EmptyState>
+        ) : (
+          data!.users.map((u) => (
+            <Surface key={u.id} className="p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="truncate text-base font-bold text-white">{u.name || 'Ismsiz'}</h3>
+                  <a href={`tel:${u.phone}`} className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-white/55 hover:text-white">
+                    <Phone className="h-3.5 w-3.5" />
+                    {u.phone}
+                  </a>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <Pill tone={u.role === 'super_admin' ? 'gold' : u.role === 'b2b_seller' ? 'blue' : 'neutral'}>{ROLE_LABEL[u.role] ?? u.role}</Pill>
+                  {u.role === 'b2b_seller' && <Pill tone={u.plan === 'FREE_TRIAL' ? 'neutral' : 'gold'}>{PLAN_LABEL[u.plan] ?? u.plan}</Pill>}
+                  {u.phoneVerified && <Pill tone="green">Telefon tasdiqlangan</Pill>}
+                  {u.banned && <Pill tone="red">Bloklangan</Pill>}
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-white/50">
+                <span>Kredit: <b className="text-white">{nf.format(u.credits)}</b></span>
+                {u.shopName && <span>Ustaxona: <b className="text-white">{u.shopName}</b></span>}
+                <span>Ro‘yxatdan: {dateTime(u.createdAt)}</span>
+              </div>
+              {u.banned && u.bannedReason && <p className="mt-2 text-xs text-red-300">Sabab: {u.bannedReason}</p>}
+
+              {u.role !== 'super_admin' ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setCreditFor(u)} className="inline-flex items-center gap-1.5 rounded-full bg-[#D4AE62] px-4 py-2.5 text-xs font-bold text-black hover:brightness-110">
+                    <Coins className="h-3.5 w-3.5" />
+                    Kredit
+                  </button>
+                  {u.banned ? (
+                    <button type="button" disabled={busy === u.id} onClick={() => void unban(u)} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-50">
+                      <Undo2 className="h-3.5 w-3.5" />
+                      Blokdan chiqarish
+                    </button>
+                  ) : (
+                    <button type="button" onClick={() => setBanFor(u)} className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-4 py-2.5 text-xs font-semibold text-red-300 hover:bg-red-500/25">
+                      <Ban className="h-3.5 w-3.5" />
+                      Bloklash
+                    </button>
+                  )}
+                </div>
               ) : (
-                filteredDevices.map((d) => (
-                  <tr key={d.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-[#141722] flex items-center justify-center shrink-0">
-                          {getPlatformIcon(d.platform)}
-                        </div>
-                        <span className="font-bold text-white block text-sm">{d.deviceLabel}</span>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-4 font-medium text-white">{d.studioName}</td>
-
-                    <td className="py-4 px-4 font-mono text-[11px] text-[#94A3B8]">{d.ipAddress}</td>
-
-                    <td className="py-4 px-4 text-[#CBD5E1]">{d.location}</td>
-
-                    <td className="py-4 px-4 font-mono text-emerald-400">{d.lastHeartbeat}</td>
-
-                    <td className="py-4 px-6 text-end">
-                      <button
-                        type="button"
-                        onClick={() => handleEvict(d.id, d.deviceLabel)}
-                        className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-[11px] font-semibold transition-all inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Sessiyani Uzish</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-white/40"><ShieldCheck className="h-3.5 w-3.5" />Admin akkaunti himoyalangan</p>
               )}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredDevices.length === 0 && (
-          <div className="p-12 text-center text-xs text-[#94A3B8]">
-            Hech qanday qurilma topilmadi.
-          </div>
+            </Surface>
+          ))
         )}
       </div>
+
+      <CreditSheet user={creditFor} onClose={() => setCreditFor(null)} onDone={(m) => { setCreditFor(null); toast.show(m); void reload(); }} onError={(m) => toast.show(m, 'err')} />
+      <BanSheet user={banFor} onClose={() => setBanFor(null)} onDone={() => { setBanFor(null); toast.show('Foydalanuvchi bloklandi'); void reload(); }} onError={(m) => toast.show(m, 'err')} />
     </div>
+  );
+}
+
+function CreditSheet({ user, onClose, onDone, onError }: { user: User | null; onClose: () => void; onDone: (m: string) => void; onError: (m: string) => void }) {
+  const api = useAdminApi();
+  const [amount, setAmount] = React.useState('');
+  const [reason, setReason] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+  React.useEffect(() => {
+    if (user) {
+      setAmount('');
+      setReason('');
+    }
+  }, [user]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    const n = Math.trunc(Number(amount));
+    if (!n) return onError('Miqdorni kiriting (masalan 50 yoki -20)');
+    if (reason.trim().length < 3) return onError('Sababni yozing');
+    setSaving(true);
+    try {
+      const r = await api<{ balance: number }>('/api/v1/admin/users/credits', { method: 'POST', body: JSON.stringify({ userId: user.id, amount: n, reason: reason.trim() }) });
+      onDone(`Yangi balans: ${nf.format(r.balance)}`);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Bajarib bo‘lmadi');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Sheet open={Boolean(user)} onClose={onClose} title={user ? `Kredit: ${user.name || user.phone}` : 'Kredit'}>
+      <form onSubmit={submit} className="space-y-4">
+        <p className="text-sm text-white/60">Hozirgi balans: <b className="text-white">{user ? nf.format(user.credits) : ''}</b></p>
+        <Field label="Miqdor (+ qo‘shish, − ayirish)">
+          <input type="number" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="50" className={fieldClass} />
+        </Field>
+        <Field label="Sabab (majburiy)">
+          <input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} placeholder="Masalan: kompensatsiya, aksiya" className={fieldClass} />
+        </Field>
+        <button type="submit" disabled={saving} className="w-full rounded-full bg-[#D4AE62] py-3.5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-60">
+          {saving ? 'Saqlanmoqda…' : 'Saqlash'}
+        </button>
+      </form>
+    </Sheet>
+  );
+}
+
+function BanSheet({ user, onClose, onDone, onError }: { user: User | null; onClose: () => void; onDone: () => void; onError: (m: string) => void }) {
+  const api = useAdminApi();
+  const [reason, setReason] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+  React.useEffect(() => {
+    if (user) setReason('');
+  }, [user]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setSaving(true);
+    try {
+      await api('/api/v1/admin/users', { method: 'PATCH', body: JSON.stringify({ userId: user.id, banned: true, reason: reason.trim() || undefined }) });
+      onDone();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Bajarib bo‘lmadi');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Sheet open={Boolean(user)} onClose={onClose} title={user ? `Bloklash: ${user.name || user.phone}` : 'Bloklash'}>
+      <form onSubmit={submit} className="space-y-4">
+        <p className="text-sm text-white/60">Bloklangan foydalanuvchi tizimga kira olmaydi va AI renderlardan foydalana olmaydi. Istalgan vaqtda blokdan chiqarish mumkin.</p>
+        <Field label="Sabab (ixtiyoriy)">
+          <input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} className={fieldClass} />
+        </Field>
+        <button type="submit" disabled={saving} className="w-full rounded-full bg-red-500 py-3.5 text-sm font-bold text-white hover:brightness-110 disabled:opacity-60">
+          {saving ? 'Bloklanmoqda…' : 'Bloklash'}
+        </button>
+      </form>
+    </Sheet>
   );
 }
