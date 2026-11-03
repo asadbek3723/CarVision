@@ -52,7 +52,7 @@ export function SellerDashboardView() {
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
-  const isSeller = user?.role === 'b2b_seller' && user.plan?.isPaid === true;
+  const isSeller = user?.plan?.isPaid === true;
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -147,7 +147,7 @@ export function SellerDashboardView() {
         <div className="flex items-center gap-3">
           <div className="rounded-2xl border border-[#D4AE62]/25 bg-[#D4AE62]/[0.07] px-4 py-2 text-center">
             <p className="text-[10px] font-semibold tracking-wide text-[#D4AE62]">KREDIT</p>
-            <p className="text-lg font-bold text-white">{user.credits_balance}</p>
+            <p className="text-lg font-bold text-white">{user.role === 'super_admin' ? '∞' : user.credits_balance}</p>
           </div>
           <button type="button" onClick={openCamera} className="inline-flex items-center gap-2 rounded-full bg-white/[0.07] px-4 py-3 text-xs font-semibold text-white hover:bg-white/[0.12]">
             <Camera className="h-4 w-4" />

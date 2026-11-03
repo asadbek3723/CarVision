@@ -10,7 +10,7 @@ import {
 import { getSuperAdminId } from '@/server/auth/session';
 import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 
-const verifyPinSchema = z.object({ pin: z.string().min(4).max(32) });
+const verifyPinSchema = z.object({ pin: z.string().min(1).max(32) });
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     const ip = clientIp(request);
     const key = `admin:${adminId}`;
     const [byAdmin, byIp] = await Promise.all([
-      recentFailures('login_key', key, 'admin_pin', WINDOW_MS),
-      recentFailures('ip', ip, 'admin_pin', WINDOW_MS),
+      recentFailures('login_key', key, 'admin_pin', WINDOW_MS, false, true),
+      recentFailures('ip', ip, 'admin_pin', WINDOW_MS, false, true),
     ]);
     if (byAdmin >= MAX_ATTEMPTS || byIp >= MAX_ATTEMPTS * 2) {
       return fail(429, 'RATE_LIMIT_EXCEEDED', "Ko'p marta xato terildi. 15 daqiqadan keyin urinib ko'ring.", {

@@ -1,4 +1,7 @@
 import crypto from 'crypto';
+import { ADMIN_COOKIE_NAME, ADMIN_SESSION_SECONDS } from './admin-token-edge';
+
+export { ADMIN_COOKIE_NAME };
 
 /**
  * Admin second factor. An admin must (1) be signed in with a Supabase account whose
@@ -7,9 +10,9 @@ import crypto from 'crypto';
  * area is closed (fails closed).
  */
 
-export const ADMIN_COOKIE_NAME = 'cv_admin_session';
-const SESSION_DURATION_SECONDS = 4 * 60 * 60; // 4 hours
+const SESSION_DURATION_SECONDS = ADMIN_SESSION_SECONDS; // 4 hours
 const MIN_SECRET_LENGTH = 32;
+const MIN_PIN_LENGTH = 6;
 
 function sessionSecret(): string | null {
   const secret = process.env.ADMIN_SESSION_SECRET;
@@ -17,7 +20,7 @@ function sessionSecret(): string | null {
 }
 
 export function isAdminConfigured(): boolean {
-  return Boolean(process.env.ADMIN_MASTER_PIN && process.env.ADMIN_MASTER_PIN.length >= 4 && sessionSecret());
+  return Boolean(process.env.ADMIN_MASTER_PIN && process.env.ADMIN_MASTER_PIN.length >= MIN_PIN_LENGTH && sessionSecret());
 }
 
 function sha256(value: string): Buffer {
@@ -27,7 +30,7 @@ function sha256(value: string): Buffer {
 /** Constant-time PIN check against ADMIN_MASTER_PIN (false when not configured). */
 export function verifyPinConstantTime(candidatePin: string): boolean {
   const master = process.env.ADMIN_MASTER_PIN;
-  if (!master || master.length < 4 || typeof candidatePin !== 'string') return false;
+  if (!master || master.length < MIN_PIN_LENGTH || typeof candidatePin !== 'string') return false;
   return crypto.timingSafeEqual(sha256(candidatePin), sha256(master));
 }
 

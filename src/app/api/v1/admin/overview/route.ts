@@ -1,13 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { adminOr401, dayKey, lastDays } from '@/server/admin';
+import { adminLiveOr401, dayKey, lastDays } from '@/server/admin';
 
 export const dynamic = 'force-dynamic';
 
 const count = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
 
 export async function GET(request: NextRequest) {
-  const auth = adminOr401(request);
+  const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   try {
     const db = createAdminClient();

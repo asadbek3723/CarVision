@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { ArrowRight, Search, Sparkles } from 'lucide-react';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { MyCarPicker } from '@/features/shop/MyCarPicker';
@@ -16,6 +17,7 @@ interface Facets {
 }
 
 export function VeloceShop() {
+  const t = useTranslations('shop.list');
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { formatPrice } = useCurrency();
@@ -73,7 +75,7 @@ export function VeloceShop() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Disk, bamper, fara, brend qidiring…"
+          placeholder={t('searchPlaceholder')}
           className="w-full bg-transparent text-sm text-white outline-none placeholder:text-muted-foreground"
         />
       </label>
@@ -86,7 +88,7 @@ export function VeloceShop() {
         <section className="rise relative mt-6 overflow-hidden rounded-3xl border border-primary/40 bg-card-gradient shadow-gold" style={{ animationDelay: '100ms' }}>
           <div className="grid items-center md:grid-cols-2">
             <div className="relative z-10 p-7 md:p-12">
-              <span className="text-[10px] font-semibold uppercase tracking-luxe text-primary">Yangi</span>
+              <span className="text-[10px] font-semibold uppercase tracking-luxe text-primary">{t('badgeNew')}</span>
               <h1 className="mt-3 font-display text-2xl tracking-[0.1em] text-white md:text-4xl">{featured.name}</h1>
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
                 {featured.brand} · {formatPrice(featured.price)}
@@ -95,7 +97,7 @@ export function VeloceShop() {
                 href={`/${locale}/shop/${featured.id}`}
                 className="shimmer mt-6 inline-flex items-center gap-2 rounded-full bg-gold-gradient px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-black shadow-gold transition hover:brightness-110 active:scale-95"
               >
-                Ko‘rish <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                {t('view')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </div>
             {featured.image && <img src={featured.image} alt={featured.name} className="h-56 w-full object-cover md:h-full" />}
@@ -112,7 +114,7 @@ export function VeloceShop() {
               category === cat ? 'border-transparent bg-gold-gradient font-semibold text-black shadow-gold' : 'border-primary/20 text-muted-foreground hover:border-primary hover:text-foreground'
             }`}
           >
-            {cat === 'All' ? 'Hammasi' : cat}
+            {cat === 'All' ? t('all') : cat}
           </button>
         ))}
       </div>
@@ -132,8 +134,8 @@ export function VeloceShop() {
       )}
 
       <div className="mb-4 mt-8 flex justify-between text-sm uppercase tracking-[0.2em]">
-        <span className="font-medium text-white">{car ? `${car.label} uchun` : 'Barcha detallar'}</span>
-        <span className="text-muted-foreground">{loading ? 'Yuklanmoqda…' : `${filtered.length} ta`}</span>
+        <span className="font-medium text-white">{car ? t('forCar', { car: car.label }) : t('allParts')}</span>
+        <span className="text-muted-foreground">{loading ? t('loading') : t('count', { count: filtered.length })}</span>
       </div>
 
       {loading ? (
@@ -143,7 +145,7 @@ export function VeloceShop() {
           ))}
         </div>
       ) : error ? (
-        <div className="py-20 text-center text-sm text-red-300">Detallarni yuklab bo‘lmadi. Sahifani yangilang.</div>
+        <div className="py-20 text-center text-sm text-red-300">{t('loadError')}</div>
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 pb-16 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
           {filtered.map((p, idx) => (
@@ -153,7 +155,7 @@ export function VeloceShop() {
       ) : (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center text-muted-foreground">
           <Sparkles className="h-8 w-8 text-primary/60" />
-          <p className="text-sm">{car ? `${car.label} uchun hozircha mos detal yo‘q.` : 'Hozircha detal topilmadi.'}</p>
+          <p className="text-sm">{car ? t('noPartsForCar', { car: car.label }) : t('noParts')}</p>
         </div>
       )}
     </div>

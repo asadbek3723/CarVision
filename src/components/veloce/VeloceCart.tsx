@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
@@ -17,6 +18,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 
 export function VeloceCart() {
   const params = useParams();
+  const t = useTranslations('shop.cart');
   const locale = (params?.['locale'] as string) || 'uz';
   const { cart, add, remove } = useVeloceStore();
   const { formatPrice } = useCurrency();
@@ -73,13 +75,13 @@ export function VeloceCart() {
     <div className="mx-auto max-w-4xl px-5 pt-8 pb-24 md:px-10 md:pt-12">
       <div className="mb-8">
         <p className="text-[11px] font-medium tracking-[0.25em] uppercase text-[#D4AE62]">
-          Tanlangan Jihozlar
+          {t('eyebrow')}
         </p>
         <h1 className="mt-1 font-display text-2xl font-light text-white sm:text-4xl">
-          3% To‘lov Orqali Manzilni Olish
+          {t('title')}
         </h1>
         <p className="mt-2 text-xs text-white/55 sm:text-sm">
-          Yoqtirgan jihozingiz qaysi tuning servisda borligini bilish va ustaxonaga raqamingizni yuborish uchun 3% zakalat to‘loviga o‘ting.
+          {t('intro')}
         </p>
       </div>
 
@@ -93,13 +95,13 @@ export function VeloceCart() {
         <div className="py-20 text-center">
           <ShoppingBag className="mx-auto h-12 w-12 text-white/25" />
           <h2 className="mt-4 font-display text-xl font-light text-white">
-            Hozircha hech qanday detal tanlanmagan
+            {t('empty')}
           </h2>
           <Link
             href={`/${locale}/shop`}
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-gold-gradient px-7 py-3.5 text-xs font-bold tracking-wider uppercase text-black"
           >
-            <span>Detallarni Ko‘rish</span>
+            <span>{t('browse')}</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -127,11 +129,11 @@ export function VeloceCart() {
                     <div>
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D4AE62]">
                         <Car className="h-3.5 w-3.5" />
-                        <span>{carName} uchun</span>
+                        <span>{t('forCar', { car: carName })}</span>
                       </span>
                       <h3 className="mt-0.5 text-base font-medium text-white">{p.name}</h3>
                       <p className="mt-1 font-mono text-sm font-semibold text-white/80 tabular-nums">
-                        Narxi: {formatPrice(unitUSD)}
+                        {t('price', { amount: formatPrice(unitUSD) })}
                       </p>
                     </div>
                   </div>
@@ -168,16 +170,16 @@ export function VeloceCart() {
               <div>
                 <div className="flex items-center gap-2 text-xs text-white/50">
                   <Lock className="h-3.5 w-3.5 text-[#D4AE62]" />
-                  <span>Tuning servis manzili 3% to‘lovdan keyin ochiladi</span>
+                  <span>{t('unlockNote')}</span>
                 </div>
                 <div className="mt-2 flex items-baseline gap-3">
-                  <span className="text-sm text-white/60">Hozir to‘lanadigan 3% zakalat:</span>
+                  <span className="text-sm text-white/60">{t('depositNow')}</span>
                   <span className="font-mono text-2xl font-bold text-emerald-400 tabular-nums sm:text-3xl">
                     {formatPrice(deposit3PercentUSD)}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-white/40">
-                  Detalning ustaxonadagi umumiy narxi: {formatPrice(totalUSD)}
+                  {t('totalAtWorkshop', { amount: formatPrice(totalUSD) })}
                 </p>
               </div>
 
@@ -185,7 +187,7 @@ export function VeloceCart() {
                 href={`/${locale}/cart/checkout`}
                 className="shimmer inline-flex items-center justify-center gap-3 rounded-2xl bg-gold-gradient px-8 py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110"
               >
-                <span>3% To‘lash va Manzilni Ochish</span>
+                <span>{t('payCta')}</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

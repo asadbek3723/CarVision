@@ -16,17 +16,23 @@ export async function recentFailures(
   value: string,
   kind: string,
   windowMs: number,
-  success = false
+  success = false,
+  failClosed = false
 ): Promise<number> {
   const db = createAdminClient();
   const since = new Date(Date.now() - windowMs).toISOString();
-  const { count } = await db
+  const { count, error } = await db
     .from('auth_attempts')
     .select('id', { count: 'exact', head: true })
     .eq(column, value)
     .eq('kind', kind)
     .eq('success', success)
     .gte('created_at', since);
+  if (error) {
+    console.error('auth_attempts read failed:', error.message);
+    // Sensitive endpoints (admin PIN) must lock instead of silently losing brute-force protection.
+    if (failClosed) return Number.POSITIVE_INFINITY;
+  }
   return count ?? 0;
 }
 

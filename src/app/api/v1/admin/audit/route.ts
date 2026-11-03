@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { adminOr401 } from '@/server/admin';
+import { adminLiveOr401 } from '@/server/admin';
 
 export const dynamic = 'force-dynamic';
 
 /** Admin action log + recent failed sign-in / PIN attempts. */
 export async function GET(request: NextRequest) {
-  const auth = adminOr401(request);
+  const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   try {
     const db = createAdminClient();

@@ -147,7 +147,7 @@ export function VeloceProfile() {
                   Tahrirlash
                 </button>
               )}
-              {user.role === 'b2b_seller' && (
+              {user.plan?.isPaid === true && (
                 <Link
                   href={`/${locale}/seller?tab=dashboard`}
                   className="rounded-2xl bg-gold-gradient px-5 py-2.5 text-xs font-bold uppercase text-black"

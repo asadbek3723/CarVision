@@ -285,8 +285,7 @@ export default function SellerOrderDetailPage() {
                       ]
                   ).map((item) => {
                     const rawItemPrice = Number(item.price) || order.totalPriceUSD;
-                    const itemUSD =
-                      rawItemPrice > 50000 ? Math.round(rawItemPrice / 13000) : rawItemPrice;
+                    const itemUSD = rawItemPrice;
 
                     return (
                       <div

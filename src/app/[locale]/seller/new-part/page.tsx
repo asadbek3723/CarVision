@@ -39,7 +39,7 @@ export default function SellerNewPartPage() {
   const locale = (params?.['locale'] as string) || 'uz';
   const editId = search?.get('id') ?? null;
   const { user, isLoading, refreshProfile } = useAuth();
-  const unlocked = user?.role === 'b2b_seller' && user.plan?.isPaid === true;
+  const unlocked = user?.plan?.isPaid === true;
 
   const [photos, setPhotos] = React.useState<PhotoEntry[]>([]);
   const [uploading, setUploading] = React.useState(0);

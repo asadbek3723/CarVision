@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Car, Search, X } from 'lucide-react';
 import { useMyCar } from './useMyCar';
 
@@ -11,6 +12,7 @@ interface ModelResult {
 
 /** "My car" chip + search. Picking a car filters the shop to parts that fit it. */
 export function MyCarPicker() {
+  const t = useTranslations('shop.myCar');
   const { car, setCar } = useMyCar();
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
@@ -52,9 +54,9 @@ export function MyCarPicker() {
           {car.year ? ` · ${car.year}` : ''}
         </span>
         <button type="button" onClick={() => setOpen(true)} className="text-xs text-white/60 underline hover:text-white">
-          O‘zgartirish
+          {t('change')}
         </button>
-        <button type="button" aria-label="Mashinani olib tashlash" onClick={() => setCar(null)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
+        <button type="button" aria-label={t('removeCar')} onClick={() => setCar(null)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -65,7 +67,7 @@ export function MyCarPicker() {
     return (
       <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-4 py-2 text-xs font-semibold text-white/85 transition hover:border-primary">
         <Car className="h-4 w-4 text-[#D4AE62]" />
-        Mening mashinam: faqat mos detallarni ko‘rsat
+        {t('chip')}
       </button>
     );
   }
@@ -73,8 +75,8 @@ export function MyCarPicker() {
   return (
     <div className="rounded-2xl border border-white/10 bg-[#0B0D13] p-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-white">Mashinangizni tanlang</p>
-        <button type="button" aria-label="Yopish" onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
+        <p className="text-sm font-semibold text-white">{t('pickTitle')}</p>
+        <button type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -84,7 +86,7 @@ export function MyCarPicker() {
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Masalan: Gentra, Toyota Camry, BYD Song"
+          placeholder={t('searchPlaceholder')}
           className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2.5 ps-9 pe-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#D4AE62]/60"
         />
       </div>
@@ -95,13 +97,13 @@ export function MyCarPicker() {
         max={2100}
         value={year}
         onChange={(e) => setYear(e.target.value)}
-        placeholder="Ishlab chiqarilgan yili (ixtiyoriy)"
+        placeholder={t('yearPlaceholder')}
         className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#D4AE62]/60"
       />
       {query.trim().length >= 2 && (
         <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-white/10">
-          {loading && <p className="px-3 py-3 text-xs text-white/50">Qidirilmoqda…</p>}
-          {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">Topilmadi</p>}
+          {loading && <p className="px-3 py-3 text-xs text-white/50">{t('searching')}</p>}
+          {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">{t('notFound')}</p>}
           {results.map((r) => (
             <button
               key={r.id}

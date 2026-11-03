@@ -24,7 +24,7 @@ import {
   LuxuryCarCompass,
   SCAN_5_ANGLES,
 } from '@/features/camera/components/SmartCameraLandscapeView';
-import type { CompressResult } from '@/features/camera/lib/image-compressor';
+import { compressFileToDataUrl, type CompressResult } from '@/features/camera/lib/image-compressor';
 import { playLock, playShutter, vibrate } from '@/features/camera/lib/fx';
 import { LuxuryQrCode } from '@/components/ui/LuxuryQrCode';
 
@@ -83,7 +83,7 @@ const REQUIRED_ANGLE_COUNT = GUIDED_SCAN_ANGLES.length;
 interface VeloceSmartCameraModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCaptured: (dataUrl: string) => void;
+  onCaptured: (dataUrl: string, angles: Record<string, string>) => void;
 }
 
 export function VeloceSmartCameraModal({
@@ -210,27 +210,13 @@ export function VeloceSmartCameraModal({
         'rear-right': finalAngles[3] || finalAngles[2] || primaryUrl,
       };
 
-      try {
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('carvision_captured_image', primaryUrl);
-          sessionStorage.setItem('veloce_photo', primaryUrl);
-          sessionStorage.setItem('carvision_captured_at', Date.now().toString());
-          sessionStorage.setItem(
-            'carvision_multi_angles',
-            JSON.stringify(normalizedMultiAngles)
-          );
-        }
-      } catch {
-        // Resilience
-      }
-
+      // The store keeps the photos in memory (storage may be full) and opens the studio.
       setTimeout(() => {
-        onCaptured(primaryUrl);
-        router.push(`/${locale}/customize?captured=1`);
+        onCaptured(primaryUrl, normalizedMultiAngles);
         onClose();
       }, 600);
     },
-    [uploadedAngles, onCaptured, router, locale, onClose]
+    [uploadedAngles, onCaptured, onClose]
   );
 
   // Poll phone QR session status — waits until all 4 required angles are captured
@@ -286,9 +272,7 @@ export function VeloceSmartCameraModal({
   };
 
   const processUploadedFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+    const finish = (dataUrl: string) => {
       if (dataUrl) {
         playShutter();
         vibrate(30);
@@ -305,7 +289,13 @@ export function VeloceSmartCameraModal({
         }
       }
     };
-    reader.readAsDataURL(file);
+    void compressFileToDataUrl(file).then((small) => {
+      if (small) return finish(small);
+      // Not decodable by the browser: read it raw and let the pipeline reject it later
+      const reader = new FileReader();
+      reader.onload = () => finish(typeof reader.result === 'string' ? reader.result : '');
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

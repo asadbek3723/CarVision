@@ -23,7 +23,7 @@ export function VeloceGarage() {
   const [error, setError] = React.useState(false);
   const [activeCategory, setActiveCategory] = React.useState('Barchasi');
 
-  const isSeller = user?.role === 'b2b_seller' && user.plan?.isPaid === true;
+  const isSeller = user?.plan?.isPaid === true;
 
   React.useEffect(() => {
     if (authLoading) return;

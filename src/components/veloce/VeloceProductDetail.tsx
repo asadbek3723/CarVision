@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -21,6 +22,8 @@ interface VeloceProductDetailProps {
 }
 
 export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
+  const t = useTranslations('shop.detail');
+  const tCard = useTranslations('shop.card');
   const params = useParams();
   const router = useRouter();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -78,12 +81,12 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
   if (!product) {
     return (
       <div className="mx-auto max-w-4xl px-5 pt-20 text-center">
-        <p className="text-sm text-white/50">Mahsulot topilmadi.</p>
+        <p className="text-sm text-white/50">{t('notFound')}</p>
         <Link
           href={`/${locale}/shop`}
           className="mt-4 inline-block text-xs tracking-widest text-[#D4AE62] uppercase hover:underline"
         >
-          Do‘konga qaytish
+          {t('backToShop')}
         </Link>
       </div>
     );
@@ -101,7 +104,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
   ].filter(Boolean);
   const outOfStock = (product.stock ?? 0) <= 0;
   const yearText = (from?: number | null, to?: number | null) =>
-    from && to ? `${from}–${to}` : from ? `${from}+` : to ? `${to} gacha` : '';
+    from && to ? `${from}–${to}` : from ? `${from}+` : to ? t('yearsUpTo', { year: to }) : '';
 
   const handleUnlockAddress = () => {
     add(product.id);
@@ -115,7 +118,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
         className="mb-8 inline-flex items-center gap-2 text-xs text-white/50 transition hover:text-white"
       >
         <ChevronLeft className="h-4 w-4" />
-        <span>Katalogga qaytish</span>
+        <span>{t('backToCatalog')}</span>
       </Link>
 
       <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
@@ -129,7 +132,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
           ) : gallery.length > 0 ? (
             <img src={gallery[Math.min(activeImg, gallery.length - 1)]} alt={product.name} className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-widest text-white/30">Rasm yo‘q</div>
+            <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-widest text-white/30">{t('noImage')}</div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           <span className="absolute bottom-4 start-4 rounded-full bg-black/75 px-3.5 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-[#D4AE62] backdrop-blur-md">
@@ -144,7 +147,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
                 key={src}
                 type="button"
                 onClick={() => setActiveImg(idx)}
-                aria-label={`Rasm ${idx + 1}`}
+                aria-label={t('imageN', { n: idx + 1 })}
                 className={`h-16 w-16 overflow-hidden rounded-xl border-2 ${idx === activeImg ? 'border-[#D4AE62]' : 'border-transparent opacity-70 hover:opacity-100'}`}
               >
                 <img src={src} alt="" className="h-full w-full object-cover" />
@@ -168,11 +171,11 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
           <div className="space-y-2">
             <p className="flex items-center gap-2 text-xs text-white/50">
               <Car className="h-4 w-4 text-[#D4AE62]" />
-              Mos avtomobillar
+              {t('compatibleCars')}
             </p>
             <div className="flex flex-wrap gap-2">
               {product.isUniversal ? (
-                <span className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-[#D4AE62]">Barcha mashinalar</span>
+                <span className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-[#D4AE62]">{tCard('allCars')}</span>
               ) : (
                 (product.compatibility ?? []).map((c) => (
                   <span key={`${c.id}-${c.name}`} className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-[#D4AE62]">
@@ -193,18 +196,21 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
 
           {/* Price & 3% Lead Unlock Info */}
           <div className="pt-2">
-            <p className="text-xs text-white/45">Ustaxonadagi to‘liq narxi</p>
+            <p className="text-xs text-white/45">{t('workshopFullPrice')}</p>
             <div className="mt-1 font-display text-3xl font-semibold text-white tabular-nums sm:text-4xl">
               {formatPrice(normalizedUSD)}
             </div>
             <p className="mt-2 text-sm text-emerald-400">
-              Manzilni ochish uchun 3% zakalat: <span className="font-mono font-bold">{formatPrice(deposit3PercentUSD)}</span>
+              {t.rich('depositToUnlock', {
+                b: (chunks) => <span className="font-mono font-bold">{chunks}</span>,
+                amount: formatPrice(deposit3PercentUSD),
+              })}
             </p>
           </div>
 
           {product.spec && <p className="whitespace-pre-line text-sm leading-relaxed text-white/65">{product.spec}</p>}
           <p className={`text-xs font-semibold ${outOfStock ? 'text-red-300' : 'text-emerald-400'}`}>
-            {outOfStock ? 'Hozircha omborda yo‘q' : `Omborda mavjud: ${product.stock} ta`}
+            {outOfStock ? t('outOfStock') : t('inStock', { count: product.stock })}
           </p>
 
           {/* Locked Workshop Explanation (Boxless soft surface) */}
@@ -215,10 +221,10 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
               </div>
               <div>
                 <p className="text-xs font-semibold text-white">
-                  Qaysi tuning servisda borligi 3% to‘lovdan so‘ng ochiladi
+                  {t('lockedTitle')}
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-white/55">
-                  Biz mahsulotni sotmaymiz. Agar ushbu detal sizga ma’qul kelsa, 3% ({formatPrice(deposit3PercentUSD)}) to‘lov qilasiz — biz darhol sizga o‘sha tuning servisning aniq manzilini beramiz va ustaxonaga sizning raqamingizni yuboramiz.
+                  {t('lockedBody', { amount: formatPrice(deposit3PercentUSD) })}
                 </p>
               </div>
             </div>
@@ -233,7 +239,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
               className="shimmer flex flex-1 items-center justify-center gap-2.5 rounded-2xl disabled:cursor-not-allowed disabled:opacity-40 bg-gold-gradient px-6 py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110 cursor-pointer"
             >
               <MapPin className="h-4 w-4" />
-              <span>3% To‘lab Manzilni Olish ({formatPrice(deposit3PercentUSD)})</span>
+              <span>{t('unlockCta', { amount: formatPrice(deposit3PercentUSD) })}</span>
               <ArrowRight className="h-4 w-4" />
             </button>
 
@@ -242,7 +248,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
               className="flex items-center justify-center gap-2 rounded-2xl bg-white/[0.05] px-6 py-4 text-xs font-semibold tracking-wider uppercase text-white transition hover:bg-white/[0.1]"
             >
               <Sparkles className="h-4 w-4 text-[#D4AE62]" />
-              <span>Mashinamda Sinab Ko‘rish</span>
+              <span>{t('tryOnCar')}</span>
             </Link>
           </div>
         </div>
@@ -252,7 +258,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
       {related.length > 0 && (
         <section className="mt-20">
           <h2 className="mb-6 font-display text-lg font-light tracking-widest uppercase text-white/80">
-            O‘xshash Detallar
+            {t('related')}
           </h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {related.map((p, idx) => (

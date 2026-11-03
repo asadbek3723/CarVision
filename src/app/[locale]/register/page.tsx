@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase,
@@ -25,33 +26,36 @@ import {
 import { playLock, vibrate } from '@/features/camera/lib/fx';
 
 interface Country {
+  id: string;
+  /** Stable value sent to the server — never shown to the user. */
   name: string;
   flag: string;
   code: string;
 }
 
 const COUNTRIES: Country[] = [
-  { name: "O'zbekiston", flag: '🇺🇿', code: '+998' },
-  { name: "Qozog'iston", flag: '🇰🇿', code: '+7' },
-  { name: "Qirg'iziston", flag: '🇰🇬', code: '+996' },
-  { name: 'Tojikiston', flag: '🇹🇯', code: '+992' },
-  { name: 'Turkmaniston', flag: '🇹🇲', code: '+993' },
-  { name: 'Rossiya', flag: '🇷🇺', code: '+7' },
-  { name: 'Turkiya', flag: '🇹🇷', code: '+90' },
-  { name: 'BAA', flag: '🇦🇪', code: '+971' },
-  { name: 'Germaniya', flag: '🇩🇪', code: '+49' },
-  { name: 'AQSH', flag: '🇺🇸', code: '+1' },
-  { name: 'Buyuk Britaniya', flag: '🇬🇧', code: '+44' },
-  { name: 'Janubiy Koreya', flag: '🇰🇷', code: '+82' },
+  { id: 'uzbekistan', name: "O'zbekiston", flag: '🇺🇿', code: '+998' },
+  { id: 'kazakhstan', name: "Qozog'iston", flag: '🇰🇿', code: '+7' },
+  { id: 'kyrgyzstan', name: "Qirg'iziston", flag: '🇰🇬', code: '+996' },
+  { id: 'tajikistan', name: 'Tojikiston', flag: '🇹🇯', code: '+992' },
+  { id: 'turkmenistan', name: 'Turkmaniston', flag: '🇹🇲', code: '+993' },
+  { id: 'russia', name: 'Rossiya', flag: '🇷🇺', code: '+7' },
+  { id: 'turkey', name: 'Turkiya', flag: '🇹🇷', code: '+90' },
+  { id: 'uae', name: 'BAA', flag: '🇦🇪', code: '+971' },
+  { id: 'germany', name: 'Germaniya', flag: '🇩🇪', code: '+49' },
+  { id: 'usa', name: 'AQSH', flag: '🇺🇸', code: '+1' },
+  { id: 'uk', name: 'Buyuk Britaniya', flag: '🇬🇧', code: '+44' },
+  { id: 'southKorea', name: 'Janubiy Koreya', flag: '🇰🇷', code: '+82' },
 ];
 
-const STEP_TITLES = [
-  ['Davlatingiz', 'Qaysi davlatdansiz?'],
-  ['Hisob turi', "O'zingizga mosini tanlang"],
-  ["Ma'lumotlar", 'Hisobingizni yarating'],
-];
+const STEP_KEYS = [
+  ['step1Title', 'step1Sub'],
+  ['step2Title', 'step2Sub'],
+  ['step3Title', 'step3Sub'],
+] as const;
 
 export default function RegisterPage() {
+  const t = useTranslations('register');
   const router = useRouter();
   const params = useParams();
   const locale = (params['locale'] as string) || 'uz';
@@ -119,13 +123,13 @@ export default function RegisterPage() {
                 className="text-center"
               >
                 <p className="text-[9px] tracking-[0.45em] text-gold uppercase">
-                  QADAM {step + 1} / 3
+                  {t('stepLabel', { current: step + 1, total: 3 })}
                 </p>
                 <h2 className="font-display mt-1 text-2xl sm:text-[28px] text-foreground leading-tight">
-                  {STEP_TITLES[step]?.[0]}
+                  {STEP_KEYS[step] ? t(STEP_KEYS[step][0]) : null}
                 </h2>
                 <p className="mt-1 text-xs text-foreground/65">
-                  {STEP_TITLES[step]?.[1]}
+                  {STEP_KEYS[step] ? t(STEP_KEYS[step][1]) : null}
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -183,12 +187,12 @@ export default function RegisterPage() {
 
         {step < 3 && (
           <p className="mt-5 text-center text-xs text-foreground/65">
-            Hisobingiz bormi?{' '}
+            {t('haveAccount')}{' '}
             <Link
               href={`/${locale}/login`}
               className="font-medium text-gold hover:brightness-125 ms-1"
             >
-              Sign In
+              {t('signInLink')}
             </Link>
           </p>
         )}
@@ -204,30 +208,31 @@ function CountryPicker({
   value: Country | null;
   onPick: (country: Country) => void;
 }) {
+  const t = useTranslations('register');
   const [query, setQuery] = React.useState('');
   const filtered = React.useMemo(
     () =>
       COUNTRIES.filter((c) =>
-        c.name.toLowerCase().includes(query.toLowerCase())
+        t(`countries.${c.id}`).toLowerCase().includes(query.toLowerCase())
       ),
-    [query]
+    [query, t]
   );
 
   return (
     <div>
       <FloatingInput
         icon={<Search className="h-4 w-4" />}
-        placeholder="Davlatni qidiring"
+        placeholder={t('searchCountry')}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
       <div className="mt-3 max-h-48 space-y-1.5 overflow-y-auto pe-1">
         {filtered.map((item, idx) => {
-          const isSelected = value?.name === item.name;
+          const isSelected = value?.id === item.id;
           return (
             <motion.button
-              key={item.name}
+              key={item.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.025 }}
@@ -238,7 +243,7 @@ function CountryPicker({
             >
               <span className="text-xl">{item.flag}</span>
               <span className="flex-1 text-[14px] text-foreground">
-                {item.name}
+                {t(`countries.${item.id}`)}
               </span>
               <span className="text-xs text-foreground/55">{item.code}</span>
               {isSelected ? (
@@ -251,7 +256,7 @@ function CountryPicker({
         })}
         {filtered.length === 0 && (
           <p className="py-4 text-center text-xs text-foreground/55">
-            Topilmadi
+            {t('notFound')}
           </p>
         )}
       </div>
@@ -266,18 +271,19 @@ function RolePicker({
   value: 'user' | 'business' | null;
   onPick: (role: 'user' | 'business') => void;
 }) {
+  const t = useTranslations('register');
   const ROLES = [
     {
       id: 'user' as const,
       icon: User,
-      title: 'Oddiy foydalanuvchi',
-      desc: 'Xizmatlarni toping va band qiling',
+      title: t('roleUserTitle'),
+      desc: t('roleUserDesc'),
     },
     {
       id: 'business' as const,
       icon: Briefcase,
-      title: 'Biznes egasi',
-      desc: 'Auto tuning servisingizni joylang',
+      title: t('roleBusinessTitle'),
+      desc: t('roleBusinessDesc'),
     },
   ];
 
@@ -332,6 +338,7 @@ function DetailsForm({
   onDone: () => void;
   onError: () => void;
 }) {
+  const t = useTranslations('register');
   const isBusiness = role === 'business';
   const { signUp } = useAuth();
   const [formData, setFormData] = React.useState({
@@ -354,17 +361,17 @@ function DetailsForm({
 
     if (formData.name.trim().length < 2) {
       errs['name'] = isBusiness
-        ? 'Servis nomini kiriting'
-        : 'Ismingizni kiriting';
+        ? t('errNameBusiness')
+        : t('errNameUser');
     }
     if (isBusiness && formData.address.trim().length < 4) {
-      errs['address'] = 'Manzilni kiriting';
+      errs['address'] = t('errAddress');
     }
     if (formData.phone.replace(/\D/g, '').length < 7) {
-      errs['phone'] = "Telefon raqamini to'g'ri kiriting";
+      errs['phone'] = t('errPhone');
     }
     if (formData.pwd.length < 8) {
-      errs['pwd'] = "Parol kamida 8 belgi bo'lishi kerak";
+      errs['pwd'] = t('errPassword');
     }
 
     setErrors(errs);
@@ -393,7 +400,7 @@ function DetailsForm({
         setTimeout(onDone, 500);
       } else {
         setErrors({
-          phone: res.error || "Ro'yxatdan o'tishda xatolik yuz berdi",
+          phone: res.error || t('errFailed'),
         });
         onError();
       }
@@ -412,7 +419,7 @@ function DetailsForm({
           <User className="h-4 w-4" />
         )
       }
-      placeholder={isBusiness ? 'Auto tuning servis nomi' : 'Ismingiz'}
+      placeholder={isBusiness ? t('phNameBusiness') : t('phNameUser')}
       value={formData.name}
       onChange={updateField('name')}
       error={errors['name']}
@@ -422,7 +429,7 @@ function DetailsForm({
       <FloatingInput
         key="a"
         icon={<MapPin className="h-4 w-4" />}
-        placeholder="Servis manzili"
+        placeholder={t('phAddress')}
         value={formData.address}
         onChange={updateField('address')}
         error={errors['address']}
@@ -433,7 +440,7 @@ function DetailsForm({
       key="p"
       icon={<Smartphone className="h-4 w-4" />}
       prefix={`${country.flag} ${country.code}`}
-      placeholder="Telefon raqam"
+      placeholder={t('phPhone')}
       inputMode="tel"
       value={formData.phone}
       onChange={updateField('phone')}
@@ -444,7 +451,7 @@ function DetailsForm({
       key="w"
       icon={<Lock className="h-4 w-4" />}
       type="password"
-      placeholder="Parol yarating"
+      placeholder={t('phPassword')}
       value={formData.pwd}
       onChange={updateField('pwd')}
       error={errors['pwd']}
@@ -467,7 +474,7 @@ function DetailsForm({
 
       <div className="pt-2">
         <GoldButton type="submit" loading={loading}>
-          CREATE ACCOUNT
+          {t('submit')}
         </GoldButton>
       </div>
     </form>
@@ -481,6 +488,7 @@ function SuccessScreen({
   role: 'user' | 'business' | null;
   onSignIn: () => void;
 }) {
+  const t = useTranslations('register');
   return (
     <div className="flex flex-col items-center py-2 text-center">
       <motion.div
@@ -498,7 +506,7 @@ function SuccessScreen({
         transition={{ delay: 0.25 }}
         className="font-display mt-5 text-3xl text-foreground"
       >
-        Xush kelibsiz
+        {t('successTitle')}
       </motion.h2>
 
       <motion.p
@@ -508,8 +516,8 @@ function SuccessScreen({
         className="mt-1.5 max-w-xs text-xs text-foreground/70"
       >
         {role === 'business'
-          ? "Servisingiz muvaffaqiyatli ro'yxatdan o'tdi."
-          : "Hisobingiz muvaffaqiyatli yaratildi."}
+          ? t('successBusiness')
+          : t('successUser')}
       </motion.p>
 
       <motion.div
@@ -519,7 +527,7 @@ function SuccessScreen({
         className="mt-6 w-full"
       >
         <GoldButton type="button" onClick={onSignIn}>
-          SIGN IN
+          {t('signIn')}
         </GoldButton>
       </motion.div>
     </div>

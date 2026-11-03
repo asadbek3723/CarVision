@@ -63,3 +63,24 @@ export async function compressFrameToWebP(
     );
   });
 }
+
+/**
+ * Shrinks an uploaded photo (a raw phone photo is often 5-10 MB) to a JPEG data URL.
+ * Falls back to null when the file cannot be decoded as an image.
+ */
+export async function compressFileToDataUrl(file: File, maxSide = 1600, quality = 0.85): Promise<string | null> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const ratio = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
+    canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    return canvas.toDataURL('image/jpeg', quality);
+  } catch {
+    return null;
+  }
+}

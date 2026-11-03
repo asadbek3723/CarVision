@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { verifyAdminSessionToken, getAdminIdFromToken, ADMIN_COOKIE_NAME } from '@/lib/admin-auth';
+import { adminLiveOr401 } from '@/server/admin';
 import { fetchBookingItems, fetchBookingRows } from '@/server/bookings';
 
 const unauthorized = () => NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -9,7 +9,7 @@ const unauthorized = () => NextResponse.json({ success: false, error: 'Unauthori
 /** Deposit review queue: bookings whose customer sent a receipt (and the decided ones). */
 export async function GET(request: NextRequest) {
   try {
-    if (!verifyAdminSessionToken(request.cookies.get(ADMIN_COOKIE_NAME)?.value)) return unauthorized();
+    if ('response' in (await adminLiveOr401(request))) return unauthorized();
     const db = createAdminClient();
     const rows = await fetchBookingRows(db, { statuses: ['PENDING_ADMIN_APPROVAL', 'UNLOCKED', 'REDEEMED', 'REJECTED'], limit: 200 });
     const items = await fetchBookingItems(db, rows.map((r) => r.id));
@@ -53,9 +53,9 @@ const reviewSchema = z.object({ orderId: z.string().uuid(), status: z.enum(['ver
 /** Approve (unlocks the workshop for the customer) or reject the deposit receipt. */
 export async function PATCH(request: NextRequest) {
   try {
-    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-    const adminId = getAdminIdFromToken(token);
-    if (!adminId) return unauthorized();
+    const auth = await adminLiveOr401(request);
+    if ('response' in auth) return unauthorized();
+    const adminId = auth.adminId;
 
     const parsed = reviewSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return NextResponse.json({ success: false, error: 'Missing orderId or status' }, { status: 400 });

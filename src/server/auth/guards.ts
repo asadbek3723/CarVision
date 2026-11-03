@@ -14,17 +14,17 @@ export async function requireUser(): Promise<GuardResult<Session>> {
   return { ok: true, value: session };
 }
 
-/** A signed-in workshop owner. Returns the session plus the shop id every query must be scoped to. */
+/** A signed-in user who owns a garage (shop). Role does not matter: a paid plan opens the garage for everyone. */
 export async function requireSeller(): Promise<GuardResult<{ session: Session; shopId: string }>> {
   const session = await getSession();
   if (!session) return deny(401, 'UNAUTHENTICATED', 'Kirish talab qilinadi');
-  if (session.role !== 'b2b_seller' || !session.shop) {
-    return deny(403, 'FORBIDDEN', 'Bu amal faqat studiya egalari uchun');
+  if (!session.shop) {
+    return deny(403, 'FORBIDDEN', 'Garaj faqat pullik tarifda ochiladi');
   }
   return { ok: true, value: { session, shopId: session.shop.id } };
 }
 
-/** A workshop owner with an ACTIVE paid plan. Free workshops get 402 and are sent to the plans page. */
+/** A garage owner with an ACTIVE paid plan. Free accounts get 402 and are sent to the plans page. */
 export async function requirePaidSeller(): Promise<GuardResult<{ session: Session; shopId: string }>> {
   const base = await requireSeller();
   if (!base.ok) return base;

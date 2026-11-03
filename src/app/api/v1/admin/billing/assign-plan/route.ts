@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { verifyAdminSessionToken, getAdminIdFromToken, ADMIN_COOKIE_NAME } from '@/lib/admin-auth';
+import { adminLiveOr401 } from '@/server/admin';
 
 const adminAssignPlanSchema = z.object({
   shopId: z.string().uuid(),
@@ -16,9 +16,9 @@ const adminAssignPlanSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // 0. Verify admin security session cookie
-    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-    if (!verifyAdminSessionToken(token)) {
+    // 0. Verify admin PIN session cookie AND that the account is still a live super_admin
+    const auth = await adminLiveOr401(request);
+    if ('response' in auth) {
       return NextResponse.json(
         {
           success: false,
@@ -49,10 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { shopId, planCode, creditsToAdd, paidAmountCents, paymentCurrency, paymentMethod, durationDays, adminNotes } = validated.data;
-    const adminId = getAdminIdFromToken(token);
-    if (!adminId) {
-      return NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED_ADMIN_SESSION' } }, { status: 401 });
-    }
+    const adminId = auth.adminId;
 
     // One database transaction: balance + ledger + audit log (see admin_assign_plan SQL function).
     const { data, error: rpcError } = await createAdminClient().rpc('admin_assign_plan', {

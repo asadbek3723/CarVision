@@ -19,6 +19,8 @@ interface VeloceStoreContextType {
   setMultiAngles: (angles: Record<string, string>) => void;
   generatedAngles: Record<string, string>;
   setGeneratedAngles: (angles: Record<string, string>) => void;
+  /** Changes with every new photo set; lets screens know the car must be re-confirmed. */
+  captureStamp: string;
   openCamera: () => void;
   closeCamera: () => void;
   isCameraOpen: boolean;
@@ -38,6 +40,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   const [multiAngles, setMultiAnglesState] = React.useState<Record<string, string>>({});
   const [generatedAngles, setGeneratedAnglesState] = React.useState<Record<string, string>>({});
   const [isCameraOpen, setIsCameraOpen] = React.useState(false);
+  const [captureStamp, setCaptureStamp] = React.useState('none');
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   // Restore state from sessionStorage on mount
@@ -47,6 +50,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
       if (savedCart) {
         setCart(JSON.parse(savedCart));
       }
+      setCaptureStamp(sessionStorage.getItem('carvision_captured_at') || 'none');
       const savedPhoto = sessionStorage.getItem('veloce_photo') || sessionStorage.getItem('carvision_captured_image');
       if (savedPhoto && (savedPhoto.startsWith('data:image/') || savedPhoto.startsWith('/'))) {
         setPhotoState(savedPhoto);
@@ -179,20 +183,20 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const handleCameraCaptured = React.useCallback(
-    (dataUrl: string) => {
+    (dataUrl: string, angles: Record<string, string>) => {
+      const stamp = Date.now().toString();
       setPhoto(dataUrl);
+      setMultiAngles(angles);
+      setCaptureStamp(stamp);
       try {
-        const savedAngles = sessionStorage.getItem('carvision_multi_angles');
-        if (savedAngles) {
-          setMultiAnglesState(JSON.parse(savedAngles));
-        }
+        sessionStorage.setItem('carvision_captured_at', stamp);
       } catch {
-        // Ignore
+        // storage full: the in-memory state above is what the studio uses
       }
       setIsCameraOpen(false);
       router.push(`/${locale}/customize?captured=1`);
     },
-    [locale, router, setPhoto]
+    [locale, router, setPhoto, setMultiAngles]
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,6 +221,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
         setMultiAngles,
         generatedAngles,
         setGeneratedAngles,
+        captureStamp,
         openCamera,
         closeCamera,
         isCameraOpen,

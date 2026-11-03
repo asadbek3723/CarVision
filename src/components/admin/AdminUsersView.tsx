@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Coins, Ban, Phone, ShieldCheck, Undo2 } from 'lucide-react';
+import { Coins, Warehouse, Ban, Phone, ShieldCheck, Undo2 } from 'lucide-react';
 import { EmptyState, ErrorState, Field, PLAN_LABEL, PageHeader, Pill, SearchField, Segmented, Sheet, Spinner, Surface, dateTime, fieldClass, nf, useAdminApi, useAdminData, useToast } from './ui';
 
 interface User {
@@ -43,6 +43,19 @@ export function AdminUsersView() {
     try {
       await api('/api/v1/admin/users', { method: 'PATCH', body: JSON.stringify({ userId: u.id, banned: false }) });
       toast.show('Blokdan chiqarildi');
+      await reload();
+    } catch (e) {
+      toast.show(e instanceof Error ? e.message : 'Xatolik', 'err');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const openGarage = async (u: User) => {
+    setBusy(u.id);
+    try {
+      await api('/api/v1/admin/shops', { method: 'POST', body: JSON.stringify({ userId: u.id }) });
+      toast.show('Garaj ochildi. Tarifni "Ustaxonalar" bo‘limidan bering');
       await reload();
     } catch (e) {
       toast.show(e instanceof Error ? e.message : 'Xatolik', 'err');
@@ -108,6 +121,12 @@ export function AdminUsersView() {
                     <Coins className="h-3.5 w-3.5" />
                     Kredit
                   </button>
+                  {!u.shopName && (
+                    <button type="button" disabled={busy === u.id} onClick={() => void openGarage(u)} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-50">
+                      <Warehouse className="h-3.5 w-3.5" />
+                      Garaj ochish
+                    </button>
+                  )}
                   {u.banned ? (
                     <button type="button" disabled={busy === u.id} onClick={() => void unban(u)} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-50">
                       <Undo2 className="h-3.5 w-3.5" />

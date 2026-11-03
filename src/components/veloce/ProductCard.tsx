@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Car, Plus } from 'lucide-react';
@@ -15,6 +16,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
+  const t = useTranslations('shop.card');
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { add } = useVeloceStore();
@@ -24,11 +26,11 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
 
   // Only what the seller entered: never a guessed car.
   const carLabel = React.useMemo(() => {
-    if (p.isUniversal) return 'Barcha mashinalar';
+    if (p.isUniversal) return t('allCars');
     const names = (p.compatibility ?? []).map((c) => c.name).filter(Boolean);
     if (names.length === 0) return p.targetCar || '';
     return names.length > 1 ? `${names[0]} +${names.length - 1}` : (names[0] as string);
-  }, [p]);
+  }, [p, t]);
 
   return (
     <div
@@ -87,13 +89,13 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
               {formatPrice(p.price)}
             </div>
             <div className="text-[10px] text-white/40">
-              3% to‘lovda ustaxona manzili ochiladi
+              {t('depositHint')}
             </div>
           </div>
           <button
             onClick={() => add(p.id)}
             disabled={p.stock === 0}
-            aria-label={`Savatga qo‘shish: ${p.name}`}
+            aria-label={t('addToCart', { name: p.name })}
             className="grid h-10 w-10 place-items-center rounded-full bg-gold-gradient text-primary-foreground transition active:scale-90 hover:shadow-gold cursor-pointer"
           >
             <Plus className="h-4 w-4" />

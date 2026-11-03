@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { adminOr401, ipOf } from '@/server/admin';
+import { adminLiveOr401, ipOf } from '@/server/admin';
 
 const schema = z.object({
   userId: z.string().uuid(),
@@ -18,7 +18,7 @@ const ERRORS: Record<string, string> = {
 
 /** Manual credit grant (+) or removal (-) with a mandatory reason, written to ledger and audit log. */
 export async function POST(request: NextRequest) {
-  const auth = adminOr401(request);
+  const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message ?? 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });

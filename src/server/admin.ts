@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_COOKIE_NAME, getAdminIdFromToken } from '@/lib/admin-auth';
+import { getSuperAdminId } from '@/server/auth/session';
 
 /** Every admin API starts here: a valid, unexpired admin session cookie (login + PIN). */
 export function adminOr401(request: NextRequest): { adminId: string } | { response: NextResponse } {
@@ -8,6 +9,20 @@ export function adminOr401(request: NextRequest): { adminId: string } | { respon
     return { response: NextResponse.json({ success: false, code: 'ADMIN_SESSION_REQUIRED', error: 'Admin sessiyasi tugagan' }, { status: 401 }) };
   }
   return { adminId };
+}
+
+/**
+ * Strongest guard for admin APIs: valid PIN session cookie AND the same account is still a signed-in
+ * super_admin right now. A demoted / signed-out admin loses access immediately, not after 4 hours.
+ */
+export async function adminLiveOr401(request: NextRequest): Promise<{ adminId: string } | { response: NextResponse }> {
+  const auth = adminOr401(request);
+  if ('response' in auth) return auth;
+  const liveId = await getSuperAdminId();
+  if (liveId !== auth.adminId) {
+    return { response: NextResponse.json({ success: false, code: 'ADMIN_SESSION_REQUIRED', error: 'Admin sessiyasi tugagan' }, { status: 401 }) };
+  }
+  return auth;
 }
 
 export function ipOf(request: NextRequest): string {

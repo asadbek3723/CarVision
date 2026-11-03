@@ -24,13 +24,6 @@ import { planRender, type PlanAngle } from '@/features/visualizer/render-plan';
 import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderBuild';
 
 const CONFIRMED_KEY = 'carvision_car_confirmed_for';
-const stampOf = () => {
-  try {
-    return sessionStorage.getItem('carvision_captured_at') || 'none';
-  } catch {
-    return 'none';
-  }
-};
 
 export const FIVE_CAR_ANGLES = [
   { id: 'front', label: 'Oldi tomon', short: 'Oldi' },
@@ -70,6 +63,7 @@ export function VeloceCustomize() {
     setSelectedPartIds,
     toggleSelectedPart,
     multiAngles,
+    captureStamp,
     setGeneratedAngles,
     openCamera,
   } = useVeloceStore();
@@ -84,24 +78,24 @@ export function VeloceCustomize() {
   const [catalogProducts, setCatalogProducts] = React.useState<VeloceProduct[]>([]);
   const [isLoadingCatalog, setIsLoadingCatalog] = React.useState(true);
   // After new photos are taken the car must be confirmed (AI guess + year) before parts are shown.
-  const [carChecked, setCarChecked] = React.useState(false);
-  const [carConfirmed, setCarConfirmed] = React.useState(true);
+  const [confirmedStamp, setConfirmedStamp] = React.useState<string | null>(null);
   React.useEffect(() => {
     try {
-      setCarConfirmed(sessionStorage.getItem(CONFIRMED_KEY) === stampOf());
+      setConfirmedStamp(sessionStorage.getItem(CONFIRMED_KEY) ?? '');
     } catch {
-      setCarConfirmed(true);
+      setConfirmedStamp('');
     }
-    setCarChecked(true);
-  }, [photo]);
-  const confirmCar = React.useCallback(() => {
-    try {
-      sessionStorage.setItem(CONFIRMED_KEY, stampOf());
-    } catch {
-      // ignore
-    }
-    setCarConfirmed(true);
   }, []);
+  const carChecked = confirmedStamp !== null;
+  const carConfirmed = confirmedStamp === captureStamp;
+  const confirmCar = React.useCallback(() => {
+    setConfirmedStamp(captureStamp);
+    try {
+      sessionStorage.setItem(CONFIRMED_KEY, captureStamp);
+    } catch {
+      // kept in memory for this visit
+    }
+  }, [captureStamp]);
   const [showProgress, setShowProgress] = React.useState(false);
   const [applyError, setApplyError] = React.useState<string | null>(null);
   const render = useRenderBuild(refreshProfile);

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence, type HTMLMotionProps } from 'framer-motion';
 import {
   ArrowLeft,
@@ -89,6 +90,7 @@ export function FloatingInput({
   label,
   ...props
 }: FloatingInputProps) {
+  const t = useTranslations('authShell');
   const [showPassword, setShowPassword] = React.useState(false);
   const [isFocused, setIsFocused] = React.useState(false);
   const isPassword = type === 'password';
@@ -133,7 +135,7 @@ export function FloatingInput({
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
             className="text-foreground/70 transition hover:text-gold cursor-pointer"
-            aria-label="Toggle password visibility"
+            aria-label={t('togglePassword')}
           >
             {showPassword ? (
               <Eye className="h-4 w-4" />
@@ -209,12 +211,14 @@ export function AuthShell({
   children: React.ReactNode;
   onBack?: () => void;
 }) {
+  const t = useTranslations('authShell');
+  const tc = useTranslations('common');
   return (
     <div className="dark relative h-screen max-h-screen w-full overflow-hidden bg-ink text-foreground flex flex-col items-center justify-center select-none">
       {/* 1:1 Porsche 911 Master Artwork Background */}
       <motion.img
         src="/images/golden/hero-car.jpg"
-        alt="Porsche 911 Studio"
+        alt={t('heroAlt')}
         width={1920}
         height={1088}
         initial={{ scale: 1.15, opacity: 0 }}
@@ -248,7 +252,7 @@ export function AuthShell({
           onClick={onBack}
           whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
-          aria-label="Orqaga"
+          aria-label={tc('back')}
           className="glass-card absolute start-4 top-4 sm:start-8 sm:top-6 z-20 grid h-10 w-10 sm:h-11 sm:w-11 place-items-center rounded-xl text-foreground/90 transition hover:text-gold cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4 rtl:rotate-180" />

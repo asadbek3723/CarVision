@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { adminOr401, ipOf } from '@/server/admin';
+import { adminLiveOr401, ipOf } from '@/server/admin';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const auth = adminOr401(request);
+  const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   try {
     const params = new URL(request.url).searchParams;
@@ -63,7 +63,7 @@ const BAN_ERRORS: Record<string, string> = {
 };
 
 export async function PATCH(request: NextRequest) {
-  const auth = adminOr401(request);
+  const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   const parsed = banSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ success: false, error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });

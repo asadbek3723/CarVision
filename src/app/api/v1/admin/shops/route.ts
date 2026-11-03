@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import crypto from 'node:crypto';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
-import { adminOr401, ipOf } from '@/server/admin';
+import { adminLiveOr401, ipOf } from '@/server/admin';
 
 export const dynamic = 'force-dynamic';
 
 /** All workshops with owner, plan, credits and catalog size. */
 export async function GET(request: NextRequest) {
-  const auth = adminOr401(request);
+  const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   try {
     const db = createAdminClient();
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
 const patchSchema = z.object({ shopId: z.string().uuid(), verified: z.boolean() });
 
 export async function PATCH(request: NextRequest) {
-  const auth = adminOr401(request);
+  const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   const parsed = patchSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ success: false, error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
@@ -76,4 +77,49 @@ export async function PATCH(request: NextRequest) {
   const r = data as { success?: boolean } | null;
   if (!r?.success) return NextResponse.json({ success: false, error: 'Ustaxona topilmadi' }, { status: 404 });
   return NextResponse.json({ success: true });
+}
+
+const createSchema = z.object({ userId: z.string().uuid() }).strict();
+
+/**
+ * Opens a garage (shop row) for any account, e.g. a regular user who bought a paid plan.
+ * The plan itself is then assigned from the Shops screen like for every other garage.
+ */
+export async function POST(request: NextRequest) {
+  const auth = await adminLiveOr401(request);
+  if ('response' in auth) return auth.response;
+  const parsed = createSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ success: false, error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
+  try {
+    const db = createAdminClient();
+    const { data: profile } = await db.from('profiles').select('id, full_name, phone, role').eq('id', parsed.data.userId).maybeSingle();
+    if (!profile) return NextResponse.json({ success: false, error: 'Foydalanuvchi topilmadi' }, { status: 404 });
+    const { data: existing } = await db.from('shops').select('id').eq('owner_id', profile.id).maybeSingle();
+    if (existing) return NextResponse.json({ success: true, shopId: existing.id as string, created: false });
+
+    const { data: shop, error } = await db
+      .from('shops')
+      .insert({
+        owner_id: profile.id,
+        shop_name: `${(profile.full_name as string) || 'Mening'} garaji`.slice(0, 150),
+        city: 'Toshkent',
+        district: '-',
+        phone: profile.phone,
+        current_plan_code: 'FREE_TRIAL',
+        credits_balance: (await db.from('profiles').select('credits_balance').eq('id', profile.id).single()).data?.credits_balance ?? 40,
+        watermark_enabled: true,
+        max_devices: 1,
+        referral_code: crypto.randomBytes(5).toString('hex').toUpperCase(),
+      })
+      .select('id')
+      .single();
+    if (error || !shop) {
+      console.error('admin create garage failed:', error?.message);
+      return NextResponse.json({ success: false, error: 'Garaj ochib bo‘lmadi' }, { status: 500 });
+    }
+    return NextResponse.json({ success: true, shopId: shop.id as string, created: true }, { status: 201 });
+  } catch (err) {
+    console.error('admin create garage error:', err);
+    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+  }
 }

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone, Lock, Check } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -28,6 +29,7 @@ function formatPhone(val: string): string {
 }
 
 export default function LoginPage() {
+  const t = useTranslations('login');
   const router = useRouter();
   const params = useParams();
   const locale = (params['locale'] as string) || 'uz';
@@ -57,16 +59,10 @@ export default function LoginPage() {
 
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 7) {
-      errs.phone =
-        locale === 'uz'
-          ? "Telefon raqamini to'g'ri kiriting"
-          : 'Please enter a valid phone number';
+      errs.phone = t('errPhone');
     }
     if (password.length < 8) {
-      errs.pwd =
-        locale === 'uz'
-          ? "Parol kamida 8 belgi bo'lishi kerak"
-          : 'Password must be at least 8 characters';
+      errs.pwd = t('errPassword');
     }
 
     setErrors(errs);
@@ -84,11 +80,7 @@ export default function LoginPage() {
         vibrate(25);
       } else {
         setErrors({
-          phone:
-            res.error ||
-            (locale === 'uz'
-              ? 'Kirishda xatolik yuz berdi'
-              : 'Sign in failed'),
+          phone: res.error || t('errFailed'),
         });
         setShake((prev) => prev + 1);
       }
@@ -102,20 +94,20 @@ export default function LoginPage() {
       <GlassCard shake={shake}>
         <div className="text-center">
           <p className="text-[9px] tracking-[0.45em] text-gold uppercase">
-            CARVISION HISOBI
+            {t('eyebrow')}
           </p>
           <h2 className="font-display mt-1 text-3xl sm:text-[32px] text-foreground leading-tight">
-            Xush kelibsiz
+            {t('title')}
           </h2>
           <p className="mt-1 text-xs text-foreground/65">
-            Hisobingizga kiring va davom eting
+            {t('subtitle')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-3.5">
           <FloatingInput
             icon={<Smartphone className="h-4 w-4" />}
-            label="Telefon raqam"
+            label={t('phone')}
             inputMode="tel"
             value={phone}
             onChange={(e) =>
@@ -129,7 +121,7 @@ export default function LoginPage() {
           <FloatingInput
             icon={<Lock className="h-4 w-4" />}
             type="password"
-            label="Parol"
+            label={t('password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={errors.pwd}
@@ -161,12 +153,12 @@ export default function LoginPage() {
                 )}
               </AnimatePresence>
             </span>
-            Meni eslab qol
+            {t('remember')}
           </motion.button>
 
           <div className="pt-1.5">
             <GoldButton type="submit" loading={loading}>
-              KIRISH
+              {t('submit')}
             </GoldButton>
           </div>
         </form>
@@ -181,24 +173,20 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() =>
-                alert(
-                  locale === 'uz'
-                    ? "Yordam uchun administrator bilan bog'laning"
-                    : 'Please contact admin for recovery'
-                )
+                alert(t('forgotHelp'))
               }
               className="text-foreground/75 transition hover:text-gold cursor-pointer"
             >
-              Parolni unutdingizmi?
+              {t('forgot')}
             </button>
           </div>
           <p className="text-foreground/60">
-            Hisobingiz yo&apos;qmi?{' '}
+            {t('noAccount')}{' '}
             <Link
               href={`/${locale}/register`}
               className="font-medium text-gold transition hover:brightness-125 ms-1"
             >
-              Ro&apos;yxatdan o&apos;ting
+              {t('registerLink')}
             </Link>
           </p>
         </motion.div>
