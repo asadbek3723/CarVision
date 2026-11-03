@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { AlertCircle, Loader2, RefreshCw, Search, X } from 'lucide-react';
 
 /* ------------------------------------------------------------------ session handling */
@@ -14,6 +15,7 @@ export function AdminSessionProvider({ onExpired, children }: { onExpired: () =>
 
 /** fetch for admin APIs: returns parsed JSON, throws a readable Error, and reports an expired session. */
 export function useAdminApi() {
+  const t = useTranslations('adm.common');
   const { onExpired } = React.useContext(AdminSessionContext);
   return React.useCallback(
     async <T,>(url: string, init?: RequestInit): Promise<T> => {
@@ -21,17 +23,18 @@ export function useAdminApi() {
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
         onExpired();
-        throw new Error('Admin sessiyasi tugagan. PIN kodni qayta kiriting');
+        throw new Error(t('sessionExpired'));
       }
-      if (!res.ok || data.success === false) throw new Error(data.error || 'Xatolik yuz berdi');
+      if (!res.ok || data.success === false) throw new Error(data.error || t('errGeneric'));
       return data as T;
     },
-    [onExpired]
+    [onExpired, t]
   );
 }
 
 /** Loads `url` on mount and whenever `url` changes; exposes reload. */
 export function useAdminData<T>(url: string) {
+  const t = useTranslations('adm.common');
   const api = useAdminApi();
   const [data, setData] = React.useState<T | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -46,11 +49,11 @@ export function useAdminData<T>(url: string) {
       const d = await api<T>(url);
       if (id === seq.current) setData(d);
     } catch (e) {
-      if (id === seq.current) setError(e instanceof Error ? e.message : 'Xatolik yuz berdi');
+      if (id === seq.current) setError(e instanceof Error ? e.message : t('errGeneric'));
     } finally {
       if (id === seq.current) setLoading(false);
     }
-  }, [api, url]);
+  }, [api, url, t]);
 
   React.useEffect(() => {
     void load();
@@ -61,16 +64,27 @@ export function useAdminData<T>(url: string) {
 
 /* ------------------------------------------------------------------ formatting */
 
-export const nf = new Intl.NumberFormat('uz-UZ');
-export const usd = (v: number) => `$${v.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
-
-export function timeAgo(iso: string): string {
-  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return 'hozirgina';
-  if (s < 3600) return `${Math.floor(s / 60)} daq oldin`;
-  if (s < 86400) return `${Math.floor(s / 3600)} soat oldin`;
-  if (s < 86400 * 30) return `${Math.floor(s / 86400)} kun oldin`;
-  return dateTime(iso).slice(0, 10);
+/** Number, currency and relative-time formatting in the active UI language. */
+export function useAdminFormat() {
+  const locale = useLocale();
+  return React.useMemo(() => {
+    const intlLocale = locale === 'ar' ? 'ar-AE' : locale;
+    const nf = new Intl.NumberFormat(intlLocale);
+    const usdFmt = new Intl.NumberFormat(intlLocale, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+    const rtf = new Intl.RelativeTimeFormat(intlLocale, { numeric: 'auto' });
+    return {
+      nf,
+      usd: (v: number) => usdFmt.format(v),
+      timeAgo: (iso: string): string => {
+        const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+        if (s < 60) return rtf.format(0, 'second');
+        if (s < 3600) return rtf.format(-Math.floor(s / 60), 'minute');
+        if (s < 86400) return rtf.format(-Math.floor(s / 3600), 'hour');
+        if (s < 86400 * 30) return rtf.format(-Math.floor(s / 86400), 'day');
+        return dateTime(iso).slice(0, 10);
+      },
+    };
+  }, [locale]);
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -124,16 +138,18 @@ export function Pill({ tone = 'neutral', children }: { tone?: 'neutral' | 'gold'
   return <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${tones[tone]}`}>{children}</span>;
 }
 
-export function Spinner({ label = 'Yuklanmoqda…' }: { label?: string }) {
+export function Spinner({ label }: { label?: string }) {
+  const t = useTranslations('adm.common');
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-20 text-sm text-white/50" role="status">
       <Loader2 className="h-6 w-6 animate-spin text-[#D4AE62]" />
-      {label}
+      {label ?? t('loading')}
     </div>
   );
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  const t = useTranslations('adm.common');
   return (
     <div role="alert" className="flex flex-col items-center gap-3 rounded-3xl bg-red-500/10 px-6 py-10 text-center">
       <AlertCircle className="h-7 w-7 text-red-300" />
@@ -141,7 +157,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
       {onRetry && (
         <button type="button" onClick={onRetry} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-xs font-semibold text-white hover:bg-white/15">
           <RefreshCw className="h-3.5 w-3.5" />
-          Qayta urinish
+          {t('retry')}
         </button>
       )}
     </div>
@@ -187,6 +203,7 @@ export function Segmented<T extends string>({ value, onChange, options }: { valu
 
 /** Bottom sheet on phones, centered dialog on larger screens. */
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
+  const t = useTranslations('adm.common');
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -211,7 +228,7 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
       >
         <div className="mb-5 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold text-white">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Yopish" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20">
+          <button type="button" onClick={onClose} aria-label={t('close')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -251,6 +268,8 @@ export function useToast() {
 
 /** Tiny dependency-free bar chart (7 days). */
 export function BarChart({ points, color = '#D4AE62', label }: { points: Array<{ day: string; value: number }>; color?: string; label: string }) {
+  const locale = useLocale();
+  const weekday = new Intl.DateTimeFormat(locale === 'ar' ? 'ar-AE' : locale, { weekday: 'short', timeZone: 'UTC' });
   const max = Math.max(1, ...points.map((p) => p.value));
   return (
     <div role="img" aria-label={label}>
@@ -265,7 +284,7 @@ export function BarChart({ points, color = '#D4AE62', label }: { points: Array<{
       <div className="mt-2 flex gap-2">
         {points.map((p) => (
           <span key={p.day} className="flex-1 text-center text-[10px] text-white/40">
-            {['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'][new Date(`${p.day}T12:00:00Z`).getUTCDay()]}
+            {weekday.format(new Date(`${p.day}T12:00:00Z`))}
           </span>
         ))}
       </div>

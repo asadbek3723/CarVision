@@ -1,8 +1,10 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Check, Copy, ImagePlus, Loader2, X } from 'lucide-react';
+import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { LuxuryQrCode } from '@/components/ui/LuxuryQrCode';
 import { LiveCamera } from './LiveCamera';
 import { fileToPhotoDataUrl } from '../lib/photo-input';
@@ -26,6 +28,9 @@ function detectMobile(): boolean {
  * Computer: QR code (take the photo with the phone, it appears here) and "upload from device".
  */
 export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
+  const t = useTranslations('photoModal');
+  const tImg = useTranslations('imageErrors');
+  const imgText = useImageErrorText();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const [mobile, setMobile] = React.useState<boolean | null>(null);
@@ -52,13 +57,13 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled && d.success) setSessionId(d.session.id);
-        else if (!cancelled) setError(d.error || 'QR kodni yaratib bo‘lmadi');
+        else if (!cancelled) setError(d.error || t('qrError'));
       })
-      .catch(() => !cancelled && setError('QR kodni yaratib bo‘lmadi'));
+      .catch(() => !cancelled && setError(t('qrError')));
     return () => {
       cancelled = true;
     };
-  }, [isOpen, mobile]);
+  }, [isOpen, mobile, t]);
 
   React.useEffect(() => {
     if (!isOpen || mobile !== false || !sessionId) return;
@@ -87,7 +92,7 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
     try {
       onPhoto(await fileToPhotoDataUrl(file));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Rasmni yuklab bo‘lmadi');
+      setError(imgText.error(err, tImg('upload')));
     } finally {
       setBusy(false);
     }
@@ -101,7 +106,7 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
     return (
       <div className="fixed inset-0 z-[100] bg-black">
         <LiveCamera busy={busy} onShot={onPhoto} onFile={(f) => void handleFile(f)} />
-        <button type="button" onClick={onClose} aria-label="Yopish" className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white">
+        <button type="button" onClick={onClose} aria-label={t('close')} className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white">
           <X className="h-5 w-5" />
         </button>
         {error && <p role="alert" className="absolute inset-x-4 top-16 rounded-xl bg-red-500/90 px-4 py-3 text-center text-sm text-white">{error}</p>}
@@ -112,17 +117,17 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-6 backdrop-blur-xl">
       <div className="relative w-full max-w-4xl rounded-[28px] border border-white/10 bg-[#0B0D13] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
-        <button type="button" onClick={onClose} aria-label="Yopish" className="absolute end-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20">
+        <button type="button" onClick={onClose} aria-label={t('close')} className="absolute end-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20">
           <X className="h-4 w-4" />
         </button>
-        <h2 className="text-2xl font-light text-white">Mahsulot rasmi</h2>
-        <p className="mt-1 text-sm text-white/50">Telefon bilan suratga oling yoki kompyuterdan yuklang.</p>
+        <h2 className="text-2xl font-light text-white">{t('title')}</h2>
+        <p className="mt-1 text-sm text-white/50">{t('subtitle')}</p>
 
         <div className="mt-8 grid gap-8 md:grid-cols-2">
           {/* QR */}
           <section className="flex flex-col items-center text-center">
-            <h3 className="text-lg font-light text-white">Telefonda skanerlash</h3>
-            <p className="mt-1 text-sm text-white/50">Telefon kamerasi bilan QR kodni skanerlang</p>
+            <h3 className="text-lg font-light text-white">{t('scanTitle')}</h3>
+            <p className="mt-1 text-sm text-white/50">{t('scanSub')}</p>
             <div className="mt-5 rounded-3xl bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.7)]">
               {url ? (
                 <LuxuryQrCode value={url} size={240} finderCornerRadius={2.2} className="rounded-2xl" />
@@ -134,7 +139,7 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
             </div>
             <p className="mt-4 flex items-center gap-2 text-xs text-white/60">
               <span className={`h-2.5 w-2.5 rounded-full ${status === 'captured' ? 'bg-emerald-400' : status === 'connected' ? 'bg-[#D4AE62]' : 'animate-pulse bg-amber-400'}`} />
-              {status === 'captured' ? 'Rasm qabul qilindi!' : status === 'connected' ? 'Telefon ulandi, suratga oling' : 'Ulanish kutilmoqda…'}
+              {status === 'captured' ? t('statusCaptured') : status === 'connected' ? t('statusConnected') : t('statusWaiting')}
             </p>
             {url && (
               <button
@@ -147,15 +152,15 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
                 className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/5 px-4 py-2 text-xs text-white/60 hover:bg-white/10 hover:text-white"
               >
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? 'Nusxalandi' : 'Havolani nusxalash'}
+                {copied ? t('copied') : t('copyLink')}
               </button>
             )}
           </section>
 
           {/* Upload */}
           <section className="flex flex-col items-center text-center">
-            <h3 className="text-lg font-light text-white">Qurilmadan yuklash</h3>
-            <p className="mt-1 text-sm text-white/50">Rasmni kompyuteringizdan tanlang</p>
+            <h3 className="text-lg font-light text-white">{t('deviceTitle')}</h3>
+            <p className="mt-1 text-sm text-white/50">{t('deviceSub')}</p>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { void handleFile(e.target.files?.[0]); e.target.value = ''; }} />
             <button
               type="button"
@@ -166,8 +171,8 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
               className={`mt-5 flex h-[272px] w-full flex-col items-center justify-center gap-3 rounded-3xl border border-dashed transition ${dragging ? 'border-[#D4AE62] bg-[#D4AE62]/10' : 'border-white/20 bg-white/[0.02] hover:bg-white/[0.05]'}`}
             >
               {busy ? <Loader2 className="h-10 w-10 animate-spin text-[#D4AE62]" /> : <ImagePlus className="h-10 w-10 text-[#D4AE62]" />}
-              <span className="text-sm font-semibold text-white">Rasmni tanlang yoki shu yerga tashlang</span>
-              <span className="text-xs text-white/40">JPEG, PNG, WebP</span>
+              <span className="text-sm font-semibold text-white">{t('dropHint')}</span>
+              <span className="text-xs text-white/40">{t('formats')}</span>
             </button>
           </section>
         </div>

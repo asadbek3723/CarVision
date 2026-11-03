@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error('admin users error:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest) {
   const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   const parsed = banSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ success: false, error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
   const { data } = await createAdminClient().rpc('admin_set_ban', {
     p_admin_id: auth.adminId,
     p_user_id: parsed.data.userId,

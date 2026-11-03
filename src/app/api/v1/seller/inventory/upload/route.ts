@@ -23,14 +23,14 @@ export async function POST(request: NextRequest) {
   try {
     const form = await request.formData();
     const file = form.get('file');
-    if (!(file instanceof File)) return NextResponse.json({ success: false, error: 'Fayl topilmadi' }, { status: 400 });
+    if (!(file instanceof File)) return NextResponse.json({ success: false, code: 'NO_FILE', error: 'Fayl topilmadi' }, { status: 400 });
     if (file.size > MAX_BYTES) {
-      return NextResponse.json({ success: false, error: 'Rasm hajmi 4MB dan oshmasligi kerak' }, { status: 413 });
+      return NextResponse.json({ success: false, code: 'TOO_LARGE', error: 'Rasm hajmi 4MB dan oshmasligi kerak' }, { status: 413 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const kind = sniff(buffer);
-    if (!kind) return NextResponse.json({ success: false, error: 'Faqat JPEG, PNG yoki WebP rasm yuklang' }, { status: 415 });
+    if (!kind) return NextResponse.json({ success: false, code: 'BAD_TYPE', error: 'Faqat JPEG, PNG yoki WebP rasm yuklang' }, { status: 415 });
 
     const path = `${guard.value.shopId}/${crypto.randomUUID()}.${kind.ext}`;
     const db = createAdminClient();
@@ -40,12 +40,12 @@ export async function POST(request: NextRequest) {
     });
     if (error) {
       console.error('catalog upload failed:', error.message);
-      return NextResponse.json({ success: false, error: 'Rasmni yuklab bo‘lmadi' }, { status: 500 });
+      return NextResponse.json({ success: false, code: 'UPLOAD_FAILED', error: 'Rasmni yuklab bo‘lmadi' }, { status: 500 });
     }
     const url = db.storage.from(CATALOG_BUCKET).getPublicUrl(path).data.publicUrl;
     return NextResponse.json({ success: true, url });
   } catch (err) {
     console.error('upload error:', err);
-    return NextResponse.json({ success: false, error: 'Serverda xatolik yuz berdi' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Serverda xatolik yuz berdi' }, { status: 500 });
   }
 }

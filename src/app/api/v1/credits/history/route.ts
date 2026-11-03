@@ -14,7 +14,7 @@ export async function GET() {
     .eq('user_id', guard.value.userId)
     .order('created_at', { ascending: false })
     .limit(60);
-  if (error) return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+  if (error) return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   return NextResponse.json({
     success: true,
     balance: guard.value.shop ? guard.value.shop.credits_balance : guard.value.profile.credits_balance,

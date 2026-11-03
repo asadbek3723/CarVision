@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertCircle, ArrowLeft, Loader2, Lock, Shield } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 
@@ -11,6 +12,8 @@ interface Props {
 
 /** Second factor: the admin PIN (any length 4-32). Works with the phone keyboard and the Enter key. */
 export function AdminPinGate({ onSuccess, adminName }: Props) {
+  const t = useTranslations('adm.gate');
+  const tn = useTranslations('adm.nav');
   const [pin, setPin] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
@@ -40,9 +43,9 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
       }
       setPin('');
       if (data.error?.code === 'RATE_LIMIT_EXCEEDED') setLockedFor(Number(data.error.retryAfterSeconds) || 900);
-      setError(data.error?.message || 'PIN kod noto‘g‘ri');
+      setError(data.error?.message || t('wrong'));
     } catch {
-      setError('Server bilan bog‘lanib bo‘lmadi. Qayta urinib ko‘ring.');
+      setError(t('network'));
     } finally {
       setSubmitting(false);
     }
@@ -55,11 +58,11 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
     <div className="flex min-h-screen items-center justify-center bg-[#07080B] p-5">
       <form onSubmit={submit} className="w-full max-w-sm rounded-[32px] bg-white/[0.04] p-7 text-center">
         <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#D4AE62]/15 text-[#D4AE62]"><Shield className="h-8 w-8" /></span>
-        <h1 className="mt-5 text-xl font-bold text-white">Admin PIN</h1>
+        <h1 className="mt-5 text-xl font-bold text-white">{t('title')}</h1>
         <p className="mt-1 text-sm text-white/50">{adminName}</p>
 
         <label className="mt-6 block">
-          <span className="sr-only">PIN kod</span>
+          <span className="sr-only">{t('pinLabel')}</span>
           <input
             type="password"
             inputMode="numeric"
@@ -75,18 +78,18 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
         </label>
 
         {lockedFor > 0 ? (
-          <p role="alert" className="mt-4 flex items-center justify-center gap-2 text-sm text-red-300"><Lock className="h-4 w-4" />Bloklandi: {mm}:{ss}</p>
+          <p role="alert" className="mt-4 flex items-center justify-center gap-2 text-sm text-red-300"><Lock className="h-4 w-4" />{t('locked', { time: `${mm}:${ss}` })}</p>
         ) : error ? (
           <p role="alert" className="mt-4 flex items-start justify-center gap-2 text-sm text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>
         ) : null}
 
         <button type="submit" disabled={pin.length < 4 || submitting || lockedFor > 0} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-4 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-40">
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          Kirish
+          {t('submit')}
         </button>
         <Link href="/seller" className="mt-4 inline-flex items-center gap-1.5 text-xs text-white/45 hover:text-white">
           <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-          Ilovaga qaytish
+          {tn('backToApp')}
         </Link>
       </form>
     </div>

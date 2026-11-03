@@ -12,6 +12,8 @@ import { useCurrency } from '@/context/CurrencyContext';
 export function VeloceCart() {
   const params = useParams();
   const t = useTranslations('shop.cart');
+  const tCard = useTranslations('shop.card');
+  const tDetail = useTranslations('shop.detail');
   const locale = (params?.['locale'] as string) || 'uz';
   const { cart, add, remove } = useVeloceStore();
   const [broken, setBroken] = React.useState<Record<string, boolean>>({});
@@ -94,8 +96,8 @@ export function VeloceCart() {
 
       {missingIds.length > 0 && (
         <div role="alert" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-500/10 px-5 py-4 text-sm text-amber-200">
-          <span>Savatdagi {missingIds.length} ta detal endi sotuvda yo‘q.</span>
-          <button type="button" onClick={dropMissing} className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">Olib tashlash</button>
+          <span>{t('missing', { count: missingIds.length })}</span>
+          <button type="button" onClick={dropMissing} className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">{t('removeMissing')}</button>
         </div>
       )}
 
@@ -125,7 +127,7 @@ export function VeloceCart() {
           <div className="divide-y divide-white/[0.06]">
             {items.map(({ product: p, quantity: q }) => {
               const unitUSD = p.price;
-              const carName = p.isUniversal ? 'Barcha mashinalar' : p.targetCar || p.compatibility?.[0]?.name || '';
+              const carName = p.isUniversal ? tCard('allCars') : p.targetCar || p.compatibility?.[0]?.name || '';
               const atMax = p.stock > 0 && q >= p.stock;
               return (
                 <div
@@ -136,7 +138,7 @@ export function VeloceCart() {
                     {p.image && !broken[p.id] ? (
                       <img src={p.image} alt={p.name} onError={() => setBroken((b) => ({ ...b, [p.id]: true }))} className="h-20 w-24 shrink-0 rounded-2xl bg-[#12141C] object-cover" />
                     ) : (
-                      <div className="flex h-20 w-24 shrink-0 items-center justify-center rounded-2xl bg-[#12141C] text-[10px] uppercase tracking-widest text-white/30">Rasm yo‘q</div>
+                      <div className="flex h-20 w-24 shrink-0 items-center justify-center rounded-2xl bg-[#12141C] text-[10px] uppercase tracking-widest text-white/30">{tDetail('noImage')}</div>
                     )}
                     <div>
                       {carName && (
@@ -145,7 +147,7 @@ export function VeloceCart() {
                           <span>{t('forCar', { car: carName })}</span>
                         </span>
                       )}
-                      {p.stock <= 0 && <p className="text-[11px] font-semibold text-red-300">Omborda yo‘q</p>}
+                      {p.stock <= 0 && <p className="text-[11px] font-semibold text-red-300">{t('outOfStock')}</p>}
                       <h3 className="mt-0.5 text-base font-medium text-white">{p.name}</h3>
                       <p className="mt-1 font-mono text-sm font-semibold text-white/80 tabular-nums">
                         {t('price', { amount: formatPrice(unitUSD) })}
@@ -157,7 +159,7 @@ export function VeloceCart() {
                     <div className="flex items-center gap-2 rounded-xl bg-white/[0.04] p-1.5">
                       <button
                         type="button"
-                        aria-label="Kamaytirish"
+                        aria-label={t('decrease')}
                         onClick={() => remove(p.id)}
                         className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08]"
                       >
@@ -168,7 +170,7 @@ export function VeloceCart() {
                       </span>
                       <button
                         type="button"
-                        aria-label="Ko‘paytirish"
+                        aria-label={t('increase')}
                         disabled={atMax}
                         onClick={() => add(p.id)}
                         className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08] disabled:opacity-30"

@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const { data: plan } = await db.from('pricing_plans').select('max_custom_items').eq('code', guard.value.session.shop?.current_plan_code ?? 'FREE_TRIAL').maybeSingle();
     const limit = (plan?.max_custom_items as number | undefined) ?? 10;
     if ((count ?? 0) >= limit) {
-      return fail(402, `Tarifingizda ${limit} tagacha mahsulot qo‘shish mumkin. Tarifni yangilang`, { code: 'ITEM_LIMIT' });
+      return fail(402, `Tarifingizda ${limit} tagacha mahsulot qo‘shish mumkin. Tarifni yangilang`, { code: 'ITEM_LIMIT', limit });
     }
 
     const { data: created, error } = await db

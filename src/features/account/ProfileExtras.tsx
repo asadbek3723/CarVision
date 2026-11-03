@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, KeyRound, Loader2, Receipt } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 
@@ -13,16 +14,7 @@ interface Entry {
   at: string;
 }
 
-const TYPE_LABEL: Record<string, string> = {
-  TRIAL_BONUS: 'Ro‘yxatdan o‘tish bonusi',
-  MONTHLY_FREE: 'Oylik bepul kredit',
-  PLAN_ASSIGNED: 'Tarif krediti',
-  RESERVED: 'AI render',
-  COMMITTED: 'AI render',
-  REFUNDED: 'Qaytarildi (xato)',
-  REFERRAL_REWARD: 'Taklif mukofoti',
-  ADMIN_ADJUSTMENT: 'Admin tuzatishi',
-};
+const TYPES = new Set(['TRIAL_BONUS', 'MONTHLY_FREE', 'PLAN_ASSIGNED', 'RESERVED', 'COMMITTED', 'REFUNDED', 'REFERRAL_REWARD', 'ADMIN_ADJUSTMENT']);
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const when = (iso: string) => {
@@ -34,16 +26,17 @@ const fieldCls = 'w-full rounded-2xl bg-white/[0.06] px-4 py-3.5 text-sm text-wh
 
 /** Credit history and password change for the signed-in account (borderless, mobile first). */
 export function ProfileExtras() {
+  const t = useTranslations('profileExtras');
   const { user } = useAuth();
   const [open, setOpen] = React.useState<'credits' | 'password' | null>(null);
 
   if (!user) return null;
   return (
     <div className="mx-auto max-w-4xl space-y-3 px-5 pb-28 md:px-10">
-      <Accordion id="credits" open={open} onToggle={setOpen} icon={<Receipt className="h-5 w-5" />} title="Kredit tarixi" hint={`Balans: ${user.credits_balance}`}>
+      <Accordion id="credits" open={open} onToggle={setOpen} icon={<Receipt className="h-5 w-5" />} title={t('creditHistory')} hint={t('balance', { count: user.credits_balance })}>
         <CreditHistory />
       </Accordion>
-      <Accordion id="password" open={open} onToggle={setOpen} icon={<KeyRound className="h-5 w-5" />} title="Parolni almashtirish" hint="Xavfsizlik">
+      <Accordion id="password" open={open} onToggle={setOpen} icon={<KeyRound className="h-5 w-5" />} title={t('changePassword')} hint={t('security')}>
         <PasswordForm />
       </Accordion>
     </div>
@@ -68,6 +61,7 @@ function Accordion({ id, open, onToggle, icon, title, hint, children }: { id: 'c
 }
 
 function CreditHistory() {
+  const t = useTranslations('profileExtras');
   const [entries, setEntries] = React.useState<Entry[] | null>(null);
   const [error, setError] = React.useState(false);
 
@@ -86,21 +80,21 @@ function CreditHistory() {
     };
   }, []);
 
-  if (error) return <p className="text-sm text-red-300">Tarixni yuklab bo‘lmadi.</p>;
+  if (error) return <p className="text-sm text-red-300">{t('errHistory')}</p>;
   if (!entries) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-[#D4AE62]" /></div>;
-  if (entries.length === 0) return <p className="text-sm text-white/50">Hali harakat yo‘q.</p>;
+  if (entries.length === 0) return <p className="text-sm text-white/50">{t('noActivity')}</p>;
 
   return (
     <ul className="divide-y divide-white/[0.06]">
       {entries.map((e) => (
         <li key={e.id} className="flex items-center justify-between gap-3 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">{TYPE_LABEL[e.type] ?? e.type}</p>
+            <p className="truncate text-sm font-semibold text-white">{TYPES.has(e.type) ? t(`types.${e.type}`) : e.type}</p>
             <p className="text-xs text-white/40">{when(e.at)}{e.description && e.type === 'ADMIN_ADJUSTMENT' ? ` · ${e.description}` : ''}</p>
           </div>
           <div className="shrink-0 text-end">
             <p className={`text-sm font-bold tabular-nums ${e.amount > 0 ? 'text-emerald-400' : 'text-white/80'}`}>{e.amount > 0 ? `+${e.amount}` : e.amount}</p>
-            <p className="text-[11px] text-white/35">qoldi {e.balanceAfter}</p>
+            <p className="text-[11px] text-white/35">{t('left', { count: e.balanceAfter })}</p>
           </div>
         </li>
       ))}
@@ -109,6 +103,7 @@ function CreditHistory() {
 }
 
 function PasswordForm() {
+  const t = useTranslations('profileExtras');
   const [current, setCurrent] = React.useState('');
   const [next, setNext] = React.useState('');
   const [again, setAgain] = React.useState('');
@@ -118,18 +113,18 @@ function PasswordForm() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMsg(null);
-    if (next !== again) return setMsg({ ok: false, text: 'Yangi parollar bir xil emas' });
+    if (next !== again) return setMsg({ ok: false, text: t('errMismatch') });
     setBusy(true);
     try {
       const res = await fetch('/api/v1/auth/password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: current, newPassword: next }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || 'Almashtirib bo‘lmadi');
-      setMsg({ ok: true, text: 'Parol almashtirildi' });
+      if (!res.ok || !data.success) throw new Error(data.error || t('errChange'));
+      setMsg({ ok: true, text: t('changed') });
       setCurrent('');
       setNext('');
       setAgain('');
     } catch (err) {
-      setMsg({ ok: false, text: err instanceof Error ? err.message : 'Almashtirib bo‘lmadi' });
+      setMsg({ ok: false, text: err instanceof Error ? err.message : t('errChange') });
     } finally {
       setBusy(false);
     }
@@ -137,13 +132,13 @@ function PasswordForm() {
 
   return (
     <form onSubmit={submit} className="space-y-3">
-      <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="Joriy parol" className={fieldCls} />
-      <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder="Yangi parol (8+ belgi, harf va raqam)" className={fieldCls} />
-      <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder="Yangi parolni takrorlang" className={fieldCls} />
+      <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder={t('phCurrent')} className={fieldCls} />
+      <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t('phNew')} className={fieldCls} />
+      <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder={t('phAgain')} className={fieldCls} />
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`text-sm ${msg.ok ? 'text-emerald-300' : 'text-red-300'}`}>{msg.text}</p>}
       <button type="submit" disabled={busy || !current || !next || !again} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-3.5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-50">
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-        Parolni almashtirish
+        {t('changePassword')}
       </button>
     </form>
   );

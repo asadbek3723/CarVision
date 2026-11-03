@@ -91,15 +91,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        return { success: false, error: data.error || 'Sign in failed' };
+        return { success: false, error: data.error || '' };
       }
 
       setUser(data.user);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
       setIsAuthModalOpen(false);
       return { success: true };
-    } catch (err: unknown) {
-      return { success: false, error: err instanceof Error ? err.message : 'Sign in failed' };
+    } catch {
+      return { success: false, error: '' };
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        return { success: false, error: data.error || 'Registration failed' };
+        return { success: false, error: data.error || '' };
       }
 
       if (typeof document !== 'undefined' && data.user.preferred_language) {
@@ -126,8 +126,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
       setIsAuthModalOpen(false);
       return { success: true };
-    } catch (err: unknown) {
-      return { success: false, error: err instanceof Error ? err.message : 'Registration failed' };
+    } catch {
+      return { success: false, error: '' };
     } finally {
       setIsLoading(false);
     }

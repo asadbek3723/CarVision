@@ -12,13 +12,13 @@ export async function POST(request: NextRequest) {
     let userId: string | undefined;
     if (kind === 'product') {
       const session = await getSession();
-      if (!session) return NextResponse.json({ success: false, error: 'Kirish talab qilinadi' }, { status: 401 });
+      if (!session) return NextResponse.json({ success: false, code: 'UNAUTHENTICATED', error: 'Kirish talab qilinadi' }, { status: 401 });
       userId = session.userId;
     }
 
     const ip = clientIp(request);
     if ((await recentFailures('ip', ip, 'camera_session', 60 * 60 * 1000, true)) >= 40) {
-      return NextResponse.json({ success: false, error: 'Juda ko‘p so‘rov' }, { status: 429 });
+      return NextResponse.json({ success: false, code: 'RATE_LIMITED', error: 'Juda ko‘p so‘rov' }, { status: 429 });
     }
     await recordAttempt('camera_session', 'create', ip, true);
 
@@ -26,6 +26,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, session });
   } catch (error) {
     console.error('camera-session create error:', error);
-    return NextResponse.json({ success: false, error: 'Sessiya yaratib bo‘lmadi' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'SESSION_FAILED', error: 'Sessiya yaratib bo‘lmadi' }, { status: 500 });
   }
 }

@@ -74,6 +74,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error('admin overview error:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }

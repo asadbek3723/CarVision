@@ -1,8 +1,9 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { BadgeCheck, Coins, MapPin, Phone } from 'lucide-react';
-import { EmptyState, ErrorState, Field, PLAN_LABEL, PageHeader, Pill, SearchField, Segmented, Sheet, Spinner, Surface, dateTime, fieldClass, nf, useAdminApi, useAdminData, useToast } from './ui';
+import { EmptyState, ErrorState, Field, PLAN_LABEL, PageHeader, Pill, SearchField, Segmented, Sheet, Spinner, Surface, dateTime, fieldClass, useAdminApi, useAdminData, useAdminFormat, useToast } from './ui';
 
 interface Shop {
   id: string;
@@ -34,13 +35,16 @@ interface Plan {
 type Filter = 'all' | 'paid' | 'free' | 'unverified';
 
 const METHODS = [
-  { id: 'BANK_TRANSFER', label: 'Bank o‘tkazmasi' },
-  { id: 'CASH', label: 'Naqd' },
-  { id: 'CLICK_PAYME_MANUAL', label: 'Click / Payme' },
-  { id: 'OCTO', label: 'Octo' },
+  { id: 'BANK_TRANSFER', label: 'mBank' },
+  { id: 'CASH', label: 'mCash' },
+  { id: 'CLICK_PAYME_MANUAL', label: 'mClick' },
+  { id: 'OCTO', label: 'mOcto' },
 ] as const;
 
 export function AdminShopsView() {
+  const t = useTranslations('adm.shops');
+  const tc = useTranslations('adm.common');
+  const { nf } = useAdminFormat();
   const { data, error, loading, reload } = useAdminData<{ shops: Shop[] }>('/api/v1/admin/shops');
   const api = useAdminApi();
   const toast = useToast();
@@ -69,10 +73,10 @@ export function AdminShopsView() {
     setBusy(s.id);
     try {
       await api('/api/v1/admin/shops', { method: 'PATCH', body: JSON.stringify({ shopId: s.id, verified: !s.verified }) });
-      toast.show(s.verified ? 'Tasdiq olib tashlandi' : 'Ustaxona tasdiqlandi');
+      toast.show(s.verified ? t('toastUnverified') : t('toastVerified'));
       await reload();
     } catch (e) {
-      toast.show(e instanceof Error ? e.message : 'Xatolik', 'err');
+      toast.show(e instanceof Error ? e.message : tc('error'), 'err');
     } finally {
       setBusy(null);
     }
@@ -84,23 +88,23 @@ export function AdminShopsView() {
   return (
     <div>
       {toast.node}
-      <PageHeader title="Ustaxonalar" subtitle={`${counts.all} ta ustaxona`} />
+      <PageHeader title={t('title')} subtitle={t('subtitle', { count: counts.all })} />
       <div className="space-y-3">
-        <SearchField value={q} onChange={setQ} placeholder="Nomi, ega, telefon yoki shahar" />
+        <SearchField value={q} onChange={setQ} placeholder={t('search')} />
         <Segmented
           value={filter}
           onChange={setFilter}
           options={[
-            { id: 'all', label: 'Hammasi', count: counts.all },
-            { id: 'paid', label: 'Pullik', count: counts.paid },
-            { id: 'free', label: 'Free', count: counts.free },
-            { id: 'unverified', label: 'Tasdiqlanmagan', count: counts.unverified },
+            { id: 'all', label: tc('all'), count: counts.all },
+            { id: 'paid', label: t('fPaid'), count: counts.paid },
+            { id: 'free', label: t('fFree'), count: counts.free },
+            { id: 'unverified', label: t('fUnverified'), count: counts.unverified },
           ]}
         />
       </div>
 
       <div className="mt-5 space-y-3">
-        {shops.length === 0 && <EmptyState>Mos ustaxona topilmadi.</EmptyState>}
+        {shops.length === 0 && <EmptyState>{t('empty')}</EmptyState>}
         {shops.map((s) => (
           <Surface key={s.id} className="p-4 sm:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -110,23 +114,23 @@ export function AdminShopsView() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 <Pill tone={s.isPaid ? 'gold' : 'neutral'}>{PLAN_LABEL[s.plan] ?? s.plan}</Pill>
-                {s.verified ? <Pill tone="green">Tasdiqlangan</Pill> : <Pill tone="amber">Tasdiqlanmagan</Pill>}
-                {s.banned && <Pill tone="red">Bloklangan</Pill>}
+                {s.verified ? <Pill tone="green">{t('verified')}</Pill> : <Pill tone="amber">{t('notVerified')}</Pill>}
+                {s.banned && <Pill tone="red">{t('banned')}</Pill>}
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-2xl bg-white/[0.04] py-3">
                 <p className="text-lg font-bold tabular-nums text-white">{nf.format(s.credits)}</p>
-                <p className="text-[10px] text-white/45">kredit</p>
+                <p className="text-[10px] text-white/45">{t('credits')}</p>
               </div>
               <div className="rounded-2xl bg-white/[0.04] py-3">
                 <p className="text-lg font-bold tabular-nums text-white">{s.items}</p>
-                <p className="text-[10px] text-white/45">detal</p>
+                <p className="text-[10px] text-white/45">{t('parts')}</p>
               </div>
               <div className="rounded-2xl bg-white/[0.04] py-3">
                 <p className="text-xs font-bold text-white">{s.isPaid && s.expiresAt ? dateTime(s.expiresAt) : '—'}</p>
-                <p className="text-[10px] text-white/45">tarif tugaydi</p>
+                <p className="text-[10px] text-white/45">{t('expires')}</p>
               </div>
             </div>
 
@@ -138,11 +142,11 @@ export function AdminShopsView() {
               <div className="flex gap-2">
                 <button type="button" onClick={() => setPlanFor(s)} className="inline-flex items-center gap-1.5 rounded-full bg-[#D4AE62] px-4 py-2.5 text-xs font-bold text-black hover:brightness-110">
                   <Coins className="h-3.5 w-3.5" />
-                  Tarif berish
+                  {t('assign')}
                 </button>
                 <button type="button" disabled={busy === s.id} onClick={() => void toggleVerified(s)} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-50">
                   <BadgeCheck className="h-3.5 w-3.5" />
-                  {s.verified ? 'Tasdiqni olish' : 'Tasdiqlash'}
+                  {s.verified ? t('unverify') : t('verify')}
                 </button>
               </div>
             </div>
@@ -150,12 +154,14 @@ export function AdminShopsView() {
         ))}
       </div>
 
-      <AssignPlanSheet shop={planFor} onClose={() => setPlanFor(null)} onDone={() => { setPlanFor(null); toast.show('Tarif berildi'); void reload(); }} onError={(m) => toast.show(m, 'err')} />
+      <AssignPlanSheet shop={planFor} onClose={() => setPlanFor(null)} onDone={() => { setPlanFor(null); toast.show(t('toastPlan')); void reload(); }} onError={(m) => toast.show(m, 'err')} />
     </div>
   );
 }
 
 function AssignPlanSheet({ shop, onClose, onDone, onError }: { shop: Shop | null; onClose: () => void; onDone: () => void; onError: (m: string) => void }) {
+  const t = useTranslations('adm.shops');
+  const tc = useTranslations('adm.common');
   const api = useAdminApi();
   const [plans, setPlans] = React.useState<Plan[]>([]);
   const [planCode, setPlanCode] = React.useState('PRO_800');
@@ -187,7 +193,7 @@ function AssignPlanSheet({ shop, onClose, onDone, onError }: { shop: Shop | null
     e.preventDefault();
     if (!shop) return;
     const paidNum = Number(paid.replace(/\s/g, '')) || 0;
-    if (notes.trim().length < 3) return onError('Izohni yozing (kim, qachon, qanday to‘lagan)');
+    if (notes.trim().length < 3) return onError(t('errNotes'));
     setSaving(true);
     try {
       await api('/api/v1/admin/billing/assign-plan', {
@@ -205,16 +211,16 @@ function AssignPlanSheet({ shop, onClose, onDone, onError }: { shop: Shop | null
       });
       onDone();
     } catch (err) {
-      onError(err instanceof Error ? err.message : 'Tarif berib bo‘lmadi');
+      onError(err instanceof Error ? err.message : t('errAssign'));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Sheet open={Boolean(shop)} onClose={onClose} title={shop ? `Tarif: ${shop.name}` : 'Tarif'}>
+    <Sheet open={Boolean(shop)} onClose={onClose} title={shop ? t('sheetTitle', { name: shop.name }) : t('sheetDefault')}>
       <form onSubmit={submit} className="space-y-4">
-        <Field label="Tarif">
+        <Field label={t('fPlan')}>
           <select value={planCode} onChange={(e) => pick(e.target.value)} className={fieldClass}>
             {plans.map((p) => (
               <option key={p.code} value={p.code} className="bg-[#101218]">{p.name} · ${p.priceUSD}</option>
@@ -223,34 +229,34 @@ function AssignPlanSheet({ shop, onClose, onDone, onError }: { shop: Shop | null
           </select>
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Kredit">
+          <Field label={t('fCredits')}>
             <input type="number" inputMode="numeric" min={1} max={50000} value={credits} onChange={(e) => setCredits(e.target.value)} className={fieldClass} />
           </Field>
-          <Field label="Muddat (kun)">
+          <Field label={t('fDays')}>
             <input type="number" inputMode="numeric" min={1} max={365} value={days} onChange={(e) => setDays(e.target.value)} className={fieldClass} />
           </Field>
         </div>
         <div className="grid grid-cols-[1fr_auto] gap-3">
-          <Field label="To‘langan summa">
+          <Field label={t('fPaidAmount')}>
             <input type="number" inputMode="decimal" min={0} value={paid} onChange={(e) => setPaid(e.target.value)} placeholder="0" className={fieldClass} />
           </Field>
-          <Field label="Valyuta">
+          <Field label={t('fCurrency')}>
             <select value={currency} onChange={(e) => setCurrency(e.target.value as typeof currency)} className={fieldClass}>
               {(['UZS', 'USD', 'AED', 'EUR'] as const).map((c) => <option key={c} value={c} className="bg-[#101218]">{c}</option>)}
             </select>
           </Field>
         </div>
-        <Field label="To‘lov usuli">
+        <Field label={t('fMethod')}>
           <select value={method} onChange={(e) => setMethod(e.target.value as typeof method)} className={fieldClass}>
-            {METHODS.map((m) => <option key={m.id} value={m.id} className="bg-[#101218]">{m.label}</option>)}
+            {METHODS.map((m) => <option key={m.id} value={m.id} className="bg-[#101218]">{t(m.label)}</option>)}
           </select>
         </Field>
-        <Field label="Izoh (majburiy)">
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} placeholder="Masalan: 4 noyabr, Click orqali 350 000 so‘m" className={`${fieldClass} resize-none`} />
+        <Field label={t('fNotes')}>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} placeholder={t('notesPlaceholder')} className={`${fieldClass} resize-none`} />
         </Field>
-        <p className="text-xs text-white/45">Kredit ustaxona balansiga qo‘shiladi, muddat hozirdan boshlab hisoblanadi. Amal audit logga yoziladi.</p>
+        <p className="text-xs text-white/45">{t('info')}</p>
         <button type="submit" disabled={saving} className="w-full rounded-full bg-[#D4AE62] py-3.5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-60">
-          {saving ? 'Saqlanmoqda…' : 'Tarifni faollashtirish'}
+          {saving ? tc('saving') : t('submit')}
         </button>
       </form>
     </Sheet>

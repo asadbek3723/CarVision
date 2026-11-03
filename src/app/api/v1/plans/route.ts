@@ -29,6 +29,6 @@ export async function GET() {
     return NextResponse.json({ success: true, plans });
   } catch (err) {
     console.error('plans error:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }

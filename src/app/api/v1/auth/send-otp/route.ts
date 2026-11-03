@@ -12,16 +12,16 @@ const schema = z.object({ identifier: z.string().min(5).max(40) });
  */
 export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ success: false, error: 'Telefon raqam kerak' }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_PHONE', error: 'Telefon raqam kerak' }, { status: 400 });
 
   if (!isSmsConfigured()) return NextResponse.json({ success: true, smsRequired: false });
 
   const phone = normalizePhone(parsed.data.identifier);
-  if (!phone) return NextResponse.json({ success: false, error: "Telefon raqam noto'g'ri" }, { status: 400 });
+  if (!phone) return NextResponse.json({ success: false, code: 'INVALID_PHONE', error: "Telefon raqam noto'g'ri" }, { status: 400 });
 
   const ip = clientIp(request);
   if ((await recentFailures('ip', ip, 'otp', 60 * 60 * 1000, true)) >= 10) {
-    return NextResponse.json({ success: false, error: "Juda ko'p so'rov" }, { status: 429 });
+    return NextResponse.json({ success: false, code: 'RATE_LIMITED', error: "Juda ko'p so'rov" }, { status: 429 });
   }
   await recordAttempt('otp', phone, ip, true);
 

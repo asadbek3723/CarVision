@@ -6,7 +6,7 @@ import { getServerRates } from '@/server/rates';
 import { fetchBookingItems, fetchBookingRows, type BookingRow } from '@/server/bookings';
 import { centsToUsd } from '@/domain/catalog';
 
-const fail = (status: number, error: string) => NextResponse.json({ success: false, error }, { status });
+const fail = (status: number, error: string, code?: string) => NextResponse.json({ success: false, code, error }, { status });
 
 type SellerStatus = 'pending' | 'verified' | 'completed' | 'cancelled';
 const STATUS_MAP: Record<string, SellerStatus> = { UNLOCKED: 'verified', REDEEMED: 'completed' };

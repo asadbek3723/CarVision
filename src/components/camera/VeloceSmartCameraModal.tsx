@@ -18,7 +18,8 @@ import {
   Lock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   SmartCameraLandscapeView,
   LuxuryCarCompass,
@@ -28,57 +29,7 @@ import { compressFileToDataUrl, type CompressResult } from '@/features/camera/li
 import { playLock, playShutter, vibrate } from '@/features/camera/lib/fx';
 import { LuxuryQrCode } from '@/components/ui/LuxuryQrCode';
 
-export interface GuidedScanAngle {
-  id: number;
-  key: 'front' | 'right' | 'rear' | 'left';
-  title: string;
-  shortTitle: string;
-  guideInstruction: string;
-  coneAngle: number;
-  isPrimary?: boolean;
-}
-
-/**
- * 4 Mandatory Program-Driven Angles matching the 4-way Car Compass 1:1.
- * Users MUST upload/capture all 4 sides in sequence; skipping is forbidden.
- */
-export const GUIDED_SCAN_ANGLES: GuidedScanAngle[] = [
-  {
-    id: 1,
-    key: 'front',
-    title: 'Old tomon',
-    shortTitle: 'Oldi',
-    guideInstruction: 'Mashinaning old tomonini to‘g‘ridan rasmga oling yoki yuklang.',
-    coneAngle: 0,
-    isPrimary: true,
-  },
-  {
-    id: 2,
-    key: 'right',
-    title: 'O‘ng tomon',
-    shortTitle: 'O‘ng',
-    guideInstruction: 'Mashinaning o‘ng yon tomonini to‘liq ko‘rinishda yuklang.',
-    coneAngle: 90,
-  },
-  {
-    id: 3,
-    key: 'rear',
-    title: 'Orqa tomon',
-    shortTitle: 'Orqa',
-    guideInstruction: 'Mashinaning orqa tomonini to‘g‘ridan ko‘rinishda yuklang.',
-    coneAngle: 180,
-  },
-  {
-    id: 4,
-    key: 'left',
-    title: 'Chap tomon',
-    shortTitle: 'Chap',
-    guideInstruction: 'Mashinaning chap yon tomonini to‘liq ko‘rinishda yuklang.',
-    coneAngle: 270,
-  },
-];
-
-const REQUIRED_ANGLE_COUNT = GUIDED_SCAN_ANGLES.length;
+import { GUIDED_SCAN_ANGLES, REQUIRED_ANGLE_COUNT } from './scan-angles';
 
 interface VeloceSmartCameraModalProps {
   isOpen: boolean;
@@ -91,7 +42,7 @@ export function VeloceSmartCameraModal({
   onClose,
   onCaptured,
 }: VeloceSmartCameraModalProps) {
-  const router = useRouter();
+  const t = useTranslations('scanModal');
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
 
@@ -254,6 +205,7 @@ export function VeloceSmartCameraModal({
 
   const currentAngle =
     GUIDED_SCAN_ANGLES[currentStepIndex] || GUIDED_SCAN_ANGLES[0]!;
+  const angleTitle = t(`angles.${currentAngle.key}.title`);
   const currentAnglePhoto = uploadedAngles[currentAngle.id];
   const uploadedAngleIds = Object.keys(uploadedAngles).map(Number);
   const uploadedCount = uploadedAngleIds.length;
@@ -382,19 +334,19 @@ export function VeloceSmartCameraModal({
                   className="flex items-center gap-1.5 rounded-full bg-white/5 px-4 py-2 text-xs font-medium text-muted-foreground hover:text-white hover:bg-white/10 transition cursor-pointer"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Orqaga</span>
+                  <span>{t('back')}</span>
                 </button>
               )}
               <div>
                 <h1 className="text-xl sm:text-2xl font-light tracking-wide text-foreground">
                   {desktopView === 'initial-choice'
-                    ? 'Mashinani suratga olish'
-                    : 'Mashina suratlari'}
+                    ? t('titleChoice')
+                    : t('titleUpload')}
                 </h1>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {desktopView === 'initial-choice'
-                    ? 'Suratni telefon yoki kompyuteringiz orqali kiriting'
-                    : `Rakurs: ${currentStepIndex + 1} / ${REQUIRED_ANGLE_COUNT} · Yuklandi: ${uploadedCount} / ${REQUIRED_ANGLE_COUNT}`}
+                    ? t('subChoice')
+                    : t('progress', { current: currentStepIndex + 1, total: REQUIRED_ANGLE_COUNT, uploaded: uploadedCount })}
                 </p>
               </div>
             </div>
@@ -402,7 +354,7 @@ export function VeloceSmartCameraModal({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Yopish"
+              aria-label={t('close')}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 hover:bg-white/15 active:scale-95 transition cursor-pointer text-muted-foreground hover:text-white"
             >
               <X className="h-5 w-5" />
@@ -425,10 +377,10 @@ export function VeloceSmartCameraModal({
                   <div className="md:col-span-5 flex flex-col items-center md:items-start text-center md:text-start space-y-7">
                     <div>
                       <h2 className="text-2xl sm:text-3xl font-light text-foreground tracking-tight">
-                        Telefonda skanerlash
+                        {t('phoneTitle')}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                        Telefoningiz kamerasi bilan QR kodni skanerlang
+                        {t('phoneSub')}
                       </p>
                     </div>
 
@@ -464,12 +416,12 @@ export function VeloceSmartCameraModal({
                         />
                         <span>
                           {sessionStatus === 'captured'
-                            ? 'Barcha 4 ta surat qabul qilindi!'
+                            ? t('statusCaptured', { total: REQUIRED_ANGLE_COUNT })
                             : sessionStatus === 'connected'
-                            ? `Telefon ulandi · ${remoteCapturedCount} / ${REQUIRED_ANGLE_COUNT} rakurs olindi`
+                            ? t('statusConnected', { captured: remoteCapturedCount, total: REQUIRED_ANGLE_COUNT })
                             : !isOnline
-                            ? 'Oflayn rejim — Mahalliy Wi-Fi bridge'
-                            : 'Ulanish kutilmoqda...'}
+                            ? t('statusOffline')
+                            : t('statusWaiting')}
                         </span>
                       </div>
 
@@ -481,12 +433,12 @@ export function VeloceSmartCameraModal({
                         {copied ? (
                           <>
                             <Check className="h-3.5 w-3.5 text-emerald-400" />
-                            <span>Nusxalandi</span>
+                            <span>{t('copied')}</span>
                           </>
                         ) : (
                           <>
                             <Copy className="h-3.5 w-3.5" />
-                            <span>Havolani nusxalash</span>
+                            <span>{t('copyLink')}</span>
                           </>
                         )}
                       </button>
@@ -500,7 +452,7 @@ export function VeloceSmartCameraModal({
                         ) : (
                           <WifiOff className="h-3 w-3 text-amber-400" />
                         )}
-                        <span>PWA Offline Handoff & Ustaxona Wi-Fi Bridge</span>
+                        <span>{t('offlineBridge')}</span>
                         <ShieldCheck className="h-3 w-3 text-emerald-400 ms-0.5" />
                       </div>
                     </div>
@@ -515,10 +467,10 @@ export function VeloceSmartCameraModal({
                   <div className="md:col-span-5 flex flex-col items-center md:items-start text-center md:text-start space-y-7">
                     <div>
                       <h2 className="text-2xl sm:text-3xl font-light text-foreground tracking-tight">
-                        Kompyuterdan yuklash
+                        {t('computerTitle')}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                        Fotosuratlarni kompyuteringizdan bosqichma-bosqich kiriting
+                        {t('computerSub')}
                       </p>
                     </div>
 
@@ -528,7 +480,7 @@ export function VeloceSmartCameraModal({
                         <div className="absolute inset-0 bg-[#D4AE62]/5 blur-3xl rounded-full pointer-events-none" />
                         <img
                           src="/images/camera/topdown_coupe.png"
-                          alt="Avtomobil silueti"
+                          alt={t('silhouetteAlt')}
                           className="relative h-[270px] sm:h-[290px] w-auto object-contain drop-shadow-[0_20px_45px_rgba(0,0,0,0.9)] select-none pointer-events-none transition-transform duration-500 hover:scale-[1.02]"
                         />
                       </div>
@@ -541,11 +493,11 @@ export function VeloceSmartCameraModal({
                           className="inline-flex items-center justify-center gap-3 rounded-2xl bg-gold-gradient py-3.5 px-8 sm:py-4 sm:px-9 text-sm sm:text-base font-semibold text-black tracking-wide transition hover:brightness-110 active:scale-98 shadow-gold cursor-pointer"
                         >
                           <Upload className="h-4 w-4 sm:h-5 sm:w-5" />
-                          <span>Rasmlarni yuklash</span>
+                          <span>{t('uploadPhotos')}</span>
                           <ChevronRight className="h-4 w-4" />
                         </button>
                         <p className="text-xs text-muted-foreground/75 mt-2.5 text-center">
-                          Istalgan paytda 1 ta rasm bilan ham davom etishingiz mumkin
+                          {t('oneHint')}
                         </p>
                       </div>
                     </div>
@@ -605,14 +557,14 @@ export function VeloceSmartCameraModal({
                         </div>
                         <div className="min-w-0">
                           <span className="block text-xs sm:text-sm font-medium truncate">
-                            {angle.title}
+                            {t(`angles.${angle.key}.title`)}
                           </span>
                           <span className="hidden sm:block text-[10px] text-white/40">
                             {isUploaded
-                              ? 'Yuklandi'
+                              ? t('stUploaded')
                               : isActive
-                              ? 'Navbatdagi majburiy'
-                              : 'Kutilmoqda'}
+                              ? t('stNext')
+                              : t('stWaiting')}
                           </span>
                         </div>
 
@@ -637,10 +589,10 @@ export function VeloceSmartCameraModal({
                         <span>{currentStepIndex + 1}-Qadam (Majburiy)</span>
                       </span>
                       <h2 className="text-xl sm:text-2xl font-light text-foreground tracking-tight">
-                        {currentAngle.title}
+                        {angleTitle}
                       </h2>
                       <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        {currentAngle.guideInstruction}
+                        {t(`angles.${currentAngle.key}.guide`)}
                       </p>
                     </div>
 
@@ -673,15 +625,15 @@ export function VeloceSmartCameraModal({
                     <div className="space-y-1 w-full">
                       <h2 className="text-xl sm:text-2xl font-light text-foreground tracking-tight">
                         {currentAnglePhoto
-                          ? `${currentAngle.title} surati yuklandi`
-                          : `${currentAngle.title} rasmini yuklang`}
+                          ? t('angleUploaded', { angle: angleTitle })
+                          : t('angleUpload', { angle: angleTitle })}
                       </h2>
                       <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                         {currentAnglePhoto
                           ? allAnglesUploaded
-                            ? 'Barcha 4 ta majburiy rasm yuklandi! Endi davom etishingiz mumkin.'
-                            : 'Keyingi majburiy rakursga o‘ting yoki rasmni yangilang.'
-                          : 'Kompas ko‘rsatgan tomon suratini tanlang yoki shu yerga tashlang'}
+                            ? t('allDoneHint', { total: REQUIRED_ANGLE_COUNT })
+                            : t('nextHint')
+                          : t('dropHint')}
                       </p>
                     </div>
 
@@ -691,14 +643,14 @@ export function VeloceSmartCameraModal({
                         <div className="relative w-full h-[220px] sm:h-[240px] flex flex-col items-center justify-center select-none rounded-3xl bg-white/[0.02]">
                           <img
                             src={currentAnglePhoto}
-                            alt={currentAngle.title}
+                            alt={angleTitle}
                             className="max-h-[165px] w-auto max-w-full rounded-2xl object-contain shadow-[0_24px_60px_rgba(0,0,0,0.95)]"
                           />
 
                           <div className="mt-3 flex items-center gap-3">
                             <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
                               <CheckCircle2 className="h-3.5 w-3.5" />
-                              <span>{currentAngle.title} saqlandi</span>
+                              <span>{t('angleSaved', { angle: angleTitle })}</span>
                             </div>
 
                             <button
@@ -710,7 +662,7 @@ export function VeloceSmartCameraModal({
                               className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs font-medium text-white hover:bg-white/20 transition cursor-pointer"
                             >
                               <RotateCcw className="h-3 w-3" />
-                              <span>Almashtirish</span>
+                              <span>{t('replace')}</span>
                             </button>
                           </div>
                         </div>
@@ -738,16 +690,16 @@ export function VeloceSmartCameraModal({
 
                             <div className="space-y-0.5">
                               <p className="text-sm font-medium text-foreground">
-                                {currentAngle.title} suratini tanlash uchun bosing
+                                {t('clickToPick', { angle: angleTitle })}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                JPG, PNG, HEIC yoki WebP formatlari
+                                {t('formats')}
                               </p>
                             </div>
 
                             <div className="inline-flex items-center gap-2 rounded-2xl bg-gold-gradient px-6 py-2.5 text-xs font-semibold text-black tracking-wide shadow-gold group-hover:brightness-110 active:scale-98 transition">
                               <ImageIcon className="h-4 w-4" />
-                              <span>{currentAngle.shortTitle} rasmini tanlash</span>
+                              <span>{t('pickBtn', { angle: t(`angles.${currentAngle.key}.short`) })}</span>
                             </div>
                           </div>
                         </div>
@@ -762,14 +714,14 @@ export function VeloceSmartCameraModal({
                             <>
                               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                               <span className="text-emerald-400 font-medium">
-                                Barcha 4 ta majburiy rasm tayyor
+                                {t('allReady', { total: REQUIRED_ANGLE_COUNT })}
                               </span>
                             </>
                           ) : (
                             <>
                               <Lock className="h-3.5 w-3.5 text-[#D4AE62]" />
                               <span>
-                                Majburiy: barcha 4 ta rasm yuklanmaguncha davom etib bo‘lmaydi
+                                {t('locked', { total: REQUIRED_ANGLE_COUNT })}
                               </span>
                             </>
                           )}
@@ -789,7 +741,7 @@ export function VeloceSmartCameraModal({
                           className="inline-flex items-center gap-1.5 rounded-full bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:text-white disabled:opacity-25 disabled:pointer-events-none transition cursor-pointer"
                         >
                           <ChevronLeft className="h-4 w-4" />
-                          <span>Oldingi</span>
+                          <span>{t('prev')}</span>
                         </button>
 
                         <div className="flex items-center gap-2.5">
@@ -805,7 +757,7 @@ export function VeloceSmartCameraModal({
                               }}
                               className="inline-flex items-center gap-1.5 rounded-2xl bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-medium text-white disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
                             >
-                              <span>Keyingi rakurs</span>
+                              <span>{t('nextAngle')}</span>
                               <ChevronRight className="h-4 w-4" />
                             </button>
                           )}
@@ -825,7 +777,7 @@ export function VeloceSmartCameraModal({
                           >
                             {!allAnglesUploaded && <Lock className="h-3.5 w-3.5" />}
                             <span>
-                              Davom etish ({uploadedCount}/{REQUIRED_ANGLE_COUNT})
+                              {t('continue', { uploaded: uploadedCount, total: REQUIRED_ANGLE_COUNT })}
                             </span>
                             <ArrowRight className="h-4 w-4" />
                           </button>
@@ -843,7 +795,7 @@ export function VeloceSmartCameraModal({
             <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#07080B]/95 backdrop-blur-xl">
               <div className="h-14 w-14 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin mb-4" />
               <p className="text-xs font-medium text-muted-foreground">
-                4K Studio tayyorlanmoqda...
+                {t('processing')}
               </p>
             </div>
           )}

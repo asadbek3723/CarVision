@@ -2,9 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { adminLiveOr401 } from '@/server/admin';
-import { fetchBookingItems, fetchBookingRows } from '@/server/bookings';
+import { fetchBookingItems, fetchBookingRows, reviewBooking } from '@/server/bookings';
+import { syncDecisionToTelegram } from '@/server/telegram';
 
-const unauthorized = () => NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+const unauthorized = () => NextResponse.json({ success: false, code: 'ADMIN_SESSION_REQUIRED', error: 'Unauthorized' }, { status: 401 });
 
 /** Deposit review queue: bookings whose customer sent a receipt (and the decided ones). */
 export async function GET(request: NextRequest) {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, orders });
   } catch (err) {
     console.error('admin escrow GET error:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -58,22 +59,23 @@ export async function PATCH(request: NextRequest) {
     const adminId = auth.adminId;
 
     const parsed = reviewSchema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) return NextResponse.json({ success: false, error: 'Missing orderId or status' }, { status: 400 });
+    if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Missing orderId or status' }, { status: 400 });
 
-    const { data } = await createAdminClient().rpc('admin_review_booking', {
-      p_admin_id: adminId,
-      p_booking_id: parsed.data.orderId,
-      p_approve: parsed.data.status === 'verified',
-      p_reason: parsed.data.reason ?? null,
-      p_ip: (request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown').slice(0, 45),
+    const approve = parsed.data.status === 'verified';
+    const r = await reviewBooking(createAdminClient(), {
+      adminId,
+      bookingId: parsed.data.orderId,
+      approve,
+      reason: parsed.data.reason,
+      ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
     });
-    const r = data as { success?: boolean; error?: string; status?: string } | null;
-    if (!r?.success) {
-      return NextResponse.json({ success: false, error: r?.error === 'INVALID_STATE' ? 'Bu bron allaqachon ko‘rib chiqilgan' : 'Bron topilmadi' }, { status: r?.error === 'INVALID_STATE' ? 409 : 404 });
+    if (!r.ok) {
+      return NextResponse.json({ success: false, error: r.error === 'INVALID_STATE' ? 'Bu bron allaqachon ko‘rib chiqilgan' : 'Bron topilmadi' }, { status: r.error === 'INVALID_STATE' ? 409 : 404 });
     }
+    await syncDecisionToTelegram(parsed.data.orderId, approve, parsed.data.reason);
     return NextResponse.json({ success: true, status: r.status });
   } catch (err) {
     console.error('admin escrow PATCH error:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }

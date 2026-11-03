@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { AlertTriangle, ArrowLeft, Camera, Check, ChevronDown, Loader2, Plus, Sparkles, X } from 'lucide-react';
@@ -11,6 +12,7 @@ import { ProductPhotoModal } from '@/features/seller/components/ProductPhotoModa
 import { StudioLock } from '@/features/seller/components/StudioLock';
 import { analyzeQuality, compressForUpload, composeStudioImage, loadImage, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { dataUrlToBlob } from '@/features/seller/lib/photo-input';
+import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { CATALOG_CATEGORIES, MAX_ITEM_IMAGES, PRICE_CURRENCIES, type CatalogCategory, type CatalogItemDTO } from '@/domain/catalog';
 
 interface PhotoEntry {
@@ -23,16 +25,21 @@ const fieldCls =
   'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-base text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
 const labelCls = 'mb-2 block text-xs font-semibold text-white/55';
 
+/** Throws an Error whose message is the server's text, or '' when there is none (the caller supplies a translated fallback). */
 async function uploadBlob(blob: Blob): Promise<string> {
   const form = new FormData();
   form.append('file', new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' }));
   const res = await fetch('/api/v1/seller/inventory/upload', { method: 'POST', body: form });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.success) throw new Error(data.error || 'Rasmni yuklab bo‘lmadi');
+  if (!res.ok || !data.success) throw new Error(data.error || '');
   return data.url as string;
 }
 
 export default function SellerNewPartPage() {
+  const t = useTranslations('newPart');
+  const tc = useTranslations('catalogCat');
+  const imgText = useImageErrorText();
+  const tImg = useTranslations('imageErrors');
   const params = useParams();
   const router = useRouter();
   const search = useSearchParams();
@@ -82,7 +89,7 @@ export default function SellerNewPartPage() {
         const data = await res.json();
         const item: CatalogItemDTO | undefined = data.items?.[0];
         if (cancelled) return;
-        if (!item) return setError('Mahsulot topilmadi');
+        if (!item) return setError(t('errNotFound'));
         const a = item.attributes;
         setCategory(item.category);
         setName(item.name);
@@ -107,7 +114,7 @@ export default function SellerNewPartPage() {
         setPhotos(item.images.map((g) => ({ id: g.id, url: g.url, kind: g.kind })));
         setMore(true);
       } catch {
-        if (!cancelled) setError('Mahsulotni yuklab bo‘lmadi');
+        if (!cancelled) setError(t('errLoad'));
       } finally {
         if (!cancelled) setLoadingItem(false);
       }
@@ -115,7 +122,7 @@ export default function SellerNewPartPage() {
     return () => {
       cancelled = true;
     };
-  }, [editId, unlocked]);
+  }, [editId, unlocked, t]);
 
   // New product: the camera opens right away
   React.useEffect(() => {
@@ -133,15 +140,19 @@ export default function SellerNewPartPage() {
     try {
       const img = await loadImageFromBlob(await dataUrlToBlob(dataUrl));
       const report = analyzeQuality(img);
-      if (!report.ok) throw new Error(report.blocking[0]);
-      if (report.warnings[0]) setPhotoNotice(report.warnings[0]);
+      if (!report.ok) {
+        setPhotoNotice(report.blocking[0] ? imgText.issue(report.blocking[0]) : null);
+        return;
+      }
+      if (report.warnings[0]) setPhotoNotice(imgText.issue(report.warnings[0]));
       const url = await uploadBlob(await compressForUpload(img));
       setPhotos((prev) => (prev.length >= MAX_ITEM_IMAGES ? prev : [...prev, { id: crypto.randomUUID(), url, kind: 'ORIGINAL' }]));
     } catch (err) {
-      setPhotoNotice(err instanceof Error ? err.message : 'Rasmni yuklab bo‘lmadi');
+      setPhotoNotice(imgText.error(err, tImg('upload')));
     } finally {
       setUploading((n) => n - 1);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---- AI helpers -------------------------------------------------------------------------------
@@ -155,10 +166,10 @@ export default function SellerNewPartPage() {
         body: JSON.stringify({ name, description, brand, category }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Yaxshilab bo‘lmadi');
+      if (!res.ok || !data.success) throw new Error(data.error || t('errImprove'));
       setSuggestion({ name: data.name, description: data.description });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Yaxshilab bo‘lmadi');
+      setError(err instanceof Error ? err.message : t('errImprove'));
     } finally {
       setImprovingText(false);
     }
@@ -177,11 +188,11 @@ export default function SellerNewPartPage() {
         body: JSON.stringify({ imageUrl: main.url }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || 'Rasmni yaxshilab bo‘lmadi');
+      if (!res.ok || !data.success) throw new Error(data.error || t('errImproveImage'));
       const composed = await composeStudioImage(await loadImage(data.cutoutUrl as string));
       setStudioCandidate({ url: await uploadBlob(composed), preview: URL.createObjectURL(composed) });
     } catch (err) {
-      setPhotoNotice(err instanceof Error ? err.message : 'Rasmni yaxshilab bo‘lmadi');
+      setPhotoNotice(imgText.error(err, t('errImproveImage')));
     } finally {
       setImprovingImage(false);
       void refreshProfile();
@@ -193,10 +204,10 @@ export default function SellerNewPartPage() {
 
   const save = async () => {
     setError(null);
-    if (photos.length === 0) return setError('Avval rasm oling');
-    if (name.trim().length < 2) return setError('Nomini yozing');
-    if (!(priceNum > 0)) return setError('Narxni yozing');
-    if (!universal && vehicles.length === 0) return setError('Qaysi mashinaga mosligini tanlang');
+    if (photos.length === 0) return setError(t('errNeedPhoto'));
+    if (name.trim().length < 2) return setError(t('errNeedName'));
+    if (!(priceNum > 0)) return setError(t('errNeedPrice'));
+    if (!universal && vehicles.length === 0) return setError(t('errNeedCar'));
 
     const attributes: Record<string, unknown> = {};
     if (category === 'wheels' && diameter) attributes['diameter'] = Number(diameter);
@@ -226,10 +237,10 @@ export default function SellerNewPartPage() {
         body: JSON.stringify(editId ? { id: editId, ...body } : body),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || 'Saqlab bo‘lmadi');
+      if (!res.ok || !data.success) throw new Error(data.error || t('errSave'));
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Saqlab bo‘lmadi');
+      setError(err instanceof Error ? err.message : t('errSave'));
     } finally {
       setSaving(false);
     }
@@ -268,11 +279,11 @@ export default function SellerNewPartPage() {
   if (!user) {
     return shell(
       <div className="mt-10 text-center">
-        <Link href={`/${locale}/login`} className="inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">Kirish</Link>
+        <Link href={`/${locale}/login`} className="inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link>
       </div>
     );
   }
-  if (!unlocked) return shell(<StudioLock title="Mahsulot qo‘shish" />);
+  if (!unlocked) return shell(<StudioLock feature="addProduct" />);
 
   if (done) {
     return shell(
@@ -280,15 +291,15 @@ export default function SellerNewPartPage() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
           <Check className="h-8 w-8" />
         </div>
-        <h1 className="mt-5 text-xl font-bold text-white">{editId ? 'Saqlandi' : 'Mahsulot do‘konda chiqdi'}</h1>
+        <h1 className="mt-5 text-xl font-bold text-white">{editId ? t('savedEdit') : t('savedNew')}</h1>
         <div className="mt-7 flex flex-col gap-3">
           {!editId && (
             <button type="button" onClick={reset} className="rounded-full bg-[#D4AE62] px-6 py-3.5 text-sm font-bold text-black">
-              Yana mahsulot qo‘shish
+              {t('addAnother')}
             </button>
           )}
           <Link href={`/${locale}/seller?tab=dashboard`} className="rounded-full bg-white/10 px-6 py-3.5 text-sm font-semibold text-white">
-            Dashboard
+            {t('dashboard')}
           </Link>
         </div>
       </div>
@@ -307,10 +318,10 @@ export default function SellerNewPartPage() {
       />
 
       <div className="mb-4 flex items-center justify-between">
-        <Link href={`/${locale}/seller?tab=dashboard`} aria-label="Orqaga" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
+        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
           <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Link>
-        <h1 className="text-base font-bold text-white">{editId ? 'Tahrirlash' : 'Yangi mahsulot'}</h1>
+        <h1 className="text-base font-bold text-white">{editId ? t('titleEdit') : t('titleNew')}</h1>
         <span className="w-10" />
       </div>
 
@@ -322,14 +333,14 @@ export default function SellerNewPartPage() {
               <img src={main.url} alt="" className="h-full w-full object-cover" />
               <button type="button" onClick={() => setPhotoModal(true)} className="absolute bottom-3 end-3 flex items-center gap-2 rounded-full bg-black/70 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur">
                 <Camera className="h-4 w-4" />
-                Qayta olish
+                {t('retake')}
               </button>
-              {main.kind === 'STUDIO' && <span className="absolute start-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[11px] font-semibold text-[#D4AE62]">Studiya</span>}
+              {main.kind === 'STUDIO' && <span className="absolute start-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[11px] font-semibold text-[#D4AE62]">{t('studioBadge')}</span>}
             </>
           ) : (
             <button type="button" onClick={() => setPhotoModal(true)} className="flex h-full w-full flex-col items-center justify-center gap-3 text-[#D4AE62]">
               {uploading > 0 ? <Loader2 className="h-9 w-9 animate-spin" /> : <Camera className="h-9 w-9" />}
-              <span className="text-sm font-semibold">{uploading > 0 ? 'Yuklanmoqda…' : 'Rasm olish'}</span>
+              <span className="text-sm font-semibold">{uploading > 0 ? t('uploading') : t('takePhoto')}</span>
             </button>
           )}
         </div>
@@ -339,14 +350,14 @@ export default function SellerNewPartPage() {
             {photos.slice(1).map((p) => (
               <div key={p.id} className="relative h-16 w-16 overflow-hidden rounded-xl bg-black">
                 <img src={p.url} alt="" className="h-full w-full object-cover" />
-                <button type="button" aria-label="O‘chirish" onClick={() => setPhotos((prev) => prev.filter((x) => x.id !== p.id))} className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/75 text-white">
+                <button type="button" aria-label={t('remove')} onClick={() => setPhotos((prev) => prev.filter((x) => x.id !== p.id))} className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/75 text-white">
                   <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
             {uploading > 0 && <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/[0.05]"><Loader2 className="h-4 w-4 animate-spin text-[#D4AE62]" /></div>}
             {photos.length < MAX_ITEM_IMAGES && (
-              <button type="button" onClick={() => setPhotoModal(true)} aria-label="Yana rasm" className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-white/25 text-white/60 hover:text-white">
+              <button type="button" onClick={() => setPhotoModal(true)} aria-label={t('addPhoto')} className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-white/25 text-white/60 hover:text-white">
                 <Plus className="h-5 w-5" />
               </button>
             )}
@@ -363,14 +374,14 @@ export default function SellerNewPartPage() {
         {main && main.kind !== 'STUDIO' && !studioCandidate && (
           <button type="button" onClick={() => void improveImage()} disabled={improvingImage} className="mt-3 inline-flex items-center gap-1.5 text-xs text-white/45 transition hover:text-[#D4AE62] disabled:opacity-50">
             {improvingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            Rasmni studiya fonida yaxshilash · 1 kredit
+            {t('studioImprove')}
           </button>
         )}
         {studioCandidate && (
           <div className="mt-3 rounded-2xl border border-[#D4AE62]/30 bg-[#D4AE62]/[0.06] p-3">
             <img src={studioCandidate.preview} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
             <div className="mt-3 flex gap-2">
-              <button type="button" onClick={() => setStudioCandidate(null)} className="flex-1 rounded-full bg-white/10 py-2.5 text-xs font-semibold text-white">Asl rasm</button>
+              <button type="button" onClick={() => setStudioCandidate(null)} className="flex-1 rounded-full bg-white/10 py-2.5 text-xs font-semibold text-white">{t('useOriginal')}</button>
               <button
                 type="button"
                 onClick={() => {
@@ -380,7 +391,7 @@ export default function SellerNewPartPage() {
                 }}
                 className="flex-1 rounded-full bg-[#D4AE62] py-2.5 text-xs font-bold text-black"
               >
-                Shuni ishlatish
+                {t('useStudio')}
               </button>
             </div>
           </div>
@@ -397,7 +408,7 @@ export default function SellerNewPartPage() {
               onClick={() => setCategory(c.slug)}
               className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold transition ${category === c.slug ? 'bg-[#D4AE62] text-black' : 'bg-white/[0.06] text-white/75'}`}
             >
-              {c.label}
+              {tc(c.slug)}
             </button>
           ))}
         </div>
@@ -406,11 +417,11 @@ export default function SellerNewPartPage() {
       {/* Name + price */}
       <section className="mt-5 space-y-4">
         <div>
-          <label className={labelCls} htmlFor="p-name">Nomi</label>
+          <label className={labelCls} htmlFor="p-name">{t('name')}</label>
           <div className="relative">
-            <input id="p-name" value={name} maxLength={150} onChange={(e) => setName(e.target.value)} placeholder="Masalan: BBS CI-R 20" className={`${fieldCls} pe-12`} />
+            <input id="p-name" value={name} maxLength={150} onChange={(e) => setName(e.target.value)} placeholder={t('namePlaceholder')} className={`${fieldCls} pe-12`} />
             {name.trim().length > 1 && (
-              <button type="button" aria-label="Matnni yaxshilash" onClick={() => void improveText()} disabled={improvingText} className="absolute end-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white/35 transition hover:text-[#D4AE62]">
+              <button type="button" aria-label={t('improveText')} onClick={() => void improveText()} disabled={improvingText} className="absolute end-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white/35 transition hover:text-[#D4AE62]">
                 {improvingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               </button>
             )}
@@ -422,7 +433,7 @@ export default function SellerNewPartPage() {
             <p className="text-sm font-semibold text-white">{suggestion.name}</p>
             {suggestion.description && <p className="mt-1 whitespace-pre-line text-sm text-white/70">{suggestion.description}</p>}
             <div className="mt-3 flex gap-2">
-              <button type="button" onClick={() => setSuggestion(null)} className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white">Yo‘q</button>
+              <button type="button" onClick={() => setSuggestion(null)} className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white">{t('no')}</button>
               <button
                 type="button"
                 onClick={() => {
@@ -432,17 +443,17 @@ export default function SellerNewPartPage() {
                 }}
                 className="rounded-full bg-[#D4AE62] px-4 py-2 text-xs font-bold text-black"
               >
-                Qabul qilish
+                {t('accept')}
               </button>
             </div>
           </div>
         )}
 
         <div>
-          <label className={labelCls} htmlFor="p-price">Narxi</label>
+          <label className={labelCls} htmlFor="p-price">{t('price')}</label>
           <div className="flex gap-2">
             <input id="p-price" type="number" inputMode="decimal" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" className={fieldCls} />
-            <select value={currency} onChange={(e) => setCurrency(e.target.value as (typeof PRICE_CURRENCIES)[number])} aria-label="Valyuta" className="rounded-2xl border border-white/10 bg-[#11141b] px-3 text-sm text-white outline-none">
+            <select value={currency} onChange={(e) => setCurrency(e.target.value as (typeof PRICE_CURRENCIES)[number])} aria-label={t('currency')} className="rounded-2xl border border-white/10 bg-[#11141b] px-3 text-sm text-white outline-none">
               {PRICE_CURRENCIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -453,16 +464,16 @@ export default function SellerNewPartPage() {
 
       {/* Fitment */}
       <section className="mt-5">
-        <label className={labelCls}>Qaysi mashinaga?</label>
+        <label className={labelCls}>{t('whichCar')}</label>
         {!pickCars && !universal && vehicles.length === 0 ? (
           <>
             <button type="button" onClick={() => setPickCars(true)} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-start text-base text-white/50">
-              Mashinani tanlang
+              {t('chooseCar')}
               <ChevronDown className="h-4 w-4" />
             </button>
             <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm text-white/75">
               <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-[#D4AE62]" />
-              Barcha mashinalarga mos
+              {t('fitsAll')}
             </label>
           </>
         ) : (
@@ -470,7 +481,7 @@ export default function SellerNewPartPage() {
             {!universal && <VehiclePicker value={vehicles} onChange={setVehicles} />}
             <label className="flex cursor-pointer items-center gap-3 text-sm text-white/75">
               <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-[#D4AE62]" />
-              Barcha mashinalarga mos
+              {t('fitsAll')}
             </label>
           </div>
         )}
@@ -480,34 +491,34 @@ export default function SellerNewPartPage() {
       <section className="mt-5">
         <button type="button" onClick={() => setMore((m) => !m)} className="flex items-center gap-2 text-sm font-semibold text-white/55 hover:text-white">
           <ChevronDown className={`h-4 w-4 transition ${more ? 'rotate-180' : ''}`} />
-          Qo‘shimcha
+          {t('more')}
         </button>
         {more && (
           <div className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls} htmlFor="p-brand">Brend</label>
+                <label className={labelCls} htmlFor="p-brand">{t('brand')}</label>
                 <input id="p-brand" value={brand} maxLength={100} onChange={(e) => setBrand(e.target.value)} className={fieldCls} />
               </div>
               <div>
-                <label className={labelCls} htmlFor="p-stock">Soni</label>
+                <label className={labelCls} htmlFor="p-stock">{t('stock')}</label>
                 <input id="p-stock" type="number" inputMode="numeric" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={fieldCls} />
               </div>
             </div>
             {category === 'wheels' && (
               <div>
-                <label className={labelCls} htmlFor="p-diam">Diametr (R)</label>
+                <label className={labelCls} htmlFor="p-diam">{t('diameter')}</label>
                 <input id="p-diam" type="number" inputMode="numeric" min={10} max={30} value={diameter} onChange={(e) => setDiameter(e.target.value)} placeholder="17" className={fieldCls} />
               </div>
             )}
             {category === 'wrap_paint' && (
               <div className="flex items-center gap-3">
-                <label className="text-xs font-semibold text-white/55" htmlFor="sw">Rang</label>
+                <label className="text-xs font-semibold text-white/55" htmlFor="sw">{t('color')}</label>
                 <input id="sw" type="color" value={swatch} onChange={(e) => setSwatch(e.target.value)} className="h-10 w-16 cursor-pointer rounded-lg border border-white/10 bg-transparent" />
               </div>
             )}
             <div>
-              <label className={labelCls} htmlFor="p-desc">Tavsif</label>
+              <label className={labelCls} htmlFor="p-desc">{t('description')}</label>
               <textarea id="p-desc" value={description} maxLength={1500} rows={3} onChange={(e) => setDescription(e.target.value)} className={`${fieldCls} resize-y`} />
             </div>
           </div>
@@ -524,7 +535,7 @@ export default function SellerNewPartPage() {
           className="mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-4 text-base font-bold text-black shadow-[0_12px_40px_rgba(0,0,0,0.6)] transition hover:brightness-110 disabled:opacity-60"
         >
           {saving && <Loader2 className="h-5 w-5 animate-spin" />}
-          {editId ? 'Saqlash' : 'Do‘konda chiqarish'}
+          {editId ? t('save') : t('publish')}
         </button>
       </div>
     </>

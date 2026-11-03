@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import {
   SmartCameraLandscapeView,
@@ -28,6 +29,7 @@ import {
 const REQUIRED_ANGLES_TOTAL = SCAN_5_ANGLES.length;
 
 export default function MobileScanSessionPage() {
+  const t = useTranslations('scanLive');
   const params = useParams();
   const sessionId = params?.['sessionId'] as string;
 
@@ -256,17 +258,17 @@ export default function MobileScanSessionPage() {
         </div>
 
         <h1 className="font-display text-xl sm:text-2xl font-light tracking-[0.25em] text-[#EDE8DF] uppercase">
-          Barcha 4 ta Rakurs Kompyuterga Uzatildi
+          {t('doneTitle', { total: REQUIRED_ANGLES_TOTAL })}
         </h1>
 
         <p className="mt-3 max-w-xs font-display text-xs sm:text-sm font-light tracking-wider text-[#D4AE62] leading-relaxed">
-          Mashinaning barcha suratlari 4K Studio visualizerga muvaffaqiyatli qabul qilindi.
+          {t('doneBody')}
         </p>
 
         <div className="mt-8 flex items-center gap-3 rounded-2xl bg-[#12141A] ring-1 ring-[#D4AE62]/20 px-6 py-4 shadow-card">
           <Monitor className="h-5 w-5 text-primary" />
           <span className="text-xs font-medium tracking-wide text-white">
-            Endi ishingizni kompyuterda davom ettiring
+            {t('doneNext')}
           </span>
         </div>
       </div>
@@ -285,7 +287,7 @@ export default function MobileScanSessionPage() {
           }`}
         >
           {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-          <span>{isOnline ? `Wi-Fi Handoff (${syncedAngleIds.length}/${REQUIRED_ANGLES_TOTAL})` : 'Oflayn Rejim'}</span>
+          <span>{isOnline ? t('handoff', { synced: syncedAngleIds.length, total: REQUIRED_ANGLES_TOTAL }) : t('offline')}</span>
         </div>
       </div>
 
@@ -299,7 +301,7 @@ export default function MobileScanSessionPage() {
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-xl">
           <div className="h-16 w-16 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin" />
           <p className="mt-4 text-xs font-mono tracking-wider text-[#D4AE62]">
-            Barcha 4 ta rakurs kompyuterga uzatilmoqda...
+            {t('sending', { total: REQUIRED_ANGLES_TOTAL })}
           </p>
         </div>
       )}
@@ -311,16 +313,16 @@ export default function MobileScanSessionPage() {
             <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-2 text-xs font-medium text-amber-400">
                 <WifiOff className="h-4 w-4" />
-                <span>Internet sust yoki uzilgan</span>
+                <span>{t('slow')}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[11px] text-[#D4AE62]">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Qurilmada saqlangan ({pendingCount > 0 ? pendingCount : 1} ta kadr)</span>
+                <span>{t('saved', { count: pendingCount > 0 ? pendingCount : 1 })}</span>
               </div>
             </div>
 
             <p className="text-xs text-neutral-300 mt-2 text-start leading-relaxed">
-              Fotosuratlar qurilmangizning xavfsiz xotirasiga (IndexedDB) saqlandi. Internet yoki ustaxona Wi-Fi tarmog‘iga ulanganda ular avtomatik kompyuterga uzatiladi.
+              {t('savedBody')}
             </p>
 
             <div className="flex items-center gap-2.5 mt-4">
@@ -331,7 +333,7 @@ export default function MobileScanSessionPage() {
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D4AE62] to-[#B38C3F] text-black font-semibold text-xs py-3 px-4 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-[0_4px_20px_rgba(212,174,98,0.3)]"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isManualRetrying ? 'animate-spin' : ''}`} />
-                <span>Qayta urinish</span>
+                <span>{t('retry')}</span>
               </button>
 
               {lastCapturedDataUrl && (
@@ -339,10 +341,10 @@ export default function MobileScanSessionPage() {
                   type="button"
                   onClick={handleDownloadBackup}
                   className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs py-3 px-3 transition active:scale-95 cursor-pointer"
-                  title="Rasmni telefonga yuklab olish"
+                  title={t('downloadTitle')}
                 >
                   <HardDriveDownload className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Yuklab olish</span>
+                  <span className="hidden sm:inline">{t('download')}</span>
                 </button>
               )}
             </div>

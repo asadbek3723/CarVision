@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
+import { sendReceiptForReview } from '@/server/telegram';
 
 export const maxDuration = 30;
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -63,6 +64,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .select('id')
       .maybeSingle();
     if (error || !updated) return fail(409, 'INVALID_STATE', 'Holat o‘zgargan, sahifani yangilang');
+
+    // Best-effort Telegram notification (never throws); awaited so serverless doesn't cut it off.
+    await sendReceiptForReview(id);
 
     return NextResponse.json({ success: true, status: 'PENDING_ADMIN_APPROVAL' });
   } catch (err) {

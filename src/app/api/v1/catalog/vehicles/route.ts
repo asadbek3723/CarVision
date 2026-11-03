@@ -67,6 +67,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, makes: makes ?? [] });
   } catch (err) {
     console.error('vehicles list error:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }

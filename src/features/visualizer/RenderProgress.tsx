@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { AlertTriangle, ArrowRight, Check, Loader2, RefreshCw, Sparkles, X } from 'lucide-react';
@@ -21,18 +22,13 @@ interface Props {
   onClose: () => void;
 }
 
-const STAGES = [
-  'Mashina geometriyasi tahlil qilinmoqda',
-  'Detallar o‘lchamga moslanmoqda',
-  'Yorug‘lik va soyalar hisoblanmoqda',
-  'Har bir rakurs alohida chizilmoqda',
-  'Ranglar rakurslar bo‘yicha tenglashtirilmoqda',
-];
+const STAGES = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5'] as const;
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Full-screen render progress: one ring per car side, a scan beam, honest states (no fake results). */
 export function RenderProgress({ states, running, fatal, percent, backdrop, locale, demo, onRetry, onContinue, onClose }: Props) {
+  const t = useTranslations('render');
   const reduce = useReducedMotion();
   const [stage, setStage] = React.useState(0);
   const done = states.filter((s) => s.status === 'done').length;
@@ -40,12 +36,12 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
 
   React.useEffect(() => {
     if (!running) return;
-    const t = setInterval(() => setStage((n) => (n + 1) % STAGES.length), 2600);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setStage((n) => (n + 1) % STAGES.length), 2600);
+    return () => clearInterval(timer);
   }, [running]);
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Render jarayoni" className="fixed inset-0 z-[90] flex flex-col overflow-hidden bg-[#07080B]">
+    <div role="dialog" aria-modal="true" aria-label={t('dialog')} className="fixed inset-0 z-[90] flex flex-col overflow-hidden bg-[#07080B]">
       {backdrop && <div className="absolute inset-0 scale-110 bg-cover bg-center opacity-30 blur-2xl" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden />}
       <div className="absolute inset-0 bg-gradient-to-b from-[#07080B]/60 via-[#07080B]/80 to-[#07080B]" aria-hidden />
 
@@ -55,7 +51,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           CarVision AI
         </span>
         {!running && (
-          <button type="button" onClick={onClose} aria-label="Yopish" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20">
+          <button type="button" onClick={onClose} aria-label={t('close')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20">
             <X className="h-5 w-5" />
           </button>
         )}
@@ -90,14 +86,14 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
               transition={{ duration: 0.35, ease: EASE }}
               className="text-base text-white/85"
             >
-              {fatal ? 'To‘xtatildi' : running ? STAGES[stage] : failed.length && !done ? 'Hech bir rakurs tayyor bo‘lmadi' : failed.length ? 'Ba’zi rakurslar tayyor bo‘lmadi' : 'Hammasi tayyor'}
+              {fatal ? t('stopped') : running ? t(STAGES[stage] ?? 'stage1') : failed.length && !done ? t('noneReady') : failed.length ? t('someFailed') : t('allReady')}
             </motion.p>
           </AnimatePresence>
-          {running && <p className="mt-1 text-xs text-white/40">Oynani yopmang, bu 20-60 soniya oladi</p>}
+          {running && <p className="mt-1 text-xs text-white/40">{t('keepOpen')}</p>}
         </div>
 
         {/* Angle chips */}
-        <ul className="mt-2 grid w-full grid-cols-5 gap-2" aria-label="Rakurslar">
+        <ul className="mt-2 grid w-full grid-cols-5 gap-2" aria-label={t('angles')}>
           {states.map((s) => (
             <li key={s.id} className="flex flex-col items-center gap-2">
               <span
@@ -120,7 +116,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           <motion.div className="h-full rounded-full bg-gradient-to-r from-[#D4AE62] to-[#F1D790]" animate={{ width: `${percent}%` }} transition={{ duration: 0.6, ease: EASE }} />
         </div>
 
-        {demo && <p className="mt-4 rounded-full bg-amber-500/15 px-4 py-2 text-center text-xs text-amber-200">AI hali ulanmagan: bu namuna ko‘rinish, kredit yechilmadi.</p>}
+        {demo && <p className="mt-4 rounded-full bg-amber-500/15 px-4 py-2 text-center text-xs text-amber-200">{t('demoNotice')}</p>}
 
         {/* Problems and actions */}
         {fatal && (
@@ -128,12 +124,12 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
             <p className="text-sm text-red-200">{fatal.message}</p>
             {(fatal.code === 'INSUFFICIENT_CREDITS' || fatal.code === 'PLAN_EXPIRED') && (
               <Link href={`/${locale}/plans`} className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-6 py-3 text-sm font-bold text-black">
-                Tariflarni ko‘rish
+                {t('viewPlans')}
                 <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             )}
             {fatal.code === 'UNAUTHENTICATED' && (
-              <Link href={`/${locale}/login`} className="mt-3 inline-flex rounded-full bg-[#D4AE62] px-6 py-3 text-sm font-bold text-black">Kirish</Link>
+              <Link href={`/${locale}/login`} className="mt-3 inline-flex rounded-full bg-[#D4AE62] px-6 py-3 text-sm font-bold text-black">{t('login')}</Link>
             )}
           </div>
         )}
@@ -142,20 +138,20 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           <div className="mt-5 w-full space-y-2">
             {failed.map((f) => (
               <div key={f.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.05] px-4 py-3">
-                <span className="min-w-0 text-sm text-white/80">{f.label}: <span className="text-red-300">{f.error || 'xato'}</span></span>
+                <span className="min-w-0 text-sm text-white/80">{f.label}: <span className="text-red-300">{f.error || t('errorFallback')}</span></span>
                 <button type="button" onClick={() => onRetry(f.id)} className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">
                   <RefreshCw className="h-3.5 w-3.5" />
-                  Qayta (1 kredit)
+                  {t('retry')}
                 </button>
               </div>
             ))}
-            <p className="text-center text-[11px] text-white/40">Xato bo‘lgan rakurslar uchun kredit avtomatik qaytarilgan.</p>
+            <p className="text-center text-[11px] text-white/40">{t('refundNote')}</p>
           </div>
         )}
 
         {!running && done > 0 && (
           <button type="button" onClick={onContinue} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-4 text-base font-bold text-black shadow-[0_12px_40px_rgba(212,174,98,0.3)] transition hover:brightness-110 active:scale-[0.98]">
-            Natijani ko‘rish ({done} ta rakurs)
+            {t('viewResult', { count: done })}
             <ArrowRight className="h-5 w-5 rtl:rotate-180" />
           </button>
         )}

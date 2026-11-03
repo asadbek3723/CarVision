@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success || (!parsed.data.name && !parsed.data.description)) {
-    return NextResponse.json({ success: false, error: 'Avval nom yoki tavsif yozing' }, { status: 400 });
+    return NextResponse.json({ success: false, code: 'NAME_REQUIRED', error: 'Avval nom yoki tavsif yozing' }, { status: 400 });
   }
   const input = parsed.data;
 
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     .eq('login_key', guard.value.session.userId)
     .gte('created_at', since);
   if ((count ?? 0) >= HOURLY_LIMIT) {
-    return NextResponse.json({ success: false, error: 'Soatiga 30 martadan ko‘p yaxshilab bo‘lmaydi' }, { status: 429 });
+    return NextResponse.json({ success: false, code: 'RATE_LIMITED', error: 'Soatiga 30 martadan ko‘p yaxshilab bo‘lmaydi' }, { status: 429 });
   }
   await db.from('auth_attempts').insert({ kind: 'improve_text', login_key: guard.value.session.userId, success: true });
 

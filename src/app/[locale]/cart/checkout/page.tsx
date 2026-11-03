@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
@@ -15,6 +16,7 @@ const fieldCls =
   'w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
 
 export default function CheckoutPage() {
+  const t = useTranslations('checkout');
   const params = useParams();
   const search = useSearchParams();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -99,8 +101,8 @@ export default function CheckoutPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (name.trim().length < 2) return setError('Ismingizni kiriting');
-    if (phone.replace(/\D/g, '').length < 9) return setError('Telefon raqamingizni to‘liq kiriting');
+    if (name.trim().length < 2) return setError(t('errName'));
+    if (phone.replace(/\D/g, '').length < 9) return setError(t('errPhone'));
     setSubmitting(true);
     try {
       const res = await fetch('/api/v1/bookings', {
@@ -114,12 +116,12 @@ export default function CheckoutPage() {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || 'Bron yaratib bo‘lmadi');
+      if (!res.ok || !data.success) throw new Error(data.error || t('errCreate'));
       setPayment(data.payment);
       setBookings(data.bookings);
       clearCart();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bron yaratib bo‘lmadi');
+      setError(err instanceof Error ? err.message : t('errCreate'));
     } finally {
       setSubmitting(false);
     }
@@ -142,9 +144,9 @@ export default function CheckoutPage() {
   if (!user) {
     return shell(
       <div className="mt-10 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-6 text-center">
-        <p className="text-sm text-white/80">Bron qilish uchun tizimga kiring.</p>
+        <p className="text-sm text-white/80">{t('loginRequired')}</p>
         <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
-          Kirish
+          {t('login')}
         </Link>
       </div>
     );
@@ -154,28 +156,28 @@ export default function CheckoutPage() {
   if (bookings.length > 0) {
     return shell(
       <>
-        <h1 className="mb-1 text-xl font-bold text-white">Bron yaratildi</h1>
-        <p className="mb-5 text-sm text-white/55">Zakalatni to‘lab chekni yuklang. Tasdiqlangach ustaxona manzili ochiladi.</p>
+        <h1 className="mb-1 text-xl font-bold text-white">{t('created')}</h1>
+        <p className="mb-5 text-sm text-white/55">{t('createdSub')}</p>
         <div className="space-y-4">
           {bookings.map((b) => (
             <BookingCard key={b.id} booking={b} payment={payment} onChanged={() => void reloadBookings()} />
           ))}
         </div>
         <Link href={`/${locale}/profile`} className="mt-6 inline-block text-sm text-[#D4AE62] underline">
-          Barcha bronlarim
+          {t('myBookings')}
         </Link>
       </>
     );
   }
 
-  if (resumeId) return shell(<p className="py-20 text-center text-sm text-white/60">Bron topilmadi.</p>);
+  if (resumeId) return shell(<p className="py-20 text-center text-sm text-white/60">{t('notFound')}</p>);
 
   if (lines.length === 0) {
     return shell(
       <div className="mt-10 rounded-3xl border border-dashed border-white/15 p-10 text-center">
-        <p className="text-sm text-white/70">Savat bo‘sh.</p>
+        <p className="text-sm text-white/70">{t('cartEmpty')}</p>
         <Link href={`/${locale}/shop`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
-          Do‘konga o‘tish
+          {t('goToShop')}
         </Link>
       </div>
     );
@@ -185,9 +187,9 @@ export default function CheckoutPage() {
     <>
       <Link href={`/${locale}/cart`} className="mb-5 inline-flex items-center gap-2 text-xs text-white/55 hover:text-white">
         <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-        Savatga qaytish
+        {t('backToCart')}
       </Link>
-      <h1 className="mb-5 text-xl font-bold text-white">Bron qilish</h1>
+      <h1 className="mb-5 text-xl font-bold text-white">{t('title')}</h1>
 
       <section className="rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5">
         <ul className="space-y-3">
@@ -196,20 +198,20 @@ export default function CheckoutPage() {
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-black">{p.image && <img src={p.image} alt="" className="h-full w-full object-cover" />}</div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-white">{p.name}</p>
-                <p className="text-[11px] text-white/45">{p.brand}{qty > 1 ? ` · ×${qty}` : ''}{p.stock <= 0 ? ' · omborda yo‘q' : ''}</p>
+                <p className="text-[11px] text-white/45">{p.brand}{qty > 1 ? ` · ×${qty}` : ''}{p.stock <= 0 ? ` · ${t('outOfStockTag')}` : ''}</p>
               </div>
               <p className="text-sm font-semibold text-white/85">{formatPrice(p.price * qty)}</p>
             </li>
           ))}
         </ul>
-        {missing > 0 && <p className="mt-3 text-xs text-amber-300">Savatdagi {missing} ta detal endi mavjud emas. Savatni yangilang.</p>}
+        {missing > 0 && <p className="mt-3 text-xs text-amber-300">{t('missing', { count: missing })}</p>}
         <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
           <div>
-            <p className="text-[11px] text-white/45">Ustaxonadagi jami narx</p>
+            <p className="text-[11px] text-white/45">{t('totalAtWorkshop')}</p>
             <p className="text-lg font-bold text-white">{formatPrice(total)}</p>
           </div>
           <div className="text-end">
-            <p className="text-[11px] text-white/45">Hozir to‘lanadigan 3% zakalat</p>
+            <p className="text-[11px] text-white/45">{t('depositNow')}</p>
             <p className="text-lg font-bold text-[#D4AE62]">{formatPrice(deposit)}</p>
           </div>
         </div>
@@ -217,22 +219,22 @@ export default function CheckoutPage() {
 
       <form onSubmit={submit} className="mt-4 space-y-4 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5">
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-name">Ismingiz</label>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-name">{t('name')}</label>
           <input id="c-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className={fieldCls} />
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-phone">Telefon raqamingiz</label>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-phone">{t('phone')}</label>
           <input id="c-phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" className={fieldCls} />
-          <p className="mt-1 text-[11px] text-white/40">Ustaxona zakalatdan keyin siz bilan shu raqam orqali bog‘lanadi.</p>
+          <p className="mt-1 text-[11px] text-white/40">{t('phoneHint')}</p>
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-note">Izoh (ixtiyoriy)</label>
+          <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-note">{t('note')}</label>
           <textarea id="c-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} rows={2} className={`${fieldCls} resize-none`} />
         </div>
 
         <p className="flex items-start gap-2 text-xs text-white/55">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AE62]" />
-          Ustaxona manzili va telefoni 3% zakalat tasdiqlangandan keyin ochiladi. Zakalat ustaxonadagi hisob-kitobdan ayriladi.
+          {t('lockedInfo')}
         </p>
 
         {error && <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
@@ -243,7 +245,7 @@ export default function CheckoutPage() {
           className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-6 py-3.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          Bron qilish
+          {t('submit')}
         </button>
       </form>
     </>

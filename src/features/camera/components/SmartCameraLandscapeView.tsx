@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Camera,
@@ -19,9 +20,6 @@ import { playShutter, playLock, vibrate } from '../lib/fx';
 export interface ScanAngle {
   id: number;
   key: 'front' | 'right' | 'rear' | 'left';
-  shortTitle: string;
-  title: string;
-  instruction: string;
   direction: 'top' | 'right' | 'bottom' | 'left';
   coneAngle: number;
 }
@@ -35,36 +33,24 @@ export const SCAN_5_ANGLES: ScanAngle[] = [
   {
     id: 1,
     key: 'front',
-    shortTitle: 'Oldi',
-    title: 'Old tomon',
-    instruction: 'Mashinaning OLD TOMONINI oltin yo‘riqnoma ichiga to‘g‘rilab suratga oling',
     direction: 'top',
     coneAngle: 0,
   },
   {
     id: 2,
     key: 'right',
-    shortTitle: 'O‘ng',
-    title: 'O‘ng tomon',
-    instruction: 'Mashinaning O‘NG YON TOMONINI ramka markaziga to‘g‘rilab suratga oling',
     direction: 'right',
     coneAngle: 90,
   },
   {
     id: 3,
     key: 'rear',
-    shortTitle: 'Orqa',
-    title: 'Orqa tomon',
-    instruction: 'Mashinaning ORQA TOMONINI oltin yo‘riqnoma ichiga to‘g‘rilab suratga oling',
     direction: 'bottom',
     coneAngle: 180,
   },
   {
     id: 4,
     key: 'left',
-    shortTitle: 'Chap',
-    title: 'Chap tomon',
-    instruction: 'Mashinaning CHAP YON TOMONINI ramka markaziga to‘g‘rilab suratga oling',
     direction: 'left',
     coneAngle: 270,
   },
@@ -86,6 +72,8 @@ export function LuxuryCarCompass({
   completedAngles,
   size = 'md',
 }: LuxuryCarCompassProps) {
+  const t = useTranslations('scanLive');
+  const tAngle = useTranslations('scanModal.angles');
   const activeAngle =
     SCAN_5_ANGLES.find((a) => a.id === activeAngleId) || SCAN_5_ANGLES[0]!;
 
@@ -116,7 +104,7 @@ export function LuxuryCarCompass({
   return (
     <div
       className={`relative ${containerSizeClass} flex items-center justify-center select-none pointer-events-none`}
-      aria-label={`Kompas yo‘riqnomasi: ${activeAngle.title}`}
+      aria-label={t('compassLabel', { angle: tAngle(`${activeAngle.key}.title`) })}
     >
       {/* Concentric Orbital Rings Matching Reference Image 1:1 */}
       <svg
@@ -171,7 +159,7 @@ export function LuxuryCarCompass({
       <div className={`relative z-10 ${carSizeClass} flex items-center justify-center`}>
         <img
           src="/images/camera/topdown_coupe.png"
-          alt="3D Avtomobil Kompas Modeli"
+          alt={t('compassAlt')}
           className="h-full w-full object-contain drop-shadow-[0_18px_36px_rgba(0,0,0,0.98)] select-none pointer-events-none"
         />
       </div>
@@ -264,6 +252,8 @@ export function SmartCameraLandscapeView({
   onClose,
   className = '',
 }: SmartCameraLandscapeViewProps) {
+  const t = useTranslations('scanLive');
+  const tAngle = useTranslations('scanModal.angles');
   const { videoRef, isReady, permissionDenied, startCamera } = useCameraStream();
 
   // Strictly sequential program-controlled step index (0 -> 1 -> 2 -> 3)
@@ -373,7 +363,12 @@ export function SmartCameraLandscapeView({
           if (nextStepIndex < SCAN_5_ANGLES.length) {
             const nextAngle = SCAN_5_ANGLES[nextStepIndex]!;
             setStepFeedback(
-              `${activeAngle.title} olindi (${nextStepIndex}/${SCAN_5_ANGLES.length}) — Endi: ${nextAngle.title}`
+              t('captured', {
+                angle: tAngle(`${activeAngle.key}.title`),
+                done: nextStepIndex,
+                total: SCAN_5_ANGLES.length,
+                next: tAngle(`${nextAngle.key}.title`),
+              })
             );
             setCurrentStepIndex(nextStepIndex);
             setTimeout(() => setStepFeedback(null), 2200);
@@ -381,7 +376,7 @@ export function SmartCameraLandscapeView({
             // All 4 required angles have been captured!
             playLock();
             vibrate([40, 60, 40]);
-            setStepFeedback('Barcha 4 ta majburiy rakurs olindi!');
+            setStepFeedback(t('allCaptured', { total: SCAN_5_ANGLES.length }));
             onAllPhotosCaptured?.(updatedMap);
           }
         }
@@ -477,22 +472,22 @@ export function SmartCameraLandscapeView({
             {/* Luxury Typography Prompt (Zero Buttons!) */}
             <div className="relative z-10 max-w-xs space-y-3">
               <p className="font-display text-[10px] font-semibold tracking-[0.35em] text-[#E5C175] uppercase">
-                Smart Camera · Majburiy Rejim
+                {t('eyebrow')}
               </p>
 
               <h2 className="font-display text-xl sm:text-2xl font-light tracking-wide text-white leading-snug">
-                Telefonni gorizontal holatga aylantiring
+                {t('rotateTitle')}
               </h2>
 
               <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-                Avtomobilni to‘liq va aniq o‘lchamda suratga olish uchun telefoningizni yotiq (gorizontal) holatga burang. Aylantirganingizda kamera avtomatik ochiladi.
+                {t('rotateBody')}
               </p>
             </div>
 
             {/* Passive Status Indicator (Non-clickable) */}
             <div className="relative z-10 mt-8 inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium text-[#E5C175] ring-1 ring-[#D4AE62]/25 pointer-events-none">
               <span className="h-2 w-2 rounded-full bg-[#E5C175] animate-ping" />
-              <span>Gorizontal holatga aylanishi kutilmoqda...</span>
+              <span>{t('waitingRotate')}</span>
             </div>
           </motion.div>
         )}
@@ -520,7 +515,7 @@ export function SmartCameraLandscapeView({
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Orqaga"
+                aria-label={t('back')}
                 className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-[#15161B] text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_24px_rgba(0,0,0,0.8)] hover:bg-[#1E2028] hover:text-white active:scale-95 transition cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -554,7 +549,7 @@ export function SmartCameraLandscapeView({
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#08090C]/90 p-6 text-center">
                 <div className="h-12 w-12 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin mb-3" />
                 <p className="font-display text-xs sm:text-sm tracking-widest text-[#EDE8DF] uppercase">
-                  Kamera ishga tushirilmoqda...
+                  {t('starting')}
                 </p>
               </div>
             )}
@@ -566,17 +561,17 @@ export function SmartCameraLandscapeView({
                   <Camera className="h-6 w-6" />
                 </div>
                 <p className="font-display text-xs sm:text-sm font-semibold tracking-wider text-white uppercase">
-                  Kameraga ruxsat berilmadi
+                  {t('deniedTitle')}
                 </p>
                 <p className="mt-1 max-w-xs text-[11px] sm:text-xs text-neutral-400 leading-relaxed">
-                  Avtomobilni suratga olish uchun brauzerda kameraga ruxsat bering.
+                  {t('deniedBody')}
                 </p>
                 <button
                   type="button"
                   onClick={startCamera}
                   className="mt-4 rounded-xl bg-gold-gradient px-5 py-2 text-xs font-semibold text-black uppercase tracking-wider shadow-gold hover:brightness-110 active:scale-95 transition cursor-pointer"
                 >
-                  Qayta urinish
+                  {t('retry')}
                 </button>
               </div>
             )}
@@ -730,7 +725,7 @@ export function SmartCameraLandscapeView({
             type="button"
             onClick={handleShutterClick}
             disabled={isCapturing || isPortrait}
-            aria-label={`${activeAngle.title} rasmini olish`}
+            aria-label={t('shutter', { angle: tAngle(`${activeAngle.key}.title`) })}
             className="group relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
           >
             {/* Outer Glowing Golden Ring */}

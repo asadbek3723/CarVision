@@ -16,7 +16,7 @@ export async function GET() {
 
     if (error) {
       console.error('shops list error:', error.message);
-      return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+      return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
     }
 
     const shops = (data ?? []).map((s) => ({
@@ -31,6 +31,6 @@ export async function GET() {
     return NextResponse.json({ success: true, shops });
   } catch (err) {
     console.error('shops list exception:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }

@@ -12,11 +12,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const guard = await requireUser();
   if (!guard.ok) return guard.response;
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ success: false, error: 'Topilmadi' }, { status: 404 });
+  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ success: false, code: 'NOT_FOUND', error: 'Topilmadi' }, { status: 404 });
 
   const db = createAdminClient();
   const rows = await fetchBookingRows(db, { userId: guard.value.userId, id, limit: 1 });
-  if (rows.length === 0) return NextResponse.json({ success: false, error: 'Bron topilmadi' }, { status: 404 });
+  if (rows.length === 0) return NextResponse.json({ success: false, code: 'NOT_FOUND', error: 'Bron topilmadi' }, { status: 404 });
   const [dto] = await toCustomerDTOs(db, rows);
   const uzsRate = (await getServerRates())['UZS'] ?? 13000;
   return NextResponse.json({
@@ -31,7 +31,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
   const guard = await requireUser();
   if (!guard.ok) return guard.response;
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ success: false, error: 'Topilmadi' }, { status: 404 });
+  if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ success: false, code: 'NOT_FOUND', error: 'Topilmadi' }, { status: 404 });
 
   const { data } = await createAdminClient()
     .from('bookings')
@@ -41,6 +41,6 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     .eq('status', 'AWAITING_PAYMENT')
     .select('id')
     .maybeSingle();
-  if (!data) return NextResponse.json({ success: false, error: 'Bekor qilib bo‘lmaydi' }, { status: 409 });
+  if (!data) return NextResponse.json({ success: false, code: 'CANNOT_CANCEL', error: 'Bekor qilib bo‘lmaydi' }, { status: 409 });
   return NextResponse.json({ success: true });
 }

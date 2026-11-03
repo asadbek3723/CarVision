@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Calendar, Check, Loader2, Phone, ShieldCheck } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 
@@ -35,6 +36,7 @@ interface Props {
 
 /** One paid lead: contact, items, what is left to pay at the workshop, and the redeem action. */
 export function LeadDetail({ order, onRedeem }: Props) {
+  const t = useTranslations('sellerOrders');
   const { formatPrice } = useCurrency();
   const [confirming, setConfirming] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
@@ -65,7 +67,7 @@ export function LeadDetail({ order, onRedeem }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-mono text-base font-bold text-white">#{order.orderNumber}</p>
         <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${done ? 'bg-white/10 text-white/70' : 'bg-emerald-500/15 text-emerald-300'}`}>
-          {done ? 'Qabul qilingan' : 'Zakalat to‘langan'}
+          {done ? t('statusAccepted') : t('depositPaid')}
         </span>
       </div>
 
@@ -89,28 +91,28 @@ export function LeadDetail({ order, onRedeem }: Props) {
             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-black">{it.product_image_url && <img src={it.product_image_url} alt="" className="h-full w-full object-cover" />}</div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{it.product_name}</p>
-              <p className="text-xs text-white/45">{it.quantity} dona</p>
+              <p className="text-xs text-white/45">{t('items', { count: it.quantity })}</p>
             </div>
             <p className="text-sm font-semibold text-white/85">{formatPrice(it.price * it.quantity)}</p>
           </li>
         ))}
       </ul>
 
-      {order.note && <p className="mt-4 rounded-2xl bg-white/[0.04] px-4 py-3 text-sm text-white/70">Izoh: {order.note}</p>}
+      {order.note && <p className="mt-4 rounded-2xl bg-white/[0.04] px-4 py-3 text-sm text-white/70">{t('note', { note: order.note })}</p>}
 
       <dl className="mt-5 space-y-2 rounded-2xl bg-black/30 p-4 text-sm">
-        <div className="flex justify-between"><dt className="text-white/50">Jami narx</dt><dd className="font-semibold text-white">{formatPrice(order.totalPriceUSD)}</dd></div>
-        <div className="flex justify-between"><dt className="text-white/50">Zakalat to‘langan (3%)</dt><dd className="font-semibold text-emerald-300">− {formatPrice(order.depositUSD)}</dd></div>
-        <div className="flex justify-between border-t border-white/10 pt-2"><dt className="font-semibold text-white">Mijoz to‘laydi</dt><dd className="text-lg font-bold text-[#D4AE62]">{formatPrice(order.remainingUSD)}</dd></div>
+        <div className="flex justify-between"><dt className="text-white/50">{t('total')}</dt><dd className="font-semibold text-white">{formatPrice(order.totalPriceUSD)}</dd></div>
+        <div className="flex justify-between"><dt className="text-white/50">{t('depositLine')}</dt><dd className="font-semibold text-emerald-300">− {formatPrice(order.depositUSD)}</dd></div>
+        <div className="flex justify-between border-t border-white/10 pt-2"><dt className="font-semibold text-white">{t('customerPays')}</dt><dd className="text-lg font-bold text-[#D4AE62]">{formatPrice(order.remainingUSD)}</dd></div>
       </dl>
 
       {error && <p role="alert" className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 
       {done ? (
-        <p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-emerald-300"><Check className="h-4 w-4" />Vaucher qabul qilingan</p>
+        <p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-emerald-300"><Check className="h-4 w-4" />{t('voucherAccepted')}</p>
       ) : (
         <div className="mt-5 space-y-2">
-          {confirming && <p className="text-center text-xs text-amber-300">Mijoz ustaxonaga keldimi? Tasdiqlansa bu amalni qaytarib bo‘lmaydi.</p>}
+          {confirming && <p className="text-center text-xs text-amber-300">{t('confirmHint')}</p>}
           <button
             type="button"
             onClick={() => void redeem()}
@@ -118,9 +120,9 @@ export function LeadDetail({ order, onRedeem }: Props) {
             className={`flex w-full items-center justify-center gap-2 rounded-full py-4 text-base font-bold transition active:scale-[0.99] disabled:opacity-60 ${confirming ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white hover:bg-white/15'}`}
           >
             {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
-            {confirming ? 'Ha, vaucherni qabul qilish' : 'Vaucherni qabul qilish'}
+            {confirming ? t('acceptYes') : t('accept')}
           </button>
-          {confirming && !busy && <button type="button" onClick={() => setConfirming(false)} className="w-full py-2 text-xs text-white/50 hover:text-white">Bekor qilish</button>}
+          {confirming && !busy && <button type="button" onClick={() => setConfirming(false)} className="w-full py-2 text-xs text-white/50 hover:text-white">{t('cancel')}</button>}
         </div>
       )}
     </article>

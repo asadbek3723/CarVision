@@ -7,8 +7,8 @@
 export interface QualityReport {
   /** true = fine to upload. Blocking problems set this to false. */
   ok: boolean;
-  blocking: string[];
-  warnings: string[];
+  blocking: QualityIssue[];
+  warnings: QualityIssue[];
   width: number;
   height: number;
 }
@@ -28,7 +28,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
     const img = new Image();
     if (!src.startsWith('blob:') && !src.startsWith('data:')) img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Rasmni ochib bo‘lmadi'));
+    img.onerror = () => reject(new Error(IMAGE_ERROR.open));
     img.src = src;
   });
 }
@@ -46,7 +46,7 @@ function drawScaled(img: HTMLImageElement, maxDim: number): HTMLCanvasElement {
 
 export function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/jpeg', quality = 0.86): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Rasmni saqlab bo‘lmadi'))), type, quality);
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(IMAGE_ERROR.save))), type, quality);
   });
 }
 
@@ -70,16 +70,28 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
   return blob;
 }
 
+/** Stable error codes thrown by the image helpers; `useImageErrorText` turns them into translated text. */
+export const IMAGE_ERROR = {
+  open: 'ERR_IMAGE_OPEN',
+  save: 'ERR_IMAGE_SAVE',
+  read: 'ERR_IMAGE_READ',
+  type: 'ERR_IMAGE_TYPE',
+} as const;
+
+export type QualityIssue =
+  | { code: 'tooSmall'; width: number; height: number }
+  | { code: 'smallish' | 'dark' | 'bright' | 'flat' | 'blurry' };
+
 export function analyzeQuality(img: HTMLImageElement): QualityReport {
   const width = img.naturalWidth;
   const height = img.naturalHeight;
-  const blocking: string[] = [];
-  const warnings: string[] = [];
+  const blocking: QualityIssue[] = [];
+  const warnings: QualityIssue[] = [];
 
   if (Math.min(width, height) < 500) {
-    blocking.push(`Rasm juda kichik (${width}×${height}). Kamida 500 pikselli rasm kerak`);
+    blocking.push({ code: 'tooSmall', width, height });
   } else if (Math.min(width, height) < 800) {
-    warnings.push('Rasm o‘lchami kichikroq. Yaxshiroq natija uchun kattaroq rasm oling');
+    warnings.push({ code: 'smallish' });
   }
 
   const canvas = drawScaled(img, 256);
@@ -113,10 +125,10 @@ export function analyzeQuality(img: HTMLImageElement): QualityReport {
   }
   const lapVar = n ? lapSq / n - (lapSum / n) ** 2 : 0;
 
-  if (mean < 40) warnings.push('Rasm juda qorong‘i. Yorug‘roq joyda oling');
-  else if (mean > 228) warnings.push('Rasm haddan tashqari yorqin. Yorug‘likni kamaytiring');
-  if (std < 22) warnings.push('Rasm yassi va kontrastsiz. Detal fondan ajralib turishi kerak');
-  if (lapVar < 35) warnings.push('Rasm xira ko‘rinadi. Kamerani to‘g‘rilab qayta oling');
+  if (mean < 40) warnings.push({ code: 'dark' });
+  else if (mean > 228) warnings.push({ code: 'bright' });
+  if (std < 22) warnings.push({ code: 'flat' });
+  if (lapVar < 35) warnings.push({ code: 'blurry' });
 
   return { ok: blocking.length === 0, blocking, warnings, width, height };
 }

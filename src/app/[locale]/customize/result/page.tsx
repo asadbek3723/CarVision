@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -35,6 +36,8 @@ const getUSDPrice = (raw?: number) => {
 };
 
 export default function CustomizeResultPage() {
+  const tc = useTranslations('customize');
+  const t = useTranslations('result');
   const router = useRouter();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -129,14 +132,14 @@ export default function CustomizeResultPage() {
   const studioAngles: CinematicAngleFrame[] = React.useMemo(() => {
     const frames = renderedAngles.map((ang) => ({
       id: ang.id,
-      label: ang.label,
+      label: tc(`angles.${ang.key}`),
       beforeUrl: multiAngles[ang.id] || photo || '',
       afterUrl: generatedAngles[ang.id] as string,
     }));
     // The reel opens on the best 3/4 view
     const hero = heroAngleId(frames.map((f) => ({ id: f.id, label: f.label, photo: f.afterUrl })));
     return [...frames].sort((a, b) => (a.id === hero ? -1 : b.id === hero ? 1 : 0));
-  }, [renderedAngles, multiAngles, photo, generatedAngles]);
+  }, [renderedAngles, multiAngles, photo, generatedAngles, tc]);
 
   // Before / After Slider Drag Logic
   const handleSliderMove = (clientX: number) => {
@@ -219,7 +222,7 @@ export default function CustomizeResultPage() {
             className="inline-flex items-center gap-2.5 rounded-full bg-[#141822] px-5 py-3 text-xs md:text-sm font-bold text-white shadow-lg hover:bg-[#1C2130] transition cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4 text-[#D4AE62]" />
-            <span>O‘zgartirish (Boshqa detallarni sinash)</span>
+            <span>{t('editParts')}</span>
           </button>
 
           <div className="flex items-center gap-2.5">
@@ -230,7 +233,7 @@ export default function CustomizeResultPage() {
               className="inline-flex items-center gap-2 rounded-full bg-[#141822] px-4 py-3 text-xs md:text-sm font-semibold text-white hover:bg-[#1C2130] transition cursor-pointer"
             >
               <Download className="h-4 w-4 text-[#D4AE62]" />
-              <span className="hidden sm:inline">Rasmni yuklash</span>
+              <span className="hidden sm:inline">{t('download')}</span>
             </button>
 
             {renderedAngles.length > 1 && (
@@ -251,17 +254,17 @@ export default function CustomizeResultPage() {
               className="inline-flex items-center gap-2.5 rounded-full bg-[#D4AE62] px-6 py-3 text-xs md:text-sm font-extrabold text-black shadow-[0_12px_32px_rgba(212,174,98,0.35)] hover:brightness-110 active:scale-95 disabled:opacity-40 transition cursor-pointer"
             >
               <Film className="h-4 w-4" />
-              <span>Video sifatida ko‘rish</span>
+              <span>{t('watchVideo')}</span>
             </button>
           </div>
         </div>
 
         {!hasResults && (
           <div className="rounded-[32px] bg-[#0B0D13] p-10 text-center">
-            <p className="text-base font-semibold text-white">Hali natija yo‘q</p>
-            <p className="mt-2 text-sm text-[#A69F92]">Avval mashinangizni suratga oling va detallarni tanlab, “Natijani ko‘rish” ni bosing.</p>
+            <p className="text-base font-semibold text-white">{t('emptyTitle')}</p>
+            <p className="mt-2 text-sm text-[#A69F92]">{t('emptyBody')}</p>
             <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="mt-6 rounded-full bg-[#D4AE62] px-8 py-3.5 text-sm font-bold text-black">
-              Mashinani sozlash
+              {t('customize')}
             </button>
           </div>
         )}
@@ -289,7 +292,7 @@ export default function CustomizeResultPage() {
             {/* AFTER (Tuned) Base Layer */}
             <img
               src={afterUrl}
-              alt="Keyingi holat (Tuning)"
+              alt={t('afterAlt')}
               draggable={false}
               className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
             />
@@ -304,7 +307,7 @@ export default function CustomizeResultPage() {
             >
               <img
                 src={beforeUrl}
-                alt="Oldingi holat (Zavod)"
+                alt={t('beforeAlt')}
                 draggable={false}
                 className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
               />
@@ -315,10 +318,10 @@ export default function CustomizeResultPage() {
             {/* Angle arrows */}
             {renderedAngles.length > 1 && (
               <>
-                <button type="button" aria-label="Oldingi rakurs" onPointerDown={(e) => e.stopPropagation()} onClick={() => goTo(-1)} className="absolute start-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur hover:bg-black/80">
+                <button type="button" aria-label={t('prevAngle')} onPointerDown={(e) => e.stopPropagation()} onClick={() => goTo(-1)} className="absolute start-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur hover:bg-black/80">
                   <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
                 </button>
-                <button type="button" aria-label="Keyingi rakurs" onPointerDown={(e) => e.stopPropagation()} onClick={() => goTo(1)} className="absolute end-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur hover:bg-black/80">
+                <button type="button" aria-label={t('nextAngle')} onPointerDown={(e) => e.stopPropagation()} onClick={() => goTo(1)} className="absolute end-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur hover:bg-black/80">
                   <ChevronRight className="h-5 w-5 rtl:rotate-180" />
                 </button>
               </>
@@ -356,12 +359,12 @@ export default function CustomizeResultPage() {
                     key={ang.id}
                     type="button"
                     onClick={() => setActiveAngleId(ang.id)}
-                    aria-label={ang.label}
+                    aria-label={tc(`angles.${ang.key}`)}
                     aria-current={active ? 'true' : undefined}
                     className={`group relative h-16 w-24 shrink-0 overflow-hidden rounded-xl transition ${active ? 'ring-2 ring-[#D4AE62]' : 'opacity-60 hover:opacity-100'}`}
                   >
                     <img src={generatedAngles[ang.id]} alt="" className="h-full w-full object-cover" />
-                    <span className="absolute inset-x-0 bottom-0 bg-black/70 py-0.5 text-center text-[10px] font-semibold text-white">{ang.short}</span>
+                    <span className="absolute inset-x-0 bottom-0 bg-black/70 py-0.5 text-center text-[10px] font-semibold text-white">{tc(`anglesShort.${ang.key}`)}</span>
                   </button>
                 );
               })}
@@ -376,10 +379,10 @@ export default function CustomizeResultPage() {
           <div className="flex flex-wrap items-center justify-between gap-4 pb-6">
             <div>
               <h2 className="text-xl md:text-2xl font-extrabold text-white">
-                Tanlangan detallar
+                {t('selectedTitle')}
               </h2>
               <p className="mt-1 text-xs md:text-sm text-[#A69F92]">
-                Avtomobilingizga o‘rnatilgan jihozlar va ularning narxi
+                {t('selectedSub')}
               </p>
             </div>
 
@@ -389,7 +392,7 @@ export default function CustomizeResultPage() {
               className="inline-flex items-center gap-2 rounded-2xl bg-white/[0.06] px-4 py-2.5 text-xs font-bold text-[#D4AE62] hover:bg-white/[0.12] transition cursor-pointer"
             >
               <SlidersHorizontal className="h-4 w-4" />
-              <span>Detallarni o‘zgartirish</span>
+              <span>{t('changeParts')}</span>
             </button>
           </div>
 
@@ -397,7 +400,7 @@ export default function CustomizeResultPage() {
           <div className="space-y-3">
             {selectedParts.map((part) => {
               const priceUSD = getUSDPrice(part.price);
-              const carFit = part.targetCar || part.compatibility?.[0]?.name || 'Maxsus model';
+              const carFit = part.targetCar || part.compatibility?.[0]?.name || tc('fitFallback');
               return (
                 <div
                   key={part.id}
@@ -442,10 +445,10 @@ export default function CustomizeResultPage() {
             <div className="mt-8 rounded-2xl bg-emerald-500/15 p-6 text-center">
               <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-400 mb-3" />
               <h3 className="text-xl font-bold text-white">
-                Buyurtma Ustaxonaga Tasdiqlandi!
+                {t('confirmedTitle')}
               </h3>
               <p className="mt-1 text-sm text-white/80">
-                Tanlangan {selectedParts.length} ta detal ustaxona ish ro‘yxatiga biriktirildi.
+                {t('confirmedBody', { count: selectedParts.length })}
               </p>
               <div className="mt-5 flex justify-center gap-3">
                 <button
@@ -454,14 +457,14 @@ export default function CustomizeResultPage() {
                   className="inline-flex items-center gap-2 rounded-2xl bg-[#D4AE62] px-6 py-3 text-xs font-extrabold text-black cursor-pointer"
                 >
                   <Film className="h-4 w-4" />
-                  <span>Video Editni Ko‘rish</span>
+                  <span>{t('viewVideo')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push(`/${locale}/customize`)}
                   className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-6 py-3 text-xs font-bold text-white cursor-pointer"
                 >
-                  <span>Yana o‘zgartirish</span>
+                  <span>{t('editAgain')}</span>
                 </button>
               </div>
             </div>
@@ -469,14 +472,14 @@ export default function CustomizeResultPage() {
             <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 rounded-2xl bg-[#161A26] p-5 md:p-6">
               <div>
                 <p className="text-xs uppercase tracking-wider text-[#A69F92]">
-                  Jami hisob ({selectedParts.length} ta detal)
+                  {t('totalLabel', { count: selectedParts.length })}
                 </p>
                 <p className="mt-1 text-2xl md:text-3xl font-extrabold text-white tabular-nums">
                   {formatPrice(totalPriceUSD)}
                 </p>
                 {!isSeller && (
                   <p className="mt-1 text-xs font-semibold text-[#D4AE62]">
-                    3% Zakalat ({formatPrice(deposit3PercentUSD)}) to‘lab ustaxona manzili va telefonini ochasiz
+                    {t('unlockHint', { amount: formatPrice(deposit3PercentUSD) })}
                   </p>
                 )}
               </div>
@@ -489,12 +492,12 @@ export default function CustomizeResultPage() {
                 {isSeller ? (
                   <>
                     <Sparkles className="h-5 w-5" />
-                    <span>Buyurtmani Tasdiqlash</span>
+                    <span>{t('confirmOrder')}</span>
                   </>
                 ) : (
                   <>
                     <ShoppingBag className="h-5 w-5" />
-                    <span>Sotib olish ({formatPrice(deposit3PercentUSD)} Zakalat)</span>
+                    <span>{t('buy', { amount: formatPrice(deposit3PercentUSD) })}</span>
                   </>
                 )}
               </button>

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Check, ChevronRight, Loader2, Search, Sparkles } from 'lucide-react';
 import { useMyCar } from '@/features/shop/useMyCar';
@@ -19,7 +20,7 @@ interface CarIdentifyGateProps {
 }
 
 const MIN_YEAR = 1990;
-const SCAN_HINTS = ['Rasm tahlil qilinmoqda…', 'Kuzov shakli aniqlanmoqda…', 'Model bazadan qidirilmoqda…'];
+const SCAN_HINT_KEYS = ['hint1', 'hint2', 'hint3'] as const;
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Shrinks the photo so the AI request stays fast and cheap. */
@@ -48,6 +49,7 @@ async function downscale(src: string, maxSide = 768): Promise<string | null> {
  * The year matters: a 1990 and a 2026 model of the same name rarely share body parts.
  */
 export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
+  const t = useTranslations('identify');
   const reduce = useReducedMotion();
   const { setCar } = useMyCar();
   const maxYear = React.useMemo(() => new Date().getFullYear(), []);
@@ -58,7 +60,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
   const [aiName, setAiName] = React.useState('');
   const [picked, setPicked] = React.useState<Candidate | null>(null);
   const [year, setYear] = React.useState(() => maxYear - 6);
-  const [notice, setNotice] = React.useState('');
+  const [notice, setNotice] = React.useState<'' | 'notCar' | 'failed'>('');
 
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<Candidate[]>([]);
@@ -68,11 +70,11 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
   React.useEffect(() => {
     let cancelled = false;
     const started = Date.now();
-    const hintTimer = setInterval(() => setHint((h) => (h + 1) % SCAN_HINTS.length), 1100);
+    const hintTimer = setInterval(() => setHint((h) => (h + 1) % SCAN_HINT_KEYS.length), 1100);
 
     (async () => {
       let found: { name: string; list: Candidate[] } | null = null;
-      let reason = '';
+      let reason: '' | 'notCar' = '';
       try {
         const small = await downscale(photo);
         if (small) {
@@ -85,7 +87,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
           if (data?.detected) {
             found = { name: `${data.make ?? ''} ${data.model ?? ''}`.trim(), list: (data.candidates ?? []) as Candidate[] };
           } else if (data?.reason === 'not_a_car') {
-            reason = 'Rasmda mashina topilmadi. Mashinani qo‘lda tanlang.';
+            reason = 'notCar';
           }
         }
       } catch {
@@ -103,7 +105,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
         setPhase('confirm');
       } else {
         if (found) setQuery(found.name);
-        setNotice(reason || 'Mashinani avtomatik aniqlab bo‘lmadi. Uni qo‘lda tanlang.');
+        setNotice(reason || 'failed');
         setPhase('manual');
       }
     })();
@@ -155,7 +157,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Mashinani aniqlash" className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-[#07080C] px-5 py-8">
+    <div role="dialog" aria-modal="true" aria-label={t('dialog')} className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-[#07080C] px-5 py-8">
       {/* Ambient backdrop: blurred photo + gold glow */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <img src={photo} alt="" className="h-full w-full scale-110 object-cover opacity-[0.18] blur-3xl" />
@@ -172,7 +174,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
           transition={{ duration: 0.7, ease: EASE }}
           className="relative mx-auto aspect-[16/10] w-full overflow-hidden rounded-[28px] bg-[#0B0D13] shadow-[0_30px_90px_rgba(0,0,0,0.8)]"
         >
-          <img src={photo} alt="Sizning mashinangiz" className="h-full w-full object-cover" />
+          <img src={photo} alt={t('photoAlt')} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
 
           {/* Gold viewfinder corners */}
@@ -228,10 +230,10 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                 <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#D4AE62]">
                   <Sparkles className="h-3.5 w-3.5" /> AI
                 </p>
-                <h2 className="mt-3 font-display text-2xl font-light text-white">Mashinangiz aniqlanmoqda</h2>
+                <h2 className="mt-3 font-display text-2xl font-light text-white">{t('scanTitle')}</h2>
                 <AnimatePresence mode="wait">
                   <motion.p key={hint} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }} className="mt-2 text-sm text-white/55">
-                    {SCAN_HINTS[hint]}
+                    {t(SCAN_HINT_KEYS[hint] ?? 'hint1')}
                   </motion.p>
                 </AnimatePresence>
                 <div className="mx-auto mt-6 h-1 w-40 overflow-hidden rounded-full bg-white/10">
@@ -242,7 +244,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
 
             {phase === 'confirm' && picked && (
               <motion.div key="confirm" {...fade} className="text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/45">Bu sizning mashinangizmi?</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/45">{t('confirmQuestion')}</p>
                 <h2 className="mt-3 font-display text-3xl font-light leading-tight text-white md:text-4xl">
                   <span className="text-gold-gradient">{picked.label}</span>
                 </h2>
@@ -262,7 +264,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                 )}
                 <div className="mt-8 grid gap-3">
                   <button type="button" onClick={() => setPhase('year')} className="shimmer inline-flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gold-gradient text-sm font-bold uppercase tracking-wider text-black shadow-[0_14px_40px_rgba(212,174,98,0.3)] transition hover:brightness-110 active:scale-[0.98]">
-                    Ha, to‘g‘ri <ChevronRight className="h-4 w-4" />
+                    {t('confirmYes')} <ChevronRight className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
@@ -273,7 +275,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                     }}
                     className="h-12 cursor-pointer rounded-2xl text-sm text-white/65 transition hover:bg-white/[0.06] hover:text-white"
                   >
-                    Yo‘q, boshqa mashina
+                    {t('confirmNo')}
                   </button>
                 </div>
               </motion.div>
@@ -281,26 +283,26 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
 
             {phase === 'manual' && (
               <motion.div key="manual" {...fade}>
-                <h2 className="text-center font-display text-2xl font-light text-white">Mashinangizni tanlang</h2>
-                {notice && <p className="mt-2 text-center text-sm text-white/55">{notice}</p>}
+                <h2 className="text-center font-display text-2xl font-light text-white">{t('manualTitle')}</h2>
+                {notice && <p className="mt-2 text-center text-sm text-white/55">{notice === 'notCar' ? t('noticeNotCar') : t('noticeFailed')}</p>}
                 <div className="relative mt-5">
                   <Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
                   <input
                     autoFocus
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Masalan: Cobalt, Toyota Camry, BYD Song"
-                    aria-label="Mashina nomi"
+                    placeholder={t('searchPlaceholder')}
+                    aria-label={t('searchLabel')}
                     className="h-14 w-full rounded-2xl bg-white/[0.06] ps-11 pe-4 text-base text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/30 focus:ring-[#D4AE62]/60"
                   />
                 </div>
                 <div className="mt-3 max-h-60 overflow-y-auto rounded-2xl">
                   {searching && (
                     <p className="flex items-center gap-2 px-2 py-3 text-xs text-white/50">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Qidirilmoqda…
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t('searching')}
                     </p>
                   )}
-                  {!searching && query.trim().length >= 2 && results.length === 0 && <p className="px-2 py-3 text-sm text-white/50">Topilmadi. Boshqacha yozib ko‘ring.</p>}
+                  {!searching && query.trim().length >= 2 && results.length === 0 && <p className="px-2 py-3 text-sm text-white/50">{t('notFound')}</p>}
                   {results.map((r, i) => (
                     <motion.button
                       key={r.id}
@@ -325,7 +327,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
             {phase === 'year' && picked && (
               <motion.div key="year" {...fade} className="text-center">
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/45">{picked.label}</p>
-                <h2 className="mt-2 font-display text-xl font-light text-white">Qaysi yilda ishlab chiqarilgan?</h2>
+                <h2 className="mt-2 font-display text-xl font-light text-white">{t('yearTitle')}</h2>
                 <div className="relative mt-4 h-20 overflow-hidden">
                   <AnimatePresence mode="popLayout" initial={false}>
                     <motion.span
@@ -347,7 +349,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                   step={1}
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
-                  aria-label="Ishlab chiqarilgan yili"
+                  aria-label={t('yearLabel')}
                   className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-[#D4AE62]"
                 />
                 <div className="mt-1 flex justify-between text-[11px] tabular-nums text-white/35">
@@ -367,7 +369,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                   ))}
                 </div>
                 <button type="button" onClick={finish} className="shimmer mt-7 inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gold-gradient text-sm font-bold uppercase tracking-wider text-black shadow-[0_14px_40px_rgba(212,174,98,0.3)] transition hover:brightness-110 active:scale-[0.98]">
-                  Mos detallarni ko‘rsat <ChevronRight className="h-4 w-4" />
+                  {t('showParts')} <ChevronRight className="h-4 w-4" />
                 </button>
               </motion.div>
             )}
@@ -377,7 +379,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                 <h2 className="font-display text-2xl font-light text-white">
                   {picked.label} <span className="text-[#D4AE62]">· {year}</span>
                 </h2>
-                <p className="mt-2 text-sm text-white/55">Mos detallar tayyorlanmoqda…</p>
+                <p className="mt-2 text-sm text-white/55">{t('preparing')}</p>
               </motion.div>
             )}
           </AnimatePresence>

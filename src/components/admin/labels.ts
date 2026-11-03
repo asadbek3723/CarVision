@@ -1,27 +1,25 @@
-const ACTIONS: Record<string, string> = {
-  ADMIN_LOGIN: 'Admin tizimga kirdi',
-  ASSIGN_PLAN: 'Tarif berildi',
-  ADJUST_CREDITS: 'Kredit o‘zgartirildi',
-  BAN_USER: 'Foydalanuvchi bloklandi',
-  UNBAN_USER: 'Foydalanuvchi blokdan chiqarildi',
-  VERIFY_SHOP: 'Ustaxona tasdiqlandi',
-  UNVERIFY_SHOP: 'Ustaxona tasdig‘i olib tashlandi',
-  APPROVE_DEPOSIT: 'Zakalat tasdiqlandi',
-  REJECT_DEPOSIT: 'Zakalat rad etildi',
-};
+/** Audit actions and failed-attempt kinds that have a translation in `adm.actions` / `adm.attempts`. */
+const ACTIONS = new Set([
+  'ADMIN_LOGIN',
+  'ASSIGN_PLAN',
+  'ADJUST_CREDITS',
+  'BAN_USER',
+  'UNBAN_USER',
+  'VERIFY_SHOP',
+  'UNVERIFY_SHOP',
+  'APPROVE_DEPOSIT',
+  'REJECT_DEPOSIT',
+]);
+const ATTEMPTS = new Set(['login', 'admin_pin', 'register', 'otp', 'camera_session']);
 
-export function actionLabel(action: string): string {
-  return ACTIONS[action] ?? action;
+type Translate = (key: string) => string;
+
+/** `t` is `useTranslations('adm.actions')`; unknown actions are shown as-is. */
+export function actionLabel(t: Translate, action: string): string {
+  return ACTIONS.has(action) ? t(action) : action;
 }
 
-const ATTEMPTS: Record<string, string> = {
-  login: 'Kirish',
-  admin_pin: 'Admin PIN',
-  register: 'Ro‘yxatdan o‘tish',
-  otp: 'SMS kod',
-  camera_session: 'Kamera sessiyasi',
-};
-
-export function attemptLabel(kind: string): string {
-  return ATTEMPTS[kind] ?? kind;
+/** `t` is `useTranslations('adm.attempts')`. */
+export function attemptLabel(t: Translate, kind: string): string {
+  return ATTEMPTS.has(kind) ? t(kind) : kind;
 }

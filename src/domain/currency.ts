@@ -57,6 +57,11 @@ export interface CurrencyFormatOptions {
   fromCurrency?: string; // Base currency of the input amount (default: 'USD')
   targetLocale: string; // Target locale e.g. 'uz', 'ru', 'en', 'ar', 'tr', 'kk', 'ky', 'tg'
   rates?: ExchangeRates;
+  /**
+   * UI language used to format the number and currency symbol (e.g. 'ru' → "1 300 000 сум").
+   * When omitted, the legacy English-style output ("1,300,000 so'm") is kept.
+   */
+  displayLocale?: string;
 }
 
 export interface ConvertedPrice {
@@ -92,6 +97,18 @@ export function getLocaleCurrency(locale: string): { code: string; symbol: strin
   }
 }
 
+/** How the Uzbek soum is written in each UI language. */
+const UZS_SYMBOL_BY_LOCALE: Record<string, string> = {
+  uz: 'soʻm',
+  ru: 'сум',
+  kk: 'сум',
+  ky: 'сом',
+  tg: 'сӯм',
+  tr: 'so\'m',
+  ar: 'سوم',
+  en: "so'm",
+};
+
 /**
  * Converts a base price to the target locale's currency and formats it according to country rounding conventions.
  */
@@ -100,6 +117,7 @@ export function convertAndFormatPrice({
   fromCurrency = 'USD',
   targetLocale,
   rates = DEFAULT_RATES,
+  displayLocale,
 }: CurrencyFormatOptions): ConvertedPrice {
   const safeAmount = Number.isFinite(amount) ? amount : 0;
   const { code: targetCode, symbol } = getLocaleCurrency(targetLocale);
@@ -146,12 +164,21 @@ export function convertAndFormatPrice({
     maximumFractionDigits: 0,
   }).format(roundedAmount);
 
-  let formattedText = '';
-  if (targetCode === 'USD') {
-    formattedText = `$${formattedNumber}`;
-  } else {
-    formattedText = `${formattedNumber} ${symbol}`;
+  // Number grouping follows the UI language when given (ru: "1 300 000", tr: "1.300.000"); symbol stays per currency.
+  let numberText = formattedNumber;
+  let displaySymbol = symbol;
+  if (displayLocale) {
+    try {
+      numberText = new Intl.NumberFormat(displayLocale === 'ar' ? 'ar-AE' : displayLocale, {
+        maximumFractionDigits: 0,
+      }).format(roundedAmount);
+    } catch {
+      numberText = formattedNumber;
+    }
+    if (targetCode === 'UZS') displaySymbol = UZS_SYMBOL_BY_LOCALE[displayLocale] ?? symbol;
   }
+
+  const formattedText = targetCode === 'USD' ? `$${numberText}` : `${numberText} ${displaySymbol}`;
 
   return {
     rawAmount: rawConverted,

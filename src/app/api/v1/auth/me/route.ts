@@ -30,13 +30,13 @@ export async function PATCH(request: NextRequest) {
   }
   const parsed = patchSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success || Object.keys(parsed.data).length === 0) {
-    return NextResponse.json({ success: false, error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
+    return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
   }
   const updates: Record<string, string> = {};
   if (parsed.data.fullName) updates['full_name'] = parsed.data.fullName;
   if (parsed.data.preferredLocale) updates['preferred_locale'] = parsed.data.preferredLocale;
   const { error } = await createAdminClient().from('profiles').update(updates).eq('id', session.userId);
-  if (error) return NextResponse.json({ success: false, error: 'Saqlab bo‘lmadi' }, { status: 500 });
+  if (error) return NextResponse.json({ success: false, code: 'SAVE_FAILED', error: 'Saqlab bo‘lmadi' }, { status: 500 });
   const fresh = (await loadSession(session.userId)) ?? session;
   return NextResponse.json({ success: true, user: fresh.profile });
 }

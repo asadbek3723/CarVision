@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronRight, ArrowUpRight, Cog, Camera, Wrench } from 'lucide-react';
@@ -9,10 +10,10 @@ import { useVeloceStore } from '@/context/VeloceStore';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 
 const FEATURES = [
-  { icon: Camera, title: 'Suratga oling', items: ['Mashinangizni 5 rakursda', 'AI tahlil qiladi'] },
-  { icon: Cog, title: 'Mos detal toping', items: ['Faqat sizning mashinangizga', 'Disk, bamper, fara, rang'] },
-  { icon: Wrench, title: 'Ustaxonada o‘rnating', items: ['3% zakalat bilan bron', 'Manzil to‘lovdan so‘ng ochiladi'] },
-];
+  { icon: Camera, key: 'f1', items: ['f1a', 'f1b'] },
+  { icon: Cog, key: 'f2', items: ['f2a', 'f2b'] },
+  { icon: Wrench, key: 'f3', items: ['f3a', 'f3b'] },
+] as const;
 
 interface StoreStats {
   parts: number;
@@ -22,6 +23,8 @@ interface StoreStats {
 }
 
 export function VeloceHome() {
+  const t = useTranslations('home');
+  const intlLocale = useLocale();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { openCamera } = useVeloceStore();
@@ -63,10 +66,10 @@ export function VeloceHome() {
 
   const statItems = stats
     ? [
-        { v: stats.parts.toLocaleString(), l: 'Detallar' },
-        { v: stats.brands.toLocaleString(), l: 'Brendlar' },
-        { v: stats.workshops.toLocaleString(), l: 'Ustaxonalar' },
-        { v: stats.vehicleModels.toLocaleString(), l: 'Mashina modellari' },
+        { v: stats.parts.toLocaleString(intlLocale), l: t('statParts') },
+        { v: stats.brands.toLocaleString(intlLocale), l: t('statBrands') },
+        { v: stats.workshops.toLocaleString(intlLocale), l: t('statWorkshops') },
+        { v: stats.vehicleModels.toLocaleString(intlLocale), l: t('statModels') },
       ]
     : [];
 
@@ -81,7 +84,7 @@ export function VeloceHome() {
           <div className="relative lg:order-2 lg:col-span-7 lg:-me-40 lg:-ms-16 xl:scale-110">
             <img
               src="/assets/car-CjioCIbt.jpg"
-              alt="Black performance coupe"
+              alt={t('heroAlt')}
               width={1920}
               height={1088}
               className="reveal relative w-full object-cover mix-blend-lighten [mask-image:radial-gradient(ellipse_65%_62%_at_55%_50%,black_55%,transparent_88%)]"
@@ -92,7 +95,7 @@ export function VeloceHome() {
           <div className="relative z-10 -mt-6 px-6 text-center lg:order-1 lg:col-span-5 lg:mt-0 lg:px-0 lg:text-start">
             <p className="rise mb-6 hidden text-[10px] tracking-[0.5em] text-primary uppercase lg:block">
               <span className="me-3 inline-block h-px w-10 bg-primary align-middle" />
-              CarVision · AI tuning
+              {t('eyebrow')}
             </p>
 
             <h1
@@ -116,8 +119,7 @@ export function VeloceHome() {
               className="rise mx-auto mt-6 hidden max-w-sm text-sm leading-relaxed text-muted-foreground lg:mx-0 lg:block"
               style={{ animationDelay: '300ms' }}
             >
-              Mashinangizni suratga oling va diskni, bamperni, rangni o‘z mashinangizda
-              sinab ko‘ring — hech qanday vint burashdan oldin.
+              {t('heroText')}
             </p>
 
             <div
@@ -128,7 +130,7 @@ export function VeloceHome() {
                 onClick={openCamera}
                 className="shimmer group inline-flex items-center gap-6 rounded-xl bg-gold-gradient py-4 ps-7 pe-5 font-display text-[11px] font-semibold tracking-[0.25em] text-black uppercase shadow-gold transition hover:brightness-110 active:scale-95 cursor-pointer"
               >
-                Mashinamni sozlash
+                {t('ctaCustomize')}
                 <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
               </button>
 
@@ -136,7 +138,7 @@ export function VeloceHome() {
                 href={`/${locale}/shop`}
                 className="group hidden items-center gap-2 font-display text-[11px] tracking-[0.3em] uppercase text-foreground/80 transition hover:text-primary lg:inline-flex"
               >
-                Do‘konga o‘tish
+                {t('ctaShop')}
                 <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </Link>
             </div>
@@ -172,7 +174,7 @@ export function VeloceHome() {
             const Icon = feat.icon;
             return (
               <div
-                key={feat.title}
+                key={feat.key}
                 className="rise group relative overflow-hidden rounded-2xl border border-primary/15 bg-card-gradient px-2 py-6 text-center shadow-card transition duration-500 hover:-translate-y-1 hover:border-primary/50 md:p-10 lg:text-start"
                 style={{ animationDelay: `${300 + idx * 100}ms` }}
               >
@@ -182,11 +184,11 @@ export function VeloceHome() {
                   className="mx-auto h-8 w-8 text-primary transition duration-700 group-hover:rotate-90 lg:mx-0 lg:h-10 lg:w-10"
                 />
                 <h3 className="mt-4 font-display text-[10px] font-medium tracking-[0.2em] uppercase sm:text-xs md:text-sm md:tracking-[0.3em] text-white">
-                  {feat.title}
+                  {t(`${feat.key}Title`)}
                 </h3>
                 <ul className="mt-3 space-y-1.5 text-[9px] tracking-[0.2em] text-muted-foreground uppercase md:text-[11px]">
                   {feat.items.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={item}>{t(item)}</li>
                   ))}
                 </ul>
                 <ArrowUpRight className="absolute end-6 top-6 hidden h-5 w-5 text-muted-foreground transition group-hover:text-primary lg:block" />
@@ -199,16 +201,16 @@ export function VeloceHome() {
         <section className="mt-16 lg:mt-24">
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <p className="text-[10px] tracking-[0.5em] text-primary uppercase">Yangi</p>
+              <p className="text-[10px] tracking-[0.5em] text-primary uppercase">{t('newEyebrow')}</p>
               <h2 className="mt-2 font-display text-lg font-light tracking-[0.3em] uppercase lg:text-2xl text-white">
-                Yangi detallar
+                {t('newTitle')}
               </h2>
             </div>
             <Link
               href={`/${locale}/shop`}
               className="flex items-center font-display text-[10px] tracking-[0.3em] text-primary uppercase hover:brightness-125"
             >
-              Hammasi <ChevronRight className="h-4 w-4 ms-1" />
+              {t('all')} <ChevronRight className="h-4 w-4 ms-1" />
             </Link>
           </div>
 
@@ -222,7 +224,7 @@ export function VeloceHome() {
                 <ProductCard key={p.id} p={p} i={idx} />
               ))
             ) : (
-              <p className="col-span-full py-10 text-center text-sm text-muted-foreground">Hozircha detallar qo‘shilmagan.</p>
+              <p className="col-span-full py-10 text-center text-sm text-muted-foreground">{t('noParts')}</p>
             )}
           </div>
         </section>

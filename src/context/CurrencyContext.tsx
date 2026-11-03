@@ -121,6 +121,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         fromCurrency,
         targetLocale: effectiveLocale,
         rates,
+        displayLocale: locale,
       });
     },
     [locale, customCurrency, rates]

@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error('admin shops error:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }
 
@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest) {
   const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   const parsed = patchSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ success: false, error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
   const { data } = await createAdminClient().rpc('admin_set_shop_verified', {
     p_admin_id: auth.adminId,
     p_shop_id: parsed.data.shopId,
@@ -75,7 +75,7 @@ export async function PATCH(request: NextRequest) {
     p_ip: ipOf(request),
   });
   const r = data as { success?: boolean } | null;
-  if (!r?.success) return NextResponse.json({ success: false, error: 'Ustaxona topilmadi' }, { status: 404 });
+  if (!r?.success) return NextResponse.json({ success: false, code: 'NOT_FOUND', error: 'Ustaxona topilmadi' }, { status: 404 });
   return NextResponse.json({ success: true });
 }
 
@@ -89,11 +89,11 @@ export async function POST(request: NextRequest) {
   const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   const parsed = createSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ success: false, error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
   try {
     const db = createAdminClient();
     const { data: profile } = await db.from('profiles').select('id, full_name, phone, role').eq('id', parsed.data.userId).maybeSingle();
-    if (!profile) return NextResponse.json({ success: false, error: 'Foydalanuvchi topilmadi' }, { status: 404 });
+    if (!profile) return NextResponse.json({ success: false, code: 'NOT_FOUND', error: 'Foydalanuvchi topilmadi' }, { status: 404 });
     const { data: existing } = await db.from('shops').select('id').eq('owner_id', profile.id).maybeSingle();
     if (existing) return NextResponse.json({ success: true, shopId: existing.id as string, created: false });
 
@@ -115,11 +115,11 @@ export async function POST(request: NextRequest) {
       .single();
     if (error || !shop) {
       console.error('admin create garage failed:', error?.message);
-      return NextResponse.json({ success: false, error: 'Garaj ochib bo‘lmadi' }, { status: 500 });
+      return NextResponse.json({ success: false, code: 'CREATE_FAILED', error: 'Garaj ochib bo‘lmadi' }, { status: 500 });
     }
     return NextResponse.json({ success: true, shopId: shop.id as string, created: true }, { status: 201 });
   } catch (err) {
     console.error('admin create garage error:', err);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
 }

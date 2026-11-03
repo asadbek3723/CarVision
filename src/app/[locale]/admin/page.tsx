@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Loader2, Lock, ShieldAlert } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -12,6 +13,7 @@ function Centered({ children }: { children: React.ReactNode }) {
 }
 
 export default function SuperAdminPage() {
+  const t = useTranslations('adm.page');
   const { user, isLoading } = useAuth();
   const [verified, setVerified] = React.useState<boolean | null>(null);
   const isAdmin = user?.role === 'super_admin';
@@ -44,7 +46,7 @@ export default function SuperAdminPage() {
     return (
       <Centered>
         <Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" />
-        <p className="mt-3 text-sm text-white/50">Tekshirilmoqda…</p>
+        <p className="mt-3 text-sm text-white/50">{t('checking')}</p>
       </Centered>
     );
   }
@@ -53,17 +55,17 @@ export default function SuperAdminPage() {
     return (
       <Centered>
         <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-red-500/10 text-red-300"><ShieldAlert className="h-8 w-8" /></span>
-        <h1 className="mt-5 text-xl font-bold text-white">Ruxsat yo‘q</h1>
-        <p className="mt-2 max-w-xs text-sm text-white/50">{user ? 'Bu bo‘lim faqat administratorlar uchun.' : 'Admin akkaunti bilan tizimga kiring.'}</p>
+        <h1 className="mt-5 text-xl font-bold text-white">{t('noAccess')}</h1>
+        <p className="mt-2 max-w-xs text-sm text-white/50">{user ? t('adminOnly') : t('signInAdmin')}</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link href="/seller" className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/15">
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-            Orqaga
+            {t('back')}
           </Link>
           {!user && (
             <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-6 py-3 text-sm font-bold text-black">
               <Lock className="h-4 w-4" />
-              Kirish
+              {t('login')}
             </Link>
           )}
         </div>

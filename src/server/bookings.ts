@@ -26,6 +26,26 @@ export function escrowDetails(): { cardNumber: string; holder: string; bank: str
   return { cardNumber, holder, bank: process.env.ESCROW_BANK?.trim() || '' };
 }
 
+export type ReviewResult = { ok: true; status: string } | { ok: false; error: 'NOT_FOUND' | 'INVALID_STATE' | 'FAILED' };
+
+/** Single confirmation point for deposits: used by the website admin panel and the Telegram bot. */
+export async function reviewBooking(
+  db: Db,
+  args: { adminId: string; bookingId: string; approve: boolean; reason?: string | null | undefined; ip: string }
+): Promise<ReviewResult> {
+  const { data, error } = await db.rpc('admin_review_booking', {
+    p_admin_id: args.adminId,
+    p_booking_id: args.bookingId,
+    p_approve: args.approve,
+    p_reason: args.reason ?? null,
+    p_ip: args.ip.slice(0, 45),
+  });
+  const r = data as { success?: boolean; error?: string; status?: string } | null;
+  if (error || !r) return { ok: false, error: 'FAILED' };
+  if (r.success) return { ok: true, status: r.status ?? '' };
+  return { ok: false, error: r.error === 'INVALID_STATE' ? 'INVALID_STATE' : 'NOT_FOUND' };
+}
+
 export type BookingStatus = 'AWAITING_PAYMENT' | 'PENDING_ADMIN_APPROVAL' | 'UNLOCKED' | 'REDEEMED' | 'REJECTED' | 'CANCELLED';
 
 export interface BookingDTO {
