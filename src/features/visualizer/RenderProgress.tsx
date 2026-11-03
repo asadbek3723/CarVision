@@ -90,7 +90,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
               transition={{ duration: 0.35, ease: EASE }}
               className="text-base text-white/85"
             >
-              {fatal ? 'To‘xtatildi' : running ? STAGES[stage] : failed.length && !done ? 'Hech bir rakurs tayyor bo‘lmadi' : 'Hammasi tayyor'}
+              {fatal ? 'To‘xtatildi' : running ? STAGES[stage] : failed.length && !done ? 'Hech bir rakurs tayyor bo‘lmadi' : failed.length ? 'Ba’zi rakurslar tayyor bo‘lmadi' : 'Hammasi tayyor'}
             </motion.p>
           </AnimatePresence>
           {running && <p className="mt-1 text-xs text-white/40">Oynani yopmang, bu 20-60 soniya oladi</p>}

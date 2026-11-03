@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
   Film,
@@ -10,6 +11,8 @@ import {
   SlidersHorizontal,
   ShoppingBag,
   Car,
+  ChevronLeft,
+  ChevronRight,
   Sparkles,
 } from 'lucide-react';
 import { VeloceShell } from '@/components/veloce/VeloceShell';
@@ -23,10 +26,12 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { vibrate } from '@/features/camera/lib/fx';
+import { heroAngleId } from '@/features/visualizer/render-plan';
 
+/** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
-  const num = Number(raw) || 850;
-  return num > 50000 ? Math.max(1, Math.round(num / 13000)) : num;
+  const num = Number(raw);
+  return Number.isFinite(num) && num > 0 ? num : 0;
 };
 
 export default function CustomizeResultPage() {
@@ -60,7 +65,8 @@ export default function CustomizeResultPage() {
     let isMounted = true;
     const fetchCatalog = async () => {
       try {
-        const endpoint = isSeller && user?.plan?.isPaid ? '/api/v1/seller/inventory' : '/api/v1/products';
+        // Workshop owners only ever see their own garage; everyone else sees the whole marketplace.
+        const endpoint = isSeller ? '/api/v1/seller/inventory' : '/api/v1/products';
         const res = await fetch(endpoint);
         const data = await res.json();
         if (isMounted && data.success && Array.isArray(data.products)) {
@@ -89,27 +95,48 @@ export default function CustomizeResultPage() {
 
   const deposit3PercentUSD = Math.max(1, Math.round(totalPriceUSD * 0.03));
 
-  const basePhoto = photo || '/assets/hero-car-1-Bi4wq3bK.jpg';
-  const beforeUrl = multiAngles[activeAngleId] || basePhoto;
-  const afterUrl =
-    generatedAngles[activeAngleId] ||
-    generatedAngles['front-left'] ||
-    '/images/studio/studio_coupe_tuned.jpg';
-
-  // Build 5-angle array for CinematicVideoStudio
-  const studioAngles: CinematicAngleFrame[] = React.useMemo(
-    () =>
-      FIVE_CAR_ANGLES.map((ang) => ({
-        id: ang.id,
-        label: ang.label,
-        beforeUrl: multiAngles[ang.id] || basePhoto,
-        afterUrl:
-          generatedAngles[ang.id] ||
-          generatedAngles['front-left'] ||
-          afterUrl,
-      })),
-    [multiAngles, basePhoto, generatedAngles, afterUrl]
+  // Only sides that were really rendered are shown (no placeholder or copied images)
+  const renderedAngles = React.useMemo(
+    () => FIVE_CAR_ANGLES.filter((a) => Boolean(generatedAngles[a.id])),
+    [generatedAngles]
   );
+  const hasResults = renderedAngles.length > 0;
+  const currentAngle = renderedAngles.find((a) => a.id === activeAngleId) ?? renderedAngles[0];
+  const currentId = currentAngle?.id ?? activeAngleId;
+  const beforeUrl = multiAngles[currentId] || photo || '';
+  const afterUrl = generatedAngles[currentId] || '';
+  const currentIndex = Math.max(0, renderedAngles.findIndex((a) => a.id === currentId));
+
+  const goTo = React.useCallback(
+    (delta: number) => {
+      if (renderedAngles.length < 2) return;
+      const next = renderedAngles[(currentIndex + delta + renderedAngles.length) % renderedAngles.length];
+      if (next) setActiveAngleId(next.id);
+    },
+    [renderedAngles, currentIndex]
+  );
+
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') goTo(1);
+      if (e.key === 'ArrowLeft') goTo(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [goTo]);
+
+  // Video frames: the real rendered sides only
+  const studioAngles: CinematicAngleFrame[] = React.useMemo(() => {
+    const frames = renderedAngles.map((ang) => ({
+      id: ang.id,
+      label: ang.label,
+      beforeUrl: multiAngles[ang.id] || photo || '',
+      afterUrl: generatedAngles[ang.id] as string,
+    }));
+    // The reel opens on the best 3/4 view
+    const hero = heroAngleId(frames.map((f) => ({ id: f.id, label: f.label, photo: f.afterUrl })));
+    return [...frames].sort((a, b) => (a.id === hero ? -1 : b.id === hero ? 1 : 0));
+  }, [renderedAngles, multiAngles, photo, generatedAngles]);
 
   // Before / After Slider Drag Logic
   const handleSliderMove = (clientX: number) => {
@@ -140,14 +167,31 @@ export default function CustomizeResultPage() {
     }
   };
 
-  // Download current 4K tuned image
-  const handleDownloadImage = () => {
-    const a = document.createElement('a');
-    a.href = afterUrl;
-    a.download = `carvision-result-${activeAngleId}-${Date.now()}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  // Downloads one image. Cross-origin URLs ignore <a download>, so fetch it as a blob first.
+  const saveImage = async (url: string, name: string) => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('fetch failed');
+      const blobUrl = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    } catch {
+      window.open(url, '_blank', 'noopener');
+    }
+  };
+
+  const handleDownloadImage = () => void saveImage(afterUrl, `carvision-${currentId}.jpg`);
+
+  const handleDownloadAll = async () => {
+    for (const ang of renderedAngles) {
+      await saveImage(generatedAngles[ang.id] as string, `carvision-${ang.id}.jpg`);
+      await new Promise((r) => setTimeout(r, 350));
+    }
   };
 
   // Primary Buy / Confirm Action
@@ -182,16 +226,29 @@ export default function CustomizeResultPage() {
             <button
               type="button"
               onClick={handleDownloadImage}
+              disabled={!hasResults}
               className="inline-flex items-center gap-2 rounded-full bg-[#141822] px-4 py-3 text-xs md:text-sm font-semibold text-white hover:bg-[#1C2130] transition cursor-pointer"
             >
               <Download className="h-4 w-4 text-[#D4AE62]" />
               <span className="hidden sm:inline">Rasmni yuklash</span>
             </button>
 
+            {renderedAngles.length > 1 && (
+              <button
+                type="button"
+                onClick={() => void handleDownloadAll()}
+                className="inline-flex items-center gap-2 rounded-full bg-[#141822] px-4 py-3 text-xs md:text-sm font-semibold text-white hover:bg-[#1C2130] transition cursor-pointer"
+              >
+                <Download className="h-4 w-4 text-[#D4AE62]" />
+                <span>Hammasi ({renderedAngles.length})</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setIsVideoStudioOpen(true)}
-              className="inline-flex items-center gap-2.5 rounded-full bg-[#D4AE62] px-6 py-3 text-xs md:text-sm font-extrabold text-black shadow-[0_12px_32px_rgba(212,174,98,0.35)] hover:brightness-110 active:scale-95 transition cursor-pointer"
+              disabled={!hasResults}
+              className="inline-flex items-center gap-2.5 rounded-full bg-[#D4AE62] px-6 py-3 text-xs md:text-sm font-extrabold text-black shadow-[0_12px_32px_rgba(212,174,98,0.35)] hover:brightness-110 active:scale-95 disabled:opacity-40 transition cursor-pointer"
             >
               <Film className="h-4 w-4" />
               <span>Video sifatida ko‘rish</span>
@@ -199,7 +256,18 @@ export default function CustomizeResultPage() {
           </div>
         </div>
 
+        {!hasResults && (
+          <div className="rounded-[32px] bg-[#0B0D13] p-10 text-center">
+            <p className="text-base font-semibold text-white">Hali natija yo‘q</p>
+            <p className="mt-2 text-sm text-[#A69F92]">Avval mashinangizni suratga oling va detallarni tanlab, “Natijani ko‘rish” ni bosing.</p>
+            <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="mt-6 rounded-full bg-[#D4AE62] px-8 py-3.5 text-sm font-bold text-black">
+              Mashinani sozlash
+            </button>
+          </div>
+        )}
+
         {/* 1. BEFORE / AFTER INTERACTIVE COMPARISON VIEWPORT */}
+        {hasResults && (
         <div className="overflow-hidden rounded-[32px] bg-[#0B0D13] shadow-[0_32px_90px_rgba(0,0,0,0.8)]">
           <div
             ref={sliderContainerRef}
@@ -209,6 +277,15 @@ export default function CustomizeResultPage() {
             onPointerCancel={handlePointerUp}
             className="relative aspect-[16/9] max-h-[520px] w-full select-none overflow-hidden cursor-ew-resize touch-none"
           >
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.div
+                key={currentId}
+                className="absolute inset-0"
+                initial={{ opacity: 0, scale: 1.04 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
             {/* AFTER (Tuned) Base Layer */}
             <img
               src={afterUrl}
@@ -232,6 +309,20 @@ export default function CustomizeResultPage() {
                 className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
               />
             </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Angle arrows */}
+            {renderedAngles.length > 1 && (
+              <>
+                <button type="button" aria-label="Oldingi rakurs" onPointerDown={(e) => e.stopPropagation()} onClick={() => goTo(-1)} className="absolute start-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur hover:bg-black/80">
+                  <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
+                </button>
+                <button type="button" aria-label="Keyingi rakurs" onPointerDown={(e) => e.stopPropagation()} onClick={() => goTo(1)} className="absolute end-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur hover:bg-black/80">
+                  <ChevronRight className="h-5 w-5 rtl:rotate-180" />
+                </button>
+              </>
+            )}
 
             {/* Top Labels */}
             <div className="pointer-events-none absolute start-4 top-4 rounded-full bg-black/75 px-4 py-1.5 text-xs font-bold tracking-wider text-white/85 backdrop-blur-md">
@@ -255,32 +346,30 @@ export default function CustomizeResultPage() {
             </div>
           </div>
 
-          {/* 5-Angle Switcher Bar Below Image */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0E1119] px-5 py-3.5">
-            <span className="text-xs font-semibold text-[#A69F92]">
-              5 ta burchakdan ko‘rish:
-            </span>
-            <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
-              {FIVE_CAR_ANGLES.map((ang) => {
-                const active = activeAngleId === ang.id;
+          {/* Rendered sides as thumbnails */}
+          <div className="flex items-center justify-between gap-3 bg-[#0E1119] px-4 py-3.5">
+            <div className="flex min-w-0 items-center gap-2.5 overflow-x-auto [scrollbar-width:none]">
+              {renderedAngles.map((ang) => {
+                const active = currentId === ang.id;
                 return (
                   <button
                     key={ang.id}
                     type="button"
                     onClick={() => setActiveAngleId(ang.id)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-bold transition cursor-pointer ${
-                      active
-                        ? 'bg-[#D4AE62] text-black shadow-md'
-                        : 'bg-white/[0.05] text-white/75 hover:bg-white/[0.1] hover:text-white'
-                    }`}
+                    aria-label={ang.label}
+                    aria-current={active ? 'true' : undefined}
+                    className={`group relative h-16 w-24 shrink-0 overflow-hidden rounded-xl transition ${active ? 'ring-2 ring-[#D4AE62]' : 'opacity-60 hover:opacity-100'}`}
                   >
-                    {ang.short}
+                    <img src={generatedAngles[ang.id]} alt="" className="h-full w-full object-cover" />
+                    <span className="absolute inset-x-0 bottom-0 bg-black/70 py-0.5 text-center text-[10px] font-semibold text-white">{ang.short}</span>
                   </button>
                 );
               })}
             </div>
+            <span className="hidden shrink-0 text-xs text-[#A69F92] sm:block">{currentIndex + 1} / {renderedAngles.length}</span>
           </div>
         </div>
+        )}
 
         {/* 2. SELECTED PARTS LIST & PRICES + BUY BUTTON */}
         <div className="mt-8 rounded-[32px] bg-[#10131C] p-6 md:p-8 shadow-[0_24px_60px_rgba(0,0,0,0.65)]">

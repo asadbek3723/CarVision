@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
-  Sparkles,
   Check,
   Car,
   Layers,
@@ -19,6 +18,19 @@ import { useMyCar } from '@/features/shop/useMyCar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { playShutter, playLock, vibrate } from '@/features/camera/lib/fx';
+import { CarIdentifyGate } from './CarIdentifyGate';
+import { RenderProgress } from '@/features/visualizer/RenderProgress';
+import { planRender, type PlanAngle } from '@/features/visualizer/render-plan';
+import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderBuild';
+
+const CONFIRMED_KEY = 'carvision_car_confirmed_for';
+const stampOf = () => {
+  try {
+    return sessionStorage.getItem('carvision_captured_at') || 'none';
+  } catch {
+    return 'none';
+  }
+};
 
 export const FIVE_CAR_ANGLES = [
   { id: 'front', label: 'Oldi tomon', short: 'Oldi' },
@@ -39,9 +51,10 @@ const CATEGORIES = [
 
 import { composeCarAnglePhotorealistic } from '@/lib/automotive-compositor';
 
+/** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
-  const num = Number(raw) || 850;
-  return num > 50000 ? Math.max(1, Math.round(num / 13000)) : num;
+  const num = Number(raw);
+  return Number.isFinite(num) && num > 0 ? num : 0;
 };
 
 export function VeloceCustomize() {
@@ -53,7 +66,6 @@ export function VeloceCustomize() {
 
   const {
     photo,
-    setPhoto,
     selectedPartIds,
     setSelectedPartIds,
     toggleSelectedPart,
@@ -71,9 +83,29 @@ export function VeloceCustomize() {
   const [activeAngleId, setActiveAngleId] = React.useState<string>('front-left');
   const [catalogProducts, setCatalogProducts] = React.useState<VeloceProduct[]>([]);
   const [isLoadingCatalog, setIsLoadingCatalog] = React.useState(true);
-  const [isApplying, setIsApplying] = React.useState(false);
-  const [applyStepText, setApplyStepText] = React.useState('');
+  // After new photos are taken the car must be confirmed (AI guess + year) before parts are shown.
+  const [carChecked, setCarChecked] = React.useState(false);
+  const [carConfirmed, setCarConfirmed] = React.useState(true);
+  React.useEffect(() => {
+    try {
+      setCarConfirmed(sessionStorage.getItem(CONFIRMED_KEY) === stampOf());
+    } catch {
+      setCarConfirmed(true);
+    }
+    setCarChecked(true);
+  }, [photo]);
+  const confirmCar = React.useCallback(() => {
+    try {
+      sessionStorage.setItem(CONFIRMED_KEY, stampOf());
+    } catch {
+      // ignore
+    }
+    setCarConfirmed(true);
+  }, []);
+  const [showProgress, setShowProgress] = React.useState(false);
   const [applyError, setApplyError] = React.useState<string | null>(null);
+  const render = useRenderBuild(refreshProfile);
+  const isApplying = render.running;
 
   // Filmstrip horizontal drag / scroll state
   const filmstripRef = React.useRef<HTMLDivElement | null>(null);
@@ -87,11 +119,12 @@ export function VeloceCustomize() {
     const fetchCatalog = async () => {
       try {
         setIsLoadingCatalog(true);
-        const endpoint = isSeller && user?.plan?.isPaid ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120${filterQuery ? `&${filterQuery}` : ''}`;
+        // Workshop owners see only their own garage parts; regular users see every shop's parts that fit their car.
+        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120${filterQuery ? `&${filterQuery}` : ''}`;
         const res = await fetch(endpoint, { cache: 'no-store' });
         const data = await res.json();
-        if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
-          setCatalogProducts(data.products);
+        if (isMounted) {
+          setCatalogProducts(data.success && Array.isArray(data.products) ? data.products : []);
         }
       } catch (err) {
         console.warn('Could not load catalog:', err);
@@ -104,7 +137,7 @@ export function VeloceCustomize() {
     return () => {
       isMounted = false;
     };
-  }, [isSeller, user?.plan?.isPaid, filterQuery]);
+  }, [isSeller, filterQuery]);
 
   // Pre-select requestedPartId if passed in URL and not yet selected
   React.useEffect(() => {
@@ -151,7 +184,7 @@ export function VeloceCustomize() {
 
   // Active angle preview image
   const currentAnglePhoto =
-    multiAngles[activeAngleId] || photo || '/assets/hero-car-1-Bi4wq3bK.jpg';
+    multiAngles[activeAngleId] || photo || '/assets/car-CjioCIbt.jpg';
 
   const capturedAnglesCount = React.useMemo(() => {
     const keys = Object.keys(multiAngles);
@@ -193,124 +226,90 @@ export function VeloceCustomize() {
     isDraggingStrip.current = false;
   };
 
-  // Apply Changes -> Generate all 5 angles & navigate to dedicated /customize/result page
-  const handleApplyChanges = async () => {
-    if (isApplying) return;
-
-    // Ensure at least 1 part is selected
-    let partsToApply = selectedProducts;
-    if (partsToApply.length === 0 && filteredProducts[0]) {
-      partsToApply = [filteredProducts[0]];
-      setSelectedPartIds([filteredProducts[0].id]);
+  // The sides that were actually photographed. A single plain photo counts as the hero side.
+  const planAngles = React.useMemo<PlanAngle[]>(() => {
+    const sides: PlanAngle[] = FIVE_CAR_ANGLES.map((a) => ({ id: a.id, label: a.label, photo: multiAngles[a.id] }));
+    if (!sides.some((a) => a.photo) && photo) {
+      return sides.map((a) => (a.id === 'front-left' ? { ...a, photo } : a));
     }
-    if (partsToApply.length === 0) return;
+    return sides;
+  }, [multiAngles, photo]);
+  const renderPlan = React.useMemo(() => planRender(planAngles), [planAngles]);
+  const creditsLeft = user?.credits_balance ?? 0;
+  const notEnoughCredits = Boolean(user) && renderPlan.creditsNeeded > creditsLeft;
+
+  const buildParts = (list: VeloceProduct[]): BuildPart[] =>
+    list.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category || 'Wheels',
+      spec: p.spec || undefined,
+      price: getUSDPrice(p.price),
+      image: p.image,
+      angleImage: p.angleImage,
+      swatch: p.swatch,
+    }));
+
+  // Render the chosen parts on EVERY captured side of the car (1 credit per side)
+  const handleApplyChanges = async () => {
+    if (render.running) return;
+
+    const partsToApply = selectedProducts;
+    if (partsToApply.length === 0) {
+      setApplyError('Avval kamida bitta detalni tanlang.');
+      return;
+    }
 
     if (!user) {
       router.push(`/${locale}/login`);
       return;
     }
-    setApplyError(null);
-
-    const basePhoto = photo || '/assets/hero-car-1-Bi4wq3bK.jpg';
-    if (!photo) {
-      setPhoto(basePhoto);
+    if (renderPlan.order.length === 0) {
+      setApplyError('Avval mashinangizni suratga oling.');
+      return;
     }
-
+    setApplyError(null);
     playShutter();
     vibrate(40);
-    setIsApplying(true);
-    setApplyStepText('1/3 · 5 ta rakurs bo‘yicha avtomobil geometriyasi tekshirilmoqda...');
-
-    try {
-      const primaryPart = partsToApply[0]!;
-      const normalizedUSD = getUSDPrice(primaryPart.price);
-
-      // Call AI generation API for primary angle
-      setTimeout(() => {
-        setApplyStepText(
-          `2/3 · Tanlangan ${partsToApply.length} ta detal 100% aniqlikda mashinaga joylashtirilmoqda...`
-        );
-      }, 450);
-
-      let apiAfterUrl: string | null = null;
-      let isLiveAi = false;
-      try {
-        const res = await fetch('/api/v1/generations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            photo: multiAngles[activeAngleId] || basePhoto,
-            angleId: activeAngleId,
-            partId: primaryPart.id,
-            partName: partsToApply.map((p) => p.name).join(' + '),
-            partCategory: primaryPart.category || 'Wheels',
-            partSpec: primaryPart.spec || '',
-            partImage: primaryPart.image,
-            partAngleImage: primaryPart.angleImage,
-            partPrice: normalizedUSD,
-            swatchColor: primaryPart.swatch || undefined,
-            parts: partsToApply.map((p) => ({
-              id: p.id,
-              name: p.name,
-              category: p.category || 'Wheels',
-              spec: p.spec || '',
-              image: p.image,
-              angleImage: p.angleImage,
-              swatch: p.swatch,
-            })),
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 401) {
-          router.push(`/${locale}/login`);
-          return;
-        }
-        if (!res.ok || !data.success) {
-          // Real failure (no credits, provider error, ...): show it, never fake a result.
-          setApplyError(data.error || "Rasm yaratib bo'lmadi. Qayta urinib ko'ring");
-          void refreshProfile();
-          return;
-        }
-        if (data.generation?.afterImageUrl) {
-          apiAfterUrl = data.generation.afterImageUrl;
-          isLiveAi = Boolean(data.generation.liveApiActive);
-        }
-        void refreshProfile();
-      } catch {
-        setApplyError("Tarmoq xatosi. Internetni tekshirib qayta urinib ko'ring");
-        return;
-      }
-
-      setApplyStepText('3/3 · Natija sahifasi tayyorlanmoqda...');
-
-      // Generate After images for all 5 angles
-      const generatedMap: Record<string, string> = {};
-      for (const angle of FIVE_CAR_ANGLES) {
-        const angleBefore = multiAngles[angle.id] || basePhoto;
-        const useAiDirect =
-          apiAfterUrl &&
-          angle.id === activeAngleId &&
-          (isLiveAi || (!angleBefore.startsWith('data:') && !angleBefore.startsWith('blob:')));
-
-        generatedMap[angle.id] = await composeCarAnglePhotorealistic({
-          baseCarSrc: angleBefore,
-          aiGeneratedUrl: useAiDirect ? apiAfterUrl : null,
-          parts: partsToApply,
-          angleId: angle.id,
-        });
-      }
-
-      setGeneratedAngles(generatedMap);
-      playLock();
-      vibrate(50);
-      router.push(`/${locale}/customize/result`);
-    } finally {
-      setIsApplying(false);
-    }
+    setShowProgress(true);
+    await render.run(planAngles, buildParts(partsToApply));
   };
+
+  // Demo mode (no AI key yet) returns a stock picture; show the local composite as a clearly labelled preview
+  const openResult = async () => {
+    const parts = selectedProducts;
+    const generatedMap: Record<string, string> = {};
+    for (const angle of renderPlan.order) {
+      const before = angle.photo as string;
+      generatedMap[angle.id] = render.demo
+        ? await composeCarAnglePhotorealistic({ baseCarSrc: before, aiGeneratedUrl: null, parts, angleId: angle.id })
+        : (render.results[angle.id] ?? before);
+    }
+    setGeneratedAngles(generatedMap);
+    playLock();
+    vibrate(50);
+    router.push(`/${locale}/customize/result`);
+  };
+
+  const showGate = carChecked && !carConfirmed && Boolean(user) && Boolean(photo);
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-4 pb-32 md:px-8">
+      {showProgress && (
+        <RenderProgress
+          states={render.states}
+          running={render.running}
+          fatal={render.fatal}
+          percent={render.summary.percent}
+          backdrop={renderPlan.order[0]?.photo}
+          locale={locale}
+          demo={render.demo}
+          onRetry={(id) => void render.retry(id)}
+          onContinue={() => void openResult()}
+          onClose={() => setShowProgress(false)}
+        />
+      )}
+      {showGate && <CarIdentifyGate photo={multiAngles['front'] || photo || ''} onDone={confirmCar} />}
       {/* Top Minimal Header */}
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link
@@ -402,16 +401,6 @@ export function VeloceCustomize() {
           </div>
         </div>
 
-        {/* AI Applying Full Overlay */}
-        {isApplying && (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#07080C]/92 p-6 text-center backdrop-blur-xl">
-            <Sparkles className="h-12 w-12 text-[#D4AE62] animate-spin mb-4" />
-            <h3 className="text-lg font-bold text-white">{applyStepText}</h3>
-            <p className="mt-1.5 text-xs text-[#A69F92]">
-              Tanlangan detallar barcha mayda qismlarigacha 100% bir xil o‘rnatilmoqda
-            </p>
-          </div>
-        )}
       </div>
 
       {applyError && (
@@ -479,6 +468,25 @@ export function VeloceCustomize() {
                 className="h-64 w-60 shrink-0 animate-pulse rounded-[28px] bg-[#12151E]"
               />
             ))}
+          </div>
+        ) : catalogProducts.length === 0 ? (
+          <div className="rounded-[28px] bg-[#11141D] px-6 py-12 text-center">
+            <p className="text-base font-semibold text-white">
+              {isSeller ? 'Garajingizda hali detal yo‘q' : 'Bu mashinaga mos detal topilmadi'}
+            </p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-white/55">
+              {isSeller
+                ? user?.plan?.isPaid
+                  ? 'Avval garajga detal qo‘shing, keyin uni mijoz mashinasida sinab ko‘rasiz.'
+                  : 'Garaj pullik tarifda ochiladi. Tarifni faollashtirib o‘z detallaringizni qo‘shing.'
+                : 'Mashina yoki yilni o‘zgartirib ko‘ring.'}
+            </p>
+            <Link
+              href={isSeller ? (user?.plan?.isPaid ? `/${locale}/seller/new-part` : `/${locale}/plans`) : `/${locale}/shop`}
+              className="mt-5 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-xs font-bold text-black transition hover:brightness-110"
+            >
+              {isSeller ? (user?.plan?.isPaid ? 'Detal qo‘shish' : 'Tariflarni ko‘rish') : 'Do‘konga o‘tish'}
+            </Link>
           </div>
         ) : (
           <div
@@ -575,6 +583,12 @@ export function VeloceCustomize() {
                 ? `Jami: ${formatPrice(totalSelectedUSD)}`
                 : 'Lentadan yoqqan jihozlarni bosing'}
             </p>
+            {notEnoughCredits && (
+              <p className="mt-0.5 text-[11px] text-amber-300">
+                {renderPlan.creditsNeeded} kredit kerak, sizda {creditsLeft} ta.{' '}
+                <Link href={`/${locale}/plans`} className="font-semibold underline">Tariflar</Link>
+              </p>
+            )}
           </div>
 
           <button
@@ -584,7 +598,10 @@ export function VeloceCustomize() {
             className="inline-flex items-center gap-2.5 rounded-2xl bg-[#D4AE62] px-7 py-4 text-sm font-extrabold uppercase tracking-wider text-black shadow-[0_12px_32px_rgba(212,174,98,0.35)] hover:brightness-110 active:scale-95 disabled:opacity-50 transition cursor-pointer"
           >
             <Layers className="h-4 w-4" />
-            <span>Apply Changes (Natijani Ko‘rish)</span>
+            <span>
+              Natijani ko‘rish
+              {renderPlan.creditsNeeded > 0 && <span className="ms-2 rounded-full bg-black/15 px-2.5 py-1 text-[11px]">{renderPlan.order.length} rakurs · {renderPlan.creditsNeeded} kredit</span>}
+            </span>
           </button>
         </div>
       </div>
