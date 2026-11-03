@@ -39,7 +39,7 @@
 }
 
 .font-display {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--nf-montserrat), 'Montserrat', sans-serif;
 }
 .tracking-luxe {
   letter-spacing: 0.35em;
