@@ -19,7 +19,7 @@ import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { playShutter, playLock, vibrate } from '@/features/camera/lib/fx';
 import { CarIdentifyGate } from './CarIdentifyGate';
 import { PartReel } from './PartReel';
-import { onePerSlot, toggleInSlot } from '@/lib/part-slot';
+import { onePerSlot, partSlot, toggleInSlot } from '@/lib/part-slot';
 import { RenderProgress } from '@/features/visualizer/RenderProgress';
 import { planRender, type PlanAngle } from '@/features/visualizer/render-plan';
 import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderBuild';
@@ -158,21 +158,8 @@ export function VeloceCustomize() {
     if (catalogProducts.length === 0) return [];
     if (activeCategory === 'All') return catalogProducts;
 
-    const categoryKeywords: Record<string, string[]> = {
-      Wheels: ['wheel', 'disk', 'gildirak', 'rim', 'r15', 'r16', 'r17', 'r18', 'r19', 'r20', 'r21', 'forged', 'alloy'],
-      'Body Kit': ['bamper', 'lip', 'splitter', 'diffuzor', 'skirt', 'spoyler', 'wing', 'widebody', 'panjara', 'rishotka', 'grille', 'hood', 'body'],
-      Interior: ['salon', 'rul', "o'rindiq", 'seat', 'ambient', 'torpeda', 'panel', 'interior'],
-      Performance: ['fara', 'chiroq', 'lighting', 'glushitel', 'exhaust', 'intake', 'tormoz', 'stage', 'chip'],
-      Color: ['wrap', 'rang', 'paint', 'black', 'gold', 'grey', 'green', 'red', 'blue', 'white'],
-    };
-
-    const keywords = categoryKeywords[activeCategory] || [activeCategory.toLowerCase()];
-    const matched = catalogProducts.filter((p) => {
-      const combined = `${p.category || ''} ${p.name || ''} ${p.spec || ''}`.toLowerCase();
-      return keywords.some((kw) => combined.includes(kw));
-    });
-
-    return matched.length > 0 ? matched : catalogProducts;
+    // Strict: a tab shows only parts of that kind (wheels -> only wheels, color -> only colors).
+    return catalogProducts.filter((p) => partSlot(p) === activeCategory.toLowerCase());
   }, [catalogProducts, activeCategory]);
 
   // All selected product objects across all categories
@@ -462,6 +449,8 @@ export function VeloceCustomize() {
               {isSeller ? (user?.plan?.isPaid ? t('ctaAddPart') : t('ctaPlans')) : t('ctaShop')}
             </Link>
           </div>
+        ) : filteredProducts.length === 0 ? (
+          <p className="py-12 text-center text-sm text-white/45">{t('noPartsInCategory')}</p>
         ) : (
           <PartReel
             items={filteredProducts}

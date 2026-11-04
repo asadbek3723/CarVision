@@ -13,11 +13,10 @@ const catalog = [
 ];
 
 describe('partSlot', () => {
-  it('separates things that can be worn together', () => {
-    expect(partSlot(catalog[2]!)).toBe('body');
-    expect(partSlot(catalog[3]!)).toBe('spoiler');
-    expect(partSlot(catalog[4]!)).toBe('lights');
-    expect(partSlot(catalog[5]!)).toBe('exhaust');
+  it('uses the shop tab as the slot', () => {
+    expect(partSlot(catalog[2]!)).toBe('body kit');
+    expect(partSlot(catalog[3]!)).toBe('body kit');
+    expect(partSlot(catalog[4]!)).toBe('performance');
   });
 });
 
@@ -27,6 +26,7 @@ describe('toggleInSlot', () => {
   });
   it('keeps parts of other slots', () => {
     expect(toggleInSlot(['w1'], 'l1', catalog)).toEqual(['w1', 'l1']);
+    expect(toggleInSlot(['b1'], 's1', catalog)).toEqual(['s1']);
   });
   it('removes a picked part when tapped again', () => {
     expect(toggleInSlot(['w1', 'c1'], 'c1', catalog)).toEqual(['w1']);

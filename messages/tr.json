@@ -517,7 +517,8 @@
     "errPickPart": "Önce en az bir parça seçin.",
     "errTakePhoto": "Önce aracınızın fotoğrafını çekin.",
     "yourBuild": "Kurulumunuz",
-    "removePart": "Kaldır"
+    "removePart": "Kaldır",
+    "noPartsInCategory": "Bu kategoride henüz parça yok"
   },
   "identify": {
     "dialog": "Aracı belirle",

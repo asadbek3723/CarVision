@@ -11,36 +11,23 @@ export interface SlotInfo {
 
 const has = (text: string, words: string[]) => words.some((w) => text.includes(w));
 
-const LIGHTS = ['fara', 'chiroq', 'optika', 'light', 'lamp', 'headlight', 'taillight', 'led'];
-const SPOILER = ['spoyler', 'spoiler', 'wing', 'qanot'];
-const EXHAUST = ['glushitel', 'exhaust', 'muffler'];
 const WHEELS = ['wheel', 'disk', 'gildirak', 'rim', 'forged', 'alloy'];
+const BODY = ['bamper', 'bumper', 'lip', 'splitter', 'diffuzor', 'skirt', 'spoyler', 'spoiler', 'wing', 'widebody', 'grille', 'hood'];
 const INTERIOR = ['salon', 'rul', "o'rindiq", 'seat', 'ambient', 'torpeda', 'steering', 'interior'];
 const COLOR = ['wrap', 'plyonka', 'paint', 'rang'];
 
+/** The slot is the shop tab the part belongs to (Wheels, Body Kit, Performance, Interior, Color, ...). */
 export function partSlot(part: SlotInfo): string {
-  const category = (part.category ?? '').toLowerCase();
+  const category = (part.category ?? '').trim().toLowerCase();
+  if (category) return category;
+
+  // No category at all: guess from the name.
   const text = `${part.name ?? ''} ${part.spec ?? ''}`.toLowerCase();
-
-  if (category === 'wheels') return 'wheels';
-  if (category === 'interior') return 'interior';
-  if (category === 'color') return 'color';
-  if (category === 'suspension') return 'suspension';
-  if (category === 'body kit') return has(text, SPOILER) ? 'spoiler' : 'body';
-  if (category === 'performance') {
-    if (has(text, EXHAUST)) return 'exhaust';
-    if (has(text, LIGHTS)) return 'lights';
-    return 'performance';
-  }
-
-  // Unknown category: guess from the name, otherwise the category itself is the slot.
   if (has(text, WHEELS)) return 'wheels';
-  if (has(text, LIGHTS)) return 'lights';
-  if (has(text, SPOILER)) return 'spoiler';
-  if (has(text, EXHAUST)) return 'exhaust';
+  if (has(text, BODY)) return 'body kit';
   if (has(text, INTERIOR)) return 'interior';
   if (has(text, COLOR)) return 'color';
-  return category || 'other';
+  return 'performance';
 }
 
 /**

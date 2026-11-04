@@ -517,7 +517,8 @@
     "errPickPart": "Select at least one part first.",
     "errTakePhoto": "Take a photo of your car first.",
     "yourBuild": "Your build",
-    "removePart": "Remove"
+    "removePart": "Remove",
+    "noPartsInCategory": "No parts in this category yet"
   },
   "identify": {
     "dialog": "Identify your car",

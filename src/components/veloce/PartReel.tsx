@@ -306,7 +306,7 @@ export function PartReel({
 
   return (
     <div className="select-none">
-      <div className="relative">
+      <div className="relative isolate">
         {/* Edge fades hint that the strip goes on */}
         <div aria-hidden className="pointer-events-none absolute inset-y-0 start-0 z-[200] w-10 bg-gradient-to-r from-[#0D0E12] to-transparent lg:w-28 rtl:bg-gradient-to-l" />
         <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 z-[200] w-10 bg-gradient-to-l from-[#0D0E12] to-transparent lg:w-28 rtl:bg-gradient-to-r" />

@@ -517,7 +517,8 @@
     "errPickPart": "Avval kamida bitta detalni tanlang.",
     "errTakePhoto": "Avval mashinangizni suratga oling.",
     "yourBuild": "Sizning to‘plamingiz",
-    "removePart": "Olib tashlash"
+    "removePart": "Olib tashlash",
+    "noPartsInCategory": "Bu kategoriyada hali detal yo‘q"
   },
   "identify": {
     "dialog": "Mashinani aniqlash",

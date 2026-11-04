@@ -517,7 +517,8 @@
     "errPickPart": "اختر قطعة واحدة على الأقل أولًا.",
     "errTakePhoto": "التقط صورة لسيارتك أولًا.",
     "yourBuild": "تجهيزاتك",
-    "removePart": "إزالة"
+    "removePart": "إزالة",
+    "noPartsInCategory": "لا توجد قطع في هذه الفئة بعد"
   },
   "identify": {
     "dialog": "تحديد السيارة",
