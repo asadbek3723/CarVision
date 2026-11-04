@@ -89,17 +89,18 @@ export function VeloceHome() {
               height={1088}
               className="reveal relative w-full object-cover mix-blend-lighten [mask-image:radial-gradient(ellipse_65%_62%_at_55%_50%,black_55%,transparent_88%)]"
             />
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#0D0E12] to-transparent lg:hidden" />
           </div>
 
           {/* Copy and CTA left column on desktop */}
-          <div className="relative z-10 -mt-6 px-6 text-center lg:order-1 lg:col-span-5 lg:mt-0 lg:px-0 lg:text-start">
+          <div className="relative z-10 -mt-4 px-6 text-start sm:px-10 lg:order-1 lg:col-span-5 lg:mt-0 lg:px-0">
             <p className="rise mb-6 hidden text-[10px] tracking-[0.5em] text-primary uppercase lg:block">
               <span className="me-3 inline-block h-px w-10 bg-primary align-middle" />
               {t('eyebrow')}
             </p>
 
             <h1
-              className="rise font-display text-[34px] font-extralight leading-[1.15] tracking-[0.32em] sm:text-5xl lg:text-[44px] lg:tracking-[0.24em] xl:text-[54px]"
+              className="rise font-display text-[34px] font-extralight leading-[1.2] tracking-[0.28em] sm:text-5xl lg:text-[44px] lg:tracking-[0.24em] xl:text-[54px]"
               style={{ animationDelay: '120ms' }}
             >
               BUILT
@@ -108,7 +109,7 @@ export function VeloceHome() {
             </h1>
 
             <p
-              className="rise mt-5 font-display text-[11px] font-light tracking-[0.45em] text-muted-foreground uppercase"
+              className="rise mt-4 font-display text-[11px] font-light tracking-[0.38em] text-muted-foreground uppercase sm:text-xs"
               style={{ animationDelay: '220ms' }}
             >
               Tune <span className="text-primary">•</span> Style{' '}
@@ -116,19 +117,19 @@ export function VeloceHome() {
             </p>
 
             <p
-              className="rise mx-auto mt-6 hidden max-w-sm text-sm leading-relaxed text-muted-foreground lg:mx-0 lg:block"
+              className="rise mt-6 hidden max-w-sm text-sm leading-relaxed text-muted-foreground lg:block"
               style={{ animationDelay: '300ms' }}
             >
               {t('heroText')}
             </p>
 
             <div
-              className="rise mt-8 flex flex-wrap items-center justify-center gap-5 lg:justify-start"
+              className="rise mt-7 flex flex-wrap items-center gap-5"
               style={{ animationDelay: '380ms' }}
             >
               <button
                 onClick={openCamera}
-                className="shimmer group inline-flex items-center gap-6 rounded-xl bg-gold-gradient py-4 ps-7 pe-5 font-display text-[11px] font-semibold tracking-[0.25em] text-black uppercase shadow-gold transition hover:brightness-110 active:scale-95 cursor-pointer"
+                className="shimmer group inline-flex items-center gap-7 rounded-full bg-gold-gradient py-3.5 ps-7 pe-5 font-display text-[11px] font-semibold tracking-[0.22em] text-black uppercase shadow-gold transition hover:brightness-110 active:scale-95 cursor-pointer lg:rounded-xl lg:py-4 lg:tracking-[0.25em]"
               >
                 {t('ctaCustomize')}
                 <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -169,24 +170,24 @@ export function VeloceHome() {
       {/* Main Page Container */}
       <div className="mx-auto max-w-[1500px] px-5 md:px-10 lg:px-14">
         {/* 3 Bento Feature Cards */}
-        <section className="mt-10 grid grid-cols-3 gap-3 md:gap-6 lg:mt-16">
+        <section className="mt-8 grid grid-cols-3 gap-2.5 md:gap-6 lg:mt-16">
           {FEATURES.map((feat, idx) => {
             const Icon = feat.icon;
             return (
               <div
                 key={feat.key}
-                className="rise group relative overflow-hidden rounded-2xl border border-primary/15 bg-card-gradient px-2 py-6 text-center shadow-card transition duration-500 hover:-translate-y-1 hover:border-primary/50 md:p-10 lg:text-start"
+                className="rise group relative flex min-w-0 flex-col items-center overflow-hidden rounded-[18px] border border-white/[0.06] bg-card-gradient px-2 py-5 text-center shadow-card transition duration-500 hover:-translate-y-1 hover:border-primary/50 md:p-10 lg:items-start lg:text-start"
                 style={{ animationDelay: `${300 + idx * 100}ms` }}
               >
                 <div className="pointer-events-none absolute -end-10 -top-10 h-32 w-32 rounded-full bg-primary/0 blur-2xl transition duration-700 group-hover:bg-primary/20" />
                 <Icon
                   strokeWidth={1.4}
-                  className="mx-auto h-8 w-8 text-primary transition duration-700 group-hover:rotate-90 lg:mx-0 lg:h-10 lg:w-10"
+                  className="h-7 w-7 text-primary transition duration-700 group-hover:rotate-90 lg:h-10 lg:w-10"
                 />
-                <h3 className="mt-4 font-display text-[10px] font-medium tracking-[0.2em] uppercase sm:text-xs md:text-sm md:tracking-[0.3em] text-white">
+                <h3 className="mt-3 max-w-full break-words font-display text-[10px] font-medium leading-tight tracking-[0.12em] uppercase text-white sm:text-xs md:mt-4 md:text-sm md:tracking-[0.3em]">
                   {t(`${feat.key}Title`)}
                 </h3>
-                <ul className="mt-3 space-y-1.5 text-[9px] tracking-[0.2em] text-muted-foreground uppercase md:text-[11px]">
+                <ul className="mt-2.5 max-w-full space-y-1.5 text-[9px] leading-snug tracking-[0.08em] text-muted-foreground uppercase md:mt-3 md:text-[11px] md:tracking-[0.2em]">
                   {feat.items.map((item) => (
                     <li key={item}>{t(item)}</li>
                   ))}

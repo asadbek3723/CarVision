@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams, usePathname } from 'next/navigation';
-import { ArrowRight, Check, LogOut, Loader2, Pencil } from 'lucide-react';
+import { useParams, usePathname, useRouter } from 'next/navigation';
+import { ArrowRight, ChevronDown, Coins, Globe, LogOut, Loader2, Pencil } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import type { SupportedCurrency } from '@/domain/currency';
@@ -35,6 +35,53 @@ function initialsOf(name: string): string {
   return (Array.from(first)[0] ?? '') + (Array.from(last)[0] ?? '');
 }
 
+interface PreferenceOption {
+  value: string;
+  label: string;
+  hint?: string;
+}
+
+/** Native select (best picker on phones, fully accessible) wearing the gold-on-black skin. */
+function PreferenceSelect({
+  id,
+  icon: Icon,
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  options: PreferenceOption[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+        {label}
+      </label>
+      <div className="relative">
+        <Icon className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AE62]" />
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`h-14 w-full cursor-pointer appearance-none rounded-2xl border border-white/[0.08] bg-white/[0.04] ps-11 pe-12 text-base text-white transition hover:bg-white/[0.07] ${focusRing}`}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value} className="bg-[#12141A] text-white">
+              {o.hint ? `${o.label} · ${o.hint}` : o.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+      </div>
+    </div>
+  );
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
@@ -47,6 +94,7 @@ export function VeloceProfile() {
   const t = useTranslations('profilePage');
   const params = useParams();
   const pathname = usePathname();
+  const router = useRouter();
   const locale = (params?.['locale'] as string) || 'uz';
   const { user, signOut, updateProfile } = useAuth();
   const { currency, setCurrency } = useCurrency();
@@ -235,6 +283,32 @@ export function VeloceProfile() {
         </Link>
       </section>
 
+      {/* Preferences */}
+      <section className="mt-12" aria-labelledby="prefs-title">
+        <h2 id="prefs-title" className="sr-only">
+          {t('langCurrency')}
+        </h2>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <PreferenceSelect
+            id="pref-language"
+            icon={Globe}
+            label={t('language')}
+            value={locale}
+            onChange={(code) => router.push(localizedPath(code))}
+            options={LANGUAGES.map((l) => ({ value: l.code, label: l.name, hint: l.code.toUpperCase() }))}
+          />
+          <PreferenceSelect
+            id="pref-currency"
+            icon={Coins}
+            label={t('currency')}
+            value={currency}
+            onChange={(code) => setCurrency(code as SupportedCurrency)}
+            options={CURRENCIES.map((code) => ({ value: code, label: code }))}
+          />
+        </div>
+      </section>
+
       {/* Bookings */}
       <section className="mt-12" aria-labelledby="bookings-title">
         <h2
@@ -273,60 +347,6 @@ export function VeloceProfile() {
             ))}
           </div>
         )}
-      </section>
-
-      {/* Preferences */}
-      <section className="mt-12" aria-labelledby="prefs-title">
-        <h2 id="prefs-title" className="sr-only">
-          {t('langCurrency')}
-        </h2>
-
-        <SectionTitle>{t('language')}</SectionTitle>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {LANGUAGES.map((lang) => {
-            const active = locale === lang.code;
-            return (
-              <Link
-                key={lang.code}
-                href={localizedPath(lang.code)}
-                hrefLang={lang.code}
-                aria-current={active ? 'true' : undefined}
-                className={`flex min-h-11 items-center justify-between gap-2 rounded-2xl px-4 text-sm transition ${focusRing} ${
-                  active
-                    ? 'bg-[#D4AE62] font-semibold text-black'
-                    : 'bg-white/[0.04] text-white/75 hover:bg-white/[0.08] hover:text-white'
-                }`}
-              >
-                <span className="truncate">{lang.name}</span>
-                {active && <Check className="h-4 w-4 shrink-0" />}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="mt-8">
-          <SectionTitle>{t('currency')}</SectionTitle>
-          <div className="grid grid-cols-4 gap-2">
-            {CURRENCIES.map((code) => {
-              const active = currency === code;
-              return (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => setCurrency(code)}
-                  aria-pressed={active}
-                  className={`min-h-11 rounded-2xl text-sm font-semibold transition ${focusRing} ${
-                    active
-                      ? 'bg-[#D4AE62] text-black'
-                      : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white'
-                  }`}
-                >
-                  {code}
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </section>
 
       {/* Account */}

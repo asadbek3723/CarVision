@@ -46,6 +46,32 @@ const CURRENCY_OPTIONS: { code: SupportedCurrency; label: string }[] = [
   { code: 'RUB', label: 'RUB' },
 ];
 
+interface DockLinkProps {
+  href: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  label: string;
+  active: boolean;
+  locked?: boolean;
+}
+
+function DockLink({ href, icon: Icon, label, active, locked = false }: DockLinkProps) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? 'page' : undefined}
+      className={`relative flex min-w-0 flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] transition-colors ${
+        active ? 'text-[#D4AE62]' : 'text-white/45 hover:text-[#E8CF94]'
+      }`}
+    >
+      <span className="relative">
+        <Icon className="h-6 w-6" strokeWidth={active ? 1.9 : 1.5} />
+        {locked && <Lock className="absolute -end-1.5 -top-1 h-3 w-3 text-[#D4AE62]" />}
+      </span>
+      <span className="max-w-full truncate">{label}</span>
+    </Link>
+  );
+}
+
 interface VeloceShellProps {
   children: React.ReactNode;
 }
@@ -92,7 +118,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
   const isShop = pathname.includes('/shop');
   const isCart = pathname.includes('/cart');
   const isProfile = pathname.includes('/profile');
-  const isPlans = pathname.includes('/plans');
+  // The customizer is a full-screen flow on phones: no header and no dock, only its own top bar and Apply button.
+  const isImmersive = pathname.includes('/customize');
 
   return (
     <div className="min-h-screen md:ps-24 lg:ps-28 bg-[#0D0E12] text-foreground">
@@ -202,7 +229,11 @@ export function VeloceShell({ children }: VeloceShellProps) {
       </aside>
 
       {/* Sticky Header */}
-      <header className="sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center border-b border-[#D4AE62]/15 bg-[#0D0E12]/70 px-5 py-4 backdrop-blur-xl md:px-10">
+      <header
+        className={`sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center bg-[#0D0E12]/70 px-5 py-4 backdrop-blur-xl md:border-b md:border-[#D4AE62]/15 md:px-10 ${
+          isImmersive ? 'max-md:hidden' : ''
+        }`}
+      >
         <button
           onClick={() => setMobileMenuOpen(true)}
           aria-label={t('menu')}
@@ -220,9 +251,9 @@ export function VeloceShell({ children }: VeloceShellProps) {
           </div>
         </Link>
 
-        <div className="flex items-center gap-2.5 md:gap-3">
-          {/* 8-Language & 8-Currency Quick Switcher */}
-          <div className="relative">
+        <div className="flex items-center justify-end gap-2.5 md:gap-3">
+          {/* 8-Language & 8-Currency Quick Switcher (desktop only; on phones it lives in Profile) */}
+          <div className="relative hidden md:block">
             <button
               type="button"
               onClick={() => setLocaleMenuOpen((v) => !v)}
@@ -307,7 +338,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
           <Link
             href={`/${locale}/cart`}
             aria-label={t('cart')}
-            className="relative grid h-10 w-10 place-items-center rounded-full border border-[#D4AE62]/20 transition hover:border-primary"
+            className="relative hidden h-10 w-10 place-items-center rounded-full border border-[#D4AE62]/20 transition hover:border-primary md:grid"
           >
             <ShoppingCart className="h-4 w-4 text-foreground/90" />
             {count > 0 && (
@@ -321,59 +352,43 @@ export function VeloceShell({ children }: VeloceShellProps) {
             href={`/${locale}/profile`}
             aria-label={t('profile')}
             data-status={isProfile ? 'active' : 'inactive'}
-            className="hidden md:grid h-10 w-10 place-items-center rounded-full border border-[#D4AE62]/20 transition hover:border-primary data-[status=active]:border-primary data-[status=active]:bg-gold-gradient/10 cursor-pointer"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AE62]/40 text-[#D4AE62] transition hover:border-primary data-[status=active]:border-primary data-[status=active]:bg-[#D4AE62]/10 md:border-[#D4AE62]/20 md:text-foreground/90 cursor-pointer"
           >
-            <User className="h-4 w-4 text-foreground/90" />
+            <User className="h-[18px] w-[18px] md:h-4 md:w-4" />
           </Link>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="pb-28 md:pb-12">{children}</main>
+      <main className={isImmersive ? 'md:pb-12' : 'pb-28 md:pb-12'}>{children}</main>
 
-      {/* Mobile Fixed Bottom Nav Dock (same for everyone; Garage/Dashboard locked on Free) */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-[#D4AE62]/15 bg-[#0D0E12]/90 px-1 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] backdrop-blur-xl md:hidden">
-        {[
-          { key: 'home', href: `/${locale}/seller`, icon: House, label: t('home'), active: isHome, locked: false },
-          { key: 'garage', href: garageHref, icon: Car, label: t('garage'), active: isGarage, locked: !studioUnlocked },
-        ].map((it) => (
-          <Link key={it.key} href={it.href} data-status={it.active ? 'active' : 'inactive'} className="group relative flex flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary">
-            <span className="relative">
-              <it.icon className="h-6 w-6" />
-              {it.locked && <Lock className="absolute -end-1.5 -top-1 h-3 w-3 text-[#D4AE62]" />}
-            </span>
-            <span>{it.label}</span>
-            <span className={`mt-1 h-0.5 w-8 rounded-full bg-gold-gradient transition-transform duration-300 ${it.active ? 'scale-x-100' : 'scale-x-0'}`} />
-          </Link>
-        ))}
+      {/* Mobile bottom dock: Home, Garage, [Create], Shop, Dashboard. Profile is the icon in the header. */}
+      {!isImmersive && (
+        <nav
+          aria-label={t('menu')}
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-[#D4AE62]/15 bg-[#0B0C10]/90 backdrop-blur-xl md:hidden"
+        >
+          <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2 pt-2 pb-[max(env(safe-area-inset-bottom),10px)]">
+            <DockLink href={`/${locale}/seller`} icon={House} label={t('home')} active={isHome} />
+            <DockLink href={garageHref} icon={Car} label={t('garage')} active={isGarage} locked={!studioUnlocked} />
 
-        <button onClick={openCamera} className="group relative flex cursor-pointer flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-primary transition-colors hover:brightness-125">
-          <CirclePlus className="h-6 w-6 transition-transform duration-300 group-hover:rotate-90" />
-          <span>{isSeller ? t('showroom') : t('create')}</span>
-          <span className="mt-1 h-0.5 w-8" />
-        </button>
+            <button
+              type="button"
+              onClick={openCamera}
+              aria-label={isSeller ? t('showroom') : t('create')}
+              className="group relative flex cursor-pointer flex-col items-center gap-1 pb-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-[#D4AE62]"
+            >
+              <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full bg-gold-gradient text-black shadow-[0_10px_30px_-4px_rgba(212,174,98,0.65)] ring-[5px] ring-[#0B0C10] transition duration-300 group-active:scale-95">
+                <CirclePlus className="h-7 w-7 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.8} />
+              </span>
+              <span>{isSeller ? t('showroom') : t('create')}</span>
+            </button>
 
-        <Link href={`/${locale}/shop`} data-status={isShop ? 'active' : 'inactive'} className="group relative flex flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary">
-          <ShoppingCart className="h-6 w-6" />
-          <span>{t('shop')}</span>
-          <span className={`mt-1 h-0.5 w-8 rounded-full bg-gold-gradient transition-transform duration-300 ${isShop ? 'scale-x-100' : 'scale-x-0'}`} />
-        </Link>
-
-        <Link href={dashboardHref} data-status={isDashboard ? 'active' : 'inactive'} className="group relative flex flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary">
-          <span className="relative">
-            <LayoutDashboard className="h-6 w-6" />
-            {!studioUnlocked && <Lock className="absolute -end-1.5 -top-1 h-3 w-3 text-[#D4AE62]" />}
-          </span>
-          <span>{t('panel')}</span>
-          <span className={`mt-1 h-0.5 w-8 rounded-full bg-gold-gradient transition-transform duration-300 ${isDashboard ? 'scale-x-100' : 'scale-x-0'}`} />
-        </Link>
-
-        <Link href={`/${locale}/profile`} data-status={isProfile || isPlans ? 'active' : 'inactive'} className="group relative flex flex-col items-center gap-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-gold-soft data-[status=active]:text-primary">
-          <User className="h-6 w-6" />
-          <span>{t('profile')}</span>
-          <span className={`mt-1 h-0.5 w-8 rounded-full bg-gold-gradient transition-transform duration-300 ${isProfile || isPlans ? 'scale-x-100' : 'scale-x-0'}`} />
-        </Link>
-      </nav>
+            <DockLink href={`/${locale}/shop`} icon={ShoppingCart} label={t('shop')} active={isShop} />
+            <DockLink href={dashboardHref} icon={LayoutDashboard} label={t('panel')} active={isDashboard} locked={!studioUnlocked} />
+          </div>
+        </nav>
+      )}
 
       {/* Mobile Slide-Over Drawer */}
       {mobileMenuOpen && (

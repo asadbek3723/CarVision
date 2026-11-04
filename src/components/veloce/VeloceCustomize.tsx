@@ -6,10 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronLeft,
-  ChevronRight,
   Camera,
-  Check,
-  Car,
   Layers,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -20,6 +17,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { playShutter, playLock, vibrate } from '@/features/camera/lib/fx';
 import { CarIdentifyGate } from './CarIdentifyGate';
+import { PartReel } from './PartReel';
 import { RenderProgress } from '@/features/visualizer/RenderProgress';
 import { planRender, type PlanAngle } from '@/features/visualizer/render-plan';
 import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderBuild';
@@ -72,7 +70,7 @@ export function VeloceCustomize() {
     openCamera,
   } = useVeloceStore();
   const { user, refreshProfile } = useAuth();
-  const { filterQuery } = useMyCar();
+  const { car: myCar, filterQuery } = useMyCar();
   const { formatPrice } = useCurrency();
 
   const isSeller = user?.role === 'b2b_seller';
@@ -104,12 +102,6 @@ export function VeloceCustomize() {
   const [applyError, setApplyError] = React.useState<string | null>(null);
   const render = useRenderBuild(refreshProfile);
   const isApplying = render.running;
-
-  // Filmstrip horizontal drag / scroll state
-  const filmstripRef = React.useRef<HTMLDivElement | null>(null);
-  const isDraggingStrip = React.useRef(false);
-  const dragStartX = React.useRef(0);
-  const scrollStartLeft = React.useRef(0);
 
   // Load catalog products
   React.useEffect(() => {
@@ -190,40 +182,6 @@ export function VeloceCustomize() {
     return photo ? 1 : 0;
   }, [multiAngles, photo]);
 
-  // Smooth scroll filmstrip left/right
-  const scrollFilmstrip = (direction: 'prev' | 'next') => {
-    const el = filmstripRef.current;
-    if (!el) return;
-    const step = 300;
-    el.scrollBy({
-      left: direction === 'next' ? step : -step,
-      behavior: 'smooth',
-    });
-  };
-
-  // Mouse drag handlers for smooth ribbon dragging on desktop/tablet
-  const handleStripMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = filmstripRef.current;
-    if (!el) return;
-    isDraggingStrip.current = true;
-    dragStartX.current = e.pageX - el.offsetLeft;
-    scrollStartLeft.current = el.scrollLeft;
-  };
-
-  const handleStripMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDraggingStrip.current) return;
-    const el = filmstripRef.current;
-    if (!el) return;
-    e.preventDefault();
-    const x = e.pageX - el.offsetLeft;
-    const walk = (x - dragStartX.current) * 1.4;
-    el.scrollLeft = scrollStartLeft.current - walk;
-  };
-
-  const handleStripMouseUp = () => {
-    isDraggingStrip.current = false;
-  };
-
   // The sides that were actually photographed. A single plain photo counts as the hero side.
   const planAngles = React.useMemo<PlanAngle[]>(() => {
     const sides: PlanAngle[] = FIVE_CAR_ANGLES.map((a) => ({ id: a.id, label: t(`angles.${a.key}`), photo: multiAngles[a.id] }));
@@ -292,7 +250,7 @@ export function VeloceCustomize() {
   const showGate = carChecked && !carConfirmed && Boolean(user) && Boolean(photo);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-4 pb-32 md:px-8">
+    <div className="mx-auto flex min-h-[100dvh] max-w-3xl flex-col px-4 pt-[max(env(safe-area-inset-top),14px)] md:min-h-[calc(100dvh-81px)] md:px-8 md:pt-6">
       {showProgress && (
         <RenderProgress
           states={render.states}
@@ -308,104 +266,75 @@ export function VeloceCustomize() {
         />
       )}
       {showGate && <CarIdentifyGate photo={multiAngles['front'] || photo || ''} onDone={confirmCar} />}
-      {/* Top Minimal Header */}
-      <div className="mb-6 flex items-center justify-between gap-4">
+
+      {/* Top bar: back, title, photo counter */}
+      <div className="grid grid-cols-[44px_1fr_auto] items-center gap-2">
         <Link
           href={isSeller ? `/${locale}/seller?tab=dashboard` : `/${locale}/shop`}
-          className="inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/[0.1] hover:text-white transition"
+          aria-label={t('back')}
+          className="grid h-11 w-11 place-items-center rounded-full text-white/80 transition hover:bg-white/[0.07] hover:text-white"
         >
-          <ChevronLeft className="h-4 w-4" />
-          <span>{t('back')}</span>
+          <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
         </Link>
 
-        <div className="text-center">
-          <h1 className="text-base md:text-lg font-bold tracking-wide text-white">
+        <div className="min-w-0 text-center">
+          <h1 className="font-display text-[12px] leading-snug font-medium uppercase tracking-[0.28em] ps-[0.28em] text-white">
             {isSeller ? t('titleSeller') : t('titleUser')}
           </h1>
-          <p className="text-xs text-[#A69F92]">
-            {t('subtitle')}
-          </p>
+          <p className="mt-0.5 truncate text-[11px] text-white/40">{myCar ? `${myCar.label}${myCar.year ? ` · ${myCar.year}` : ''}` : t('subtitle')}</p>
         </div>
 
         <button
+          type="button"
           onClick={openCamera}
-          className="inline-flex items-center gap-2 rounded-full bg-[#D4AE62]/15 px-4 py-2 text-xs font-bold text-[#D4AE62] hover:bg-[#D4AE62]/25 transition cursor-pointer"
+          aria-label={t('refreshPhoto')}
+          className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-[#D4AE62] transition hover:bg-[#D4AE62]/10"
         >
-          <Camera className="h-4 w-4" />
-          <span className="hidden sm:inline">5 Rakursda Rasmga Olish</span>
-          <span className="sm:hidden">{capturedAnglesCount}/5</span>
+          <Camera className="h-[18px] w-[18px]" />
+          <span className="tabular-nums">{capturedAnglesCount}/5</span>
         </button>
       </div>
 
-      {/* 1. CAR 5-ANGLE VIEWPORT (Boxless, Deep Shadow) */}
-      <div className="relative overflow-hidden rounded-[32px] bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
-        <div className="relative aspect-[16/9] max-h-[460px] w-full overflow-hidden">
-          <img
-            src={currentAnglePhoto}
-            alt={t('photoAlt')}
-            className="h-full w-full object-cover transition-all duration-300"
-          />
+      {/* Car viewport */}
+      <div className="relative mt-3 overflow-hidden rounded-[28px] bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(212,174,98,0.10),transparent_70%)]" />
+        <div className="relative aspect-[16/10] w-full overflow-hidden md:aspect-[2/1]">
+          <img src={currentAnglePhoto} alt={t('photoAlt')} className="h-full w-full object-cover transition-opacity duration-300" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0B0D13] via-[#0B0D13]/40 to-transparent" />
 
-          {/* Subtle gradient at bottom for angle pills */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#07080C] via-[#07080C]/50 to-transparent" />
-
-          {/* Top-Start Selected Parts Counter Pill */}
-          <div className="absolute start-4 top-4 flex items-center gap-2 rounded-full bg-[#090A0F]/85 px-4 py-2 text-xs font-bold text-white backdrop-blur-md">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-[#D4AE62]" />
-            <span>
-              {selectedProducts.length > 0
-                ? t('selectedCount', { count: selectedProducts.length })
-                : t('pickFromStrip')}
-            </span>
-          </div>
-
-          {/* 5-Angle Selector Pills inside Viewport Bottom */}
-          <div className="absolute inset-x-4 bottom-4 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 overflow-x-auto rounded-full bg-[#090A0F]/85 p-1.5 backdrop-blur-md [scrollbar-width:none]">
-              {FIVE_CAR_ANGLES.map((ang) => {
-                const isActive = activeAngleId === ang.id;
-                const hasCaptured = Boolean(multiAngles[ang.id]);
-                return (
-                  <button
-                    key={ang.id}
-                    type="button"
-                    onClick={() => setActiveAngleId(ang.id)}
-                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
-                      isActive
-                        ? 'bg-[#D4AE62] text-black shadow-md'
-                        : 'text-white/75 hover:text-white'
-                    }`}
-                  >
-                    <span>{t(`anglesShort.${ang.key}`)}</span>
-                    {hasCaptured && (
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          isActive ? 'bg-black' : 'bg-emerald-400'
-                        }`}
-                      />
-                    )}
-                  </button>
-                );
-              })}
+          {selectedProducts.length > 0 && (
+            <div className="absolute start-3 top-3 z-[2] flex items-center gap-1.5 rounded-full bg-[#090A0F]/80 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-[#D4AE62]" />
+              {t('selectedCount', { count: selectedProducts.length })}
             </div>
+          )}
 
-            <button
-              type="button"
-              onClick={openCamera}
-              className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
-            >
-              {t('refreshPhoto')}
-            </button>
+          {/* Angle pills */}
+          <div className="absolute inset-x-3 bottom-3 z-[2] flex items-center gap-1 overflow-x-auto rounded-full bg-[#090A0F]/80 p-1 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {FIVE_CAR_ANGLES.map((ang) => {
+              const isActive = activeAngleId === ang.id;
+              const hasCaptured = Boolean(multiAngles[ang.id]);
+              return (
+                <button
+                  key={ang.id}
+                  type="button"
+                  onClick={() => setActiveAngleId(ang.id)}
+                  aria-pressed={isActive}
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition ${
+                    isActive ? 'bg-[#D4AE62] text-black' : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <span>{t(`anglesShort.${ang.key}`)}</span>
+                  {hasCaptured && <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-black' : 'bg-emerald-400'}`} />}
+                </button>
+              );
+            })}
           </div>
         </div>
-
       </div>
 
       {applyError && (
-        <div
-          role="alert"
-          className="mt-4 flex items-start justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
-        >
+        <div role="alert" className="mt-4 flex items-start justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           <span>{applyError}</span>
           <button type="button" onClick={() => setApplyError(null)} className="shrink-0 text-xs font-semibold text-red-100/80 hover:text-white">
             {t('close')}
@@ -413,71 +342,41 @@ export function VeloceCustomize() {
         </div>
       )}
 
-      {/* 2. CATEGORY FILTER PILLS */}
-      <div className="mt-8 flex items-center justify-between gap-4">
-        <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">
-          {CATEGORIES.map((cat) => {
-            const active = activeCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setActiveCategory(cat.id)}
-                className={`shrink-0 rounded-full px-5 py-2.5 text-xs font-bold transition cursor-pointer ${
-                  active
-                    ? 'bg-[#D4AE62] text-black shadow-[0_8px_24px_rgba(212,174,98,0.28)]'
-                    : 'bg-[#12151E] text-white/75 hover:bg-[#181C28] hover:text-white'
-                }`}
-              >
-                {t(`categories.${cat.key}`)}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Left / Right Ribbon Glide Arrows */}
-        <div className="hidden md:flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => scrollFilmstrip('prev')}
-            className="grid h-10 w-10 place-items-center rounded-full bg-[#12151E] text-white/80 hover:bg-[#1A1E2B] hover:text-white transition cursor-pointer"
-            aria-label={t('scrollBack')}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollFilmstrip('next')}
-            className="grid h-10 w-10 place-items-center rounded-full bg-[#12151E] text-white/80 hover:bg-[#1A1E2B] hover:text-white transition cursor-pointer"
-            aria-label={t('scrollForward')}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
+      {/* Category tabs */}
+      <div role="tablist" aria-label={t('subtitle')} className="mt-5 flex gap-6 overflow-x-auto border-b border-white/[0.07] px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
+        {CATEGORIES.map((cat) => {
+          const active = activeCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`relative shrink-0 cursor-pointer py-3 text-[11px] font-medium uppercase tracking-[0.2em] transition-colors ${
+                active ? 'text-white' : 'text-white/40 hover:text-white/70'
+              }`}
+            >
+              {t(`categories.${cat.key}`)}
+              <span className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-gold-gradient transition-transform duration-300 ${active ? 'scale-x-100' : 'scale-x-0'}`} />
+            </button>
+          );
+        })}
       </div>
 
-      {/* 3. CONTINUOUS HORIZONTAL FILMSTRIP RIBBON (Lenta) */}
-      <div className="mt-4">
+      {/* Parts reel */}
+      <div className="mt-1 flex-1">
         {isLoadingCatalog ? (
-          <div className="flex gap-4 overflow-hidden py-2">
-            {[1, 2, 3, 4].map((n) => (
-              <div
-                key={n}
-                className="h-64 w-60 shrink-0 animate-pulse rounded-[28px] bg-[#12151E]"
-              />
+          <div className="flex items-center justify-center gap-3 py-10" aria-hidden>
+            {[0.5, 0.75, 1, 0.75, 0.5].map((o, n) => (
+              <div key={n} className="aspect-square w-[22%] max-w-[120px] animate-pulse rounded-[22px] bg-[#12151E]" style={{ opacity: o }} />
             ))}
           </div>
         ) : catalogProducts.length === 0 ? (
-          <div className="rounded-[28px] bg-[#11141D] px-6 py-12 text-center">
-            <p className="text-base font-semibold text-white">
-              {isSeller ? t('emptySeller') : t('emptyUser')}
-            </p>
+          <div className="mt-6 rounded-[28px] bg-[#11141D] px-6 py-12 text-center">
+            <p className="text-base font-semibold text-white">{isSeller ? t('emptySeller') : t('emptyUser')}</p>
             <p className="mx-auto mt-2 max-w-sm text-sm text-white/55">
-              {isSeller
-                ? user?.plan?.isPaid
-                  ? t('emptySellerHint')
-                  : t('emptyLockedHint')
-                : t('emptyUserHint')}
+              {isSeller ? (user?.plan?.isPaid ? t('emptySellerHint') : t('emptyLockedHint')) : t('emptyUserHint')}
             </p>
             <Link
               href={isSeller ? (user?.plan?.isPaid ? `/${locale}/seller/new-part` : `/${locale}/plans`) : `/${locale}/shop`}
@@ -487,119 +386,51 @@ export function VeloceCustomize() {
             </Link>
           </div>
         ) : (
-          <div
-            ref={filmstripRef}
-            onMouseDown={handleStripMouseDown}
-            onMouseMove={handleStripMouseMove}
-            onMouseUp={handleStripMouseUp}
-            onMouseLeave={handleStripMouseUp}
-            className="flex gap-4 overflow-x-auto py-3 snap-x snap-mandatory scroll-smooth select-none cursor-grab active:cursor-grabbing [scrollbar-width:none]"
-          >
-            {filteredProducts.map((part) => {
-              const isSelected = selectedPartIds.includes(part.id);
-              const usdPrice = getUSDPrice(part.price);
-              const carFit = part.targetCar || part.compatibility?.[0]?.name || t('fitFallback');
-
-              return (
-                <div
-                  key={part.id}
-                  onClick={() => {
-                    toggleSelectedPart(part.id);
-                    vibrate(20);
-                  }}
-                  className={`snap-center shrink-0 w-64 rounded-[28px] p-3.5 transition-all duration-300 cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#1A1E2B] shadow-[0_20px_50px_rgba(212,174,98,0.22)] scale-[1.02]'
-                      : 'bg-[#11141D] hover:bg-[#161A26] opacity-90 hover:opacity-100'
-                  }`}
-                >
-                  {/* Part Photo */}
-                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#090B10]">
-                    {part.swatch ? (
-                      <div className="h-full w-full" style={{ background: part.swatch }} />
-                    ) : (
-                      <img
-                        src={part.image}
-                        alt={part.name}
-                        draggable={false}
-                        className="h-full w-full object-cover"
-                      />
-                    )}
-
-                    {/* Selected Check Badge */}
-                    <div
-                      className={`absolute end-3 top-3 grid h-8 w-8 place-items-center rounded-full transition ${
-                        isSelected
-                          ? 'bg-[#D4AE62] text-black shadow-lg scale-105'
-                          : 'bg-black/60 text-white/70 backdrop-blur-md'
-                      }`}
-                    >
-                      <Check className="h-4 w-4" />
-                    </div>
-
-                    {/* 1-Car Compatibility Pill */}
-                    <div className="absolute start-3 bottom-3 inline-flex items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
-                      <Car className="h-3 w-3 text-[#D4AE62]" />
-                      <span className="truncate max-w-[140px]">{carFit}</span>
-                    </div>
-                  </div>
-
-                  {/* Part Name & Price */}
-                  <div className="mt-3 px-1">
-                    <h3 className="truncate text-sm font-bold text-white">{part.name}</h3>
-                    <div className="mt-1.5 flex items-center justify-between">
-                      <span className="text-sm font-extrabold text-[#D4AE62] tabular-nums">
-                        {formatPrice(usdPrice)}
-                      </span>
-                      <span
-                        className={`text-xs font-bold ${
-                          isSelected ? 'text-emerald-400' : 'text-[#A69F92]'
-                        }`}
-                      >
-                        {isSelected ? t('selected') : t('select')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <PartReel
+            items={filteredProducts}
+            selectedIds={selectedPartIds}
+            onToggle={(id) => {
+              toggleSelectedPart(id);
+              vibrate(20);
+            }}
+            onFocusChange={() => vibrate(8)}
+            prevLabel={t('scrollBack')}
+            nextLabel={t('scrollForward')}
+            selectLabel={t('select')}
+            selectedLabel={t('selected')}
+            formatPrice={formatPrice}
+            fitFallback={t('fitFallback')}
+            ariaLabel={t('pickFromStrip')}
+          />
         )}
       </div>
 
-      {/* 4. STICKY BOTTOM "APPLY CHANGES" BAR */}
-      <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-[#07080C] via-[#07080C]/95 to-transparent pb-5 pt-4 px-4">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 rounded-[28px] bg-[#12151F] p-3.5 ps-6 shadow-[0_24px_60px_rgba(0,0,0,0.85)]">
-          <div>
-            <p className="text-xs text-[#A69F92]">
-              {selectedProducts.length > 0
-                ? t('selectedCount', { count: selectedProducts.length })
-                : t('pickParts')}
-            </p>
-            <p className="text-base md:text-lg font-extrabold text-white tabular-nums">
-              {selectedProducts.length > 0
-                ? t('total', { amount: formatPrice(totalSelectedUSD) })
-                : t('tapHint')}
-            </p>
-            {notEnoughCredits && (
-              <p className="mt-0.5 text-[11px] text-amber-300">
-                {t('creditsNeeded', { needed: renderPlan.creditsNeeded, left: creditsLeft })}{' '}
-                <Link href={`/${locale}/plans`} className="font-semibold underline">{t('plans')}</Link>
-              </p>
-            )}
+      {/* Apply changes */}
+      <div className="sticky bottom-0 z-30 -mx-4 mt-4 bg-gradient-to-t from-[#0D0E12] via-[#0D0E12]/95 to-transparent px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-8 md:-mx-8 md:px-8">
+        <div className="mx-auto max-w-md">
+          <div className="mb-2 flex items-center justify-between gap-3 px-2 text-xs">
+            <span className="text-white/50">{selectedProducts.length > 0 ? t('selectedCount', { count: selectedProducts.length }) : t('pickParts')}</span>
+            <span className="font-semibold tabular-nums text-white">{selectedProducts.length > 0 ? t('total', { amount: formatPrice(totalSelectedUSD) }) : t('tapHint')}</span>
           </div>
-
+          {notEnoughCredits && (
+            <p className="mb-2 px-2 text-[11px] text-amber-300">
+              {t('creditsNeeded', { needed: renderPlan.creditsNeeded, left: creditsLeft })}{' '}
+              <Link href={`/${locale}/plans`} className="font-semibold underline">{t('plans')}</Link>
+            </p>
+          )}
           <button
             type="button"
             onClick={handleApplyChanges}
             disabled={isApplying}
-            className="inline-flex items-center gap-2.5 rounded-2xl bg-[#D4AE62] px-7 py-4 text-sm font-extrabold uppercase tracking-wider text-black shadow-[0_12px_32px_rgba(212,174,98,0.35)] hover:brightness-110 active:scale-95 disabled:opacity-50 transition cursor-pointer"
+            className="shimmer inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-gold-gradient px-6 text-[13px] font-bold uppercase tracking-[0.2em] text-black shadow-[0_14px_36px_rgba(212,174,98,0.35)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
           >
             <Layers className="h-4 w-4" />
-            <span>
-              {t('viewResult')}
-              {renderPlan.creditsNeeded > 0 && <span className="ms-2 rounded-full bg-black/15 px-2.5 py-1 text-[11px]">{t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}</span>}
-            </span>
+            <span>{t('viewResult')}</span>
+            {renderPlan.creditsNeeded > 0 && (
+              <span className="rounded-full bg-black/15 px-2.5 py-1 text-[10px] tracking-wider">
+                {t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}
+              </span>
+            )}
           </button>
         </div>
       </div>
