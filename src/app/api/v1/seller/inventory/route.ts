@@ -1,6 +1,7 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, after, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
+import { saveManualTranslations, syncItemTranslations } from '@/server/catalog-translations';
 import { requirePaidSeller } from '@/server/auth/guards';
 import { getServerRates } from '@/server/rates';
 import { coverFor, itemBodySchema, loadItems, replaceItemRelations } from '@/server/catalog';
@@ -113,6 +114,10 @@ export async function POST(request: NextRequest) {
       return fail(400, relErr);
     }
 
+    await saveManualTranslations(db, created.id as string, body.translations);
+    // Translate into the other languages after the response is sent, so saving stays fast.
+    after(() => syncItemTranslations(db, created.id as string));
+
     const [item] = await loadItems(db, { shopId, ids: [created.id as string], limit: 1 });
     return NextResponse.json({ success: true, item }, { status: 201 });
   } catch (err) {
@@ -196,6 +201,9 @@ export async function PATCH(request: NextRequest) {
 
     const relErr = await replaceItemRelations(db, id as string, shopId, body);
     if (relErr) return fail(400, relErr);
+
+    await saveManualTranslations(db, id as string, body.translations);
+    after(() => syncItemTranslations(db, id as string));
 
     const [item] = await loadItems(db, { shopId, ids: [id as string], limit: 1 });
     return NextResponse.json({ success: true, item });

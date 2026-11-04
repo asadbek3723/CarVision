@@ -35,7 +35,7 @@ export function VeloceHome() {
 
   React.useEffect(() => {
     let isMounted = true;
-    fetch('/api/v1/products?limit=4')
+    fetch(`/api/v1/products?limit=4&locale=${locale}`)
       .then((r) => r.json())
       .then((data) => {
         if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
@@ -49,7 +49,7 @@ export function VeloceHome() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [locale]);
 
   React.useEffect(() => {
     let isMounted = true;

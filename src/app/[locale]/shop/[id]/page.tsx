@@ -6,6 +6,7 @@ import { SEO_COPY } from '@/lib/seo/copy';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { DEFAULT_LOCALE, isLocale, localePath } from '@/lib/seo/site';
 import { getPublishedItem } from '@/server/catalog-public';
+import { localizedText } from '@/domain/catalog';
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
@@ -23,9 +24,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     });
   }
 
-  const title = `${item.brand ? `${item.brand} ` : ''}${item.name} | CarVision`;
+  const text = localizedText(item, l);
+  const title = `${item.brand ? `${item.brand} ` : ''}${text.name} | CarVision`;
   const description = (
-    item.description?.trim() || SEO_COPY[l].productDescription(item.name, item.brand, item.categoryLabel)
+    text.description?.trim() || SEO_COPY[l].productDescription(text.name, item.brand, item.categoryLabel)
   ).slice(0, 160);
   return buildMetadata({
     locale: l,
@@ -33,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     image: `/${l}/shop/${id}/opengraph-image`,
-    imageAlt: item.name,
+    imageAlt: text.name,
   });
 }
 
@@ -41,6 +43,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const { locale, id } = await params;
   const l = isLocale(locale) ? locale : DEFAULT_LOCALE;
   const item = await getPublishedItem(id);
+  const text = item ? localizedText(item, l) : null;
 
   return (
     <VeloceShell>
@@ -50,10 +53,10 @@ export default async function ProductDetailPage({ params }: Props) {
             productLd({
               locale: l,
               id,
-              name: item.name,
+              name: text?.name ?? item.name,
               brand: item.brand,
               description:
-                item.description?.trim() || SEO_COPY[l].productDescription(item.name, item.brand, item.categoryLabel),
+                text?.description?.trim() || SEO_COPY[l].productDescription(text?.name ?? item.name, item.brand, item.categoryLabel),
               images: item.images.map((i) => i.url).slice(0, 6),
               priceUSD: item.priceUSD,
               inStock: item.stock > 0,

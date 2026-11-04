@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { loadItems } from '@/server/catalog';
-import { CATALOG_CATEGORIES, veloceCategory } from '@/domain/catalog';
+import { CATALOG_CATEGORIES, ITEM_LOCALES, localizedText, veloceCategory } from '@/domain/catalog';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(params.get('limit') || '60', 10) || 60, 200);
     const modelId = params.get('model');
     const year = parseInt(params.get('year') || '', 10) || null;
+    const localeParam = params.get('locale') ?? '';
+    const locale = (ITEM_LOCALES as readonly string[]).includes(localeParam) ? localeParam : '';
     const brandFilter = params.get('brand')?.trim().toLowerCase() || null;
 
     // Accept both catalog slugs and the shop's display categories (Wheels, Body Kit, ...)
@@ -53,12 +55,14 @@ export async function GET(request: NextRequest) {
     }
     if (brandFilter) items = items.filter((i) => i.brand.toLowerCase() === brandFilter);
 
-    const products = items.map((i) => ({
+    const products = items.map((i) => {
+      const text = localizedText(i, locale);
+      return {
       id: i.id,
-      name: i.name,
+      name: text.name,
       brand: i.brand || 'CarVision',
       price: i.priceUSD,
-      spec: i.description,
+      spec: text.description,
       category: veloceCategory(i.category),
       categoryLabel: i.categoryLabel,
       image: i.coverImageUrl ?? i.images[0]?.url ?? '',
@@ -77,7 +81,8 @@ export async function GET(request: NextRequest) {
       sellerName: `Verified Partner #${i.shopId.slice(0, 4).toUpperCase()}`,
       seller: { id: i.shopId, business_name: `Verified Partner #${i.shopId.slice(0, 4).toUpperCase()}` },
       createdAt: i.createdAt,
-    }));
+    };
+    });
 
     // Facets for the filter UI (independent of the current filters)
     const { data: facetRows } = await db.from('catalog_items').select('brand, category').eq('status', 'PUBLISHED').limit(1000);

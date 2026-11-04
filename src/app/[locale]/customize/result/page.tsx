@@ -69,7 +69,7 @@ export default function CustomizeResultPage() {
     const fetchCatalog = async () => {
       try {
         // Workshop owners only ever see their own garage; everyone else sees the whole marketplace.
-        const endpoint = isSeller ? '/api/v1/seller/inventory' : '/api/v1/products';
+        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?locale=${locale}`;
         const res = await fetch(endpoint);
         const data = await res.json();
         if (isMounted && data.success && Array.isArray(data.products)) {
@@ -83,7 +83,7 @@ export default function CustomizeResultPage() {
     return () => {
       isMounted = false;
     };
-  }, [isSeller, user?.plan?.isPaid]);
+  }, [isSeller, user?.plan?.isPaid, locale]);
 
   const selectedParts = React.useMemo(() => {
     if (catalogProducts.length === 0) return [];

@@ -60,7 +60,7 @@ export default function CheckoutPage() {
     }
     let cancelled = false;
     setLoadingProducts(true);
-    fetch(`/api/v1/products?ids=${cartIds.join(',')}&limit=100`, { cache: 'no-store' })
+    fetch(`/api/v1/products?ids=${cartIds.join(',')}&limit=100&locale=${locale}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled && d.success) setProducts(d.products ?? []);
@@ -72,7 +72,7 @@ export default function CheckoutPage() {
     return () => {
       cancelled = true;
     };
-  }, [cartIds, resumeId]);
+  }, [cartIds, resumeId, locale]);
 
   const reloadBookings = React.useCallback(async () => {
     try {

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import {
   CATEGORY_SLUGS,
+  ITEM_LOCALES,
+  type ItemTranslations,
   MAX_ITEM_IMAGES,
   PRICE_CURRENCIES,
   categoryLabel,
@@ -61,6 +63,10 @@ export const itemBodySchema = z
       .max(MAX_ITEM_IMAGES),
     fitment: z.array(fitmentSchema).max(60).default([]),
     publish: z.boolean().default(true),
+    /** Hand-edited translations (only the languages the seller changed). */
+    translations: z
+      .record(z.enum(ITEM_LOCALES), z.object({ name: z.string().trim().max(150).optional(), description: z.string().trim().max(1500).optional() }))
+      .optional(),
   })
   .strict()
   .refine((b) => b.attributes.universal === true || b.fitment.length > 0, {
@@ -142,6 +148,15 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
     }
   }
 
+  // Translations live in columns added by a later migration: read them separately so the catalog keeps working without it.
+  const translated = new Map<string, { sourceLang: string | null; translations: ItemTranslations }>();
+  const { data: trRows, error: trErr } = await db.from('catalog_items').select('id, source_lang, translations').in('id', ids);
+  if (!trErr) {
+    for (const r of trRows ?? []) {
+      translated.set(r.id as string, { sourceLang: (r.source_lang as string | null) ?? null, translations: ((r.translations as ItemTranslations | null) ?? {}) });
+    }
+  }
+
   return items.map((i) => {
     const attrs = (i.attributes ?? {}) as Record<string, unknown>;
     return {
@@ -175,6 +190,8 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
           yearTo: (f.year_to as number | null) ?? null,
         })),
       isUniversal: attrs['universal'] === true,
+      sourceLang: translated.get(i.id)?.sourceLang ?? null,
+      translations: translated.get(i.id)?.translations ?? {},
       createdAt: i.created_at,
     };
   });

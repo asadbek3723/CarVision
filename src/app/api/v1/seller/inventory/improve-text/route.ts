@@ -33,7 +33,7 @@ function localClean(text: string): string {
 }
 
 async function viaGemini(key: string, prompt: string): Promise<{ name: string; description: string } | null> {
-  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(process.env['GEMINI_MODEL'] || 'gemini-3.1-flash-lite')}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({

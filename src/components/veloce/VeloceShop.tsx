@@ -37,7 +37,7 @@ export function VeloceShop() {
       setLoading(true);
       setError(false);
       try {
-        const qs = ['limit=120', filterQuery].filter(Boolean).join('&');
+        const qs = ['limit=120', `locale=${locale}`, filterQuery].filter(Boolean).join('&');
         const res = await fetch(`/api/v1/products?${qs}`, { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error('load failed');
@@ -54,7 +54,7 @@ export function VeloceShop() {
     return () => {
       cancelled = true;
     };
-  }, [filterQuery]);
+  }, [filterQuery, locale]);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();

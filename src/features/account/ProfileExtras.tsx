@@ -15,7 +15,12 @@ interface Entry {
   at: string;
 }
 
+type PanelId = 'credits' | 'password';
+
 const TYPES = new Set(['TRIAL_BONUS', 'MONTHLY_FREE', 'PLAN_ASSIGNED', 'RESERVED', 'COMMITTED', 'REFUNDED', 'REFERRAL_REWARD', 'ADMIN_ADJUSTMENT']);
+
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AE62]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0B0F]';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const when = (iso: string) => {
@@ -23,40 +28,50 @@ const when = (iso: string) => {
   return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 };
 
-const fieldCls = 'w-full rounded-2xl bg-white/[0.06] px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/35 focus:bg-white/[0.1]';
+const fieldCls = `w-full rounded-2xl bg-white/[0.06] px-4 py-3.5 text-base text-white placeholder:text-white/35 ${focusRing}`;
 
-/** Credit history and password change for the signed-in account (borderless, mobile first). */
+/** Credit history and password change for the signed-in account. */
 export function ProfileExtras() {
   const t = useTranslations('profileExtras');
   const { user } = useAuth();
-  const [open, setOpen] = React.useState<'credits' | 'password' | null>(null);
+  const [open, setOpen] = React.useState<PanelId | null>(null);
 
   if (!user) return null;
   return (
-    <div className="mx-auto max-w-4xl space-y-3 px-5 pb-28 md:px-10">
-      <Accordion id="credits" open={open} onToggle={setOpen} icon={<Receipt className="h-5 w-5" />} title={t('creditHistory')} hint={t('balance', { count: user.credits_balance })}>
+    <div className="space-y-3">
+      <Panel id="credits" open={open} onToggle={setOpen} icon={<Receipt className="h-5 w-5" />} title={t('creditHistory')} hint={t('balance', { count: user.credits_balance })}>
         <CreditHistory />
-      </Accordion>
-      <Accordion id="password" open={open} onToggle={setOpen} icon={<KeyRound className="h-5 w-5" />} title={t('changePassword')} hint={t('security')}>
+      </Panel>
+      <Panel id="password" open={open} onToggle={setOpen} icon={<KeyRound className="h-5 w-5" />} title={t('changePassword')} hint={t('security')}>
         <PasswordForm />
-      </Accordion>
+      </Panel>
     </div>
   );
 }
 
-function Accordion({ id, open, onToggle, icon, title, hint, children }: { id: 'credits' | 'password'; open: string | null; onToggle: (v: 'credits' | 'password' | null) => void; icon: React.ReactNode; title: string; hint: string; children: React.ReactNode }) {
+function Panel({ id, open, onToggle, icon, title, hint, children }: { id: PanelId; open: PanelId | null; onToggle: (v: PanelId | null) => void; icon: React.ReactNode; title: string; hint: string; children: React.ReactNode }) {
   const isOpen = open === id;
   return (
     <section className="rounded-3xl bg-white/[0.04]">
-      <button type="button" onClick={() => onToggle(isOpen ? null : id)} aria-expanded={isOpen} className="flex w-full items-center gap-4 p-5 text-start">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#D4AE62]/15 text-[#D4AE62]">{icon}</span>
+      <button
+        type="button"
+        onClick={() => onToggle(isOpen ? null : id)}
+        aria-expanded={isOpen}
+        aria-controls={`panel-${id}`}
+        className={`flex min-h-14 w-full items-center gap-4 rounded-3xl px-5 py-4 text-start ${focusRing}`}
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#D4AE62]/15 text-[#D4AE62]">{icon}</span>
         <span className="min-w-0 flex-1">
-          <span className="block text-base font-semibold text-white">{title}</span>
-          <span className="block text-xs text-white/45">{hint}</span>
+          <span className="block text-sm font-semibold text-white">{title}</span>
+          <span className="block truncate text-xs text-white/45">{hint}</span>
         </span>
-        <ChevronDown className={`h-5 w-5 shrink-0 text-white/40 transition ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-5 w-5 shrink-0 text-white/40 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      {isOpen && <div className="px-5 pb-5">{children}</div>}
+      {isOpen && (
+        <div id={`panel-${id}`} className="px-5 pb-5">
+          {children}
+        </div>
+      )}
     </section>
   );
 }
@@ -81,8 +96,8 @@ function CreditHistory() {
     };
   }, []);
 
-  if (error) return <p className="text-sm text-red-300">{t('errHistory')}</p>;
-  if (!entries) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-[#D4AE62]" /></div>;
+  if (error) return <p role="alert" className="text-sm text-red-300">{t('errHistory')}</p>;
+  if (!entries) return <div className="flex justify-center py-6" role="status"><Loader2 className="h-5 w-5 animate-spin text-[#D4AE62]" /></div>;
   if (entries.length === 0) return <p className="text-sm text-white/50">{t('noActivity')}</p>;
 
   return (
@@ -90,11 +105,11 @@ function CreditHistory() {
       {entries.map((e) => (
         <li key={e.id} className="flex items-center justify-between gap-3 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">{TYPES.has(e.type) ? t(`types.${e.type}`) : e.type}</p>
+            <p className="truncate text-sm font-medium text-white">{TYPES.has(e.type) ? t(`types.${e.type}`) : e.type}</p>
             <p className="text-xs text-white/40">{when(e.at)}{e.description && e.type === 'ADMIN_ADJUSTMENT' ? ` · ${e.description}` : ''}</p>
           </div>
           <div className="shrink-0 text-end">
-            <p className={`text-sm font-bold tabular-nums ${e.amount > 0 ? 'text-emerald-400' : 'text-white/80'}`}>{e.amount > 0 ? `+${e.amount}` : e.amount}</p>
+            <p className={`text-sm font-semibold tabular-nums ${e.amount > 0 ? 'text-emerald-400' : 'text-white/80'}`}>{e.amount > 0 ? `+${e.amount}` : e.amount}</p>
             <p className="text-[11px] text-white/35">{t('left', { count: e.balanceAfter })}</p>
           </div>
         </li>
@@ -134,11 +149,11 @@ function PasswordForm() {
 
   return (
     <form onSubmit={submit} className="space-y-3">
-      <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder={t('phCurrent')} className={fieldCls} />
-      <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t('phNew')} className={fieldCls} />
-      <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder={t('phAgain')} className={fieldCls} />
+      <input type="password" aria-label={t('phCurrent')} autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder={t('phCurrent')} className={fieldCls} />
+      <input type="password" aria-label={t('phNew')} autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t('phNew')} className={fieldCls} />
+      <input type="password" aria-label={t('phAgain')} autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder={t('phAgain')} className={fieldCls} />
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`text-sm ${msg.ok ? 'text-emerald-300' : 'text-red-300'}`}>{msg.text}</p>}
-      <button type="submit" disabled={busy || !current || !next || !again} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-3.5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-50">
+      <button type="submit" disabled={busy || !current || !next || !again} className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-50 ${focusRing}`}>
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
         {t('changePassword')}
       </button>

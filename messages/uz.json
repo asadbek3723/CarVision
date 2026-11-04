@@ -450,7 +450,17 @@
     "loading": "Yuklanmoqda…",
     "noBookings": "Hozircha bronlar yoʻq.",
     "browse": "Detallarni koʻrish",
-    "langCurrency": "Til va valyuta"
+    "langCurrency": "Til va valyuta",
+    "cancel": "Bekor qilish",
+    "credits": "Kreditlar",
+    "plan": "Tarif",
+    "planFree": "Bepul",
+    "planActive": "Faol",
+    "upgrade": "Tarifni yangilash",
+    "language": "Til",
+    "currency": "Valyuta",
+    "account": "Hisob",
+    "saveError": "Saqlab bo'lmadi. Ismni tekshiring (kamida 2 belgi)."
   },
   "customize": {
     "angles": {
@@ -1004,7 +1014,14 @@
     "color": "Rang",
     "description": "Tavsif",
     "save": "Saqlash",
-    "publish": "Doʻkonda chiqarish"
+    "publish": "Doʻkonda chiqarish",
+    "trTitle": "Tarjimalar",
+    "trHint": "Saqlagandan keyin avtomatik tarjima qilinadi. Istalgan tilni tuzatishingiz mumkin.",
+    "trPending": "Tarjimalar saqlangandan bir necha soniya keyin paydo boʻladi. Koʻrish uchun sahifani qayta oching.",
+    "trAuto": "Avtomatik",
+    "trManual": "Siz tahrirlagansiz",
+    "trName": "Nomi",
+    "trDesc": "Tavsif"
   },
   "photoModal": {
     "close": "Yopish",

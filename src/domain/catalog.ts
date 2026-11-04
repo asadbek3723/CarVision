@@ -77,5 +77,31 @@ export interface CatalogItemDTO {
   images: ItemImageDTO[];
   fitment: ItemFitmentDTO[];
   isUniversal: boolean;
+  /** Language the seller wrote `name` / `description` in (null until detected). */
+  sourceLang: string | null;
+  translations: ItemTranslations;
   createdAt: string;
+}
+
+/** Languages the storefront supports (same list as the router). */
+export const ITEM_LOCALES = ['uz', 'ru', 'en', 'ar', 'tr', 'kk', 'ky', 'tg'] as const;
+export type ItemLocale = (typeof ITEM_LOCALES)[number];
+
+export interface ItemTranslation {
+  name?: string | undefined;
+  description?: string | undefined;
+  /** The seller edited this language by hand: automatic translation must not overwrite it. */
+  manual?: boolean | undefined;
+}
+
+export type ItemTranslations = Partial<Record<ItemLocale, ItemTranslation>>;
+
+/** Name and description in `locale`: the translation when there is one, otherwise what the seller typed. */
+export function localizedText(
+  item: { name: string; description: string; translations?: ItemTranslations | undefined; sourceLang?: string | null | undefined },
+  locale: string
+): { name: string; description: string } {
+  if (!locale || locale === item.sourceLang) return { name: item.name, description: item.description };
+  const tr = item.translations?.[locale as ItemLocale];
+  return { name: tr?.name?.trim() || item.name, description: tr?.description?.trim() || item.description };
 }

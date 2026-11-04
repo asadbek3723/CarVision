@@ -38,13 +38,13 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
   React.useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
-    fetch(`/api/v1/products?id=${encodeURIComponent(id)}`)
+    fetch(`/api/v1/products?id=${encodeURIComponent(id)}&locale=${locale}`)
       .then((r) => r.json())
       .then((data) => {
         if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
           const found = data.products[0];
           setProduct(found);
-          fetch('/api/v1/products?limit=5')
+          fetch(`/api/v1/products?limit=5&locale=${locale}`)
             .then((r2) => r2.json())
             .then((relData) => {
               if (isMounted && relData.success && Array.isArray(relData.products)) {
@@ -61,7 +61,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, locale]);
 
   if (isLoading) {
     return (

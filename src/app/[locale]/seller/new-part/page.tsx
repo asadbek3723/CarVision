@@ -14,13 +14,25 @@ import { StudioLock } from '@/features/seller/components/StudioLock';
 import { analyzeQuality, compressForUpload, composeStudioImage, loadImage, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { dataUrlToBlob } from '@/features/seller/lib/photo-input';
 import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
-import { CATALOG_CATEGORIES, MAX_ITEM_IMAGES, PRICE_CURRENCIES, type CatalogCategory, type CatalogItemDTO } from '@/domain/catalog';
+import { CATALOG_CATEGORIES, ITEM_LOCALES, MAX_ITEM_IMAGES, PRICE_CURRENCIES, type CatalogCategory, type CatalogItemDTO, type ItemLocale, type ItemTranslations } from '@/domain/catalog';
 
 interface PhotoEntry {
   id: string;
   url: string;
   kind: 'ORIGINAL' | 'STUDIO' | 'ANGLE';
 }
+
+/** Language names written in their own language (never translated). */
+const LANGUAGE_NAMES: Record<ItemLocale, string> = {
+  uz: 'Oʻzbekcha',
+  ru: 'Русский',
+  en: 'English',
+  ar: 'العربية',
+  tr: 'Türkçe',
+  kk: 'Қазақша',
+  ky: 'Кыргызча',
+  tg: 'Тоҷикӣ',
+};
 
 const fieldCls =
   'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-base text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
@@ -65,6 +77,9 @@ export default function SellerNewPartPage() {
   const [pickCars, setPickCars] = React.useState(false);
 
   const [more, setMore] = React.useState(false);
+  const [sourceLang, setSourceLang] = React.useState<string | null>(null);
+  const [translations, setTranslations] = React.useState<ItemTranslations>({});
+  const [editedLangs, setEditedLangs] = React.useState<Set<ItemLocale>>(new Set());
   const [brand, setBrand] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [stock, setStock] = React.useState('1');
@@ -97,6 +112,8 @@ export default function SellerNewPartPage() {
         setName(item.name);
         setBrand(item.brand);
         setDescription(item.description);
+        setSourceLang(item.sourceLang);
+        setTranslations(item.translations ?? {});
         setDiameter(a['diameter'] ? String(a['diameter']) : '');
         if (typeof a['swatch'] === 'string') setSwatch(a['swatch']);
         setUniversal(item.isUniversal);
@@ -229,6 +246,10 @@ export default function SellerNewPartPage() {
       images: photos.map((p) => ({ url: p.url, kind: p.kind })),
       fitment: universal ? [] : vehicles.map((v) => ({ modelId: v.modelId, customModel: v.modelId ? undefined : v.customModel, yearFrom: v.yearFrom, yearTo: v.yearTo })),
       publish: true,
+      // Only the languages the seller changed by hand; the rest stay automatic.
+      translations: editedLangs.size
+        ? Object.fromEntries([...editedLangs].map((l) => [l, { name: translations[l]?.name ?? '', description: translations[l]?.description ?? '' }]))
+        : undefined,
     };
 
     setSaving(true);
@@ -526,6 +547,37 @@ export default function SellerNewPartPage() {
           </div>
         )}
       </section>
+
+      {/* Translations (edit mode): the listing is translated automatically; the seller can correct any language */}
+      {editId && (
+        <section className="mt-5">
+          <h2 className="text-sm font-semibold text-white/75">{t('trTitle')}</h2>
+          <p className="mt-1 text-xs text-white/45">{t('trHint')}</p>
+          {ITEM_LOCALES.filter((l) => l !== sourceLang && translations[l]).length === 0 ? (
+            <p className="mt-3 rounded-2xl bg-white/[0.04] px-4 py-3 text-xs text-white/55">{t('trPending')}</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {ITEM_LOCALES.filter((l) => l !== sourceLang && translations[l]).map((l) => {
+                const tr = translations[l]!;
+                const edit = (patch: { name?: string; description?: string }) => {
+                  setTranslations((prev) => ({ ...prev, [l]: { ...prev[l], ...patch } }));
+                  setEditedLangs((prev) => new Set(prev).add(l));
+                };
+                return (
+                  <div key={l} className="rounded-2xl bg-white/[0.04] p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-white">{LANGUAGE_NAMES[l]}</span>
+                      <span className="text-[11px] text-white/45">{tr.manual || editedLangs.has(l) ? t('trManual') : t('trAuto')}</span>
+                    </div>
+                    <input aria-label={t('trName')} value={tr.name ?? ''} maxLength={150} onChange={(e) => edit({ name: e.target.value })} dir={l === 'ar' ? 'rtl' : 'ltr'} className={`${fieldCls} !py-2.5 !text-sm`} />
+                    <textarea aria-label={t('trDesc')} value={tr.description ?? ''} maxLength={1500} rows={2} onChange={(e) => edit({ description: e.target.value })} dir={l === 'ar' ? 'rtl' : 'ltr'} className={`${fieldCls} mt-2 resize-y !py-2.5 !text-sm`} />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       {error && <p role="alert" className="mt-5 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 

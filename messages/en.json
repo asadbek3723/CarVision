@@ -450,7 +450,17 @@
     "loading": "Loading…",
     "noBookings": "No bookings yet.",
     "browse": "Browse parts",
-    "langCurrency": "Language and currency"
+    "langCurrency": "Language and currency",
+    "cancel": "Cancel",
+    "credits": "Credits",
+    "plan": "Plan",
+    "planFree": "Free",
+    "planActive": "Active",
+    "upgrade": "Upgrade plan",
+    "language": "Language",
+    "currency": "Currency",
+    "account": "Account",
+    "saveError": "Couldn't save. Check the name (at least 2 characters)."
   },
   "customize": {
     "angles": {
@@ -1004,7 +1014,14 @@
     "color": "Color",
     "description": "Description",
     "save": "Save",
-    "publish": "Publish to the store"
+    "publish": "Publish to the store",
+    "trTitle": "Translations",
+    "trHint": "Translated automatically after you save. You can correct any language.",
+    "trPending": "Translations will appear a few seconds after saving. Reopen this page to see them.",
+    "trAuto": "Automatic",
+    "trManual": "Edited by you",
+    "trName": "Name",
+    "trDesc": "Description"
   },
   "photoModal": {
     "close": "Close",

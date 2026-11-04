@@ -450,7 +450,17 @@
     "loading": "Yükleniyor…",
     "noBookings": "Henüz rezervasyon yok.",
     "browse": "Parçalara göz at",
-    "langCurrency": "Dil ve para birimi"
+    "langCurrency": "Dil ve para birimi",
+    "cancel": "İptal",
+    "credits": "Krediler",
+    "plan": "Plan",
+    "planFree": "Ücretsiz",
+    "planActive": "Aktif",
+    "upgrade": "Planı yükselt",
+    "language": "Dil",
+    "currency": "Para birimi",
+    "account": "Hesap",
+    "saveError": "Kaydedilemedi. Adı kontrol edin (en az 2 karakter)."
   },
   "customize": {
     "angles": {
@@ -1004,7 +1014,14 @@
     "color": "Renk",
     "description": "Açıklama",
     "save": "Kaydet",
-    "publish": "Mağazada yayınla"
+    "publish": "Mağazada yayınla",
+    "trTitle": "Çeviriler",
+    "trHint": "Kaydettikten sonra otomatik çevrilir. Herhangi bir dili düzeltebilirsiniz.",
+    "trPending": "Çeviriler kaydettikten birkaç saniye sonra görünür. Görmek için sayfayı yeniden açın.",
+    "trAuto": "Otomatik",
+    "trManual": "Sizin düzenlemeniz",
+    "trName": "Ad",
+    "trDesc": "Açıklama"
   },
   "photoModal": {
     "close": "Kapat",

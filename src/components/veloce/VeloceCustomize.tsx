@@ -118,7 +118,7 @@ export function VeloceCustomize() {
       try {
         setIsLoadingCatalog(true);
         // Workshop owners see only their own garage parts; regular users see every shop's parts that fit their car.
-        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120${filterQuery ? `&${filterQuery}` : ''}`;
+        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120&locale=${locale}${filterQuery ? `&${filterQuery}` : ''}`;
         const res = await fetch(endpoint, { cache: 'no-store' });
         const data = await res.json();
         if (isMounted) {
@@ -135,7 +135,7 @@ export function VeloceCustomize() {
     return () => {
       isMounted = false;
     };
-  }, [isSeller, filterQuery]);
+  }, [isSeller, filterQuery, locale]);
 
   // Pre-select requestedPartId if passed in URL and not yet selected
   React.useEffect(() => {

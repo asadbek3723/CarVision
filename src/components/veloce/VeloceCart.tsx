@@ -32,7 +32,7 @@ export function VeloceCart() {
     }
     let isMounted = true;
     setIsLoading(true);
-    fetch(`/api/v1/products?ids=${encodeURIComponent(cartIdsKey)}&limit=100`, { cache: 'no-store' })
+    fetch(`/api/v1/products?ids=${encodeURIComponent(cartIdsKey)}&limit=100&locale=${locale}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
         if (isMounted && data.success && Array.isArray(data.products)) {
@@ -53,7 +53,7 @@ export function VeloceCart() {
     return () => {
       isMounted = false;
     };
-  }, [cartIdsKey]);
+  }, [cartIdsKey, locale]);
 
   // Items in the cart that are no longer sold (unpublished / deleted): tell the customer, let them clear them
   const missingIds = loaded && !isLoading ? Object.keys(cart).filter((id) => !productsMap[id]) : [];
