@@ -141,7 +141,7 @@ export default function MobileScanSessionPage() {
     return cleanup;
   }, [sessionId, checkAndSyncPending]);
 
-  // Direct upload dispatcher with offline queue fallback — requires all 4 angles before completing
+  // Direct upload dispatcher with offline queue fallback — requires all 5 angles before completing
   const uploadPhotoData = React.useCallback(
     async (dataUrl: string, blob: Blob, angleId: number, totalCapturedCount: number) => {
       const isFinalAngle = totalCapturedCount >= REQUIRED_ANGLES_TOTAL;

@@ -128,7 +128,7 @@ export function VeloceSmartCameraModal({
     };
   }, [isOpen, isMobileDevice]);
 
-  // Safe navigation to Studio ONLY when all 4 required angles are present
+  // Safe navigation to Studio ONLY when all 5 required angles are present
   const handleProceedToStudio = React.useCallback(
     (customUrl?: string, customAngles?: Record<number, string>) => {
       const finalAngles = customAngles || uploadedAngles;
@@ -150,16 +150,13 @@ export function VeloceSmartCameraModal({
 
       if (!primaryUrl) return;
 
-      const normalizedMultiAngles: Record<string, string> = {
-        ...finalAngles,
-        front: finalAngles[1] || primaryUrl,
-        right: finalAngles[2] || primaryUrl,
-        side: finalAngles[2] || primaryUrl,
-        rear: finalAngles[3] || primaryUrl,
-        left: finalAngles[4] || primaryUrl,
-        'front-left': finalAngles[1] || primaryUrl,
-        'rear-right': finalAngles[3] || finalAngles[2] || primaryUrl,
-      };
+      // Every named angle gets its own real photo (keys match `FIVE_CAR_ANGLES` in the studio).
+      const normalizedMultiAngles: Record<string, string> = { ...finalAngles };
+      for (const angle of GUIDED_SCAN_ANGLES) {
+        normalizedMultiAngles[angle.slug] = finalAngles[angle.id] || primaryUrl;
+      }
+      normalizedMultiAngles.side = normalizedMultiAngles.right!;
+      normalizedMultiAngles.left = normalizedMultiAngles['front-left']!;
 
       // The store keeps the photos in memory (storage may be full) and opens the studio.
       setTimeout(() => {
@@ -170,7 +167,7 @@ export function VeloceSmartCameraModal({
     [uploadedAngles, onCaptured, onClose]
   );
 
-  // Poll phone QR session status — waits until all 4 required angles are captured
+  // Poll phone QR session status — waits until all 5 required angles are captured
   React.useEffect(() => {
     if (!isOpen || !sessionId || isMobileDevice) return;
 
@@ -277,7 +274,7 @@ export function VeloceSmartCameraModal({
     }
   };
 
-  // Mobile single angle captured -> store in uploadedAngles, wait until all 4 are captured
+  // Mobile single angle captured -> store in uploadedAngles, wait until all 5 are captured
   const handleMobilePhotoCaptured = (
     result: CompressResult,
     angleId: number,
@@ -307,7 +304,7 @@ export function VeloceSmartCameraModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#050507] text-white">
-      {/* 1. MOBILE ONLY: LIVE 1:1 SMART CAMERA (WITH MANDATORY LANDSCAPE LOCK & 4-ANGLE SEQUENCE) */}
+      {/* 1. MOBILE ONLY: LIVE 1:1 SMART CAMERA (WITH MANDATORY LANDSCAPE LOCK & 5-ANGLE SEQUENCE) */}
       {isMobileDevice && (
         <div className="relative w-full h-full flex flex-col bg-[#050507]">
           <SmartCameraLandscapeView
@@ -318,7 +315,7 @@ export function VeloceSmartCameraModal({
         </div>
       )}
 
-      {/* 2. DESKTOP VIEW: BORDERLESS, NO-BOX, STRICT ALL-4-ANGLES REQUIREMENT */}
+      {/* 2. DESKTOP VIEW: BORDERLESS, NO-BOX, STRICT ALL-5-ANGLES REQUIREMENT */}
       {!isMobileDevice && (
         <div className="relative min-h-screen w-full flex flex-col bg-[#07080B] px-8 sm:px-14 md:px-20 py-5 sm:py-6 overflow-y-auto">
           {/* Subtle Ambient Radial Glow */}
@@ -517,7 +514,7 @@ export function VeloceSmartCameraModal({
                 className="relative z-10 flex-1 flex flex-col justify-between my-auto py-2 sm:py-3 max-w-6xl mx-auto w-full space-y-4 sm:space-y-5"
               >
                 {/* 4-Step Program-Controlled Progress Bar (Cannot Skip Ahead!) */}
-                <div className="grid grid-cols-4 gap-2 sm:gap-4 w-full pb-3">
+                <div className="grid grid-cols-5 gap-2 sm:gap-4 w-full pb-3">
                   {GUIDED_SCAN_ANGLES.map((angle, idx) => {
                     const isUploaded = Boolean(uploadedAngles[angle.id]);
                     const isActive = idx === currentStepIndex;

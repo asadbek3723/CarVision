@@ -635,15 +635,20 @@
         "short": "Sağ",
         "guide": "Aracın sağ yan tarafını tam görünümle yükleyin."
       },
+      "rearRight": {
+        "title": "Sağ arka köşe",
+        "short": "Sağ arka",
+        "guide": "Aracın sağ arka köşesini 45° açıyla, arka ve sağ yan birlikte görünecek şekilde çekin."
+      },
       "rear": {
         "title": "Arka taraf",
         "short": "Arka",
         "guide": "Aracın arka tarafını tam arkadan yükleyin."
       },
-      "left": {
-        "title": "Sol yan",
-        "short": "Sol",
-        "guide": "Aracın sol yan tarafını tam görünümle yükleyin."
+      "frontLeft": {
+        "title": "Sol ön köşe",
+        "short": "Sol ön",
+        "guide": "Aracın sol ön köşesini 45° açıyla, ön ve sol yan birlikte görünecek şekilde çekin."
       }
     }
   },
@@ -672,7 +677,10 @@
     "saved": "Cihazda kaydedildi ({count} kare)",
     "savedBody": "Fotoğraflar cihazınızın güvenli belleğine (IndexedDB) kaydedildi. İnternete veya atölye Wi-Fi ağına bağlandığınızda otomatik olarak bilgisayara aktarılacak.",
     "download": "İndir",
-    "downloadTitle": "Fotoğrafı telefona kaydet"
+    "downloadTitle": "Fotoğrafı telefona kaydet",
+    "levelPhone": "Telefonu düz tutun",
+    "aligned": "Düz — çekebilirsiniz",
+    "motionEnable": "Su terazisini aç"
   },
   "landing": {
     "nav": {

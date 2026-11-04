@@ -635,15 +635,20 @@
         "short": "Oʻng",
         "guide": "Mashinaning oʻng yon tomonini toʻliq koʻrinishda yuklang."
       },
+      "rearRight": {
+        "title": "Orqa-oʻng burchak",
+        "short": "Orqa-oʻng",
+        "guide": "Mashinaning orqa-oʻng burchagini 45° da, orqa va oʻng tomon birga koʻrinadigan qilib oling."
+      },
       "rear": {
         "title": "Orqa tomon",
         "short": "Orqa",
         "guide": "Mashinaning orqa tomonini toʻgʻridan koʻrinishda yuklang."
       },
-      "left": {
-        "title": "Chap tomon",
-        "short": "Chap",
-        "guide": "Mashinaning chap yon tomonini toʻliq koʻrinishda yuklang."
+      "frontLeft": {
+        "title": "Oldi-chap burchak",
+        "short": "Oldi-chap",
+        "guide": "Mashinaning oldi-chap burchagini 45° da, old va chap tomon birga koʻrinadigan qilib oling."
       }
     }
   },
@@ -672,7 +677,10 @@
     "saved": "Qurilmada saqlangan ({count} ta kadr)",
     "savedBody": "Fotosuratlar qurilmangizning xavfsiz xotirasiga (IndexedDB) saqlandi. Internet yoki ustaxona Wi-Fi tarmogʻiga ulanganda ular avtomatik kompyuterga uzatiladi.",
     "download": "Yuklab olish",
-    "downloadTitle": "Rasmni telefonga yuklab olish"
+    "downloadTitle": "Rasmni telefonga yuklab olish",
+    "levelPhone": "Telefonni tekis ushlang",
+    "aligned": "Tayyor — suratga oling",
+    "motionEnable": "Sath yoʻriqnomasini yoqish"
   },
   "landing": {
     "nav": {

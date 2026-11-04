@@ -27,7 +27,11 @@ export function useAdminApi() {
         onExpired();
         throw new Error(t('sessionExpired'));
       }
-      if (!res.ok || data.success === false) throw new Error(apiError(data, t('errGeneric')));
+      if (!res.ok || data.success === false) {
+        // Routes return { success:false, error:{ code, ... } }; useApiError expects the inner object.
+        const body = data && typeof data.error === 'object' && data.error ? data.error : data;
+        throw new Error(apiError(body, t('errGeneric')));
+      }
       return data as T;
     },
     [onExpired, t, apiError]
@@ -261,7 +265,7 @@ export function useToast() {
   }, []);
   React.useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const node = msg ? (
-    <div role="status" className={`fixed inset-x-4 bottom-24 z-[90] mx-auto max-w-md rounded-2xl px-5 py-3.5 text-sm font-semibold shadow-2xl md:bottom-8 ${msg.tone === 'ok' ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'}`}>
+    <div role="status" className={`pointer-events-none fixed inset-x-4 top-4 z-[200] mx-auto max-w-md rounded-2xl px-5 py-3.5 text-sm font-semibold shadow-2xl ${msg.tone === 'ok' ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'}`}>
       {msg.text}
     </div>
   ) : null;

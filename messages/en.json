@@ -635,15 +635,20 @@
         "short": "Right",
         "guide": "Upload the full view of the car’s right side."
       },
+      "rearRight": {
+        "title": "Rear-right corner",
+        "short": "Rear-right",
+        "guide": "Shoot the rear-right corner at 45°, showing the rear and right side together."
+      },
       "rear": {
         "title": "Rear",
         "short": "Rear",
         "guide": "Upload the rear of the car straight on."
       },
-      "left": {
-        "title": "Left side",
-        "short": "Left",
-        "guide": "Upload the full view of the car’s left side."
+      "frontLeft": {
+        "title": "Front-left corner",
+        "short": "Front-left",
+        "guide": "Shoot the front-left corner at 45°, showing the front and left side together."
       }
     }
   },
@@ -672,7 +677,10 @@
     "saved": "Saved on device ({count, plural, one {# frame} other {# frames}})",
     "savedBody": "Photos were saved in your device's secure storage (IndexedDB). They'll be sent to the computer automatically once you're back online or on the workshop Wi-Fi.",
     "download": "Download",
-    "downloadTitle": "Save the photo to your phone"
+    "downloadTitle": "Save the photo to your phone",
+    "levelPhone": "Hold the phone level",
+    "aligned": "Level — shoot now",
+    "motionEnable": "Enable level guide"
   },
   "landing": {
     "nav": {

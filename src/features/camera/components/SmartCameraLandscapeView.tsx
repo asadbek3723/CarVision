@@ -5,61 +5,44 @@ import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Camera,
-  ChevronLeft,
   ChevronUp,
-  ChevronDown,
-  ChevronRight,
   Check,
   Sparkles,
+  Compass,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCameraStream } from '../hooks/useCameraStream';
+import { useDeviceLevel } from '../hooks/useDeviceLevel';
+import { AngleGhostOverlay } from './AngleGhostOverlay';
+import { LevelGuide } from './LevelGuide';
 import { compressFrameToWebP, type CompressResult } from '../lib/image-compressor';
 import { playShutter, playLock, vibrate } from '../lib/fx';
+import { GUIDED_SCAN_ANGLES, type GuidedScanAngle } from '@/components/camera/scan-angles';
 
-export interface ScanAngle {
-  id: number;
-  key: 'front' | 'right' | 'rear' | 'left';
-  direction: 'top' | 'right' | 'bottom' | 'left';
-  coneAngle: number;
-}
+export type ScanAngle = GuidedScanAngle;
 
 /**
- * 4 Mandatory Cardinal Angles strictly matching the 4-way 3D/top-down Car Compass
- * in the reference design (Top = Front, Right = Right Side, Bottom = Rear, Left = Left Side).
- * The user MUST capture all 4 angles in strict program-controlled sequence.
+ * The 5 mandatory angles, shared with the upload flow (see `scan-angles.ts`).
+ * Each one is placed on the compass ring at its real bearing around the car.
  */
-export const SCAN_5_ANGLES: ScanAngle[] = [
-  {
-    id: 1,
-    key: 'front',
-    direction: 'top',
-    coneAngle: 0,
-  },
-  {
-    id: 2,
-    key: 'right',
-    direction: 'right',
-    coneAngle: 90,
-  },
-  {
-    id: 3,
-    key: 'rear',
-    direction: 'bottom',
-    coneAngle: 180,
-  },
-  {
-    id: 4,
-    key: 'left',
-    direction: 'left',
-    coneAngle: 270,
-  },
-];
+export const SCAN_5_ANGLES: ScanAngle[] = GUIDED_SCAN_ANGLES;
 
 export interface LuxuryCarCompassProps {
   activeAngleId: number;
   completedAngles: number[];
   size?: 'sm' | 'md' | 'lg';
+}
+
+/** Radius of the badge ring as a percentage of the compass box (matches the r=92 ring of the 240 viewBox). */
+const COMPASS_RING_RADIUS = 38.3;
+
+/** Position of a badge on the ring for a bearing (0° = top/front, clockwise). */
+function compassPosition(bearing: number): React.CSSProperties {
+  const rad = (bearing * Math.PI) / 180;
+  return {
+    left: `${50 + COMPASS_RING_RADIUS * Math.sin(rad)}%`,
+    top: `${50 - COMPASS_RING_RADIUS * Math.cos(rad)}%`,
+  };
 }
 
 /**
@@ -76,16 +59,6 @@ export function LuxuryCarCompass({
   const tAngle = useTranslations('scanModal.angles');
   const activeAngle =
     SCAN_5_ANGLES.find((a) => a.id === activeAngleId) || SCAN_5_ANGLES[0]!;
-
-  const isTopActive = activeAngle.direction === 'top';
-  const isRightActive = activeAngle.direction === 'right';
-  const isBottomActive = activeAngle.direction === 'bottom';
-  const isLeftActive = activeAngle.direction === 'left';
-
-  const isTopDone = completedAngles.includes(1);
-  const isRightDone = completedAngles.includes(2);
-  const isBottomDone = completedAngles.includes(3);
-  const isLeftDone = completedAngles.includes(4);
 
   const containerSizeClass =
     size === 'lg'
@@ -142,17 +115,10 @@ export function LuxuryCarCompass({
         />
       </svg>
 
-      {/* Directional Golden Bloom Behind Active Badge (Matches Reference Top Gold Halo 1:1) */}
+      {/* Golden bloom behind the active badge, at its real bearing */}
       <div
-        className={`absolute pointer-events-none transition-all duration-500 rounded-full blur-xl ${
-          isTopActive
-            ? '-top-1 start-1/2 -translate-x-1/2 w-24 h-12 bg-[#E5C175]/45'
-            : isRightActive
-            ? 'top-1/2 -end-1 -translate-y-1/2 w-12 h-24 bg-[#E5C175]/45'
-            : isBottomActive
-            ? '-bottom-1 start-1/2 -translate-x-1/2 w-24 h-12 bg-[#E5C175]/45'
-            : 'top-1/2 -start-1 -translate-y-1/2 w-12 h-24 bg-[#E5C175]/45'
-        }`}
+        className="absolute pointer-events-none transition-all duration-500 rounded-full blur-xl h-14 w-14 -translate-x-1/2 -translate-y-1/2 bg-[#E5C175]/45"
+        style={compassPosition(activeAngle.coneAngle)}
       />
 
       {/* Center Top-Down Photorealistic Luxury Coupe (Fixed Upright so Arrows Match Car Sides 1:1) */}
@@ -164,73 +130,34 @@ export function LuxuryCarCompass({
         />
       </div>
 
-      {/* 1. TOP INDICATOR (FRONT / OLDI) — Strictly Non-Clickable */}
-      <div
-        className={`absolute top-1.5 start-1/2 -translate-x-1/2 h-7 w-12 sm:h-8 sm:w-14 md:h-9 md:w-16 rounded-2xl flex items-center justify-center transition-all duration-500 pointer-events-none ${
-          isTopActive
-            ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_-4px_22px_rgba(229,193,117,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-105'
-            : isTopDone
-            ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
-            : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
-        }`}
-      >
-        {isTopDone && !isTopActive ? (
-          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
-        ) : (
-          <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.6]" />
-        )}
-      </div>
-
-      {/* 2. RIGHT INDICATOR (RIGHT SIDE / O'NG) — Strictly Non-Clickable */}
-      <div
-        className={`absolute top-1/2 end-1.5 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-11 md:w-11 rounded-full flex items-center justify-center transition-all duration-500 pointer-events-none ${
-          isRightActive
-            ? 'bg-gradient-to-s from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[4px_0_22px_rgba(229,193,117,0.85),inset_-1.5px_0_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-105'
-            : isRightDone
-            ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
-            : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
-        }`}
-      >
-        {isRightDone && !isRightActive ? (
-          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
-        ) : (
-          <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.4]" />
-        )}
-      </div>
-
-      {/* 3. BOTTOM INDICATOR (REAR / ORQA) — Strictly Non-Clickable */}
-      <div
-        className={`absolute bottom-1.5 start-1/2 -translate-x-1/2 h-7 w-10 sm:h-8 sm:w-12 md:h-9 md:w-13 rounded-2xl flex items-center justify-center transition-all duration-500 pointer-events-none ${
-          isBottomActive
-            ? 'bg-gradient-to-t from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_4px_22px_rgba(229,193,117,0.85),inset_0_-1.5px_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-105'
-            : isBottomDone
-            ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
-            : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
-        }`}
-      >
-        {isBottomDone && !isBottomActive ? (
-          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
-        ) : (
-          <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.4]" />
-        )}
-      </div>
-
-      {/* 4. LEFT INDICATOR (LEFT SIDE / CHAP) — Strictly Non-Clickable */}
-      <div
-        className={`absolute top-1/2 start-1.5 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-11 md:w-11 rounded-full flex items-center justify-center transition-all duration-500 pointer-events-none ${
-          isLeftActive
-            ? 'bg-gradient-to-e from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[-4px_0_22px_rgba(229,193,117,0.85),inset_1.5px_0_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-105'
-            : isLeftDone
-            ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
-            : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
-        }`}
-      >
-        {isLeftDone && !isLeftActive ? (
-          <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
-        ) : (
-          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.4]" />
-        )}
-      </div>
+      {/* One badge per required angle, placed on the ring at its real bearing. Never clickable. */}
+      {SCAN_5_ANGLES.map((angle) => {
+        const isActive = angle.id === activeAngle.id;
+        const isDone = completedAngles.includes(angle.id);
+        return (
+          <div
+            key={angle.id}
+            data-angle={angle.slug}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center transition-all duration-500 pointer-events-none ${
+              isActive
+                ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_0_22px_rgba(229,193,117,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-110'
+                : isDone
+                ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
+                : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
+            }`}
+            style={compassPosition(angle.coneAngle)}
+          >
+            {isDone && !isActive ? (
+              <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.8]" />
+            ) : (
+              <ChevronUp
+                className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.6]"
+                style={{ transform: `rotate(${angle.coneAngle}deg)` }}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -256,7 +183,7 @@ export function SmartCameraLandscapeView({
   const tAngle = useTranslations('scanModal.angles');
   const { videoRef, isReady, permissionDenied, startCamera } = useCameraStream();
 
-  // Strictly sequential program-controlled step index (0 -> 1 -> 2 -> 3)
+  // Strictly sequential program-controlled step index (0 -> 1 -> ... -> 4)
   const [currentStepIndex, setCurrentStepIndex] = React.useState<number>(0);
   const [capturedResults, setCapturedResults] = React.useState<Record<number, CompressResult>>({});
   const [isCapturing, setIsCapturing] = React.useState(false);
@@ -270,6 +197,14 @@ export function SmartCameraLandscapeView({
 
   const activeAngle =
     SCAN_5_ANGLES[currentStepIndex] || SCAN_5_ANGLES[0]!;
+
+  // Phone-level guide (gyro). Purely advisory: the shutter is never blocked by it.
+  const { level, aligned, needsPermission, requestPermission } = useDeviceLevel(!isCapturing);
+  const wasAligned = React.useRef(false);
+  React.useEffect(() => {
+    if (aligned && !wasAligned.current) vibrate(12);
+    wasAligned.current = aligned;
+  }, [aligned]);
 
   // Orientation detection: Portrait vs Landscape
   const [isPortrait, setIsPortrait] = React.useState<boolean>(false);
@@ -373,7 +308,7 @@ export function SmartCameraLandscapeView({
             setCurrentStepIndex(nextStepIndex);
             setTimeout(() => setStepFeedback(null), 2200);
           } else {
-            // All 4 required angles have been captured!
+            // All 5 required angles have been captured!
             playLock();
             vibrate([40, 60, 40]);
             setStepFeedback(t('allCaptured', { total: SCAN_5_ANGLES.length }));
@@ -576,123 +511,68 @@ export function SmartCameraLandscapeView({
               </div>
             )}
 
-            {/* Subtle Edge Vignette Inside Viewport */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/25" />
+            {/* Soft edge blur (instead of a dark overlay) so the camera feed stays visible */}
+            <div
+              className="pointer-events-none absolute inset-0 backdrop-blur-[3px] bg-black/5 [mask-image:linear-gradient(to_top,black,transparent_45%,transparent_80%,black)] [-webkit-mask-image:linear-gradient(to_top,black,transparent_45%,transparent_80%,black)]"
+            />
 
-            {/* 1:1 Reference Perspective Golden Floor Parking-Bay Alignment Grid (SVG) */}
-            <svg
-              viewBox="0 0 800 320"
-              preserveAspectRatio="none"
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-[54%] w-full z-10"
-              fill="none"
-            >
-              <defs>
-                <linearGradient id="floor-lane-stroke" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#E5C175" stopOpacity="0.22" />
-                  <stop offset="55%" stopColor="#E5C175" stopOpacity="0.62" />
-                  <stop offset="100%" stopColor="#F7DFA0" stopOpacity="0.88" />
-                </linearGradient>
-                <filter id="floor-glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="2.5" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
+            {/* Perspective-correct car outline for the current angle + horizon level guide */}
+            {isReady && !permissionDenied && (
+              <>
+                <AngleGhostOverlay bearing={activeAngle.coneAngle} aligned={aligned} />
+                <LevelGuide level={level} aligned={aligned} />
+              </>
+            )}
 
-              {/* Left & Right Perspective Rails with Rounded Top & Bottom Corners */}
-              <path
-                d="M 275 284 L 185 284 Q 146 284 162 248 L 268 42 Q 278 22 304 22 L 352 22"
-                stroke="url(#floor-lane-stroke)"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                filter="url(#floor-glow)"
-              />
-              <path
-                d="M 525 284 L 615 284 Q 654 284 638 248 L 532 42 Q 522 22 496 22 L 448 22"
-                stroke="url(#floor-lane-stroke)"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                filter="url(#floor-glow)"
-              />
-
-              {/* Center Baseline Highlight Bar */}
-              <line
-                x1="348"
-                y1="284"
-                x2="452"
-                y2="284"
-                stroke="#F7DFA0"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                filter="url(#floor-glow)"
-              />
-
-              {/* Perspective Distance Tick Marks (3 Pairs: Far, Mid, Near) */}
-              <line
-                x1="242"
-                y1="92"
-                x2="305"
-                y2="92"
-                stroke="#E5C175"
-                strokeOpacity="0.45"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-              <line
-                x1="495"
-                y1="92"
-                x2="558"
-                y2="92"
-                stroke="#E5C175"
-                strokeOpacity="0.45"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-
-              <line
-                x1="210"
-                y1="160"
-                x2="310"
-                y2="160"
-                stroke="#E5C175"
-                strokeOpacity="0.65"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-              <line
-                x1="490"
-                y1="160"
-                x2="590"
-                y2="160"
-                stroke="#E5C175"
-                strokeOpacity="0.65"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-
-              <line
-                x1="176"
-                y1="228"
-                x2="290"
-                y2="228"
-                stroke="#F7DFA0"
-                strokeOpacity="0.8"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-              <line
-                x1="510"
-                y1="228"
-                x2="624"
-                y2="228"
-                stroke="#F7DFA0"
-                strokeOpacity="0.8"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
+            {/* Active angle chip: step, name, progress and level status */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-3 sm:bottom-4 z-20 flex justify-center px-14">
+              <div className="pointer-events-auto flex max-w-full items-center gap-2.5 rounded-full bg-[#0D0F14]/70 py-1.5 ps-1.5 pe-3.5 ring-1 ring-[#E5C175]/35 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+                <span className="flex h-6 min-w-[2.25rem] items-center justify-center rounded-full bg-gradient-to-b from-[#F7DFA0] to-[#D4AE62] px-2 text-[11px] font-bold tabular-nums text-black">
+                  {activeAngle.id}/{SCAN_5_ANGLES.length}
+                </span>
+                <span className="truncate text-[11px] sm:text-xs font-semibold tracking-wide text-[#F4EBD6]">
+                  {tAngle(`${activeAngle.key}.title`)}
+                </span>
+                <span className="hidden sm:flex items-center gap-1" aria-hidden="true">
+                  {SCAN_5_ANGLES.map((a) => (
+                    <span
+                      key={a.id}
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        completedAngles.includes(a.id)
+                          ? 'w-3 bg-emerald-400'
+                          : a.id === activeAngle.id
+                          ? 'w-5 bg-[#E5C175]'
+                          : 'w-3 bg-white/20'
+                      }`}
+                    />
+                  ))}
+                </span>
+                {needsPermission ? (
+                  <button
+                    type="button"
+                    onClick={requestPermission}
+                    className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-[#F7DFA0] ring-1 ring-[#E5C175]/40 hover:bg-white/15 active:scale-95 transition cursor-pointer"
+                  >
+                    <Compass className="h-3 w-3" />
+                    {t('motionEnable')}
+                  </button>
+                ) : level ? (
+                  <span
+                    className={`flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium transition-colors duration-300 ${
+                      aligned ? 'text-emerald-300' : 'text-white/55'
+                    }`}
+                    aria-live="polite"
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        aligned ? 'bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.9)]' : 'bg-white/35'
+                      }`}
+                    />
+                    {aligned ? t('aligned') : t('levelPhone')}
+                  </span>
+                ) : null}
+              </div>
+            </div>
 
             {/* 4 Inset Golden Rounded L-Shaped Corner Brackets (1:1 with Reference Image) */}
             <div className="pointer-events-none absolute top-3.5 start-3.5 sm:top-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-s-[2.5px] border-[#E5C175] rounded-ss-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
