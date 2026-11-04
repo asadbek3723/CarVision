@@ -1342,7 +1342,10 @@
     "errImages": "Couldn't load the images. Take a photo of the car first.",
     "errFailed": "Couldn't create the video.",
     "errStopped": "Video creation stopped. Keep the window open and try again.",
-    "errRetry": "Couldn't create the video. Please try again."
+    "errRetry": "Couldn't create the video. Please try again.",
+    "mastering": "AI is perfecting your frames… {done}/{total}",
+    "masteringHint": "Every angle is being re-mastered to commercial quality",
+    "madeBy": "Made by"
   },
   "apiErrors": {
     "ADMIN_NOT_CONFIGURED": "The admin panel is not configured.",

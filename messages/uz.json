@@ -1342,7 +1342,10 @@
     "errImages": "Rasmlarni yuklab boʻlmadi. Avval avtomobil rasmini oling.",
     "errFailed": "Video yaratib boʻlmadi.",
     "errStopped": "Video yaratish toʻxtadi. Oynani ochiq qoldirib, qayta urinib koʻring.",
-    "errRetry": "Video yaratib boʻlmadi. Qayta urinib koʻring."
+    "errRetry": "Video yaratib boʻlmadi. Qayta urinib koʻring.",
+    "mastering": "AI kadrlarni mukammallashtirmoqda… {done}/{total}",
+    "masteringHint": "Har bir rakurs reklama sifatida qayta ishlanmoqda",
+    "madeBy": "Tayyorladi"
   },
   "apiErrors": {
     "ADMIN_NOT_CONFIGURED": "Admin paneli sozlanmagan.",

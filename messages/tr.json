@@ -1342,7 +1342,10 @@
     "errImages": "Görseller yüklenemedi. Önce aracın fotoğrafını çekin.",
     "errFailed": "Video oluşturulamadı.",
     "errStopped": "Video oluşturma durdu. Pencereyi açık tutup tekrar deneyin.",
-    "errRetry": "Video oluşturulamadı. Lütfen tekrar deneyin."
+    "errRetry": "Video oluşturulamadı. Lütfen tekrar deneyin.",
+    "mastering": "Yapay zekâ kareleri mükemmelleştiriyor… {done}/{total}",
+    "masteringHint": "Her açı reklam kalitesinde yeniden işleniyor",
+    "madeBy": "Hazırlayan"
   },
   "apiErrors": {
     "ADMIN_NOT_CONFIGURED": "Yönetici paneli yapılandırılmamış.",

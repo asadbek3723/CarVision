@@ -133,13 +133,12 @@ export default function CustomizeResultPage() {
     const frames = renderedAngles.map((ang) => ({
       id: ang.id,
       label: tc(`angles.${ang.key}`),
-      beforeUrl: multiAngles[ang.id] || photo || '',
       afterUrl: generatedAngles[ang.id] as string,
     }));
     // The reel opens on the best 3/4 view
     const hero = heroAngleId(frames.map((f) => ({ id: f.id, label: f.label, photo: f.afterUrl })));
     return [...frames].sort((a, b) => (a.id === hero ? -1 : b.id === hero ? 1 : 0));
-  }, [renderedAngles, multiAngles, photo, generatedAngles, tc]);
+  }, [renderedAngles, generatedAngles, tc]);
 
   // Before / After Slider Drag Logic
   const handleSliderMove = (clientX: number) => {

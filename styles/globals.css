@@ -871,3 +871,9 @@ div[data-nextjs-route-announcer] {
   display: none !important;
 }
 
+
+/* AI mastering scan line (video studio) */
+@keyframes scan {
+  0% { top: -25%; }
+  100% { top: 105%; }
+}

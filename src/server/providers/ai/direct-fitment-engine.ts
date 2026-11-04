@@ -466,3 +466,79 @@ export async function executeDirectAiFitment(
     outcome: !carDataUri ? 'invalid_image' : providerConfigured ? 'failed' : 'no_provider',
   };
 }
+
+// ---------------------------------------------------------------------------------------------
+// Video frame mastering
+// ---------------------------------------------------------------------------------------------
+
+export interface VideoEnhanceRequest {
+  /** Finished tuned render of one side of the car (data URI or allowed https URL). */
+  image: string;
+  angleId?: string | undefined;
+  /** Names of the installed parts, so the model protects them while relighting. */
+  partNames?: string[] | undefined;
+}
+
+export interface VideoEnhanceResponse {
+  /** data URI of the mastered frame, or null when no provider could do it */
+  image: string | null;
+  providerUsed: 'fal-ai' | 'gemini-ai' | 'none';
+  outcome?: 'no_provider' | 'failed' | 'invalid_image' | undefined;
+}
+
+function buildVideoMasterPrompt(req: VideoEnhanceRequest): string {
+  const parts = (req.partNames ?? []).filter(Boolean).slice(0, 6).join(', ');
+  return [
+    'Re-master this exact photo as a hero frame from a premium automotive commercial.',
+    'Keep EVERYTHING that is in the photo: the exact same car, make, model, body shape, every installed part' +
+      (parts ? ` (${parts})` : '') +
+      ', wheel design, paint colour, camera angle, framing and location. Do not add, remove or redesign anything.',
+    'Only improve the image quality: razor-sharp detail, clean noise-free surfaces, crisp panel lines,',
+    'deep rich blacks, glossy clear-coat reflections, a soft golden rim light along the body lines,',
+    'polished metallic micro-contrast on the wheels, subtle cinematic colour grade with warm highlights,',
+    'natural shadows under the car, high dynamic range, photorealistic, no text, no watermark, no people.',
+  ].join(' ');
+}
+
+/** Downloads a provider output URL (https only) into a data URI so the client never hot-links it. */
+async function providerImageToDataUri(url: string): Promise<string | null> {
+  if (url.startsWith('data:image/')) return validDataUri(url);
+  if (!url.startsWith('https://')) return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+    if (!res.ok) return null;
+    const type = (res.headers.get('content-type') || 'image/jpeg').split(';')[0]!.trim().toLowerCase();
+    if (!ALLOWED_MIME.has(type)) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length === 0 || buf.length > MAX_IMAGE_BYTES) return null;
+    return `data:${type};base64,${buf.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Re-renders one finished frame at commercial quality for the video edit.
+ * Image-to-image editors only (never text-to-image: the car must stay the same car).
+ */
+export async function executeVideoEnhance(req: VideoEnhanceRequest): Promise<VideoEnhanceResponse> {
+  const falKey = (process.env.FAL_KEY || process.env.FAL_API_KEY || '').trim();
+  const geminiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
+  if (falKey.length <= 8 && geminiKey.length <= 8) return { image: null, providerUsed: 'none', outcome: 'no_provider' };
+
+  const src = await resolveImageToDataUri(req.image);
+  if (!src) return { image: null, providerUsed: 'none', outcome: 'invalid_image' };
+  const prompt = buildVideoMasterPrompt(req);
+
+  if (falKey.length > 8) {
+    const url = await runFalAiFitment(falKey, src, [], prompt, 'enhance_for_video', null);
+    const data = url ? await providerImageToDataUri(url) : null;
+    if (data) return { image: data, providerUsed: 'fal-ai' };
+  }
+  if (geminiKey.length > 8) {
+    const data = await runGeminiMultimodalFitment(geminiKey, src, [], prompt, null);
+    const valid = data ? validDataUri(data) : null;
+    if (valid) return { image: valid, providerUsed: 'gemini-ai' };
+  }
+  return { image: null, providerUsed: 'none', outcome: 'failed' };
+}
