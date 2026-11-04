@@ -8,6 +8,7 @@ import {
   Car,
   ShoppingCart,
   CirclePlus,
+  Plus,
   Menu,
   User,
   X,
@@ -63,6 +64,12 @@ function DockLink({ href, icon: Icon, label, active, locked = false }: DockLinkP
         active ? 'text-[#D4AE62]' : 'text-white/45 hover:text-[#E8CF94]'
       }`}
     >
+      <span
+        aria-hidden
+        className={`absolute -top-2 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-[#D4AE62] transition-all duration-300 ${
+          active ? 'w-6 opacity-100' : 'w-0 opacity-0'
+        }`}
+      />
       <span className="relative">
         <Icon className="h-6 w-6" strokeWidth={active ? 1.9 : 1.5} />
         {locked && <Lock className="absolute -end-1.5 -top-1 h-3 w-3 text-[#D4AE62]" />}
@@ -366,8 +373,12 @@ export function VeloceShell({ children }: VeloceShellProps) {
       {!isImmersive && (
         <nav
           aria-label={t('menu')}
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-[#D4AE62]/15 bg-[#0B0C10]/90 backdrop-blur-xl md:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.07] bg-[#0B0C10]/65 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-2xl backdrop-saturate-150 md:hidden"
         >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#D4AE62]/40 to-transparent"
+          />
           <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2 pt-2 pb-[max(env(safe-area-inset-bottom),10px)]">
             <DockLink href={`/${locale}/seller`} icon={House} label={t('home')} active={isHome} />
             <DockLink href={garageHref} icon={Car} label={t('garage')} active={isGarage} locked={!studioUnlocked} />
@@ -376,10 +387,10 @@ export function VeloceShell({ children }: VeloceShellProps) {
               type="button"
               onClick={openCamera}
               aria-label={isSeller ? t('showroom') : t('create')}
-              className="group relative flex cursor-pointer flex-col items-center gap-1 pb-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-[#D4AE62]"
+              className="group relative flex cursor-pointer flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] text-[#D4AE62] outline-none"
             >
-              <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full bg-gold-gradient text-black shadow-[0_10px_30px_-4px_rgba(212,174,98,0.65)] ring-[5px] ring-[#0B0C10] transition duration-300 group-active:scale-95">
-                <CirclePlus className="h-7 w-7 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.8} />
+              <span className="grid h-8 w-11 place-items-center rounded-xl border border-[#D4AE62]/30 bg-gradient-to-b from-[#D4AE62]/20 to-[#D4AE62]/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-all duration-200 group-hover:border-[#D4AE62]/50 group-hover:from-[#D4AE62]/28 group-active:scale-95 group-focus-visible:ring-2 group-focus-visible:ring-[#D4AE62]/60 motion-reduce:transition-none">
+                <Plus className="h-[18px] w-[18px]" strokeWidth={2} />
               </span>
               <span>{isSeller ? t('showroom') : t('create')}</span>
             </button>

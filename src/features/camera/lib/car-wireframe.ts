@@ -362,9 +362,9 @@ const OPACITY_STEP = 0.04;
 
 /** Brightness of one line: calm body lines by depth, lines on a face that looks at the camera lift clearly. */
 function lineOpacity(near: number, facing: number | null, weight: number): number {
-  if (facing === null) return 0.1 + 0.22 * near;
-  if (facing <= 0.04) return 0.05;
-  return Math.min(0.62, 0.14 + 0.5 * Math.pow(facing, 0.6) * (0.65 + 0.35 * near) * (0.85 + 0.15 * weight));
+  if (facing === null) return 0.16 + 0.26 * near;
+  if (facing <= 0.04) return 0.07;
+  return Math.min(0.8, 0.2 + 0.6 * Math.pow(facing, 0.6) * (0.65 + 0.35 * near) * (0.85 + 0.15 * weight));
 }
 
 /**

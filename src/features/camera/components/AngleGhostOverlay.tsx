@@ -40,7 +40,7 @@ export function AngleGhostOverlay({ bearing, aligned }: AngleGhostOverlayProps) 
               ? { opacity: 1, scale: 1 }
               : { opacity: aligned ? 1 : [0.8, 1, 0.8], scale: 1 }
           }
-          exit={{ opacity: 0, scale: 1.03 }}
+          exit={{ opacity: 0, scale: 1.03, transition: { duration: 0.25 } }}
           transition={
             reduce || aligned
               ? { duration: 0.35 }

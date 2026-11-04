@@ -515,7 +515,9 @@
     "viewResult": "See result",
     "angleCredits": "{angles, plural, one {# angle} other {# angles}} · {credits, plural, one {# credit} other {# credits}}",
     "errPickPart": "Select at least one part first.",
-    "errTakePhoto": "Take a photo of your car first."
+    "errTakePhoto": "Take a photo of your car first.",
+    "yourBuild": "Your build",
+    "removePart": "Remove"
   },
   "identify": {
     "dialog": "Identify your car",

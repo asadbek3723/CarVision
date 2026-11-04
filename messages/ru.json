@@ -515,7 +515,9 @@
     "viewResult": "Смотреть результат",
     "angleCredits": "{angles, plural, one {# ракурс} few {# ракурса} many {# ракурсов} other {# ракурса}} · {credits, plural, one {# кредит} few {# кредита} many {# кредитов} other {# кредита}}",
     "errPickPart": "Сначала выберите хотя бы одну деталь.",
-    "errTakePhoto": "Сначала сфотографируйте свой автомобиль."
+    "errTakePhoto": "Сначала сфотографируйте свой автомобиль.",
+    "yourBuild": "Ваша сборка",
+    "removePart": "Убрать"
   },
   "identify": {
     "dialog": "Определение автомобиля",

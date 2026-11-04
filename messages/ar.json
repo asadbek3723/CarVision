@@ -515,7 +515,9 @@
     "viewResult": "عرض النتيجة",
     "angleCredits": "{angles, plural, one {زاوية} two {زاويتان} few {# زوايا} many {# زاوية} other {# زاوية}} · {credits, plural, one {رصيد} two {رصيدان} few {# أرصدة} many {# رصيدًا} other {# رصيد}}",
     "errPickPart": "اختر قطعة واحدة على الأقل أولًا.",
-    "errTakePhoto": "التقط صورة لسيارتك أولًا."
+    "errTakePhoto": "التقط صورة لسيارتك أولًا.",
+    "yourBuild": "تجهيزاتك",
+    "removePart": "إزالة"
   },
   "identify": {
     "dialog": "تحديد السيارة",

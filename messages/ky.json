@@ -515,7 +515,9 @@
     "viewResult": "Натыйжаны көрүү",
     "angleCredits": "{angles} ракурс · {credits} кредит",
     "errPickPart": "Адегенде кеминде бир тетикти тандаңыз.",
-    "errTakePhoto": "Адегенде унааңызды сүрөткө тартыңыз."
+    "errTakePhoto": "Адегенде унааңызды сүрөткө тартыңыз.",
+    "yourBuild": "Сиздин топтом",
+    "removePart": "Алып салуу"
   },
   "identify": {
     "dialog": "Унааны аныктоо",

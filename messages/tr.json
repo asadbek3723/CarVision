@@ -515,7 +515,9 @@
     "viewResult": "Sonucu gör",
     "angleCredits": "{angles} açı · {credits} kredi",
     "errPickPart": "Önce en az bir parça seçin.",
-    "errTakePhoto": "Önce aracınızın fotoğrafını çekin."
+    "errTakePhoto": "Önce aracınızın fotoğrafını çekin.",
+    "yourBuild": "Kurulumunuz",
+    "removePart": "Kaldır"
   },
   "identify": {
     "dialog": "Aracı belirle",

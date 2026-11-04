@@ -9,6 +9,7 @@ import {
   Camera,
   Layers,
   SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -18,6 +19,7 @@ import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { playShutter, playLock, vibrate } from '@/features/camera/lib/fx';
 import { CarIdentifyGate } from './CarIdentifyGate';
 import { PartReel } from './PartReel';
+import { onePerSlot, toggleInSlot } from '@/lib/part-slot';
 import { RenderProgress } from '@/features/visualizer/RenderProgress';
 import { planRender, type PlanAngle } from '@/features/visualizer/render-plan';
 import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderBuild';
@@ -63,7 +65,6 @@ export function VeloceCustomize() {
     photo,
     selectedPartIds,
     setSelectedPartIds,
-    toggleSelectedPart,
     multiAngles,
     captureStamp,
     setGeneratedAngles,
@@ -129,13 +130,26 @@ export function VeloceCustomize() {
     };
   }, [isSeller, filterQuery, locale]);
 
-  // Pre-select requestedPartId if passed in URL and not yet selected
+  // One part per slot: a car can't wear two sets of wheels or two paint jobs, so picking a part
+  // replaces the one already chosen in the same slot.
+  const togglePart = React.useCallback(
+    (id: string) => {
+      setSelectedPartIds(toggleInSlot(selectedPartIds, id, catalogProducts));
+      vibrate(20);
+    },
+    [selectedPartIds, catalogProducts, setSelectedPartIds]
+  );
+
+  // Pre-select requestedPartId if passed in URL and not yet selected; tidy older multi-picks per slot.
   React.useEffect(() => {
-    if (requestedPartId && catalogProducts.length > 0) {
-      const exists = catalogProducts.some((p) => p.id === requestedPartId);
-      if (exists && !selectedPartIds.includes(requestedPartId)) {
-        setSelectedPartIds([...selectedPartIds, requestedPartId]);
-      }
+    if (catalogProducts.length === 0) return;
+    let next = selectedPartIds;
+    if (requestedPartId && catalogProducts.some((p) => p.id === requestedPartId) && !next.includes(requestedPartId)) {
+      next = toggleInSlot(next, requestedPartId, catalogProducts);
+    }
+    next = onePerSlot(next, catalogProducts);
+    if (next.length !== selectedPartIds.length || next.some((id, i) => id !== selectedPartIds[i])) {
+      setSelectedPartIds(next);
     }
   }, [requestedPartId, catalogProducts, selectedPartIds, setSelectedPartIds]);
 
@@ -247,10 +261,33 @@ export function VeloceCustomize() {
     router.push(`/${locale}/customize/result`);
   };
 
+  const applyButton = (
+    <button
+      type="button"
+      onClick={handleApplyChanges}
+      disabled={isApplying}
+      className="shimmer inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-gold-gradient px-6 text-[13px] font-bold uppercase tracking-[0.2em] text-black shadow-[0_14px_36px_rgba(212,174,98,0.35)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+    >
+      <Layers className="h-4 w-4" />
+      <span>{t('viewResult')}</span>
+      {renderPlan.creditsNeeded > 0 && (
+        <span className="rounded-full bg-black/15 px-2.5 py-1 text-[10px] tracking-wider">
+          {t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}
+        </span>
+      )}
+    </button>
+  );
+  const creditsNote = notEnoughCredits && (
+    <p className="mb-2 px-2 text-[11px] text-amber-300">
+      {t('creditsNeeded', { needed: renderPlan.creditsNeeded, left: creditsLeft })}{' '}
+      <Link href={`/${locale}/plans`} className="font-semibold underline">{t('plans')}</Link>
+    </p>
+  );
+
   const showGate = carChecked && !carConfirmed && Boolean(user) && Boolean(photo);
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-3xl flex-col px-4 pt-[max(env(safe-area-inset-top),14px)] md:min-h-[calc(100dvh-81px)] md:px-8 md:pt-6">
+    <div className="mx-auto flex min-h-[100dvh] max-w-3xl flex-col px-4 pt-[max(env(safe-area-inset-top),14px)] md:min-h-[calc(100dvh-81px)] md:px-8 md:pt-6 lg:max-w-7xl lg:px-10">
       {showProgress && (
         <RenderProgress
           states={render.states}
@@ -295,8 +332,9 @@ export function VeloceCustomize() {
         </button>
       </div>
 
+      <div className="lg:mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
       {/* Car viewport */}
-      <div className="relative mt-3 overflow-hidden rounded-[28px] bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
+      <div className="relative mt-3 overflow-hidden rounded-[28px] lg:mt-0 bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(212,174,98,0.10),transparent_70%)]" />
         <div className="relative aspect-[16/10] w-full overflow-hidden md:aspect-[2/1]">
           <img src={currentAnglePhoto} alt={t('photoAlt')} className="h-full w-full object-cover transition-opacity duration-300" />
@@ -331,6 +369,45 @@ export function VeloceCustomize() {
             })}
           </div>
         </div>
+      </div>
+
+      {/* Desktop build panel: what is on the car right now, one part per slot */}
+      <aside className="mt-0 hidden flex-col rounded-[28px] border border-white/[0.07] bg-[#11141D] p-5 lg:flex">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white">{t('yourBuild')}</h2>
+          <span className="text-xs tabular-nums text-white/40">{selectedProducts.length}</span>
+        </div>
+        <ul className="mt-4 flex-1 space-y-2 overflow-y-auto pe-1">
+          {selectedProducts.length === 0 && <li className="py-6 text-center text-sm text-white/45">{t('pickParts')}</li>}
+          {selectedProducts.map((p) => (
+            <li key={p.id} className="flex items-center gap-3 rounded-2xl bg-white/[0.04] p-2">
+              <span className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#0E1016]">
+                {p.swatch ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-white">{p.name}</span>
+                <span className="block text-xs tabular-nums text-[#D4AE62]">{formatPrice(getUSDPrice(p.price))}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => togglePart(p.id)}
+                aria-label={`${t('removePart')}: ${p.name}`}
+                className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full text-white/45 transition hover:bg-white/[0.08] hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 border-t border-white/[0.07] pt-4">
+          <div className="mb-3 flex items-center justify-between px-1 text-xs">
+            <span className="text-white/50">{selectedProducts.length > 0 ? t('selectedCount', { count: selectedProducts.length }) : t('tapHint')}</span>
+            {selectedProducts.length > 0 && <span className="text-base font-semibold tabular-nums text-white">{t('total', { amount: formatPrice(totalSelectedUSD) })}</span>}
+          </div>
+          {creditsNote}
+          {applyButton}
+        </div>
+      </aside>
       </div>
 
       {applyError && (
@@ -389,10 +466,7 @@ export function VeloceCustomize() {
           <PartReel
             items={filteredProducts}
             selectedIds={selectedPartIds}
-            onToggle={(id) => {
-              toggleSelectedPart(id);
-              vibrate(20);
-            }}
+            onToggle={togglePart}
             onFocusChange={() => vibrate(8)}
             prevLabel={t('scrollBack')}
             nextLabel={t('scrollForward')}
@@ -405,33 +479,16 @@ export function VeloceCustomize() {
         )}
       </div>
 
-      {/* Apply changes */}
-      <div className="sticky bottom-0 z-30 -mx-4 mt-4 bg-gradient-to-t from-[#0D0E12] via-[#0D0E12]/95 to-transparent px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-8 md:-mx-8 md:px-8">
+      {/* Apply changes: fixed to the bottom on phones / tablets, lives in the build panel on desktop */}
+      <div aria-hidden className="h-44 shrink-0 lg:hidden" />
+      <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-[#0D0E12] via-[#0D0E12]/95 to-transparent px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-8 md:start-24 md:px-8 lg:hidden">
         <div className="mx-auto max-w-md">
           <div className="mb-2 flex items-center justify-between gap-3 px-2 text-xs">
             <span className="text-white/50">{selectedProducts.length > 0 ? t('selectedCount', { count: selectedProducts.length }) : t('pickParts')}</span>
             <span className="font-semibold tabular-nums text-white">{selectedProducts.length > 0 ? t('total', { amount: formatPrice(totalSelectedUSD) }) : t('tapHint')}</span>
           </div>
-          {notEnoughCredits && (
-            <p className="mb-2 px-2 text-[11px] text-amber-300">
-              {t('creditsNeeded', { needed: renderPlan.creditsNeeded, left: creditsLeft })}{' '}
-              <Link href={`/${locale}/plans`} className="font-semibold underline">{t('plans')}</Link>
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={handleApplyChanges}
-            disabled={isApplying}
-            className="shimmer inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-gold-gradient px-6 text-[13px] font-bold uppercase tracking-[0.2em] text-black shadow-[0_14px_36px_rgba(212,174,98,0.35)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
-          >
-            <Layers className="h-4 w-4" />
-            <span>{t('viewResult')}</span>
-            {renderPlan.creditsNeeded > 0 && (
-              <span className="rounded-full bg-black/15 px-2.5 py-1 text-[10px] tracking-wider">
-                {t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}
-              </span>
-            )}
-          </button>
+          {creditsNote}
+          {applyButton}
         </div>
       </div>
     </div>

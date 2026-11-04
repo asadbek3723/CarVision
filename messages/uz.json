@@ -515,7 +515,9 @@
     "viewResult": "Natijani koʻrish",
     "angleCredits": "{angles} rakurs · {credits} kredit",
     "errPickPart": "Avval kamida bitta detalni tanlang.",
-    "errTakePhoto": "Avval mashinangizni suratga oling."
+    "errTakePhoto": "Avval mashinangizni suratga oling.",
+    "yourBuild": "Sizning to‘plamingiz",
+    "removePart": "Olib tashlash"
   },
   "identify": {
     "dialog": "Mashinani aniqlash",
