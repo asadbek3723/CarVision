@@ -88,62 +88,215 @@ function section(st: number[]): Array<[number, number]> {
 interface Segment3 {
   a: Vec3;
   b: Vec3;
-  /** Relative line weight (rings and wheels read stronger than long lines). */
+  /** Relative line weight (long body lines read calmer than lamps and glass). */
   weight: number;
+  /**
+   * Outward normal of the car face this line is drawn on. Lines on a face that looks at the camera
+   * are drawn brighter, so the side to shoot reads at a glance. Omitted = neutral body line.
+   */
+  n?: Vec3 | undefined;
 }
 
 let cachedSegments: Segment3[] | null = null;
+let cachedTable: number[][] | null = null;
+
+function table(): number[][] {
+  return (cachedTable ??= smoothStations());
+}
+
+/** Station values (z, half-width, belt, roof, roof half-width, sill) at any z, linearly interpolated. */
+function stationAt(z: number): [number, number, number, number, number, number] {
+  const t = table();
+  for (let i = 0; i < t.length - 1; i++) {
+    const a = t[i]!;
+    const b = t[i + 1]!;
+    if (z <= a[0]! && z >= b[0]!) {
+      const k = (a[0]! - z) / (a[0]! - b[0]! || 1);
+      return a.map((v, j) => v + (b[j]! - v) * k) as [number, number, number, number, number, number];
+    }
+  }
+  const e = z > t[0]![0]! ? t[0]! : t[t.length - 1]!;
+  return [...e] as [number, number, number, number, number, number];
+}
+
+/** Point on the side of the body at z, `k` = 0 at the belt line … 1 at the roof edge. */
+function sidePoint(side: number, z: number, k: number): Vec3 {
+  const [, w, belt, roof, wr] = stationAt(z);
+  return [side * (w + (wr - w) * k), belt + (roof - belt) * k, z];
+}
+
+const unit = (v: Vec3): Vec3 => {
+  const l = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+};
 
 /** All 3D segments of the ghost car (built once). */
 export function buildCarSegments(): Segment3[] {
   if (cachedSegments) return cachedSegments;
   const segs: Segment3[] = [];
-  const push = (a: Vec3, b: Vec3, weight: number) => segs.push({ a, b, weight });
-  const stations = smoothStations();
+  const line = (a: Vec3, b: Vec3, weight = 1, n?: Vec3) => segs.push({ a, b, weight, n });
+  const poly = (pts: Vec3[], closed: boolean, weight: number, n?: Vec3) => {
+    const last = closed ? pts.length : pts.length - 1;
+    for (let i = 0; i < last; i++) line(pts[i]!, pts[(i + 1) % pts.length]!, weight, n);
+  };
+  const stations = table();
   const sections = stations.map((st) => section(st).map(([x, y]) => [x, y, st[0]!] as Vec3));
 
-  // Longitudinal lines (the 6 section points, front → back).
+  const FRONT: Vec3 = [0, 0, 1];
+  const REAR: Vec3 = [0, 0, -1];
+
+  // Body silhouette: sills, belt lines and roof edges, front → back.
   for (let p = 0; p < 6; p++) {
     for (let i = 0; i < sections.length - 1; i++) {
-      push(sections[i]![p]!, sections[i + 1]![p]!, p === 1 || p === 4 ? 1.25 : 1);
+      line(sections[i]![p]!, sections[i + 1]![p]!, p === 1 || p === 4 ? 1.15 : 1);
     }
   }
-  // Cross-section rings at every other key station only (more reads as clutter head-on).
-  for (let i = 0; i < sections.length; i += SUBDIVISIONS * 2) {
-    const ring = sections[i]!;
-    for (let p = 0; p < ring.length; p++) {
-      push(ring[p]!, ring[(p + 1) % ring.length]!, 1.1);
-    }
+  // Nose and tail outlines (head-on views show a clear face, no cross-section clutter).
+  poly(sections[0]!, true, 1.1, FRONT);
+  poly(sections[sections.length - 1]!, true, 1.1, REAR);
+
+  const zs = (from: number, to: number, n: number) =>
+    Array.from({ length: n + 1 }, (_, i) => from + ((to - from) * i) / n);
+
+  // Bonnet creases + roof panel.
+  for (const x of [-0.5, 0, 0.5]) {
+    poly(zs(2.1, 1.08, 6).map((z) => [x, stationAt(z)[3] + 0.005, z] as Vec3), false, 0.7, unit([0, 1, 0.35]));
   }
-  // Wheels: tyre + rim on both sides.
-  for (const z of WHEEL_Z) {
-    for (const side of [-1, 1]) {
+  for (const x of [-0.4, 0.4]) {
+    poly(zs(0.2, -1.35, 8).map((z) => [x, stationAt(z)[3] + 0.005, z] as Vec3), false, 0.6, [0, 1, 0]);
+  }
+
+  // Windscreen and rear screen.
+  const glass = (z1: number, z2: number, n: Vec3) => {
+    const a = stationAt(z1);
+    const b = stationAt(z2);
+    poly(
+      [
+        [-(a[4] - 0.02), a[3] - 0.01, z1],
+        [a[4] - 0.02, a[3] - 0.01, z1],
+        [b[4] - 0.02, b[3] - 0.01, z2],
+        [-(b[4] - 0.02), b[3] - 0.01, z2],
+      ],
+      true,
+      0.9,
+      n
+    );
+  };
+  glass(1.02, 0.6, unit([0, 0.55, 0.85]));
+  glass(-1.4, -1.9, unit([0, 0.55, -0.85]));
+
+  for (const s of [-1, 1] as const) {
+    const side: Vec3 = [s, 0, 0];
+    // Side glass + pillars.
+    const lower = zs(0.74, -1.78, 10).map((z) => sidePoint(s, z, 0.1));
+    const upper = zs(0.74, -1.78, 10).map((z) => sidePoint(s, z, 0.9));
+    poly(lower, false, 0.9, side);
+    poly(upper, false, 0.9, side);
+    line(lower[0]!, upper[0]!, 0.9, side);
+    line(lower[lower.length - 1]!, upper[upper.length - 1]!, 0.9, side);
+    line(sidePoint(s, -0.32, 0.1), sidePoint(s, -0.32, 0.9), 0.9, side); // B-pillar
+    // Door shut lines, handles and the character line along the flank.
+    for (const z of [0.78, -0.32, -1.4]) {
+      const [, w, , , , sill] = stationAt(z);
+      line([s * w, sill + 0.05, z], sidePoint(s, z, 0.1), 0.8, side);
+    }
+    for (const z of [0.1, -0.95]) {
+      const [, w, belt] = stationAt(z);
+      line([s * w, belt - 0.1, z - 0.13], [s * w, belt - 0.1, z + 0.13], 1, side);
+    }
+    poly(
+      zs(1.95, -2.0, 12).map((z) => {
+        const [, w, belt, , , sill] = stationAt(z);
+        return [s * w, sill + (belt - sill) * 0.42, z] as Vec3;
+      }),
+      false,
+      0.8,
+      side
+    );
+    // Wing mirror.
+    const [, mw, mb] = stationAt(0.82);
+    poly(
+      [
+        [s * (mw + 0.02), mb + 0.1, 0.9],
+        [s * (mw + 0.2), mb + 0.13, 0.84],
+        [s * (mw + 0.2), mb + 0.25, 0.84],
+        [s * (mw + 0.02), mb + 0.22, 0.9],
+      ],
+      true,
+      0.9,
+      unit([s, 0, 0.5])
+    );
+    // Wheels: arch, tyre and rim.
+    for (const z of WHEEL_Z) {
+      const arch: Vec3[] = [];
+      for (let i = 0; i <= 14; i++) {
+        const a = (i / 14) * Math.PI;
+        arch.push([s * WHEEL_X, WHEEL_RADIUS + Math.sin(a) * (WHEEL_RADIUS + 0.1), z + Math.cos(a) * (WHEEL_RADIUS + 0.1)]);
+      }
+      poly(arch, false, 0.9, side);
       for (const [r, wgt] of [
-        [WHEEL_RADIUS, 1.35],
-        [WHEEL_RADIUS * 0.58, 0.9],
+        [WHEEL_RADIUS, 1.2],
+        [WHEEL_RADIUS * 0.6, 0.8],
       ] as const) {
-        const n = 28;
-        for (let i = 0; i < n; i++) {
-          const a0 = (i / n) * Math.PI * 2;
-          const a1 = ((i + 1) / n) * Math.PI * 2;
-          push(
-            [side * WHEEL_X, WHEEL_RADIUS + Math.sin(a0) * r, z + Math.cos(a0) * r],
-            [side * WHEEL_X, WHEEL_RADIUS + Math.sin(a1) * r, z + Math.cos(a1) * r],
-            wgt
-          );
+        const ring: Vec3[] = [];
+        for (let i = 0; i < 28; i++) {
+          const a = (i / 28) * Math.PI * 2;
+          ring.push([s * WHEEL_X, WHEEL_RADIUS + Math.sin(a) * r, z + Math.cos(a) * r]);
         }
+        poly(ring, true, wgt, side);
       }
     }
+    // Head-lamp, tail-lamp.
+    poly(
+      [
+        [s * 0.34, 0.5, 2.27],
+        [s * 0.76, 0.52, 2.13],
+        [s * 0.8, 0.64, 2.1],
+        [s * 0.36, 0.6, 2.26],
+      ],
+      true,
+      1.3,
+      unit([s * 0.25, 0, 1])
+    );
+    poly(
+      [
+        [s * 0.36, 0.64, -2.23],
+        [s * 0.78, 0.66, -2.12],
+        [s * 0.8, 0.78, -2.1],
+        [s * 0.38, 0.76, -2.22],
+      ],
+      true,
+      1.3,
+      unit([s * 0.25, 0, -1])
+    );
   }
-  // Head- and tail-lamps.
-  for (const [z, y] of [
-    [2.29, 0.5],
-    [-2.24, 0.62],
-  ] as const) {
-    for (const side of [-1, 1]) {
-      push([side * 0.28, y, z], [side * 0.7, y + 0.04, z], 1.6);
-    }
-  }
+
+  // Grille + number plates + light bar.
+  poly(
+    [
+      [-0.26, 0.4, 2.3],
+      [0.26, 0.4, 2.3],
+      [0.26, 0.52, 2.3],
+      [-0.26, 0.52, 2.3],
+    ],
+    true,
+    1,
+    FRONT
+  );
+  line([-0.3, 0.46, 2.3], [0.3, 0.46, 2.3], 0.6, FRONT);
+  poly(
+    [
+      [-0.24, 0.46, -2.26],
+      [0.24, 0.46, -2.26],
+      [0.24, 0.58, -2.26],
+      [-0.24, 0.58, -2.26],
+    ],
+    true,
+    1,
+    REAR
+  );
+  line([-0.36, 0.7, -2.23], [0.36, 0.7, -2.23], 0.9, REAR);
+
   cachedSegments = segs;
   return segs;
 }
@@ -204,17 +357,30 @@ export function makeCamera(bearing: number, distance = 12, height = 1.6) {
   };
 }
 
-const DEPTH_BUCKETS = 5;
+/** Opacity steps: segments are grouped into one SVG path per step. */
+const OPACITY_STEP = 0.04;
+
+/** Brightness of one line: calm body lines by depth, lines on a face that looks at the camera lift clearly. */
+function lineOpacity(near: number, facing: number | null, weight: number): number {
+  if (facing === null) return 0.1 + 0.22 * near;
+  if (facing <= 0.04) return 0.05;
+  return Math.min(0.62, 0.14 + 0.5 * Math.pow(facing, 0.6) * (0.65 + 0.35 * near) * (0.85 + 0.15 * weight));
+}
 
 /**
  * Projects the ghost car for a bearing and fits it to the viewBox (the car always fills the same
  * share of the frame, matching the 72–85 % viewport coverage the capture guide asks for).
+ * Lines on the faces that look at the camera (front, right side, …) are drawn brightest.
  */
 export function projectGhost(bearing: number, fill = 0.8): GhostWireframe {
   const { width, height } = GHOST_VIEWBOX;
   const cam = makeCamera(bearing);
   const segs = buildCarSegments();
-  const proj = segs.map((s) => ({ a: cam.project(s.a), b: cam.project(s.b), weight: s.weight }));
+  const proj = segs.map((s) => ({ a: cam.project(s.a), b: cam.project(s.b), weight: s.weight, n: s.n }));
+
+  // Unit vector from the car's centre towards the camera.
+  const th = (bearing * Math.PI) / 180;
+  const toCam = norm([Math.sin(th) * 12, 1.6 - 0.75, Math.cos(th) * 12]);
 
   let minX = Infinity;
   let maxX = -Infinity;
@@ -243,21 +409,22 @@ export function projectGhost(bearing: number, fill = 0.8): GhostWireframe {
   });
   const fmt = (n: number) => n.toFixed(1);
 
-  const buckets: string[][] = Array.from({ length: DEPTH_BUCKETS }, () => []);
+  const groups = new Map<number, string[]>();
   for (const s of proj) {
     const mid = (s.a.depth + s.b.depth) / 2;
     const near = 1 - (mid - minD) / (maxD - minD || 1); // 1 = nearest
-    const bi = Math.min(DEPTH_BUCKETS - 1, Math.floor(near * DEPTH_BUCKETS));
+    const facing = s.n ? dot(s.n, toCam) : null;
+    const step = Math.round(lineOpacity(near, facing, s.weight) / OPACITY_STEP);
     const a = toSvg(s.a);
     const b = toSvg(s.b);
-    buckets[bi]!.push(`M${fmt(a.x)} ${fmt(a.y)}L${fmt(b.x)} ${fmt(b.y)}`);
+    const list = groups.get(step) ?? [];
+    list.push(`M${fmt(a.x)} ${fmt(a.y)}L${fmt(b.x)} ${fmt(b.y)}`);
+    groups.set(step, list);
   }
-  const body: GhostPath[] = buckets
-    .map((segsInBucket, i) => ({
-      d: segsInBucket.join(''),
-      opacity: 0.07 + Math.pow(i / (DEPTH_BUCKETS - 1), 1.6) * 0.88,
-    }))
-    .filter((b) => b.d.length > 0);
+  // Far/hidden lines first, bright ones on top.
+  const body: GhostPath[] = [...groups.entries()]
+    .sort((x, y) => x[0] - y[0])
+    .map(([step, list]) => ({ d: list.join(''), opacity: step * OPACITY_STEP }));
 
   const gp = groundContour().map((p) => toSvg(cam.project(p)));
   const ground = gp.map((p, i) => `${i === 0 ? 'M' : 'L'}${fmt(p.x)} ${fmt(p.y)}`).join('') + 'Z';

@@ -8,7 +8,6 @@ import {
   ChevronUp,
   Check,
   Sparkles,
-  Compass,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCameraStream } from '../hooks/useCameraStream';
@@ -242,6 +241,8 @@ export function SmartCameraLandscapeView({
 
   const handleShutterClick = async () => {
     if (isCapturing || isPortrait) return;
+    // iOS only allows motion access from a tap: ask on the shutter, the level guide then switches on.
+    if (needsPermission) void requestPermission();
     setIsCapturing(true);
     setFlash(true);
 
@@ -524,54 +525,23 @@ export function SmartCameraLandscapeView({
               </>
             )}
 
-            {/* Active angle chip: step, name, progress and level status */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-3 sm:bottom-4 z-20 flex justify-center px-14">
-              <div className="pointer-events-auto flex max-w-full items-center gap-2.5 rounded-full bg-[#0D0F14]/70 py-1.5 ps-1.5 pe-3.5 ring-1 ring-[#E5C175]/35 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-                <span className="flex h-6 min-w-[2.25rem] items-center justify-center rounded-full bg-gradient-to-b from-[#F7DFA0] to-[#D4AE62] px-2 text-[11px] font-bold tabular-nums text-black">
-                  {activeAngle.id}/{SCAN_5_ANGLES.length}
-                </span>
-                <span className="truncate text-[11px] sm:text-xs font-semibold tracking-wide text-[#F4EBD6]">
+            {/* Faint hint of the side to shoot (no chip, no buttons) */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 sm:bottom-5 z-20 flex justify-center px-14">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={activeAngle.id}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: aligned ? 0.7 : 0.42, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.4 }}
+                  aria-live="polite"
+                  className={`font-display text-[11px] sm:text-xs font-light uppercase tracking-[0.32em] [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] transition-colors duration-500 ${
+                    aligned ? 'text-emerald-200' : 'text-[#F4EBD6]'
+                  }`}
+                >
                   {tAngle(`${activeAngle.key}.title`)}
-                </span>
-                <span className="hidden sm:flex items-center gap-1" aria-hidden="true">
-                  {SCAN_5_ANGLES.map((a) => (
-                    <span
-                      key={a.id}
-                      className={`h-1 rounded-full transition-all duration-300 ${
-                        completedAngles.includes(a.id)
-                          ? 'w-3 bg-emerald-400'
-                          : a.id === activeAngle.id
-                          ? 'w-5 bg-[#E5C175]'
-                          : 'w-3 bg-white/20'
-                      }`}
-                    />
-                  ))}
-                </span>
-                {needsPermission ? (
-                  <button
-                    type="button"
-                    onClick={requestPermission}
-                    className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-[#F7DFA0] ring-1 ring-[#E5C175]/40 hover:bg-white/15 active:scale-95 transition cursor-pointer"
-                  >
-                    <Compass className="h-3 w-3" />
-                    {t('motionEnable')}
-                  </button>
-                ) : level ? (
-                  <span
-                    className={`flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium transition-colors duration-300 ${
-                      aligned ? 'text-emerald-300' : 'text-white/55'
-                    }`}
-                    aria-live="polite"
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        aligned ? 'bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.9)]' : 'bg-white/35'
-                      }`}
-                    />
-                    {aligned ? t('aligned') : t('levelPhone')}
-                  </span>
-                ) : null}
-              </div>
+                </motion.span>
+              </AnimatePresence>
             </div>
 
             {/* 4 Inset Golden Rounded L-Shaped Corner Brackets (1:1 with Reference Image) */}

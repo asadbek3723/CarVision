@@ -30,15 +30,15 @@ export function AngleGhostOverlay({ bearing, aligned }: AngleGhostOverlayProps) 
           }`}
           style={{
             filter: aligned
-              ? 'drop-shadow(0 0 6px rgba(110,231,183,0.55))'
-              : 'drop-shadow(0 0 6px rgba(229,193,117,0.45))',
+              ? 'drop-shadow(0 0 4px rgba(110,231,183,0.4))'
+              : 'drop-shadow(0 0 3px rgba(229,193,117,0.25))',
           }}
           fill="none"
           initial={{ opacity: 0, scale: 0.96 }}
           animate={
             reduce
               ? { opacity: 1, scale: 1 }
-              : { opacity: aligned ? 1 : [0.82, 1, 0.82], scale: 1 }
+              : { opacity: aligned ? 1 : [0.8, 1, 0.8], scale: 1 }
           }
           exit={{ opacity: 0, scale: 1.03 }}
           transition={
@@ -51,8 +51,8 @@ export function AngleGhostOverlay({ bearing, aligned }: AngleGhostOverlayProps) 
           <path
             d={ghost.ground}
             stroke="currentColor"
-            strokeOpacity={0.28}
-            strokeWidth={1.2}
+            strokeOpacity={0.18}
+            strokeWidth={1}
             strokeDasharray="3 7"
             strokeLinecap="round"
             vectorEffect="non-scaling-stroke"
@@ -63,7 +63,7 @@ export function AngleGhostOverlay({ bearing, aligned }: AngleGhostOverlayProps) 
               d={part.d}
               stroke="currentColor"
               strokeOpacity={part.opacity}
-              strokeWidth={1.5}
+              strokeWidth={1.1}
               strokeLinecap="round"
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
