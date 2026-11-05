@@ -53,11 +53,11 @@ const DAMPING = 17;
 // Flick physics (units: cards, seconds). The wheel coasts with friction that grows as it slows,
 // while a detent force pulls it into the nearest tooth, so it visibly ticks from tooth to tooth
 // and finally clicks into one.
-const MAX_SPEED = 8; // cards / s: a bit faster than a normal swipe, never a blur
-const MIN_LAUNCH = 5; // cards / s: enough to roll over the next tooth
+const MAX_SPEED = 11; // cards / s: a bit faster than a normal swipe, never a blur
+const MIN_LAUNCH = 6; // cards / s: enough to roll over the next tooth
 const MIN_FLICK = 1.3; // slower releases just snap to the nearest tooth
 const DETENT = 18; // tooth pull; crossing a tooth needs ~3.4 cards/s
-const FRICTION_BASE = 1.6;
+const FRICTION_BASE = 1.05;
 const FRICTION_LOW_SPEED = 7;
 const SUBSTEP = 1 / 240;
 
