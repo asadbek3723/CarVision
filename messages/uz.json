@@ -988,6 +988,7 @@
     "blurry": "Rasm xira koʻrinadi. Kamerani toʻgʻrilab qayta oling"
   },
   "newPart": {
+    "category": "Kategoriya",
     "errNotFound": "Mahsulot topilmadi",
     "errLoad": "Mahsulotni yuklab boʻlmadi",
     "errImprove": "Yaxshilab boʻlmadi",

@@ -988,6 +988,7 @@
     "blurry": "The image looks blurry. Hold the camera steady and retake it"
   },
   "newPart": {
+    "category": "Category",
     "errNotFound": "Product not found",
     "errLoad": "Couldn't load the product",
     "errImprove": "Couldn't improve it",

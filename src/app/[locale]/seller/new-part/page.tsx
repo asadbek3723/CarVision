@@ -36,7 +36,22 @@ const LANGUAGE_NAMES: Record<ItemLocale, string> = {
 
 const fieldCls =
   'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-base text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
-const labelCls = 'mb-2 block text-xs font-semibold text-white/55';
+const labelCls = 'mb-2 block text-xs font-semibold uppercase tracking-wider text-white/50';
+const cardCls = 'rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5 md:p-6';
+const selectCls =
+  'w-full appearance-none rounded-2xl border border-white/10 bg-white/[0.04] ps-4 pe-11 py-3.5 text-base text-white outline-none transition hover:border-white/20 focus:border-[#D4AE62]/60 [&>option]:bg-[#11141b]';
+
+/** Styled native select (keeps the mobile picker) with a chevron. */
+function SelectBox({ children, className = '', ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className={`relative ${className}`}>
+      <select {...props} className={selectCls}>
+        {children}
+      </select>
+      <ChevronDown className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AE62]" />
+    </div>
+  );
+}
 
 /** Throws an Error whose message is the server's text, or '' when there is none (the caller supplies a translated fallback). */
 async function uploadBlob(blob: Blob, apiError: (b: { code?: string; error?: string }, fallback: string) => string): Promise<string> {
@@ -76,7 +91,7 @@ export default function SellerNewPartPage() {
   const [vehicles, setVehicles] = React.useState<PickedVehicle[]>([]);
   const [pickCars, setPickCars] = React.useState(false);
 
-  const [more, setMore] = React.useState(false);
+  const [more, setMore] = React.useState(true);
   const [sourceLang, setSourceLang] = React.useState<string | null>(null);
   const [translations, setTranslations] = React.useState<ItemTranslations>({});
   const [editedLangs, setEditedLangs] = React.useState<Set<ItemLocale>>(new Set());
@@ -288,7 +303,7 @@ export default function SellerNewPartPage() {
   // ---- screens -------------------------------------------------------------------------------------
   const shell = (children: React.ReactNode) => (
     <VeloceShell>
-      <div className="mx-auto max-w-xl px-4 pb-40 pt-4 md:px-8">{children}</div>
+      <div className="mx-auto max-w-xl px-4 pb-40 pt-4 md:px-8 lg:max-w-6xl">{children}</div>
     </VeloceShell>
   );
 
@@ -348,8 +363,9 @@ export default function SellerNewPartPage() {
         <span className="w-10" />
       </div>
 
+      <div className="lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-8">
       {/* Photo */}
-      <section>
+      <section className={`${cardCls} !p-3 md:!p-4 lg:sticky lg:top-6`}>
         <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#0B0D13]">
           {main ? (
             <>
@@ -421,24 +437,19 @@ export default function SellerNewPartPage() {
         )}
       </section>
 
+      <div className="mt-5 flex flex-col gap-5 lg:mt-0 [&>section]:!mt-0">
       {/* Category */}
-      <section className="mt-6">
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+      <section className={cardCls}>
+        <label className={labelCls} htmlFor="p-cat">{t('category')}</label>
+        <SelectBox id="p-cat" value={category} onChange={(e) => setCategory(e.target.value as CatalogCategory)}>
           {CATALOG_CATEGORIES.map((c) => (
-            <button
-              key={c.slug}
-              type="button"
-              onClick={() => setCategory(c.slug)}
-              className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold transition ${category === c.slug ? 'bg-[#D4AE62] text-black' : 'bg-white/[0.06] text-white/75'}`}
-            >
-              {tc(c.slug)}
-            </button>
+            <option key={c.slug} value={c.slug}>{tc(c.slug)}</option>
           ))}
-        </div>
+        </SelectBox>
       </section>
 
       {/* Name + price */}
-      <section className="mt-5 space-y-4">
+      <section className={`${cardCls} space-y-4`}>
         <div>
           <label className={labelCls} htmlFor="p-name">{t('name')}</label>
           <div className="relative">
@@ -476,17 +487,17 @@ export default function SellerNewPartPage() {
           <label className={labelCls} htmlFor="p-price">{t('price')}</label>
           <div className="flex gap-2">
             <input id="p-price" type="number" inputMode="decimal" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" className={fieldCls} />
-            <select value={currency} onChange={(e) => setCurrency(e.target.value as (typeof PRICE_CURRENCIES)[number])} aria-label={t('currency')} className="rounded-2xl border border-white/10 bg-[#11141b] px-3 text-sm text-white outline-none">
+            <SelectBox value={currency} onChange={(e) => setCurrency(e.target.value as (typeof PRICE_CURRENCIES)[number])} aria-label={t('currency')} className="w-32 shrink-0">
               {PRICE_CURRENCIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
-            </select>
+            </SelectBox>
           </div>
         </div>
       </section>
 
       {/* Fitment */}
-      <section className="mt-5">
+      <section className={cardCls}>
         <label className={labelCls}>{t('whichCar')}</label>
         {!pickCars && !universal && vehicles.length === 0 ? (
           <>
@@ -511,13 +522,13 @@ export default function SellerNewPartPage() {
       </section>
 
       {/* More */}
-      <section className="mt-5">
-        <button type="button" onClick={() => setMore((m) => !m)} className="flex items-center gap-2 text-sm font-semibold text-white/55 hover:text-white">
-          <ChevronDown className={`h-4 w-4 transition ${more ? 'rotate-180' : ''}`} />
+      <section className={cardCls}>
+        <button type="button" onClick={() => setMore((m) => !m)} className="flex w-full items-center justify-between text-sm font-semibold text-white/75 hover:text-white">
           {t('more')}
+          <ChevronDown className={`h-4 w-4 text-[#D4AE62] transition ${more ? 'rotate-180' : ''}`} />
         </button>
         {more && (
-          <div className="mt-4 space-y-4">
+          <div className="mt-5 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls} htmlFor="p-brand">{t('brand')}</label>
@@ -531,7 +542,12 @@ export default function SellerNewPartPage() {
             {category === 'wheels' && (
               <div>
                 <label className={labelCls} htmlFor="p-diam">{t('diameter')}</label>
-                <input id="p-diam" type="number" inputMode="numeric" min={10} max={30} value={diameter} onChange={(e) => setDiameter(e.target.value)} placeholder="17" className={fieldCls} />
+                <SelectBox id="p-diam" value={diameter} onChange={(e) => setDiameter(e.target.value)}>
+                  <option value="">—</option>
+                  {Array.from({ length: 17 }, (_, i) => 13 + i).map((d) => (
+                    <option key={d} value={d}>R{d}</option>
+                  ))}
+                </SelectBox>
               </div>
             )}
             {category === 'wrap_paint' && (
@@ -550,7 +566,7 @@ export default function SellerNewPartPage() {
 
       {/* Translations (edit mode): the listing is translated automatically; the seller can correct any language */}
       {editId && (
-        <section className="mt-5">
+        <section className={cardCls}>
           <h2 className="text-sm font-semibold text-white/75">{t('trTitle')}</h2>
           <p className="mt-1 text-xs text-white/45">{t('trHint')}</p>
           {ITEM_LOCALES.filter((l) => l !== sourceLang && translations[l]).length === 0 ? (
@@ -578,6 +594,9 @@ export default function SellerNewPartPage() {
           )}
         </section>
       )}
+
+      </div>
+      </div>
 
       {error && <p role="alert" className="mt-5 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 

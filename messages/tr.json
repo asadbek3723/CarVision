@@ -988,6 +988,7 @@
     "blurry": "Görsel bulanık görünüyor. Kamerayı sabit tutup yeniden çekin"
   },
   "newPart": {
+    "category": "Kategori",
     "errNotFound": "Ürün bulunamadı",
     "errLoad": "Ürün yüklenemedi",
     "errImprove": "İyileştirilemedi",
