@@ -95,4 +95,45 @@ describe('direct-fitment-engine', () => {
     expect(res.promptUsed).toContain('LAST input image');
     expect(res.promptUsed).toContain('Only modify what is actually visible');
   });
+
+  it('keeps the rest of the car untouched and does not add shine', async () => {
+    const res = await executeDirectAiFitment({
+      carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
+      angleId: 'front-left',
+      parts: [{ id: 'w1', name: 'BBS CI-R 20"', category: 'Wheels' }],
+      mode: 'fitment',
+    });
+    expect(res.promptUsed).toContain('dents');
+    expect(res.promptUsed).toContain('Never repair, clean, smooth');
+    expect(res.promptUsed).toContain('Do not add extra shine');
+  });
+
+  it('recolours in place and keeps damage visible', async () => {
+    const res = await executeDirectAiFitment({
+      carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
+      angleId: 'right',
+      parts: [{ id: 'c1', name: 'Satin Black', category: 'Color', swatch: '#111' }],
+      mode: 'fitment',
+    });
+    expect(res.promptUsed).toContain('Change ONLY the exterior paint colour');
+    expect(res.promptUsed).toContain('Do not make the paint glossier');
+    expect(res.promptUsed).not.toContain('Do not add extra shine');
+  });
+
+  it('describes ceramic coating and polishing as paint finish only', async () => {
+    const ceramic = await executeDirectAiFitment({
+      carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
+      parts: [{ id: 'k1', name: 'Ceramic Pro 9H', category: 'Ceramic' }],
+      mode: 'fitment',
+    });
+    expect(ceramic.promptUsed).toContain('CERAMIC COATING');
+    expect(ceramic.promptUsed).toContain('deep scratches stay');
+    const polish = await executeDirectAiFitment({
+      carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
+      parts: [{ id: 'p1', name: 'Polirovka 2 bosqich', category: 'Polish' }],
+      mode: 'fitment',
+    });
+    expect(polish.promptUsed).toContain('PAINT POLISHING');
+    expect(polish.promptUsed).toContain('Dents, creases, deep scratches');
+  });
 });

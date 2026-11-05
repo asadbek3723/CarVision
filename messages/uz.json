@@ -483,7 +483,9 @@
       "bodyKit": "Bamper va obves",
       "performance": "Fara va chiroqlar",
       "interior": "Salon va rul",
-      "color": "Kuzov rangi"
+      "color": "Kuzov rangi",
+      "ceramic": "Keramika",
+      "polish": "Polirovka"
     },
     "back": "Orqaga",
     "titleSeller": "Planshet tyuning studiyasi",
@@ -518,7 +520,9 @@
     "errTakePhoto": "Avval mashinangizni suratga oling.",
     "yourBuild": "Sizning to‘plamingiz",
     "removePart": "Olib tashlash",
-    "noPartsInCategory": "Bu kategoriyada hali detal yo‘q"
+    "noPartsInCategory": "Bu kategoriyada hali detal yo‘q",
+    "before": "Oldin",
+    "after": "Keyin"
   },
   "identify": {
     "dialog": "Mashinani aniqlash",
@@ -966,6 +970,8 @@
     "interior": "Salon va rul",
     "exhaust": "Glushitel",
     "wrap_paint": "Rang va plyonka",
+    "ceramic": "Keramika",
+    "polish": "Polirovka",
     "other": "Boshqa"
   },
   "imageErrors": {

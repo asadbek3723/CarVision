@@ -158,33 +158,53 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
       .join(' ');
   }
 
+  const isCeramic = (p: { category: string; name: string }) => /ceramic|keramik/i.test(`${p.category} ${p.name}`);
+  const isPolish = (p: { category: string; name: string }) => /polish|polirov/i.test(`${p.category} ${p.name}`);
+  const isColor = (p: { category: string; swatch?: string | undefined }) => Boolean(p.swatch) || /color|wrap|paint/i.test(p.category);
+
   const partInstructions = req.parts.map((p) => {
     const cat = p.category.toLowerCase();
     const specText = p.spec ? ` (${p.spec})` : '';
+    if (isCeramic(p)) {
+      return `CERAMIC COATING "${p.name}": show the paint exactly as if a professional ceramic coating was applied to the existing paint. Only the clear-coat surface changes: slightly deeper, cleaner and crisper reflections, light swirl marks and haze gone. The body shape, dents, creases and deep scratches stay exactly as in the photo`;
+    }
+    if (isPolish(p)) {
+      return `PAINT POLISHING "${p.name}": show the paint exactly as if it was machine-polished (paint correction). Swirl marks, haze, oxidation and light surface scratches are removed and the gloss is even and natural. Dents, creases, deep scratches, chips and damaged areas stay exactly as in the photo`;
+    }
+    if (isColor(p)) {
+      return `Change ONLY the exterior paint colour to "${p.name}" (${p.swatch || 'custom automotive wrap'}). Recolour the painted body panels in place: every dent, crease, scratch, scuff, chip and panel gap stays visible with the same shape, and the reflections keep the same position and intensity as in the original photo. Do not make the paint glossier or shinier than it was. Windows, glass, trim, lamps, tyres and wheels keep their original colour`;
+    }
     if (cat.includes('wheel') || cat.includes('disk')) {
-      return `Mount "${p.name}"${specText} forged wheels/rims into the wheel wells with exact spoke geometry, brake caliper clearance, and realistic tire sidewalls`;
+      return `Replace the wheels with "${p.name}"${specText}: exact spoke geometry from the reference photo, same wheel size position, brake calipers and tyre sidewalls kept, realistic contact shadow`;
     }
     if (cat.includes('body') || cat.includes('bamper') || cat.includes('aero')) {
-      return `Install "${p.name}"${specText} aerodynamic body kit / bumper fascia seamlessly aligned with factory body panel gaps and matching paint/carbon weave reflections`;
+      return `Replace the matching body part with "${p.name}"${specText}, aligned with the factory panel gaps and painted in the car's current paint colour (or the shown carbon weave)`;
     }
     if (cat.includes('perf') || cat.includes('light') || cat.includes('fara')) {
-      return `Fit "${p.name}"${specText} crystal LED headlights/taillights into the factory lamp housings with realistic DRL illumination`;
+      return `Replace the lamps with "${p.name}"${specText} inside the factory housings, with natural DRL illumination`;
     }
-    if (p.swatch || cat.includes('color') || cat.includes('wrap')) {
-      return `Refinish the exterior body panels in "${p.name}" (${p.swatch || 'custom automotive wrap'}) while preserving all window glass, trim, and realistic environment reflections`;
-    }
-    return `Install "${p.name}"${specText} (${p.category}) with 100% factory-grade fitment`;
+    return `Install "${p.name}"${specText} (${p.category}) with factory-grade fitment`;
   });
 
+  const touchesPaint = req.parts.some((p) => isColor(p) || isCeramic(p) || isPolish(p));
+  const refinesPaint = req.parts.some((p) => isCeramic(p) || isPolish(p));
+
   return [
-    `Photorealistic 4K automotive tuning modification on the exact input car (${angleText}).`,
-    ...partInstructions,
+    `This is a precise edit of the customer's real car photo (${angleText}), not a new picture: change only what is listed below, and keep every other pixel of the photo as it is.`,
+    'CHANGES TO MAKE:',
+    ...partInstructions.map((line, n) => `${n + 1}. ${line}.`),
     req.referenceAfter
       ? 'The LAST input image shows this same car already modified, taken from a different angle: use it ONLY as a reference for how the new parts, wheel design and paint look, and reproduce them identically. Never copy its camera angle or background.'
       : '',
     `Only modify what is actually visible from this ${angleText}; do not invent parts that are hidden from this viewpoint.`,
-    'CRITICAL RULES: Keep the exact same car make/model, exact same camera angle, and exact same background environment.',
-    'Do not alter the background or change the vehicle into a different car. Photorealistic shadows, reflections, and OEM+ studio quality.',
+    'KEEP EXACTLY AS IN THE ORIGINAL PHOTO: car make, model and body shape, camera angle, framing, background, lighting, shadows, number plate, glass, and all existing damage and wear: dents, dings, creases, scratches, scuffs, chips, rust, dirt, stickers.',
+    'Never repair, clean, smooth, retouch or beautify anything that was not listed above.',
+    refinesPaint
+      ? 'Outside the listed paint finish work, change nothing about the paint.'
+      : touchesPaint
+        ? 'The paint gloss level stays the same as in the original photo.'
+        : 'Do not touch the paint: the same colour, the same gloss level, the same swirl marks and dull spots. Do not add extra shine, glow, bloom, HDR look or contrast.',
+    'Result: a photorealistic photo that looks like the same photograph taken after the work was really done, with natural shadows and reflections.',
   ]
     .filter(Boolean)
     .join(' ');

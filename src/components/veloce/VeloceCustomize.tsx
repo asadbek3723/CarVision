@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronLeft,
+  ChevronRight,
+  Download,
   Camera,
   Layers,
   SlidersHorizontal,
@@ -43,6 +45,8 @@ const CATEGORIES = [
   { id: 'Performance', key: 'performance' },
   { id: 'Interior', key: 'interior' },
   { id: 'Color', key: 'color' },
+  { id: 'Ceramic', key: 'ceramic' },
+  { id: 'Polish', key: 'polish' },
 ] as const;
 
 import { composeCarAnglePhotorealistic } from '@/lib/automotive-compositor';
@@ -55,6 +59,7 @@ const getUSDPrice = (raw?: number) => {
 
 export function VeloceCustomize() {
   const t = useTranslations('customize');
+  const tr = useTranslations('result');
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -67,6 +72,7 @@ export function VeloceCustomize() {
     setSelectedPartIds,
     multiAngles,
     captureStamp,
+    generatedAngles,
     setGeneratedAngles,
     openCamera,
   } = useVeloceStore();
@@ -135,9 +141,11 @@ export function VeloceCustomize() {
   const togglePart = React.useCallback(
     (id: string) => {
       setSelectedPartIds(toggleInSlot(selectedPartIds, id, catalogProducts));
+      // The rendered pictures belong to the old selection: drop them so the top never shows stale parts.
+      if (Object.keys(generatedAngles).length > 0) setGeneratedAngles({});
       vibrate(20);
     },
-    [selectedPartIds, catalogProducts, setSelectedPartIds]
+    [selectedPartIds, catalogProducts, setSelectedPartIds, generatedAngles, setGeneratedAngles]
   );
 
   // Pre-select requestedPartId if passed in URL and not yet selected; tidy older multi-picks per slot.
@@ -176,6 +184,42 @@ export function VeloceCustomize() {
   // Active angle preview image
   const currentAnglePhoto =
     multiAngles[activeAngleId] || photo || '/assets/car-CjioCIbt.jpg';
+
+  // Rendered result of this side (if any): the top picture becomes a before / after comparison.
+  const afterPhoto = generatedAngles[activeAngleId] || '';
+  const hasAfter = Boolean(afterPhoto);
+  const [sliderPos, setSliderPos] = React.useState(50);
+  const sliderRef = React.useRef<HTMLDivElement | null>(null);
+  const sliderDrag = React.useRef(false);
+  const moveSlider = (clientX: number) => {
+    const rect = sliderRef.current?.getBoundingClientRect();
+    if (!rect || rect.width <= 0) return;
+    setSliderPos(Math.max(0, Math.min(((clientX - rect.left) / rect.width) * 100, 100)));
+  };
+  const stepAngle = (delta: number) => {
+    const withPhoto = FIVE_CAR_ANGLES.filter((a) => multiAngles[a.id] || generatedAngles[a.id]);
+    const list = withPhoto.length > 1 ? withPhoto : FIVE_CAR_ANGLES;
+    const at = Math.max(0, list.findIndex((a) => a.id === activeAngleId));
+    const next = list[(at + delta + list.length) % list.length];
+    if (next) setActiveAngleId(next.id);
+  };
+  // Cross-origin URLs ignore <a download>, so fetch the picture as a blob first.
+  const saveAfter = async () => {
+    try {
+      const res = await fetch(afterPhoto);
+      if (!res.ok) throw new Error('fetch failed');
+      const blobUrl = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `carvision-${activeAngleId}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    } catch {
+      window.open(afterPhoto, '_blank', 'noopener');
+    }
+  };
 
   const capturedAnglesCount = React.useMemo(() => {
     const keys = Object.keys(multiAngles);
@@ -323,11 +367,80 @@ export function VeloceCustomize() {
       {/* Car viewport */}
       <div className="relative mt-3 overflow-hidden rounded-[28px] lg:mt-0 bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(212,174,98,0.10),transparent_70%)]" />
-        <div className="relative aspect-[16/10] w-full overflow-hidden md:aspect-[2/1]">
-          <img src={currentAnglePhoto} alt={t('photoAlt')} className="h-full w-full object-cover transition-opacity duration-300" />
+        <div
+          ref={sliderRef}
+          onPointerDown={(e) => {
+            if (!hasAfter) return;
+            sliderDrag.current = true;
+            e.currentTarget.setPointerCapture?.(e.pointerId);
+            moveSlider(e.clientX);
+          }}
+          onPointerMove={(e) => {
+            if (sliderDrag.current) moveSlider(e.clientX);
+          }}
+          onPointerUp={() => {
+            sliderDrag.current = false;
+          }}
+          onPointerCancel={() => {
+            sliderDrag.current = false;
+          }}
+          className={`relative aspect-[16/10] w-full overflow-hidden md:aspect-[2/1] ${hasAfter ? 'cursor-ew-resize touch-none select-none' : ''}`}
+        >
+          {hasAfter ? (
+            <>
+              <img src={afterPhoto} alt={tr('afterAlt')} draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+              <img
+                src={currentAnglePhoto}
+                alt={tr('beforeAlt')}
+                draggable={false}
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)`, WebkitClipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 z-[2] w-0.5 bg-[#D4AE62] shadow-[0_0_20px_rgba(212,174,98,0.9)]"
+                style={{ insetInlineStart: `${sliderPos}%`, transform: 'translateX(-50%)' }}
+              >
+                <div className="absolute start-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#D4AE62] text-sm font-black text-black shadow-[0_0_24px_rgba(212,174,98,0.9)]">‹ ›</div>
+              </div>
+              <span className="pointer-events-none absolute start-3 top-3 z-[3] rounded-full bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/85 backdrop-blur-md">{t('before')}</span>
+              <span className="pointer-events-none absolute end-3 top-3 z-[3] rounded-full bg-[#D4AE62] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-black">{t('after')}</span>
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => void saveAfter()}
+                aria-label={tr('download')}
+                className="absolute end-3 top-12 z-[3] grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-black/65 text-[#D4AE62] backdrop-blur-md transition hover:bg-black/85"
+              >
+                <Download className="h-[18px] w-[18px]" />
+              </button>
+            </>
+          ) : (
+            <img src={currentAnglePhoto} alt={t('photoAlt')} className="h-full w-full object-cover transition-opacity duration-300" />
+          )}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0B0D13] via-[#0B0D13]/40 to-transparent" />
 
-          {selectedProducts.length > 0 && (
+          {/* Other sides */}
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => stepAngle(-1)}
+            aria-label={tr('prevAngle')}
+            className="absolute start-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75"
+          >
+            <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
+          </button>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => stepAngle(1)}
+            aria-label={tr('nextAngle')}
+            className="absolute end-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75"
+          >
+            <ChevronRight className="h-5 w-5 rtl:rotate-180" />
+          </button>
+
+          {selectedProducts.length > 0 && !hasAfter && (
             <div className="absolute start-3 top-3 z-[2] flex items-center gap-1.5 rounded-full bg-[#090A0F]/80 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md">
               <SlidersHorizontal className="h-3.5 w-3.5 text-[#D4AE62]" />
               {t('selectedCount', { count: selectedProducts.length })}
@@ -335,7 +448,7 @@ export function VeloceCustomize() {
           )}
 
           {/* Angle pills */}
-          <div className="absolute inset-x-3 bottom-3 z-[2] flex items-center gap-1 overflow-x-auto rounded-full bg-[#090A0F]/80 p-1 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div onPointerDown={(e) => e.stopPropagation()} className="absolute inset-x-3 bottom-3 z-[2] flex items-center gap-1 overflow-x-auto rounded-full bg-[#090A0F]/80 p-1 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {FIVE_CAR_ANGLES.map((ang) => {
               const isActive = activeAngleId === ang.id;
               const hasCaptured = Boolean(multiAngles[ang.id]);

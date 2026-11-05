@@ -13,6 +13,8 @@ export const CATALOG_CATEGORIES = [
   { slug: 'interior', label: 'Salon va rul', hint: "O'rindiq, rul, panel", veloce: 'Interior' },
   { slug: 'exhaust', label: 'Glushitel', hint: 'Chiqarish tizimi', veloce: 'Performance' },
   { slug: 'wrap_paint', label: 'Rang va plyonka', hint: 'Wrap, bo‘yoq, tonirovka', veloce: 'Color' },
+  { slug: 'ceramic', label: 'Keramika', hint: 'Keramik qoplama', veloce: 'Ceramic' },
+  { slug: 'polish', label: 'Polirovka', hint: 'Kuzov polirovkasi', veloce: 'Polish' },
   { slug: 'other', label: 'Boshqa', hint: 'Boshqa detallar', veloce: 'Performance' },
 ] as const;
 

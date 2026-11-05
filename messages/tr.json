@@ -483,7 +483,9 @@
       "bodyKit": "Tampon ve body kit",
       "performance": "Farlar ve aydınlatma",
       "interior": "İç mekân ve direksiyon",
-      "color": "Kaporta rengi"
+      "color": "Kaporta rengi",
+      "ceramic": "Seramik kaplama",
+      "polish": "Cilalama"
     },
     "back": "Geri",
     "titleSeller": "Tablet tuning stüdyosu",
@@ -518,7 +520,9 @@
     "errTakePhoto": "Önce aracınızın fotoğrafını çekin.",
     "yourBuild": "Kurulumunuz",
     "removePart": "Kaldır",
-    "noPartsInCategory": "Bu kategoride henüz parça yok"
+    "noPartsInCategory": "Bu kategoride henüz parça yok",
+    "before": "Önce",
+    "after": "Sonra"
   },
   "identify": {
     "dialog": "Aracı belirle",
@@ -966,6 +970,8 @@
     "interior": "İç mekân ve direksiyon",
     "exhaust": "Egzoz",
     "wrap_paint": "Boya ve folyo",
+    "ceramic": "Seramik kaplama",
+    "polish": "Cilalama",
     "other": "Diğer"
   },
   "imageErrors": {

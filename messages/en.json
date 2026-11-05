@@ -483,7 +483,9 @@
       "bodyKit": "Bumpers & body kits",
       "performance": "Lights & lamps",
       "interior": "Interior & steering wheel",
-      "color": "Body color"
+      "color": "Body color",
+      "ceramic": "Ceramic coating",
+      "polish": "Polishing"
     },
     "back": "Back",
     "titleSeller": "Tablet tuning studio",
@@ -518,7 +520,9 @@
     "errTakePhoto": "Take a photo of your car first.",
     "yourBuild": "Your build",
     "removePart": "Remove",
-    "noPartsInCategory": "No parts in this category yet"
+    "noPartsInCategory": "No parts in this category yet",
+    "before": "Before",
+    "after": "After"
   },
   "identify": {
     "dialog": "Identify your car",
@@ -966,6 +970,8 @@
     "interior": "Interior & steering wheel",
     "exhaust": "Exhaust",
     "wrap_paint": "Paint & wrap",
+    "ceramic": "Ceramic coating",
+    "polish": "Polishing",
     "other": "Other"
   },
   "imageErrors": {

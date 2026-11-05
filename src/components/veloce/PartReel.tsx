@@ -50,6 +50,17 @@ function measure(width: number): Metrics {
 const STIFFNESS = 190;
 const DAMPING = 17;
 
+// Flick physics (units: cards, seconds). The wheel coasts with friction that grows as it slows,
+// while a detent force pulls it into the nearest tooth, so it visibly ticks from tooth to tooth
+// and finally clicks into one.
+const MAX_SPEED = 8; // cards / s: a bit faster than a normal swipe, never a blur
+const MIN_LAUNCH = 5; // cards / s: enough to roll over the next tooth
+const MIN_FLICK = 1.3; // slower releases just snap to the nearest tooth
+const DETENT = 18; // tooth pull; crossing a tooth needs ~3.4 cards/s
+const FRICTION_BASE = 1.6;
+const FRICTION_LOW_SPEED = 7;
+const SUBSTEP = 1 / 240;
+
 /**
  * Endless "reel" of parts that sits on the rim of a big wheel. Every swipe, arrow press or
  * wheel notch turns the wheel by one tooth: the cards travel along the arc, tilt with it and
@@ -86,6 +97,9 @@ export function PartReel({
   const targetRef = React.useRef(0);
   const centerRef = React.useRef(0);
   const rafRef = React.useRef(0);
+  const modeRef = React.useRef<'spring' | 'inertia'>('spring');
+  const teethRef = React.useRef<HTMLDivElement | null>(null);
+  const widthRef = React.useRef(360);
   const lastTRef = React.useRef(0);
   const [centerK, setCenterK] = React.useState(0);
 
@@ -117,6 +131,9 @@ export function PartReel({
       if (inner) inner.dataset['active'] = ad < 0.5 ? '1' : '0';
     });
 
+    const teeth = teethRef.current;
+    if (teeth) teeth.style.backgroundPosition = `${(widthRef.current / 2 - 1 - dir * pos * slot).toFixed(1)}px 0`;
+
     const c = Math.round(pos);
     if (c !== centerRef.current) {
       centerRef.current = c;
@@ -126,15 +143,38 @@ export function PartReel({
 
   const tick = React.useCallback(
     (now: number) => {
-      const dt = Math.min((now - lastTRef.current) / 1000, 1 / 30);
+      const total = Math.min((now - lastTRef.current) / 1000, 1 / 30);
       lastTRef.current = now;
-      const toGo = targetRef.current - posRef.current;
-      velRef.current += (STIFFNESS * toGo - DAMPING * velRef.current) * dt;
-      posRef.current += velRef.current * dt;
-      if (Math.abs(toGo) < 0.0015 && Math.abs(velRef.current) < 0.02) {
+      const steps = Math.max(1, Math.ceil(total / SUBSTEP));
+      const h = total / steps;
+      const inertia = modeRef.current === 'inertia';
+
+      for (let i = 0; i < steps; i++) {
+        let acc: number;
+        if (inertia) {
+          const friction = FRICTION_BASE + FRICTION_LOW_SPEED * Math.exp(-Math.abs(velRef.current) / 1.5);
+          acc = -friction * velRef.current - DETENT * Math.sin(2 * Math.PI * posRef.current);
+        } else {
+          acc = STIFFNESS * (targetRef.current - posRef.current) - DAMPING * velRef.current;
+        }
+        velRef.current += acc * h;
+        posRef.current += velRef.current * h;
+      }
+
+      let settled: boolean;
+      if (inertia) {
+        const tooth = Math.round(posRef.current);
+        targetRef.current = tooth;
+        settled = Math.abs(velRef.current) < 0.06 && Math.abs(posRef.current - tooth) < 0.004;
+      } else {
+        settled = Math.abs(targetRef.current - posRef.current) < 0.0015 && Math.abs(velRef.current) < 0.02;
+      }
+
+      if (settled) {
         posRef.current = targetRef.current;
         velRef.current = 0;
         rafRef.current = 0;
+        modeRef.current = 'spring';
         paint();
         return;
       }
@@ -159,6 +199,7 @@ export function PartReel({
   const goTo = React.useCallback(
     (k: number) => {
       if (n < 2) return;
+      modeRef.current = 'spring';
       targetRef.current = k;
       kick();
     },
@@ -172,6 +213,7 @@ export function PartReel({
     if (!stage) return;
     const apply = () => {
       const next = measure(stage.clientWidth || 360);
+      widthRef.current = stage.clientWidth || 360;
       dirRef.current = getComputedStyle(stage).direction === 'rtl' ? -1 : 1;
       metricsRef.current = next;
       setMetrics((prev) => (prev.size === next.size && prev.slot === next.slot && prev.step === next.step ? prev : next));
@@ -191,6 +233,7 @@ export function PartReel({
     posRef.current = 0;
     velRef.current = 0;
     targetRef.current = 0;
+    modeRef.current = 'spring';
     centerRef.current = 0;
     setCenterK(0);
     paint();
@@ -235,6 +278,7 @@ export function PartReel({
     const d = drag.current;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = 0;
+    modeRef.current = 'spring';
     d.down = true;
     d.moved = false;
     d.startX = d.lastX = e.clientX;
@@ -268,10 +312,17 @@ export function PartReel({
     if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
     if (d.moved) {
       const flick = (-dirRef.current * d.v * 1000) / metricsRef.current.slot; // cards per second
-      const from = Math.round(posRef.current);
-      const k = Math.round(posRef.current + flick * 0.16);
-      targetRef.current = clamp(k, from - 2, from + 2);
-      velRef.current = flick * 0.4;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduced && Math.abs(flick) >= MIN_FLICK) {
+        modeRef.current = 'inertia';
+        // never weaker than one tooth's worth of push, so a flick always moves on
+        velRef.current = Math.sign(flick) * clamp(Math.abs(flick), MIN_LAUNCH, MAX_SPEED);
+        targetRef.current = Math.round(posRef.current);
+      } else {
+        modeRef.current = 'spring';
+        velRef.current = 0;
+        targetRef.current = Math.round(posRef.current);
+      }
       kick();
       // swallow the click that follows a drag
       setTimeout(() => {
@@ -325,6 +376,16 @@ export function PartReel({
           style={{ height: metrics.height, touchAction: 'pan-y' }}
           className="relative cursor-grab overflow-hidden outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#D4AE62]/50"
         >
+          {/* Gear rim: teeth slide past as the wheel turns */}
+          <div
+            ref={teethRef}
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-2 h-3 [mask-image:linear-gradient(90deg,transparent,#000_20%,#000_80%,transparent)]"
+            style={{
+              backgroundImage: 'linear-gradient(90deg, rgba(212,174,98,0.5) 0 2px, transparent 2px)',
+              backgroundSize: `${metrics.slot / 2}px 100%`,
+            }}
+          />
           {slides.map((k) => {
             const part = items[mod(k, n)]!;
             const picked = selectedIds.includes(part.id);

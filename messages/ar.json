@@ -483,7 +483,9 @@
       "bodyKit": "المصدات وطقم الهيكل",
       "performance": "المصابيح والإضاءة",
       "interior": "المقصورة والمقود",
-      "color": "لون الهيكل"
+      "color": "لون الهيكل",
+      "ceramic": "طلاء سيراميك",
+      "polish": "تلميع"
     },
     "back": "رجوع",
     "titleSeller": "استوديو التعديل على الجهاز اللوحي",
@@ -518,7 +520,9 @@
     "errTakePhoto": "التقط صورة لسيارتك أولًا.",
     "yourBuild": "تجهيزاتك",
     "removePart": "إزالة",
-    "noPartsInCategory": "لا توجد قطع في هذه الفئة بعد"
+    "noPartsInCategory": "لا توجد قطع في هذه الفئة بعد",
+    "before": "قبل",
+    "after": "بعد"
   },
   "identify": {
     "dialog": "تحديد السيارة",
@@ -966,6 +970,8 @@
     "interior": "المقصورة والمقود",
     "exhaust": "العادم",
     "wrap_paint": "الطلاء والتغليف",
+    "ceramic": "طلاء سيراميك",
+    "polish": "تلميع",
     "other": "أخرى"
   },
   "imageErrors": {
