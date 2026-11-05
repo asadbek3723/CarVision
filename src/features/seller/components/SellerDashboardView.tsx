@@ -5,7 +5,7 @@ import { useApiError } from '@/lib/api-error';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Camera, Eye, EyeOff, Loader2, Minus, Package, Pencil, Phone, Plus, Sparkles, Trash2, Users } from 'lucide-react';
+import { Camera, Coins, Eye, EyeOff, Loader2, Minus, Package, Pencil, Phone, Plus, Sparkles, Trash2, Users } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -150,16 +150,28 @@ export function SellerDashboardView() {
           <p className="text-xs text-white/50">{t('studio')}</p>
           <h1 className="text-xl font-bold text-white md:text-2xl">{user.shop?.shop_name ?? t('defaultName')}</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl border border-[#D4AE62]/25 bg-[#D4AE62]/[0.07] px-4 py-2 text-center">
-            <p className="text-[10px] font-semibold tracking-wide text-[#D4AE62]">{t('credits')}</p>
-            <p className="text-lg font-bold text-white">{user.role === 'super_admin' ? '∞' : user.credits_balance}</p>
+        <div className="flex w-full items-center gap-2.5 sm:w-auto">
+          <div className="flex h-12 items-center gap-2.5 rounded-full border border-[#D4AE62]/30 bg-gradient-to-b from-[#D4AE62]/[0.14] to-[#D4AE62]/[0.04] ps-2 pe-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#D4AE62]/20 text-[#D4AE62]">
+              <Coins className="h-4 w-4" />
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#D4AE62]/90">{t('credits')}</span>
+              <span className="mt-1 text-base font-bold tabular-nums text-white">{user.role === 'super_admin' ? '∞' : user.credits_balance}</span>
+            </span>
           </div>
-          <button type="button" onClick={openCamera} className="inline-flex items-center gap-2 rounded-full bg-white/[0.07] px-4 py-3 text-xs font-semibold text-white hover:bg-white/[0.12]">
+          <button
+            type="button"
+            onClick={openCamera}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-5 text-sm font-semibold text-white transition hover:border-white/20 hover:bg-white/[0.09] active:scale-[0.98] sm:flex-none"
+          >
             <Camera className="h-4 w-4" />
             <span className="hidden sm:inline">{t('takePhoto')}</span>
           </button>
-          <Link href={`/${locale}/seller/new-part`} className="inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-xs font-bold text-black hover:brightness-110">
+          <Link
+            href={`/${locale}/seller/new-part`}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-gradient-to-b from-[#E2BF78] to-[#C79F4E] px-6 text-sm font-bold text-black shadow-[0_6px_20px_-6px_rgba(212,174,98,0.55)] transition hover:brightness-105 active:scale-[0.98] sm:flex-none"
+          >
             <Plus className="h-4 w-4" />
             {t('addProduct')}
           </Link>
