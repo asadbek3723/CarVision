@@ -40,7 +40,7 @@ export function ProfileExtras() {
 
   if (!user) return null;
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       <Panel id="credits" open={open} onToggle={setOpen} icon={<Receipt className="h-5 w-5" />} title={t('creditHistory')} hint={t('balance', { count: user.credits_balance })}>
         <CreditHistory />
       </Panel>
@@ -54,23 +54,23 @@ export function ProfileExtras() {
 function Panel({ id, open, onToggle, icon, title, hint, children }: { id: PanelId; open: PanelId | null; onToggle: (v: PanelId | null) => void; icon: React.ReactNode; title: string; hint: string; children: React.ReactNode }) {
   const isOpen = open === id;
   return (
-    <section className="rounded-3xl bg-white/[0.04]">
+    <section>
       <button
         type="button"
         onClick={() => onToggle(isOpen ? null : id)}
         aria-expanded={isOpen}
         aria-controls={`panel-${id}`}
-        className={`flex min-h-14 w-full items-center gap-4 rounded-3xl px-5 py-4 text-start ${focusRing}`}
+        className={`group flex min-h-14 w-full items-center gap-4 rounded-lg py-3 text-start ${focusRing}`}
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-500">{icon}</span>
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center text-gold-500">{icon}</span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-white">{title}</span>
-          <span className="block truncate text-xs text-white/45">{hint}</span>
+          <span className="block text-base font-medium text-white transition group-hover:text-gold-300">{title}</span>
+          <span className="block truncate text-sm text-white/45">{hint}</span>
         </span>
         <ChevronDown className={`h-5 w-5 shrink-0 text-white/40 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div id={`panel-${id}`} className="px-5 pb-5">
+        <div id={`panel-${id}`} className="max-w-2xl pb-6 ps-9">
           {children}
         </div>
       )}
