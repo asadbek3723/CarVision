@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
 
     const parsed = requestSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
+      console.warn('generations: validation failed:', JSON.stringify(parsed.error.flatten().fieldErrors));
       return errorResponse(400, 'VALIDATION_FAILED', "Ma'lumotlar noto'g'ri kiritildi", {
         details: parsed.error.flatten(),
       });

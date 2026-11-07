@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { planRender, summarize, usableReference, type AngleState, type PlanAngle } from './render-plan';
 import { readJson } from '@/lib/safe-json';
+import { fitDataUrlToLimit } from '@/features/camera/lib/image-compressor';
 
 export interface BuildPart {
   id: string;
@@ -68,11 +69,12 @@ export function toRequestBody(angle: PlanAngle, parts: BuildPart[], referenceAft
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function renderAngle(angle: PlanAngle, parts: BuildPart[], reference?: string): Promise<{ url: string; demo: boolean }> {
+  const photo = angle.photo ? await fitDataUrlToLimit(angle.photo) : angle.photo;
   for (let attempt = 0; ; attempt++) {
     const res = await fetch('/api/v1/generations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(toRequestBody(angle, parts, reference)),
+      body: JSON.stringify(toRequestBody({ ...angle, photo }, parts, reference)),
     });
     const data = (await readJson(res)).data;
     if (res.ok && data.success && data.generation?.afterImageUrl) {

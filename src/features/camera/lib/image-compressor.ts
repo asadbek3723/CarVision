@@ -122,3 +122,36 @@ export async function compressFileToDataUrl(file: File, maxSide = 1600, quality 
     return null;
   }
 }
+
+/**
+ * Makes sure a captured photo (data URL) fits the render request limit before it is sent.
+ * Hosting platforms reject request bodies of about 4.5 MB, so anything bigger is re-encoded as a
+ * smaller JPEG. Photos that already fit, and non data URLs, are returned unchanged.
+ */
+export async function fitDataUrlToLimit(dataUrl: string, maxChars = 3_200_000): Promise<string> {
+  if (!dataUrl.startsWith('data:image/') || dataUrl.length <= maxChars) return dataUrl;
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const bitmap = await createImageBitmap(blob);
+    let side = Math.min(2048, Math.max(bitmap.width, bitmap.height));
+    let quality = 0.85;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const ratio = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
+      canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
+      canvas.getContext('2d')?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const url = canvas.toDataURL('image/jpeg', quality);
+      if (url.length <= maxChars) {
+        bitmap.close();
+        return url;
+      }
+      if (quality > 0.6) quality -= 0.1;
+      else side = Math.round(side * 0.8);
+    }
+    bitmap.close();
+  } catch {
+    // keep the original: the server answers with a clear error if it is really too large
+  }
+  return dataUrl;
+}
