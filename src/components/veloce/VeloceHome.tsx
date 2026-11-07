@@ -79,7 +79,6 @@ export function VeloceHome() {
       {/* Hero Section */}
       {/* overflow-x only: the glow must fade out on its own, not be cut off at the section's edge */}
       <section className="relative overflow-x-clip">
-        <div className="pointer-events-none absolute start-[60%] top-[15%] h-[55%] w-[55%] -translate-x-1/2 rounded-full bg-primary/[0.07] blur-[100px]" />
 
         <div className="relative mx-auto max-w-[1500px] lg:grid lg:min-h-[calc(100vh-81px)] lg:grid-cols-12 lg:items-center lg:px-14">
           {/* Car visual right column on desktop */}
@@ -89,7 +88,7 @@ export function VeloceHome() {
               alt={t('heroAlt')}
               width={1920}
               height={1088}
-              className="reveal relative w-full object-cover mix-blend-lighten [mask-image:radial-gradient(ellipse_58%_55%_at_55%_48%,black_40%,transparent_78%)]"
+              className="reveal relative w-full object-cover mix-blend-lighten [mask-image:linear-gradient(to_bottom,black_60%,transparent_95%)]"
             />
             <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-surface-0 to-transparent lg:hidden" />
           </div>
