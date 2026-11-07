@@ -81,7 +81,7 @@ export default function PlansPage() {
               const isCurrent = p.code === current;
               const free = p.priceUSD === 0;
               return (
-                <article key={p.code} className={`flex flex-col rounded-3xl border p-6 ${p.code === 'MAX_4000' ? ' bg-gold-500/[0.05]' : ' bg-surface-1'}`}>
+                <article key={p.code} className={`flex flex-col rounded-3xl p-6 shadow-e1 ${p.code === 'MAX_4000' ? 'bg-gold-500/[0.07] ring-1 ring-gold-500/25' : 'bg-surface-1'}`}>
                   <h2 className="text-sm font-bold uppercase tracking-widest text-white">{p.name}</h2>
                   <p className="mt-4 text-3xl font-bold text-white">{free ? '0' : formatPrice(p.priceUSD)}</p>
                   <p className="text-xs text-white/45">{free ? t('freeMonthly') : t('days', { count: p.durationDays })}</p>

@@ -68,8 +68,8 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
         </div>
 
         <div className="space-y-1.5 p-4">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase truncate">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
+            <span className="min-w-0 max-w-full truncate text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               {p.brand}
             </span>
             {carLabel && (

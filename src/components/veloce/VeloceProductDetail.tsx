@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
+import { useCategoryLabel } from '@/lib/category-label';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -24,6 +25,7 @@ interface VeloceProductDetailProps {
 
 export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
   const t = useTranslations('shop.detail');
+  const categoryLabel = useCategoryLabel();
   const tCard = useTranslations('shop.card');
   const params = useParams();
   const router = useRouter();
@@ -137,7 +139,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           <span className="absolute bottom-4 start-4 rounded-full bg-black/75 px-3.5 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-gold-500 backdrop-blur-md">
-            {product.category}
+            {categoryLabel(product.category)}
           </span>
         </div>
 
