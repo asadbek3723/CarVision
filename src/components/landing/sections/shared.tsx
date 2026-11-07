@@ -38,21 +38,41 @@ export function LogoWithText({ small = false }: { small?: boolean }) {
 
 export function useReveal() {
   React.useEffect(() => {
-    const elements = document.querySelectorAll('.reveal');
+    const root = document.documentElement;
+    const show = (el: Element) => {
+      el.classList.add('in');
+      el.setAttribute('data-revealed', 'true');
+    };
+    if (typeof IntersectionObserver === 'undefined') {
+      document.querySelectorAll('.reveal').forEach(show);
+      return;
+    }
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('in');
-            entry.target.setAttribute('data-revealed', 'true');
+            show(entry.target);
             observer.unobserve(entry.target);
           }
         });
       },
       { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
     );
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    const watch = (scope: ParentNode) =>
+      scope.querySelectorAll('.reveal:not(.in)').forEach((el) => observer.observe(el));
+    watch(document);
+    // Sections that mount later (lazy parts, language switch) are picked up too.
+    const mo = new MutationObserver((records) => {
+      for (const r of records) r.addedNodes.forEach((n) => n instanceof Element && (n.matches('.reveal') ? observer.observe(n) : watch(n)));
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    // Only now may content start hidden: without JS (or if this hook never runs) nothing stays invisible.
+    root.classList.add('reveal-ready');
+    return () => {
+      observer.disconnect();
+      mo.disconnect();
+      root.classList.remove('reveal-ready');
+    };
   }, []);
 }
 
