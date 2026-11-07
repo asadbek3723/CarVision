@@ -123,7 +123,7 @@ export function SellerDashboardView() {
     );
   }
 
-  if (user && !isSeller) return <StudioLock feature="dashboard" />;
+  if (user && !isSeller) return <StudioLock title="Dashboard" />;
 
   if (!user) {
     return (
