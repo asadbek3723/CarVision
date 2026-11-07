@@ -82,7 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = React.useCallback(async (identifier: string, password?: string) => {
-    setIsLoading(true);
     try {
       const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
@@ -100,13 +99,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch {
       return { success: false, error: '' };
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
   const signUp = React.useCallback(async (payload: SignUpPayload) => {
-    setIsLoading(true);
     try {
       const res = await fetch('/api/v1/auth/register', {
         method: 'POST',
@@ -128,8 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch {
       return { success: false, error: '' };
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 

@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, after, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase/server';
 import { loadSession } from '@/server/auth/session';
@@ -56,7 +56,8 @@ export async function POST(request: NextRequest) {
       return fail(403, 'ACCOUNT_BLOCKED', 'Akkaunt bloklangan');
     }
 
-    await recordAttempt('login', phone, ip, true);
+    // Audit row is not needed for the response: write it after the reply is sent.
+    after(() => recordAttempt('login', phone, ip, true));
 
     // Monthly free credits (idempotent, once per 30 days)
     await createAdminClient().rpc('claim_monthly_credits', { p_user_id: session.userId });

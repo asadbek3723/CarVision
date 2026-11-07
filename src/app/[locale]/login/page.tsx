@@ -6,28 +6,17 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smartphone, Lock, Check } from 'lucide-react';
+import { Lock, Check } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import {
   AuthShell,
   GlassCard,
   FloatingInput,
+  PhoneInput,
   GoldButton,
 } from '@/features/auth/components/AuthShell';
+import { DEFAULT_DIGITS, nationalLength } from '@/features/auth/lib/phone-countries';
 import { playLock, vibrate } from '@/features/camera/lib/fx';
-
-function formatPhone(val: string): string {
-  const chunks = [2, 3, 2, 2];
-  const parts: string[] = [];
-  let r = 0;
-  for (const c of chunks) {
-    if (r >= val.length) break;
-    parts.push(val.slice(r, r + c));
-    r += c;
-  }
-  if (r < val.length) parts.push(val.slice(r));
-  return parts.join(' ');
-}
 
 export default function LoginPage() {
   const t = useTranslations('login');
@@ -37,20 +26,26 @@ export default function LoginPage() {
   const locale = (params['locale'] as string) || 'uz';
   const { user, signIn } = useAuth();
 
-  const [phone, setPhone] = React.useState('');
+  const [phone, setPhone] = React.useState(DEFAULT_DIGITS);
   const [password, setPassword] = React.useState('');
   const [rememberMe, setRememberMe] = React.useState(true);
   const [errors, setErrors] = React.useState<{ phone?: string; pwd?: string }>({});
   const [shake, setShake] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
 
+  // Warm up the pages the user is most likely to open next.
+  React.useEffect(() => {
+    router.prefetch(`/${locale}/seller`);
+    router.prefetch(`/${locale}/register`);
+  }, [router, locale]);
+
   // If already authenticated, redirect to the Veloce App
   React.useEffect(() => {
     if (user) {
       if (user.role === 'super_admin') {
-        router.push(`/${locale}/admin`);
+        router.replace(`/${locale}/admin`);
       } else {
-        router.push(`/${locale}/seller`);
+        router.replace(`/${locale}/seller`);
       }
     }
   }, [user, locale, router]);
@@ -59,8 +54,7 @@ export default function LoginPage() {
     e.preventDefault();
     const errs: { phone?: string; pwd?: string } = {};
 
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 7) {
+    if (nationalLength(phone) < 7) {
       errs.phone = t('errPhone');
     }
     if (password.length < 8) {
@@ -75,7 +69,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const fullPhone = digits.startsWith('998') ? `+${digits}` : `+998${digits}`;
+      const fullPhone = `+${phone}`;
       const res = await signIn(fullPhone, password);
       if (res.success) {
         playLock();
@@ -107,16 +101,10 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-3.5">
-          <FloatingInput
-            icon={<Smartphone className="h-4 w-4" />}
+          <PhoneInput
             label={t('phone')}
-            inputMode="tel"
             value={phone}
-            onChange={(e) =>
-              setPhone(
-                formatPhone(e.target.value.replace(/\D/g, '').slice(0, 9))
-              )
-            }
+            onChange={setPhone}
             error={errors.phone}
           />
 
@@ -168,7 +156,7 @@ export default function LoginPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.15 }}
           className="mt-5 space-y-2.5 text-center text-xs"
         >
           <div>
