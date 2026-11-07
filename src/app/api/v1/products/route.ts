@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { loadItems } from '@/server/catalog';
-import { CATALOG_CATEGORIES, ITEM_LOCALES, localizedText, veloceCategory } from '@/domain/catalog';
+import { toVeloceProduct } from '@/server/product-view';
+import { CATALOG_CATEGORIES, ITEM_LOCALES, veloceCategory } from '@/domain/catalog';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,34 +65,7 @@ export async function GET(request: NextRequest) {
     }
     if (brandFilter) items = items.filter((i) => i.brand.toLowerCase() === brandFilter);
 
-    const products = items.map((i) => {
-      const text = localizedText(i, locale);
-      return {
-      id: i.id,
-      name: text.name,
-      brand: i.brand || 'CarVision',
-      price: i.priceUSD,
-      spec: text.description,
-      category: veloceCategory(i.category, i.attributes),
-      categoryLabel: i.categoryLabel,
-      image: i.coverImageUrl ?? i.images[0]?.url ?? '',
-      image_url: i.coverImageUrl ?? i.images[0]?.url ?? '',
-      images: i.images.map((g) => g.url),
-      angleImage: i.images.find((g) => g.kind === 'ANGLE')?.url,
-      swatch: typeof i.attributes['swatch'] === 'string' ? i.attributes['swatch'] : undefined,
-      inStock: i.stock > 0,
-      stock: i.stock,
-      installAvailable: i.installAvailable,
-      installPrice: i.installPriceUSD,
-      attributes: i.attributes,
-      targetCar: i.isUniversal ? 'Barcha mashinalar' : i.fitment[0]?.label ?? '',
-      compatibility: i.isUniversal ? [] : i.fitment.map((f) => ({ id: f.modelId ?? f.id, name: f.label, yearFrom: f.yearFrom, yearTo: f.yearTo })),
-      isUniversal: i.isUniversal,
-      sellerName: `Verified Partner #${i.shopId.slice(0, 4).toUpperCase()}`,
-      seller: { id: i.shopId, business_name: `Verified Partner #${i.shopId.slice(0, 4).toUpperCase()}` },
-      createdAt: i.createdAt,
-    };
-    });
+    const products = items.map((i) => toVeloceProduct(i, locale));
 
     const { data: facetRows } = await facetsQuery;
     const brands = [...new Set((facetRows ?? []).map((r) => (r.brand as string | null)?.trim()).filter((b): b is string => Boolean(b)))].sort((a, b) => a.localeCompare(b));

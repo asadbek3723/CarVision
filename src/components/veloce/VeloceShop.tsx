@@ -11,7 +11,8 @@ import { MyCarPicker } from '@/features/shop/MyCarPicker';
 import { useMyCar } from '@/features/shop/useMyCar';
 import { useCurrency } from '@/context/CurrencyContext';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
-import { buttonClasses } from '@/components/ui';
+import { buttonClasses, ProductImage } from '@/components/ui';
+import { rememberProducts } from '@/features/shop/product-cache';
 
 interface Facets {
   brands: string[];
@@ -62,6 +63,7 @@ export function VeloceShop() {
         if (!res.ok || !data.success) throw new Error('load failed');
         const next = { products: (data.products ?? []) as VeloceProduct[], facets: (data.facets ?? { brands: [], categories: [] }) as Facets };
         listCache.set(qs, next);
+        rememberProducts(locale, next.products);
         if (!cancelled) {
           setProducts(next.products);
           setFacets(next.facets);
@@ -120,7 +122,11 @@ export function VeloceShop() {
           href={`/${locale}/shop/${featured.id}`}
           className="mt-4 flex items-center gap-4 overflow-hidden rounded-2xl bg-surface-1 p-2.5 pe-4 md:hidden"
         >
-          {featured.image && <img src={featured.image} alt="" className="h-20 w-20 shrink-0 rounded-xl object-cover" />}
+          {featured.image && (
+            <span className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl">
+              <ProductImage src={featured.image} alt="" sizes="80px" className="object-cover" />
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold-500">{t('badgeNew')}</span>
             <p className="mt-0.5 line-clamp-2 text-[14px] font-semibold leading-snug text-white">{featured.name}</p>
@@ -142,7 +148,11 @@ export function VeloceShop() {
                 {t('view')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </div>
-            {featured.image && <img src={featured.image} alt={featured.name} className="h-[360px] w-full object-cover" />}
+            {featured.image && (
+              <div className="relative h-[360px] w-full">
+                <ProductImage src={featured.image} alt={featured.name} sizes="(min-width: 768px) 50vw, 1px" className="object-cover" />
+              </div>
+            )}
           </div>
         </section>
       )}

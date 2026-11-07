@@ -9,6 +9,8 @@ import { Camera, Coins, Eye, EyeOff, Loader2, Minus, Package, Pencil, Phone, Plu
 import { useCurrency } from '@/context/CurrencyContext';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { cachedInventory, rememberInventory } from '@/features/seller/lib/inventory-cache';
+import { ProductImage } from '@/components/ui/ProductImage';
 import type { CatalogItemDTO } from '@/domain/catalog';
 import { StudioLock } from './StudioLock';
 import { buttonClasses } from '@/components/ui';
@@ -54,16 +56,17 @@ export function SellerDashboardView() {
   const { user, isLoading: authLoading } = useAuth();
 
   const [tab, setTab] = React.useState<Tab>('parts');
-  const [items, setItems] = React.useState<CatalogItemDTO[]>([]);
+  const [items, setItems] = React.useState<CatalogItemDTO[]>(() => cachedInventory(user?.id) ?? []);
   const [leads, setLeads] = React.useState<SellerLead[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(() => !cachedInventory(user?.id));
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
   const isSeller = user?.plan?.isPaid === true;
 
   const load = React.useCallback(async () => {
-    setLoading(true);
+    // A list already on screen stays there while it refreshes; only a first visit shows the loader.
+    if (!cachedInventory(user?.id)) setLoading(true);
     setError(null);
     try {
       const [invRes, ordRes] = await Promise.all([
@@ -80,12 +83,17 @@ export function SellerDashboardView() {
     } finally {
       setLoading(false);
     }
-  }, [t, apiError]);
+  }, [t, apiError, user?.id]);
 
   React.useEffect(() => {
     if (isSeller) void load();
     else if (!authLoading) setLoading(false);
   }, [isSeller, authLoading, load]);
+
+  // Edits made here (stock, status, delete) are what the garage shows next time too.
+  React.useEffect(() => {
+    if (!loading) rememberInventory(user?.id, items);
+  }, [items, loading, user?.id]);
 
   const setStock = async (item: CatalogItemDTO, next: number) => {
     const stock = Math.max(0, next);
@@ -235,9 +243,9 @@ export function SellerDashboardView() {
           )}
           {items.map((item) => (
             <article key={item.id} className="flex flex-col gap-4 rounded-3xl bg-surface-1 p-4 sm:flex-row sm:items-center">
-              <div className="h-24 w-full shrink-0 overflow-hidden rounded-2xl bg-black sm:w-32">
+              <div className="relative h-24 w-full shrink-0 overflow-hidden rounded-2xl bg-black sm:w-32">
                 {item.coverImageUrl && (
-                  <img src={item.coverImageUrl} alt={item.name} className="h-full w-full object-cover" />
+                  <ProductImage src={item.coverImageUrl} alt={item.name} sizes="(min-width: 640px) 128px, 100vw" className="object-cover" />
                 )}
               </div>
               <div className="min-w-0 flex-1">

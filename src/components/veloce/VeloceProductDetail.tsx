@@ -16,13 +16,16 @@ import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { ProductCard } from '@/components/veloce/ProductCard';
-import { buttonClasses } from '@/components/ui';
+import { buttonClasses, ProductImage } from '@/components/ui';
+import { cachedOthers, cachedProduct, rememberProducts } from '@/features/shop/product-cache';
 
 interface VeloceProductDetailProps {
   id: string;
+  /** The part as the server already loaded it (in the page HTML); no extra request is needed then. */
+  initialProduct?: VeloceProduct | null | undefined;
 }
 
-export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
+export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailProps) {
   const t = useTranslations('shop.detail');
   const categoryLabel = useCategoryLabel();
   const tCard = useTranslations('shop.card');
@@ -32,38 +35,50 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
   const { add } = useVeloceStore();
   const { formatPrice } = useCurrency();
 
-  const [product, setProduct] = React.useState<VeloceProduct | null>(null);
-  const [related, setRelated] = React.useState<VeloceProduct[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  // Shown at once from the server's copy or from the card that was tapped; the network only refreshes it.
+  const [product, setProduct] = React.useState<VeloceProduct | null>(() => initialProduct ?? cachedProduct(locale, id));
+  const [related, setRelated] = React.useState<VeloceProduct[]>(() => cachedOthers(locale, id, 4));
+  const [isLoading, setIsLoading] = React.useState(() => !(initialProduct ?? cachedProduct(locale, id)));
   const [activeImg, setActiveImg] = React.useState(0);
 
   React.useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
-    fetch(`/api/v1/products?id=${encodeURIComponent(id)}&locale=${locale}`)
+    const known = initialProduct ?? cachedProduct(locale, id);
+    if (known) {
+      setProduct(known);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+    // The part (only when the server did not send it) and the related parts load side by side.
+    const productReq = initialProduct
+      ? Promise.resolve()
+      : fetch(`/api/v1/products?id=${encodeURIComponent(id)}&locale=${locale}`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
+              rememberProducts(locale, data.products);
+              setProduct(data.products[0]);
+            }
+          })
+          .catch((err) => console.warn('Could not load product detail:', err));
+    const relatedReq = fetch(`/api/v1/products?limit=5&locale=${locale}`)
       .then((r) => r.json())
-      .then((data) => {
-        if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
-          const found = data.products[0];
-          setProduct(found);
-          fetch(`/api/v1/products?limit=5&locale=${locale}`)
-            .then((r2) => r2.json())
-            .then((relData) => {
-              if (isMounted && relData.success && Array.isArray(relData.products)) {
-                setRelated(relData.products.filter((x: VeloceProduct) => x.id !== found.id).slice(0, 4));
-              }
-            })
-            .catch(() => {});
+      .then((relData) => {
+        if (isMounted && relData.success && Array.isArray(relData.products)) {
+          rememberProducts(locale, relData.products);
+          setRelated(relData.products.filter((x: VeloceProduct) => x.id !== id).slice(0, 4));
         }
       })
-      .catch((err) => console.warn('Could not load product detail:', err))
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
+      .catch(() => {});
+    productReq.finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
+    void relatedReq;
     return () => {
       isMounted = false;
     };
-  }, [id, locale]);
+  }, [id, locale, initialProduct]);
 
   if (isLoading) {
     return (
@@ -133,7 +148,13 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
               style={{ background: `radial-gradient(circle at 30% 30%, ${product.swatch}, oklch(0.08 0 0))` }}
             />
           ) : gallery.length > 0 ? (
-            <img src={gallery[Math.min(activeImg, gallery.length - 1)]} alt={product.name} className="h-full w-full object-cover" />
+            <ProductImage
+              src={gallery[Math.min(activeImg, gallery.length - 1)] as string}
+              alt={product.name}
+              sizes="(min-width: 1024px) 560px, 100vw"
+              priority
+              className="object-cover"
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-widest text-white/30">{t('noImage')}</div>
           )}
@@ -151,9 +172,9 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
                 type="button"
                 onClick={() => setActiveImg(idx)}
                 aria-label={t('imageN', { n: idx + 1 })}
-                className={`h-16 w-16 overflow-hidden rounded-xl border-2 ${idx === activeImg ? 'border-gold-500' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                className={`relative h-16 w-16 overflow-hidden rounded-xl border-2 ${idx === activeImg ? 'border-gold-500' : 'border-transparent opacity-70 hover:opacity-100'}`}
               >
-                <img src={src} alt="" className="h-full w-full object-cover" />
+                <ProductImage src={src} alt="" sizes="64px" className="object-cover" />
               </button>
             ))}
           </div>

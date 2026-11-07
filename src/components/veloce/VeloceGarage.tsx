@@ -8,6 +8,8 @@ import { Camera, Car, Loader2, Plus } from 'lucide-react';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { cachedInventory, rememberInventory } from '@/features/seller/lib/inventory-cache';
+import { ProductImage } from '@/components/ui/ProductImage';
 import type { CatalogItemDTO } from '@/domain/catalog';
 import { StudioLock } from '@/features/seller/components/StudioLock';
 import { buttonClasses } from '@/components/ui';
@@ -25,15 +27,17 @@ export function VeloceGarage() {
   const { formatPrice } = useCurrency();
   const { user, isLoading: authLoading } = useAuth();
 
-  const [items, setItems] = React.useState<CatalogItemDTO[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [items, setItems] = React.useState<CatalogItemDTO[]>(() => (cachedInventory(user?.id) ?? []).filter((i) => i.status === 'PUBLISHED'));
+  const [loading, setLoading] = React.useState(() => !cachedInventory(user?.id));
   const [error, setError] = React.useState(false);
+  // The profile saved on this device is enough to start; the server check of the session runs alongside.
+  const waitingForUser = authLoading && !user;
   const [activeCategory, setActiveCategory] = React.useState(ALL);
 
   const isSeller = user?.plan?.isPaid === true;
 
   React.useEffect(() => {
-    if (authLoading) return;
+    if (waitingForUser) return;
     if (!isSeller) {
       setLoading(false);
       return;
@@ -44,9 +48,10 @@ export function VeloceGarage() {
         const res = await fetch('/api/v1/seller/inventory', { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error();
+        rememberInventory(user?.id, data.items as CatalogItemDTO[]);
         if (!cancelled) setItems((data.items as CatalogItemDTO[]).filter((i) => i.status === 'PUBLISHED'));
       } catch {
-        if (!cancelled) setError(true);
+        if (!cancelled && !cachedInventory(user?.id)) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -54,12 +59,12 @@ export function VeloceGarage() {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, isSeller]);
+  }, [waitingForUser, isSeller, user?.id]);
 
   const categories = React.useMemo(() => [ALL, ...new Set(items.map((i) => i.category))], [items]);
   const visible = items.filter((i) => activeCategory === ALL || i.category === activeCategory);
 
-  if (authLoading || loading) {
+  if (waitingForUser || loading) {
     return (
       <div className="flex justify-center py-24">
         <Loader2 className="h-7 w-7 animate-spin text-gold-500" />
@@ -125,7 +130,14 @@ export function VeloceGarage() {
               <div key={item.id} className="group flex flex-col justify-between">
                 <div>
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#11131A] shadow-[0_16px_40px_rgba(0,0,0,0.55)]">
-                    {item.coverImageUrl && <img src={item.coverImageUrl} alt={item.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
+                    {item.coverImageUrl && (
+                      <ProductImage
+                        src={item.coverImageUrl}
+                        alt={item.name}
+                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                      />
+                    )}
                   </div>
                   <div className="mt-3">
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gold-500">

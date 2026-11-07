@@ -8,6 +8,8 @@ import { useParams } from 'next/navigation';
 import { Car } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useCurrency } from '@/context/CurrencyContext';
+import { rememberProducts, warmImage } from '@/features/shop/product-cache';
+import { ProductImage } from '@/components/ui/ProductImage';
 
 interface ProductCardProps {
   p: VeloceProduct;
@@ -36,6 +38,11 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
     <Link
       href={`/${locale}/shop/${p.id}`}
       aria-label={p.name}
+      // The part's page opens from memory, and its big photo starts downloading on first touch.
+      onPointerDown={() => {
+        rememberProducts(locale, [p]);
+        warmImage(p.images?.[0] ?? p.image);
+      }}
       className="rise group relative flex flex-col overflow-hidden rounded-2xl bg-surface-1 outline-none focus-visible:ring-2 focus-visible:ring-gold-500/60 transition duration-500 md:shadow-[0_12px_32px_rgba(0,0,0,0.6)] md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(212,174,98,0.18)]"
       style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
     >
@@ -49,13 +56,12 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
           ) : imgFailed || !p.image ? (
             <div className="h-full w-full bg-surface-2" />
           ) : (
-            <img
+            <ProductImage
               src={p.image}
               alt={p.name}
-              loading="lazy"
-              decoding="async"
+              sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 48vw"
               onError={() => setImgFailed(true)}
-              className="h-full w-full object-cover transition duration-700 md:group-hover:scale-110"
+              className="object-cover transition duration-700 md:group-hover:scale-110"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent md:from-card" />

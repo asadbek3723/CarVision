@@ -29,6 +29,11 @@ const nextConfig = {
     // AVIF/WebP are 30-60% smaller than the original JPEG/PNG; optimized copies are cached for 30 days.
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
+    // Part photos live in Supabase storage; only that public bucket path may be resized.
+    remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' }],
+    // Phone-first widths: a 2-column phone card needs ~384px, the product photo ~828px.
+    deviceSizes: [640, 828, 1080, 1280, 1920],
+    imageSizes: [64, 128, 256, 384],
   },
   compiler: {
     // Console noise costs time on phones; errors and warnings stay.

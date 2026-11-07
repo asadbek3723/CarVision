@@ -6,6 +6,8 @@ import { buildMetadata } from '@/lib/seo/metadata';
 import { DEFAULT_LOCALE, isLocale, localePath } from '@/lib/seo/site';
 import { getPublishedItem } from '@/server/catalog-public';
 import { localizedText } from '@/domain/catalog';
+import { toVeloceProduct } from '@/server/product-view';
+import type { VeloceProduct } from '@/domain/veloce-catalog';
 
 // Product pages are built on first visit and then served from cache, refreshed at most once a minute,
 // so opening a part does not wait for the database every time.
@@ -75,7 +77,7 @@ export default async function ProductDetailPage({ params }: Props) {
           ]}
         />
       )}
-      <VeloceProductDetail id={id} />
+      <VeloceProductDetail id={id} initialProduct={item ? (toVeloceProduct(item, l) as unknown as VeloceProduct) : null} />
     </>
   );
 }

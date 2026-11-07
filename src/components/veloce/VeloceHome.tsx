@@ -8,6 +8,7 @@ import { ChevronRight, ArrowUpRight, Cog, Camera, Wrench } from 'lucide-react';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
+import { rememberProducts } from '@/features/shop/product-cache';
 import { buttonClasses } from '@/components/ui';
 
 const FEATURES = [
@@ -40,6 +41,7 @@ export function VeloceHome() {
       .then((r) => r.json())
       .then((data) => {
         if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
+          rememberProducts(locale, data.products);
           setTrendingProducts(data.products);
         }
       })
