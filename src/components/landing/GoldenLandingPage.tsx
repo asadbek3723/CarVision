@@ -36,7 +36,7 @@ export default function GoldenLandingPage() {
   useReveal();
 
   return (
-    <main className="overflow-x-hidden bg-background text-foreground">
+    <main className="overflow-x-clip bg-background text-foreground">
       <Header locale={locale} />
       <Hero />
       <Brands />
