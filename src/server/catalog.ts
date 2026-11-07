@@ -131,9 +131,12 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
   if (items.length === 0) return [];
 
   const ids = items.map((i) => i.id);
-  const [{ data: imgs }, { data: fits }] = await Promise.all([
+  // One round trip for everything that only needs the item ids.
+  // Translations live in columns added by a later migration: read them separately so the catalog keeps working without it.
+  const [{ data: imgs }, { data: fits }, { data: trRows, error: trErr }] = await Promise.all([
     db.from('catalog_item_images').select('id, item_id, url, kind, position').in('item_id', ids).order('position'),
     db.from('catalog_item_fitment').select('id, item_id, model_id, custom_model, year_from, year_to').in('item_id', ids),
+    db.from('catalog_items').select('id, source_lang, translations').in('id', ids),
   ]);
 
   const modelIds = [...new Set((fits ?? []).map((f) => f.model_id as string | null).filter((v): v is string => Boolean(v)))];
@@ -150,9 +153,7 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
     }
   }
 
-  // Translations live in columns added by a later migration: read them separately so the catalog keeps working without it.
   const translated = new Map<string, { sourceLang: string | null; translations: ItemTranslations }>();
-  const { data: trRows, error: trErr } = await db.from('catalog_items').select('id, source_lang, translations').in('id', ids);
   if (!trErr) {
     for (const r of trRows ?? []) {
       translated.set(r.id as string, { sourceLang: (r.source_lang as string | null) ?? null, translations: ((r.translations as ItemTranslations | null) ?? {}) });

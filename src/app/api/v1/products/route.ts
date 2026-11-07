@@ -36,6 +36,9 @@ export async function GET(request: NextRequest) {
     }
 
     const db = createAdminClient();
+    // Facets for the filter UI (independent of the current filters): fetched alongside the items.
+    // (`.then` starts the request now; a bare query builder would only run when awaited.)
+    const facetsQuery = db.from('catalog_items').select('brand, category, attributes').eq('status', 'PUBLISHED').limit(1000).then((r) => r);
     let items = await loadItems(db, {
       statuses: ['PUBLISHED'],
       ids: id ? [id] : ids,
@@ -90,8 +93,7 @@ export async function GET(request: NextRequest) {
     };
     });
 
-    // Facets for the filter UI (independent of the current filters)
-    const { data: facetRows } = await db.from('catalog_items').select('brand, category, attributes').eq('status', 'PUBLISHED').limit(1000);
+    const { data: facetRows } = await facetsQuery;
     const brands = [...new Set((facetRows ?? []).map((r) => (r.brand as string | null)?.trim()).filter((b): b is string => Boolean(b)))].sort((a, b) => a.localeCompare(b));
     const categories = [...new Set((facetRows ?? []).map((r) => veloceCategory(r.category as string, r.attributes as Record<string, unknown> | null)))];
 

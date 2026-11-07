@@ -717,8 +717,8 @@ html {
 }
 
 @keyframes rise {
-  0% { opacity: 0; filter: blur(8px); transform: translateY(30px); }
-  100% { opacity: 1; filter: none; transform: none; }
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: none; }
 }
 
 @keyframes scrollline {
