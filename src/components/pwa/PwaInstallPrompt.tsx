@@ -52,6 +52,70 @@ const LOCALIZED_COPY: Record<string, PwaCopy> = {
   },
 };
 
+declare global {
+  interface Window {
+    /** Captured by the inline script in the locale layout, before React hydrates. */
+    __cvDeferredPrompt?: BeforeInstallPromptEvent | null;
+  }
+}
+
+const DISMISS_KEY = 'cv_pwa_dismissed_until';
+const DISMISS_DAYS = 7;
+
+function readDismissed(): boolean {
+  try {
+    return Number(localStorage.getItem(DISMISS_KEY) ?? 0) > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function detectIos(): boolean {
+  const ua = window.navigator.userAgent;
+  const iPadOs = window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1; // iPadOS 13+ pretends to be a Mac
+  return (/iphone|ipad|ipod/i.test(ua) || iPadOs) && !('MSStream' in window);
+}
+
+function detectStandalone(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+    ('standalone' in window.navigator && Boolean((window.navigator as unknown as { standalone: boolean }).standalone))
+  );
+}
+
+/** True when the browser can show a real install flow (native prompt, or iOS "Add to Home Screen"). */
+export function useCanInstall(): boolean {
+  const [can, setCan] = useState(false);
+  useEffect(() => {
+    const update = () => setCan(!detectStandalone() && (detectIos() || Boolean(window.__cvDeferredPrompt)));
+    update();
+    window.addEventListener('cv:installable', update);
+    window.addEventListener('appinstalled', update);
+    return () => {
+      window.removeEventListener('cv:installable', update);
+      window.removeEventListener('appinstalled', update);
+    };
+  }, []);
+  return can;
+}
+
+/** Always-available "Install app" button (e.g. in the profile) for users who closed the banner. */
+export function InstallAppButton({ className = '', label }: { className?: string; label?: string }) {
+  const can = useCanInstall();
+  if (!can) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new Event('cv:open-install'))}
+      className={className || 'flex w-full items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-3.5 text-start text-sm font-semibold text-white hover:bg-white/[0.07]'}
+    >
+      <Download className="h-5 w-5 text-[#D4AE62]" />
+      {label ?? 'Ilovani o‘rnatish'}
+    </button>
+  );
+}
+
 export const PwaInstallPrompt: React.FC = () => {
   const params = useParams();
   const rawLocale = (params?.locale as string) || 'uz';
@@ -63,54 +127,68 @@ export const PwaInstallPrompt: React.FC = () => {
   const [dismissed, setDismissed] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check if running in standalone mode already
-    const isStandaloneMode =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      ('standalone' in window.navigator && Boolean((window.navigator as unknown as { standalone: boolean }).standalone));
-
-    setIsStandalone(isStandaloneMode);
-    if (isStandaloneMode) return;
-
-    // Check dismissed in session
-    const isDismissed = sessionStorage.getItem('cv_pwa_dismissed') === 'true';
-    if (isDismissed) return;
-
-    // Detect iOS
-    const ua = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(ua) && !('MSStream' in window);
-    setIsIos(isIosDevice);
-
-    if (isIosDevice) {
-      setDismissed(false);
+    if (detectStandalone()) {
+      setIsStandalone(true);
       return;
     }
 
-    // Android / Desktop Chrome handler
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    const ios = detectIos();
+    setIsIos(ios);
+    const wasDismissed = readDismissed();
+
+    // The browser fires `beforeinstallprompt` once, often before React hydrates: pick up the copy
+    // the layout script stored, then keep listening for later ones.
+    const adopt = () => {
+      if (window.__cvDeferredPrompt) {
+        setDeferredPrompt(window.__cvDeferredPrompt);
+        if (!readDismissed()) setDismissed(false);
+      }
+    };
+    const open = () => {
+      adopt();
       setDismissed(false);
     };
+    const installed = () => {
+      window.__cvDeferredPrompt = null;
+      setDeferredPrompt(null);
+      setDismissed(true);
+      setIsStandalone(true);
+    };
 
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    if (ios && !wasDismissed) setDismissed(false);
+    adopt();
+    window.addEventListener('cv:installable', adopt);
+    window.addEventListener('cv:open-install', open);
+    window.addEventListener('appinstalled', installed);
+    return () => {
+      window.removeEventListener('cv:installable', adopt);
+      window.removeEventListener('cv:open-install', open);
+      window.removeEventListener('appinstalled', installed);
+    };
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    if (choice.outcome === 'accepted') {
-      setDismissed(true);
-    }
+    const promptEvent = deferredPrompt ?? window.__cvDeferredPrompt;
+    if (!promptEvent) return;
+    await promptEvent.prompt();
+    const choice = await promptEvent.userChoice;
+    // A prompt can only be used once; the browser fires a fresh event if it is still installable.
+    window.__cvDeferredPrompt = null;
     setDeferredPrompt(null);
+    if (choice.outcome === 'accepted') setDismissed(true);
   };
 
   const handleDismiss = () => {
     setDismissed(true);
-    sessionStorage.setItem('cv_pwa_dismissed', 'true');
+    try {
+      localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DAYS * 86_400_000));
+    } catch {
+      // storage unavailable: it simply reappears next visit
+    }
   };
 
+  // Nothing to offer: not iOS and the browser has not said the app is installable.
+  if (!isIos && !deferredPrompt) return null;
   if (isStandalone || dismissed) return null;
 
   return (

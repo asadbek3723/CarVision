@@ -48,6 +48,14 @@ export default async function LocaleLayout({
     <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} className="dark" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        {/* Catch the one-time install event before React hydrates (it is easy to miss otherwise). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__cvDeferredPrompt=e;window.dispatchEvent(new Event('cv:installable'));});",
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

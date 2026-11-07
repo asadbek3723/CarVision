@@ -198,7 +198,10 @@
     "registerLink": "Create one",
     "errPhone": "Please enter a valid phone number",
     "errPassword": "Password must be at least 8 characters",
-    "errFailed": "Sign in failed"
+    "errFailed": "Sign in failed",
+    "errNetwork": "No connection. Check your internet and try again",
+    "errServer": "Server error. Please try again in a moment",
+    "errInvalid": "Phone number or password is incorrect"
   },
   "nav": {
     "home": "Home",
@@ -263,7 +266,9 @@
       "usa": "USA",
       "uk": "United Kingdom",
       "southKorea": "South Korea"
-    }
+    },
+    "errNetwork": "No connection. Check your internet and try again",
+    "errServer": "Server error. Please try again in a moment"
   },
   "authShell": {
     "togglePassword": "Show or hide password",

@@ -12,10 +12,12 @@ import {
   GlassCard,
   FloatingInput,
   GoldButton,
+  AuthAlert,
 } from '@/features/auth/components/AuthShell';
 import { playLock, vibrate } from '@/features/camera/lib/fx';
+import { COUNTRIES, DEFAULT_COUNTRY, buildE164, isPlausibleNational, type Country } from '@/features/auth/phone-input';
 
-function formatPhone(val: string): string {
+function formatUzPhone(val: string): string {
   const chunks = [2, 3, 2, 2];
   const parts: string[] = [];
   let r = 0;
@@ -28,17 +30,22 @@ function formatPhone(val: string): string {
   return parts.join(' ');
 }
 
+type FieldErrors = { phone?: string | undefined; pwd?: string | undefined };
+
 export default function LoginPage() {
   const t = useTranslations('login');
+  const tReg = useTranslations('register');
   const router = useRouter();
   const params = useParams();
   const locale = (params['locale'] as string) || 'uz';
   const { user, signIn } = useAuth();
 
+  const [country, setCountry] = React.useState<Country>(DEFAULT_COUNTRY);
   const [phone, setPhone] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [rememberMe, setRememberMe] = React.useState(true);
-  const [errors, setErrors] = React.useState<{ phone?: string; pwd?: string }>({});
+  const [errors, setErrors] = React.useState<FieldErrors>({});
+  const [formError, setFormError] = React.useState<string | null>(null);
   const [shake, setShake] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
 
@@ -53,37 +60,45 @@ export default function LoginPage() {
     }
   }, [user, locale, router]);
 
+  const fail = (next: FieldErrors = {}, banner: string | null = null) => {
+    setErrors(next);
+    setFormError(banner);
+    setShake((prev) => prev + 1);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs: { phone?: string; pwd?: string } = {};
+    if (loading) return;
+    const errs: FieldErrors = {};
 
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 7) {
-      errs.phone = t('errPhone');
-    }
-    if (password.length < 8) {
-      errs.pwd = t('errPassword');
-    }
+    if (!isPlausibleNational(phone, country)) errs.phone = t('errPhone');
+    if (password.length < 8) errs.pwd = t('errPassword');
 
-    setErrors(errs);
     if (Object.keys(errs).length > 0) {
-      setShake((prev) => prev + 1);
+      fail(errs);
       return;
     }
 
+    setErrors({});
+    setFormError(null);
     setLoading(true);
     try {
-      const fullPhone = digits.startsWith('998') ? `+${digits}` : `+998${digits}`;
-      const res = await signIn(fullPhone, password);
+      const res = await signIn(buildE164(country, phone), password);
       if (res.success) {
         playLock();
         vibrate(25);
-      } else {
-        setErrors({
-          phone: res.error || t('errFailed'),
-        });
-        setShake((prev) => prev + 1);
+        return;
       }
+      // Real reason, shown prominently: wrong credentials, blocked, rate-limited, offline, server.
+      const message =
+        res.code === 'NETWORK'
+          ? t('errNetwork')
+          : res.code === 'SERVER' || res.code === 'INTERNAL'
+            ? t('errServer')
+            : res.code === 'INVALID_CREDENTIALS'
+              ? t('errInvalid')
+              : res.error || t('errFailed');
+      fail({}, message);
     } finally {
       setLoading(false);
     }
@@ -104,28 +119,57 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-3.5">
-          <FloatingInput
-            icon={<Smartphone className="h-4 w-4" />}
-            label={t('phone')}
-            inputMode="tel"
-            value={phone}
-            onChange={(e) =>
-              setPhone(
-                formatPhone(e.target.value.replace(/\D/g, '').slice(0, 9))
-              )
-            }
-            error={errors.phone}
-          />
+        <AuthAlert message={formError} />
+
+        <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-3.5">
+          <div className="flex gap-2">
+            <label className="auth-input relative flex h-14 shrink-0 items-center rounded-xl ps-3 pe-2">
+              <span className="sr-only">{tReg('searchCountry')}</span>
+              <select
+                value={country.id}
+                onChange={(e) => {
+                  setCountry(COUNTRIES.find((c) => c.id === e.target.value) ?? DEFAULT_COUNTRY);
+                  setErrors((p) => ({ ...p, phone: undefined }));
+                }}
+                className="h-full cursor-pointer appearance-none bg-transparent pe-1 text-base text-foreground outline-none"
+                aria-label={tReg('searchCountry')}
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-[#12141A] text-white">
+                    {c.flag} {c.code}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="min-w-0 flex-1">
+              <FloatingInput
+                icon={<Smartphone className="h-4 w-4" />}
+                label={t('phone')}
+                inputMode="tel"
+                autoComplete="tel-national"
+                value={phone}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  setPhone(country.code === '+998' && !raw.trim().startsWith('+') && raw.replace(/\D/g, '').length <= 9 ? formatUzPhone(raw.replace(/\D/g, '')) : raw.slice(0, 20));
+                  if (errors.phone) setErrors((p) => ({ ...p, phone: undefined }));
+                }}
+                error={errors.phone}
+              />
+            </div>
+          </div>
 
           <FloatingInput
             icon={<Lock className="h-4 w-4" />}
             type="password"
             label={t('password')}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (errors.pwd) setErrors((p) => ({ ...p, pwd: undefined }));
+            }}
+            autoComplete="current-password"
             error={errors.pwd}
-            maxLength={64}
+            maxLength={72}
           />
 
           <motion.button

@@ -2,11 +2,11 @@
   "name": "CarVision — AI Tuning",
   "short_name": "CarVision",
   "description": "Mashinangizni suratga oling va tuning detallarni o‘zingizning avtomobilingizda sinab ko‘ring.",
-  "start_url": "/uz/seller",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#07080B",
   "theme_color": "#0D0E12",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -21,13 +21,13 @@
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/icon-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -77,7 +77,12 @@
       ]
     }
   ],
-  "id": "/uz/seller",
+  "id": "/",
   "lang": "uz",
-  "scope": "/"
+  "scope": "/",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ]
 }

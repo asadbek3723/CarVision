@@ -281,42 +281,60 @@ export function SmartCameraLandscapeView({
   const activeAngle =
     SCAN_5_ANGLES[currentStepIndex] || SCAN_5_ANGLES[0]!;
 
-  // Orientation detection: Portrait vs Landscape
+  // Orientation detection: Portrait vs Landscape.
+  // iOS fires `orientationchange` BEFORE the viewport has its new size, and sometimes fires nothing
+  // at all, so several signals are combined and a cheap poll acts as the safety net.
   const [isPortrait, setIsPortrait] = React.useState<boolean>(false);
+  // The user can continue in portrait (rotation lock on, installed app locked to portrait, ...):
+  // the camera UI is then rotated by CSS so it still reads as the landscape layout.
+  const [forceLandscape, setForceLandscape] = React.useState(false);
 
   React.useEffect(() => {
     startCamera();
   }, [startCamera]);
 
   React.useEffect(() => {
-    const checkOrientation = () => {
-      if (typeof window !== 'undefined') {
-        const portrait = window.innerHeight > window.innerWidth;
-        setIsPortrait(portrait);
-      }
+    if (typeof window === 'undefined') return;
+    const read = () => {
+      const vv = window.visualViewport;
+      const w = vv?.width ?? window.innerWidth;
+      const h = vv?.height ?? window.innerHeight;
+      setIsPortrait(h > w);
+    };
+    // After a rotation the new size arrives a moment later: re-read a few times.
+    const readSoon = () => {
+      read();
+      [120, 350, 800].forEach((ms) => window.setTimeout(read, ms));
     };
 
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
-    const mediaQuery =
-      typeof window !== 'undefined' && window.matchMedia
-        ? window.matchMedia('(orientation: portrait)')
-        : null;
-    const handleMediaChange = (e: MediaQueryListEvent) => {
-      setIsPortrait(e.matches);
-    };
-    mediaQuery?.addEventListener?.('change', handleMediaChange);
+    read();
+    window.addEventListener('resize', read);
+    window.addEventListener('orientationchange', readSoon);
+    window.visualViewport?.addEventListener('resize', read);
+    screen.orientation?.addEventListener?.('change', readSoon);
+    const mediaQuery = window.matchMedia ? window.matchMedia('(orientation: portrait)') : null;
+    mediaQuery?.addEventListener?.('change', readSoon);
+    const poll = window.setInterval(read, 500);
 
     return () => {
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
-      mediaQuery?.removeEventListener?.('change', handleMediaChange);
+      window.removeEventListener('resize', read);
+      window.removeEventListener('orientationchange', readSoon);
+      window.visualViewport?.removeEventListener('resize', read);
+      screen.orientation?.removeEventListener?.('change', readSoon);
+      mediaQuery?.removeEventListener?.('change', readSoon);
+      window.clearInterval(poll);
     };
   }, []);
 
+  // Back to a real landscape: drop the CSS rotation.
+  React.useEffect(() => {
+    if (!isPortrait) setForceLandscape(false);
+  }, [isPortrait]);
+
+  const showRotateHint = isPortrait && !forceLandscape;
+
   const handleShutterClick = async () => {
-    if (isCapturing || isPortrait) return;
+    if (isCapturing || showRotateHint) return;
     setIsCapturing(true);
     setFlash(true);
 
@@ -396,6 +414,20 @@ export function SmartCameraLandscapeView({
   return (
     <div
       className={`relative w-full h-full min-h-0 bg-[#050507] select-none overflow-hidden text-white ${className}`}
+      style={
+        forceLandscape && isPortrait
+          ? {
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100dvh',
+              height: '100dvw',
+              transformOrigin: 'top left',
+              transform: 'translateX(100vw) rotate(90deg)',
+              zIndex: 60,
+            }
+          : undefined
+      }
     >
       {/* =====================================================================
           MANDATORY HORIZONTAL (LANDSCAPE) LOCK OVERLAY (WHEN PHONE IS VERTICAL)
@@ -404,7 +436,7 @@ export function SmartCameraLandscapeView({
           - Automatically reappears if phone rotates back to portrait
           ===================================================================== */}
       <AnimatePresence>
-        {isPortrait && (
+        {showRotateHint && (
           <motion.div
             key="mandatory-landscape-lock"
             initial={{ opacity: 0, scale: 0.96 }}
@@ -477,7 +509,7 @@ export function SmartCameraLandscapeView({
             {/* Luxury Typography Prompt (Zero Buttons!) */}
             <div className="relative z-10 max-w-xs space-y-3">
               <p className="font-display text-[10px] font-semibold tracking-[0.35em] text-[#E5C175] uppercase">
-                Smart Camera · Majburiy Rejim
+                Smart Camera · Tavsiya
               </p>
 
               <h2 className="font-display text-xl sm:text-2xl font-light tracking-wide text-white leading-snug">
@@ -494,6 +526,15 @@ export function SmartCameraLandscapeView({
               <span className="h-2 w-2 rounded-full bg-[#E5C175] animate-ping" />
               <span>Gorizontal holatga aylanishi kutilmoqda...</span>
             </div>
+
+            {/* Escape hatch: rotation lock / portrait-locked app. Capture works in any orientation. */}
+            <button
+              type="button"
+              onClick={() => setForceLandscape(true)}
+              className="relative z-10 mt-5 cursor-pointer rounded-full bg-[#D4AE62] px-6 py-3 text-xs font-bold tracking-wide text-black transition active:scale-95"
+            >
+              Aylanmayapti? Shu holatda davom etish
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -729,7 +770,7 @@ export function SmartCameraLandscapeView({
           <button
             type="button"
             onClick={handleShutterClick}
-            disabled={isCapturing || isPortrait}
+            disabled={isCapturing || showRotateHint}
             aria-label={`${activeAngle.title} rasmini olish`}
             className="group relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
           >

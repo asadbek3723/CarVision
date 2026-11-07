@@ -198,7 +198,10 @@
     "registerLink": "Kayıt olun",
     "errPhone": "Lütfen geçerli bir telefon numarası girin",
     "errPassword": "Şifre en az 8 karakter olmalıdır",
-    "errFailed": "Giriş yapılamadı"
+    "errFailed": "Giriş yapılamadı",
+    "errNetwork": "Bağlantı yok. İnterneti kontrol edip tekrar deneyin",
+    "errServer": "Sunucu hatası. Lütfen biraz sonra tekrar deneyin",
+    "errInvalid": "Telefon numarası veya şifre hatalı"
   },
   "nav": {
     "home": "Ana Sayfa",
@@ -263,7 +266,9 @@
       "usa": "ABD",
       "uk": "Birleşik Krallık",
       "southKorea": "Güney Kore"
-    }
+    },
+    "errNetwork": "Bağlantı yok. İnterneti kontrol edip tekrar deneyin",
+    "errServer": "Sunucu hatası. Lütfen biraz sonra tekrar deneyin"
   },
   "authShell": {
     "togglePassword": "Şifreyi göster veya gizle",

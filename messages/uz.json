@@ -198,7 +198,10 @@
     "registerLink": "Roʻyxatdan oʻting",
     "errPhone": "Telefon raqamini toʻgʻri kiriting",
     "errPassword": "Parol kamida 8 belgidan iborat boʻlishi kerak",
-    "errFailed": "Kirishda xatolik yuz berdi"
+    "errFailed": "Kirishda xatolik yuz berdi",
+    "errNetwork": "Internet bilan aloqa yo'q. Ulanishni tekshirib, qayta urinib ko'ring",
+    "errServer": "Serverda xatolik yuz berdi. Birozdan keyin qayta urinib ko'ring",
+    "errInvalid": "Telefon raqam yoki parol noto'g'ri"
   },
   "nav": {
     "home": "Asosiy",
@@ -263,7 +266,9 @@
       "usa": "AQSH",
       "uk": "Buyuk Britaniya",
       "southKorea": "Janubiy Koreya"
-    }
+    },
+    "errNetwork": "Internet bilan aloqa yo'q. Ulanishni tekshirib, qayta urinib ko'ring",
+    "errServer": "Serverda xatolik yuz berdi. Birozdan keyin qayta urinib ko'ring"
   },
   "authShell": {
     "togglePassword": "Parolni koʻrsatish yoki yashirish",

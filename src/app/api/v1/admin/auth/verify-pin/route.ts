@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import {
   isAdminConfigured,
+  adminConfigProblem,
+  ADMIN_MIN_PIN_LENGTH,
   verifyPinConstantTime,
   createAdminSessionToken,
   getAdminCookieOptions,
@@ -21,14 +23,24 @@ function fail(status: number, code: string, message: string, extra: Record<strin
 
 export async function POST(request: NextRequest) {
   try {
-    if (!isAdminConfigured()) {
-      return fail(503, 'ADMIN_NOT_CONFIGURED', 'Admin paneli sozlanmagan (ADMIN_MASTER_PIN / ADMIN_SESSION_SECRET).');
-    }
-
     // Factor 1: signed-in Supabase account with the server-set super_admin role.
     const adminId = await getSuperAdminId();
     if (!adminId) {
       return fail(403, 'NOT_ADMIN', 'Avval admin akkaunti bilan tizimga kiring.');
+    }
+
+    // Only an authenticated super_admin sees what exactly is misconfigured (never the values).
+    if (!isAdminConfigured()) {
+      const problem = adminConfigProblem();
+      const hints: Record<string, string> = {
+        PIN_MISSING: 'ADMIN_MASTER_PIN o‘rnatilmagan.',
+        PIN_TOO_SHORT: `ADMIN_MASTER_PIN juda qisqa: kamida ${ADMIN_MIN_PIN_LENGTH} ta belgi bo‘lishi kerak.`,
+        SECRET_MISSING: 'ADMIN_SESSION_SECRET o‘rnatilmagan.',
+        SECRET_TOO_SHORT: 'ADMIN_SESSION_SECRET juda qisqa: kamida 32 ta belgi (openssl rand -hex 32).',
+      };
+      return fail(503, 'ADMIN_NOT_CONFIGURED', `Admin paneli sozlanmagan. ${hints[problem ?? 'PIN_MISSING']} Muhit o‘zgaruvchisini tuzatib, serverni qayta ishga tushiring.`, {
+        reason: problem,
+      });
     }
 
     const ip = clientIp(request);

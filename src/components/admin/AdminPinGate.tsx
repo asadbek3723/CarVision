@@ -9,7 +9,7 @@ interface Props {
   adminName: string;
 }
 
-/** Second factor: the admin PIN (any length 4-32). Works with the phone keyboard and the Enter key. */
+/** Second factor: the admin PIN (6-32 characters). Works with the phone keyboard and the Enter key. */
 export function AdminPinGate({ onSuccess, adminName }: Props) {
   const [pin, setPin] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
@@ -24,7 +24,7 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin.length < 4 || submitting || lockedFor > 0) return;
+    if (pin.length < 6 || submitting || lockedFor > 0) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -38,7 +38,7 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
         onSuccess();
         return;
       }
-      setPin('');
+      if (data.error?.code !== 'ADMIN_NOT_CONFIGURED') setPin('');
       if (data.error?.code === 'RATE_LIMIT_EXCEEDED') setLockedFor(Number(data.error.retryAfterSeconds) || 900);
       setError(data.error?.message || 'PIN kod noto‘g‘ri');
     } catch {
@@ -80,7 +80,7 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
           <p role="alert" className="mt-4 flex items-start justify-center gap-2 text-sm text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>
         ) : null}
 
-        <button type="submit" disabled={pin.length < 4 || submitting || lockedFor > 0} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-4 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-40">
+        <button type="submit" disabled={pin.length < 6 || submitting || lockedFor > 0} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-4 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-40">
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           Kirish
         </button>
