@@ -5,9 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useCategoryLabel } from '@/lib/category-label';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Car, Plus } from 'lucide-react';
+import { Car } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
-import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 
 interface ProductCardProps {
@@ -21,7 +20,6 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
   const categoryLabel = useCategoryLabel();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { add } = useVeloceStore();
   const { formatPrice } = useCurrency();
 
   const [imgFailed, setImgFailed] = React.useState(false);
@@ -34,24 +32,14 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
     return names.length > 1 ? `${names[0]} +${names.length - 1}` : (names[0] as string);
   }, [p, t]);
 
-  const addButton = (extra: string) => (
-    <button
-      type="button"
-      onClick={() => add(p.id)}
-      disabled={p.stock === 0}
-      aria-label={t('addToCart', { name: p.name })}
-      className={`grid place-items-center rounded-full bg-gold-500 text-ink shadow-glow-gold transition active:scale-90 disabled:opacity-40 cursor-pointer ${extra}`}
-    >
-      <Plus className="h-4 w-4" strokeWidth={2.5} />
-    </button>
-  );
-
   return (
-    <div
-      className="rise group relative flex flex-col overflow-hidden rounded-2xl bg-surface-1 transition duration-500 md:shadow-[0_12px_32px_rgba(0,0,0,0.6)] md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(212,174,98,0.18)]"
+    <Link
+      href={`/${locale}/shop/${p.id}`}
+      aria-label={p.name}
+      className="rise group relative flex flex-col overflow-hidden rounded-2xl bg-surface-1 outline-none focus-visible:ring-2 focus-visible:ring-gold-500/60 transition duration-500 md:shadow-[0_12px_32px_rgba(0,0,0,0.6)] md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(212,174,98,0.18)]"
       style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
     >
-      <Link href={`/${locale}/shop/${p.id}`} className="block">
+      <div className="block">
         <div className="relative aspect-square overflow-hidden md:aspect-[4/3]">
           {p.swatch ? (
             <div
@@ -90,14 +78,7 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
           <h3 className="mt-1 line-clamp-2 min-h-[2.6em] text-[14px] font-semibold leading-[1.3] text-white md:mt-0 md:line-clamp-1 md:min-h-0 md:text-base">{p.name}</h3>
           <p className="hidden truncate text-xs text-muted-foreground md:block">{p.spec}</p>
         </div>
-      </Link>
-
-      {/* Phones: the add button sits on the photo, so the price gets the full width below */}
-      {showPrice && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square md:hidden">
-          <div className="pointer-events-auto absolute bottom-2.5 end-2.5">{addButton('h-10 w-10')}</div>
-        </div>
-      )}
+      </div>
 
       {showPrice && (
         <div className="mt-auto flex items-center justify-between gap-2 px-3 pb-3 md:px-4 md:pb-4">
@@ -107,9 +88,8 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
             </div>
             <div className="hidden text-[10px] text-white/40 md:block">{t('depositHint')}</div>
           </div>
-          {addButton('hidden h-11 w-11 shrink-0 md:grid')}
         </div>
       )}
-    </div>
+    </Link>
   );
 }
