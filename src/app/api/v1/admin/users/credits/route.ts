@@ -22,13 +22,17 @@ export async function POST(request: NextRequest) {
   if ('response' in auth) return auth.response;
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message ?? 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
-  const { data } = await createAdminClient().rpc('admin_adjust_credits', {
+  const { data, error: rpcErr } = await createAdminClient().rpc('admin_adjust_credits', {
     p_admin_id: auth.adminId,
     p_user_id: parsed.data.userId,
     p_amount: parsed.data.amount,
     p_reason: parsed.data.reason,
     p_ip: ipOf(request),
   });
+  if (rpcErr) {
+    console.error('admin rpc failed:', rpcErr.message);
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Serverda xatolik' }, { status: 500 });
+  }
   const r = data as { success?: boolean; error?: string; balanceAfter?: number } | null;
   if (!r?.success) return NextResponse.json({ success: false, error: ERRORS[r?.error ?? ''] ?? 'Bajarib bo‘lmadi' }, { status: 409 });
   return NextResponse.json({ success: true, balance: r.balanceAfter });

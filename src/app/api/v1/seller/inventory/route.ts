@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const id = new URL(request.url).searchParams.get('id');
+    if (id && !z.string().uuid().safeParse(id).success) return fail(400, 'id noto‘g‘ri');
 
     const items = await loadItems(createAdminClient(), {
       shopId: guard.value.shopId,
@@ -167,6 +168,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { id, ...rest } = raw;
+    if (typeof id !== 'string' || !z.string().uuid().safeParse(id).success) return fail(400, 'id noto‘g‘ri');
     const parsed = itemBodySchema.safeParse(rest);
     if (!parsed.success) {
       return fail(400, parsed.error.issues[0]?.message ?? 'Ma’lumotlar noto‘g‘ri', { details: parsed.error.flatten() });

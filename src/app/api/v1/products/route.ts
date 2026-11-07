@@ -12,8 +12,14 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const params = new URL(request.url).searchParams;
-    const id = params.get('id');
-    const ids = params.get('ids')?.split(',').filter(Boolean);
+    // Malformed ids would make Postgres throw (500); they simply match nothing.
+    const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    const rawId = params.get('id');
+    const id = rawId && isUuid(rawId) ? rawId : rawId ? '00000000-0000-0000-0000-000000000000' : null;
+    const idsParam = params.get('ids');
+    const validIds = idsParam?.split(',').map((v) => v.trim()).filter(isUuid);
+    // An explicit list that is all garbage must match nothing, not "every product".
+    const ids = idsParam ? (validIds?.length ? validIds : ['00000000-0000-0000-0000-000000000000']) : undefined;
     const query = params.get('query')?.trim() || undefined;
     const categoryParam = params.get('category');
     const limit = Math.min(parseInt(params.get('limit') || '60', 10) || 60, 200);

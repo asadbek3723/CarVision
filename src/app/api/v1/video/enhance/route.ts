@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import crypto from 'node:crypto';
 import { z } from 'zod';
 import { getSession } from '@/server/auth/session';
+import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 import { executeVideoEnhance } from '@/server/providers/ai/direct-fitment-engine';
 
 export const dynamic = 'force-dynamic';
@@ -10,13 +11,13 @@ export const maxDuration = 60;
 /**
  * Masters one finished tuned frame for the video edit (sharper, relit, graded), keeping the
  * car, parts and angle identical. No credits: the user already paid for the render itself;
- * abuse is held back by a per-user rate limit. Without an AI key the client keeps its own
+ * abuse is held back by a per-user, database-backed rate limit (shared by every server instance). Without an AI key the client keeps its own
  * frames and the reel still renders with the built-in grade.
  */
 
-const MAX_IMAGE_CHARS = 8_000_000;
+// Hosting platforms cut request bodies at ~4.5 MB, so a bigger limit would never be reached.
+const MAX_IMAGE_CHARS = 4_200_000;
 const PER_MINUTE = 12;
-const IN_FLIGHT = 3;
 
 const schema = z
   .object({
@@ -25,28 +26,6 @@ const schema = z
     partNames: z.array(z.string().trim().min(1).max(160)).max(6).optional(),
   })
   .strict();
-
-// Per-instance limiter (serverless instances each keep their own window; good enough for a free helper)
-const usage = new Map<string, { hits: number[]; running: number }>();
-
-function take(userId: string): boolean {
-  const now = Date.now();
-  const u = usage.get(userId) ?? { hits: [], running: 0 };
-  u.hits = u.hits.filter((t) => now - t < 60_000);
-  if (u.hits.length >= PER_MINUTE || u.running >= IN_FLIGHT) {
-    usage.set(userId, u);
-    return false;
-  }
-  u.hits.push(now);
-  u.running += 1;
-  usage.set(userId, u);
-  return true;
-}
-
-function release(userId: string) {
-  const u = usage.get(userId);
-  if (u) u.running = Math.max(0, u.running - 1);
-}
 
 const meta = () => ({ requestId: crypto.randomUUID(), timestamp: new Date().toISOString() });
 
@@ -59,9 +38,11 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Ma’lumotlar noto‘g‘ri', meta: meta() }, { status: 400 });
   }
-  if (!take(session.userId)) {
+  const used = await recentFailures('login_key', session.userId, 'video_enhance', 60_000, true);
+  if (used >= PER_MINUTE) {
     return NextResponse.json({ success: false, code: 'RATE_LIMITED', error: 'Juda ko‘p so‘rov', meta: meta() }, { status: 429 });
   }
+  await recordAttempt('video_enhance', session.userId, clientIp(request), true);
   try {
     const result = await executeVideoEnhance(parsed.data);
     return NextResponse.json({
@@ -75,7 +56,5 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('video enhance failed:', err);
     return NextResponse.json({ success: true, enhanced: false, image: null, providerUsed: 'none', outcome: 'failed', meta: meta() });
-  } finally {
-    release(session.userId);
   }
 }

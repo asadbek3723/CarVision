@@ -51,9 +51,6 @@ export async function POST(request: NextRequest) {
       return fail(401, 'INVALID_CREDENTIALS', "Telefon raqam yoki parol noto'g'ri");
     }
 
-    // Monthly free credits (idempotent, once per 30 days) run before the single profile read,
-    // so the returned balance is already fresh and login needs one fewer database round trip.
-    await createAdminClient().rpc('claim_monthly_credits', { p_user_id: data.user.id });
     const session = await loadSession(data.user.id);
     if (!session) {
       await supabase.auth.signOut();
@@ -62,6 +59,14 @@ export async function POST(request: NextRequest) {
     if (session.isBanned) {
       await supabase.auth.signOut();
       return fail(403, 'ACCOUNT_BLOCKED', 'Akkaunt bloklangan');
+    }
+
+    // Monthly free credits (idempotent, once per 30 days), only for accounts that may sign in.
+    // The RPC returns the new balance, so the profile does not need a second read.
+    const { data: claim } = await createAdminClient().rpc('claim_monthly_credits', { p_user_id: session.userId });
+    const claimed = claim as { granted?: boolean; balance?: number } | null;
+    if (claimed?.granted && typeof claimed.balance === 'number') {
+      session.profile.credits_balance = claimed.balance;
     }
 
     // Audit row is not needed for the response: write it after the reply is sent.

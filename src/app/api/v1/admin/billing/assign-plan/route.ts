@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const validated = adminAssignPlanSchema.safeParse(body);
 
     if (!validated.success) {

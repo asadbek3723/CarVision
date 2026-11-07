@@ -107,14 +107,26 @@ export async function verifyOtp(phoneE164: string, code: string): Promise<boolea
   if (new Date(row.expires_at as string).getTime() < Date.now()) return false;
   if ((row.attempts as number) >= OTP_MAX_ATTEMPTS) return false;
 
+  // Claim one attempt atomically (compare-and-set on the counter): parallel guesses cannot all
+  // read the same count and slip past OTP_MAX_ATTEMPTS.
+  const { data: claimed } = await db
+    .from('otp_codes')
+    .update({ attempts: (row.attempts as number) + 1 })
+    .eq('id', row.id)
+    .eq('attempts', row.attempts as number)
+    .eq('consumed', false)
+    .select('id')
+    .maybeSingle();
+  if (!claimed) return false;
+
   const expected = Buffer.from(row.code_hash as string);
   const actual = Buffer.from(hashCode(phoneE164, code));
-  const ok = expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+  let ok = expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
 
   if (ok) {
-    await db.from('otp_codes').update({ consumed: true }).eq('id', row.id);
-  } else {
-    await db.from('otp_codes').update({ attempts: (row.attempts as number) + 1 }).eq('id', row.id);
+    // A code can be used once, even if two correct requests race.
+    const { data: used } = await db.from('otp_codes').update({ consumed: true }).eq('id', row.id).eq('consumed', false).select('id').maybeSingle();
+    ok = Boolean(used);
   }
   return ok;
 }

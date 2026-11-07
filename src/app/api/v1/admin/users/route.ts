@@ -67,13 +67,17 @@ export async function PATCH(request: NextRequest) {
   if ('response' in auth) return auth.response;
   const parsed = banSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
-  const { data } = await createAdminClient().rpc('admin_set_ban', {
+  const { data, error: rpcErr } = await createAdminClient().rpc('admin_set_ban', {
     p_admin_id: auth.adminId,
     p_user_id: parsed.data.userId,
     p_banned: parsed.data.banned,
     p_reason: parsed.data.reason ?? null,
     p_ip: ipOf(request),
   });
+  if (rpcErr) {
+    console.error('admin rpc failed:', rpcErr.message);
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Serverda xatolik' }, { status: 500 });
+  }
   const r = data as { success?: boolean; error?: string } | null;
   if (!r?.success) return NextResponse.json({ success: false, error: BAN_ERRORS[r?.error ?? ''] ?? 'Bajarib bo‘lmadi' }, { status: 409 });
   return NextResponse.json({ success: true });
