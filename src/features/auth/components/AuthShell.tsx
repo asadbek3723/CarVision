@@ -131,20 +131,16 @@ export function FloatingInput({
   const [isFocused, setIsFocused] = React.useState(false);
   const isPassword = type === 'password';
   const hasValue = typeof props.value === 'string' && props.value.length > 0;
-  const isFloating = Boolean(label && (isFocused || hasValue));
+  // Same layout as PhoneInput: the label always sits on top, the value below it.
+  const isFloating = Boolean(label);
+  void hasValue;
 
   return (
     <div>
       <label
-        className={`auth-input relative flex h-14 items-center gap-2.5 rounded-xl px-4 ${
- error ? 'auth-input-error' : ''
- }`}
+        className={`auth-input relative flex h-14 items-center gap-3 rounded-xl px-4 ${error ? 'auth-input-error' : ''}`}
       >
-        <span
-          className={`transition-colors duration-300 ${
- isFocused ? 'text-gold' : 'text-foreground/80'
- }`}
-        >
+        <span className={`grid h-5 w-5 shrink-0 place-items-center transition-colors duration-300 ${isFocused ? 'text-gold' : 'text-foreground/70'}`}>
           {icon}
         </span>
         {prefix && isFloating && (
@@ -162,9 +158,7 @@ export function FloatingInput({
             setIsFocused(false);
             props.onBlur?.(e);
           }}
-          className={`h-full flex-1 bg-transparent outline-none placeholder:text-foreground/50 ${
- isFloating ? 'pt-4' : ''
- } text-base text-foreground`}
+          className={`h-full min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-foreground/35 ${isFloating ? 'pt-4' : ''}`}
         />
         {isPassword && (
           <button
@@ -182,11 +176,7 @@ export function FloatingInput({
         )}
         {label && (
           <span
-            className={`pointer-events-none absolute start-[44px] transition-all duration-300 ${
- isFloating
- ? 'top-1.5 text-[9px] uppercase tracking-[0.16em] text-gold font-medium'
-                : 'top-1/2 -translate-y-1/2 text-[13.5px] text-foreground/55'
-            }`}
+            className={`pointer-events-none absolute start-12 top-2 text-[10px] font-medium uppercase tracking-[0.16em] transition-colors duration-300 ${isFocused ? 'text-gold' : 'text-gold/75'}`}
           >
             {label}
           </span>
@@ -226,11 +216,9 @@ export function PhoneInput({ label, value, onChange, error }: PhoneInputProps) {
   return (
     <div>
       <label
-        className={`auth-input relative flex h-12 items-center gap-2.5 rounded-xl px-4 ${
- error ? 'auth-input-error' : ''
- }`}
+        className={`auth-input relative flex h-14 items-center gap-3 rounded-xl px-4 ${error ? 'auth-input-error' : ''}`}
       >
-        <span className="w-6 text-center text-lg leading-none" aria-hidden={true}>
+        <span className="grid h-5 w-5 shrink-0 place-items-center text-[17px] leading-none" aria-hidden={true}>
           {country ? country.flag : '🌐'}
         </span>
         <input
@@ -244,12 +232,10 @@ export function PhoneInput({ label, value, onChange, error }: PhoneInputProps) {
           }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className="h-full flex-1 bg-transparent pt-3.5 text-[14px] tabular-nums text-foreground outline-none"
+          className="h-full min-w-0 flex-1 bg-transparent pt-4 text-base tabular-nums text-foreground outline-none"
         />
         <span
-          className={`pointer-events-none absolute start-[52px] top-1 text-[9px] font-medium uppercase tracking-[0.16em] transition-colors duration-300 ${
- isFocused ? 'text-gold' : 'text-gold/80'
- }`}
+          className={`pointer-events-none absolute start-12 top-2 text-[10px] font-medium uppercase tracking-[0.16em] transition-colors duration-300 ${isFocused ? 'text-gold' : 'text-gold/75'}`}
         >
           {label}
         </span>
