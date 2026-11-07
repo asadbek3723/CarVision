@@ -685,7 +685,9 @@
     "bookingNotFound": "Брон ёфт нашуд",
     "backToProfile": "Бозгашт ба профил",
     "itemsCount": "{count} қисм",
-    "bookedOn": "{date} брон шудааст"
+    "bookedOn": "{date} брон шудааст",
+    "details": "Муфассал",
+    "emptyHint": "Барои брони нав аз <shop>мағоза</shop> истифода баред"
   },
   "customize": {
     "saveConfig": "Нигоҳ доштани танзим",

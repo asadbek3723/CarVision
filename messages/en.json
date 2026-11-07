@@ -685,7 +685,9 @@
     "bookingNotFound": "Booking not found",
     "backToProfile": "Back to profile",
     "itemsCount": "{count, plural, one {# part} other {# parts}}",
-    "bookedOn": "Booked on {date}"
+    "bookedOn": "Booked on {date}",
+    "details": "Details",
+    "emptyHint": "Use the <shop>shop</shop> to make a new booking"
   },
   "customize": {
     "saveConfig": "Save config",

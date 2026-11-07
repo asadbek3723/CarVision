@@ -685,7 +685,9 @@
     "bookingNotFound": "Bron topilmadi",
     "backToProfile": "Profilga qaytish",
     "itemsCount": "{count} ta detal",
-    "bookedOn": "{date} kuni bron qilingan"
+    "bookedOn": "{date} kuni bron qilingan",
+    "details": "Batafsil",
+    "emptyHint": "Yangi bron qilish uchun <shop>do‘kondan</shop> foydalaning"
   },
   "customize": {
     "saveConfig": "Konfiguratsiyani saqlash",

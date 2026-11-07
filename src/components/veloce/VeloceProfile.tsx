@@ -4,8 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowRight, BarChart3, LayoutDashboard, Loader2, Package, Pencil, Settings } from 'lucide-react';
-import { buttonClasses } from '@/components/ui';
+import { ArrowRight, BarChart3, CalendarClock, LayoutDashboard, Loader2, Package, Pencil, RefreshCw, Settings, WalletCards } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { BOOKING_STATUS_STYLE, type BookingView } from '@/features/shop/BookingCard';
@@ -100,82 +99,99 @@ export function VeloceProfile() {
   const base = `/${locale}/profile`;
 
   const stats = [
-    { label: t('credits'), value: user.credits_balance >= 1_000_000 ? '∞' : user.credits_balance.toLocaleString() },
-    { label: t('statRenders'), value: rendersUsed === null ? '–' : rendersUsed.toLocaleString() },
-    { label: t('statBookings'), value: bookingsLoading ? '–' : bookings.length.toLocaleString() },
+    { icon: WalletCards, label: t('credits'), value: user.credits_balance >= 1_000_000 ? '∞' : user.credits_balance.toLocaleString() },
+    { icon: RefreshCw, label: t('statRenders'), value: rendersUsed === null ? '–' : rendersUsed.toLocaleString() },
+    { icon: BarChart3, label: t('statBookings'), value: bookingsLoading ? '–' : bookings.length.toLocaleString() },
   ];
 
   return (
     <div className={pageWrap}>
       {/* Identity + actions */}
-      <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-12">
-        <div className="flex min-w-0 items-center gap-4 md:gap-6">
+      <header className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-12">
+        <div className="flex min-w-0 items-center gap-5 md:gap-10">
           <div
             aria-hidden="true"
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gold-gradient text-xl font-semibold uppercase text-black md:h-24 md:w-24 md:text-3xl"
+            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gold-gradient font-heading text-3xl font-semibold uppercase text-black shadow-[0_0_0_6px_rgba(0,0,0,0.6),0_18px_50px_rgba(212,175,55,0.22)] md:h-28 md:w-28 md:text-5xl"
           >
             {initialsOf(user.full_name)}
           </div>
           <div className="min-w-0">
-            <h1 className="truncate font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground md:text-5xl">{name}</h1>
-            <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-white/50 md:mt-2.5 md:text-base">
+            <h1 className="truncate font-heading text-3xl font-semibold leading-tight tracking-[-0.02em] text-foreground md:text-5xl">{name}</h1>
+            <p className="mt-1.5 flex min-w-0 items-center gap-3 text-sm text-white/55 md:mt-3 md:text-lg">
               {contact && <span dir="ltr" className="truncate">{contact}</span>}
-              {contact && <span aria-hidden="true" className="text-white/20">·</span>}
-              <span className={`shrink-0 font-medium ${isPaid ? 'text-gold-300' : 'text-white/60'}`}>{isPaid ? t('planActive') : t('planFree')}</span>
+              {contact && <span aria-hidden="true" className="text-white/25">·</span>}
+              <span className="flex shrink-0 items-center gap-2">
+                <span aria-hidden="true" className={`h-2 w-2 rounded-full ${isPaid ? 'bg-emerald-400' : 'bg-white/40'}`} />
+                <span className={isPaid ? 'text-gold-300' : 'text-white/60'}>{isPaid ? t('planActive') : t('planFree')}</span>
+              </span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 md:gap-2">
+        <div className="flex items-center gap-1">
           <Link href={`${base}/edit`} aria-label={t('editProfile')} title={t('editProfile')} className={iconLink}>
             <Pencil className="h-5 w-5" />
-          </Link>
-          <Link href={`${base}/stats`} aria-label={t('viewStats')} title={t('viewStats')} className={iconLink}>
-            <BarChart3 className="h-5 w-5" />
           </Link>
           <Link href={`${base}/settings`} aria-label={t('settings')} title={t('settings')} className={iconLink}>
             <Settings className="h-5 w-5" />
           </Link>
           <Link
             href={isPaid ? `/${locale}/seller?tab=dashboard` : `/${locale}/plans`}
-            className={buttonClasses({ size: 'md', className: 'ms-2 flex-1 lg:flex-none lg:px-7' })}
+            className={`ms-3 inline-flex min-h-12 flex-1 items-center justify-center gap-2.5 rounded-full px-7 text-base font-semibold text-gold-300 ring-1 ring-inset ring-gold-500/60 transition hover:bg-gold-500/10 hover:text-gold-200 md:flex-none ${focusRing}`}
           >
-            <LayoutDashboard className="h-4 w-4" />
+            <LayoutDashboard className="h-5 w-5" />
             <span className="truncate">{t('dashboard')}</span>
           </Link>
         </div>
       </header>
 
-      {/* Numbers */}
-      <dl className="mt-10 grid grid-cols-3 gap-4 md:mt-16 md:max-w-3xl md:gap-12">
-        {stats.map((s) => (
-          <div key={s.label} className="min-w-0">
-            <dd className="font-display text-3xl font-semibold tabular-nums tracking-[-0.02em] text-white md:text-5xl">{s.value}</dd>
-            <dt className="mt-1 truncate text-xs text-white/45 md:mt-2 md:text-sm">{s.label}</dt>
+      {/* Numbers: one row across the page */}
+      <dl className="mt-10 grid grid-cols-3 md:mt-16">
+        {stats.map((s, i) => (
+          <div key={s.label} className={`flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-5 ${i > 0 ? 'border-s border-white/10 ps-4 sm:ps-8 lg:ps-24' : 'pe-4'}`}>
+            <s.icon aria-hidden="true" className="h-6 w-6 shrink-0 text-gold-500 md:h-9 md:w-9" />
+            <div className="min-w-0">
+              <dd className="font-display text-2xl font-semibold tabular-nums tracking-[-0.02em] text-white md:text-4xl">{s.value}</dd>
+              <dt className="mt-0.5 truncate text-xs text-white/55 md:text-base">{s.label}</dt>
+            </div>
           </div>
         ))}
       </dl>
 
       {/* Bookings */}
-      <section aria-labelledby="bookings-title" className="mt-12 md:mt-20">
-        <h2 id="bookings-title" className="font-heading text-xl font-semibold tracking-[-0.01em] text-white md:text-2xl">
-          {t('bookingsTitle')}
-        </h2>
-        <p className="mt-1 max-w-xl text-sm text-white/45">{t('bookingsSub')}</p>
+      <section aria-labelledby="bookings-title" className="mt-14 md:mt-24">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 border-s-2 border-gold-500 ps-4 md:ps-6">
+            <h2 id="bookings-title" className="font-heading text-xl font-semibold tracking-[-0.01em] text-white md:text-3xl">
+              {t('bookingsTitle')}
+            </h2>
+            <p className="mt-1 text-sm text-white/55 md:text-base">{t('bookingsSub')}</p>
+          </div>
+          <Link href={`${base}/stats`} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg text-sm font-semibold text-gold-500 transition hover:text-gold-300 md:text-base ${focusRing}`}>
+            {t('details')}
+            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+          </Link>
+        </div>
 
-        <div className="mt-6 md:mt-8">
+        <div className="mt-8 md:mt-12">
           {bookingsLoading ? (
             <div className="flex items-center gap-2 text-sm text-white/50" role="status">
               <Loader2 className="h-4 w-4 animate-spin" />
               {t('loading')}
             </div>
           ) : bookings.length === 0 ? (
-            <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-6">
-              <p className="text-base text-white/55">{t('noBookings')}</p>
-              <Link href={`/${locale}/shop`} className={`inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-semibold text-gold-500 transition hover:text-gold-300 ${focusRing}`}>
-                {t('browse')}
-                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-              </Link>
+            <div className="flex flex-col items-center py-12 text-center md:py-20">
+              <CalendarClock aria-hidden="true" className="h-14 w-14 text-white/35 md:h-16 md:w-16" strokeWidth={1.4} />
+              <p className="mt-5 text-lg font-semibold text-white md:text-xl">{t('noBookings')}</p>
+              <p className="mt-2 text-sm text-white/45 md:text-base">
+                {t.rich('emptyHint', {
+                  shop: (chunks) => (
+                    <Link href={`/${locale}/shop`} className={`rounded font-semibold text-gold-500 transition hover:text-gold-300 ${focusRing}`}>
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </p>
             </div>
           ) : (
             <ul className="grid grid-cols-2 gap-x-3 gap-y-8 md:gap-x-8 md:gap-y-12">

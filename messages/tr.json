@@ -685,7 +685,9 @@
     "bookingNotFound": "Rezervasyon bulunamadı",
     "backToProfile": "Profile dön",
     "itemsCount": "{count} parça",
-    "bookedOn": "{date} tarihinde rezerve edildi"
+    "bookedOn": "{date} tarihinde rezerve edildi",
+    "details": "Ayrıntılar",
+    "emptyHint": "Yeni rezervasyon için <shop>mağazayı</shop> kullanın"
   },
   "customize": {
     "saveConfig": "Yapılandırmayı kaydet",

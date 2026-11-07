@@ -685,7 +685,9 @@
     "bookingNotFound": "الحجز غير موجود",
     "backToProfile": "العودة إلى الملف الشخصي",
     "itemsCount": "{count, plural, one {قطعة واحدة} two {قطعتان} few {# قطع} other {# قطعة}}",
-    "bookedOn": "تم الحجز في {date}"
+    "bookedOn": "تم الحجز في {date}",
+    "details": "التفاصيل",
+    "emptyHint": "استخدم <shop>المتجر</shop> لإجراء حجز جديد"
   },
   "customize": {
     "saveConfig": "حفظ التهيئة",

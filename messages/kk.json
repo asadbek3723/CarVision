@@ -685,7 +685,9 @@
     "bookingNotFound": "Брон табылмады",
     "backToProfile": "Профильге оралу",
     "itemsCount": "{count} бөлшек",
-    "bookedOn": "{date} брондалған"
+    "bookedOn": "{date} брондалған",
+    "details": "Толығырақ",
+    "emptyHint": "Жаңа брон жасау үшін <shop>дүкенді</shop> пайдаланыңыз"
   },
   "customize": {
     "saveConfig": "Конфигурацияны сақтау",

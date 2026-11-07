@@ -685,7 +685,9 @@
     "bookingNotFound": "Бронь не найдена",
     "backToProfile": "Вернуться в профиль",
     "itemsCount": "{count, plural, one {# деталь} few {# детали} other {# деталей}}",
-    "bookedOn": "Забронировано {date}"
+    "bookedOn": "Забронировано {date}",
+    "details": "Подробнее",
+    "emptyHint": "Чтобы забронировать, загляните в <shop>магазин</shop>"
   },
   "customize": {
     "saveConfig": "Сохранить конфигурацию",

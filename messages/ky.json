@@ -685,7 +685,9 @@
     "bookingNotFound": "Брондоо табылган жок",
     "backToProfile": "Профилге кайтуу",
     "itemsCount": "{count} тетик",
-    "bookedOn": "{date} брондолгон"
+    "bookedOn": "{date} брондолгон",
+    "details": "Кененирээк",
+    "emptyHint": "Жаңы брондоо үчүн <shop>дүкөндү</shop> колдонуңуз"
   },
   "customize": {
     "saveConfig": "Конфигурацияны сактоо",
