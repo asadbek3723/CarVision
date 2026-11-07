@@ -662,7 +662,7 @@ export function VeloceCustomize() {
             items={filteredProducts}
             selectedIds={selectedPartIds}
             onToggle={togglePart}
-            onFocusChange={() => vibrate(8)}
+            onTick={() => vibrate(10)}
             prevLabel={t('scrollBack')}
             nextLabel={t('scrollForward')}
             selectLabel={t('select')}

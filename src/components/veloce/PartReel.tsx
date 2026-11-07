@@ -8,8 +8,13 @@ interface PartReelProps {
   items: VeloceProduct[];
   selectedIds: string[];
   onToggle: (id: string) => void;
-  /** Fired when the part in the middle changes (used for a light haptic tick). */
+  /** Fired when the part in the middle changes. */
   onFocusChange?: (id: string) => void;
+  /**
+   * Fired synchronously every time a tooth of the wheel passes the middle (drag, flick, arrows,
+   * keys). Used for the light haptic "tick"; it must stay cheap and silent.
+   */
+  onTick?: () => void;
   /** Label for the previous / next arrows (desktop). */
   prevLabel: string;
   nextLabel: string;
@@ -76,6 +81,7 @@ export function PartReel({
   selectedIds,
   onToggle,
   onFocusChange,
+  onTick,
   prevLabel,
   nextLabel,
   selectLabel,
@@ -104,6 +110,8 @@ export function PartReel({
   const widthRef = React.useRef(360);
   const lastTRef = React.useRef(0);
   const [centerK, setCenterK] = React.useState(0);
+  const onTickRef = React.useRef(onTick);
+  onTickRef.current = onTick;
 
   const drag = React.useRef({ down: false, moved: false, startX: 0, startPos: 0, lastX: 0, lastT: 0, v: 0 });
 
@@ -140,6 +148,7 @@ export function PartReel({
     if (c !== centerRef.current) {
       centerRef.current = c;
       setCenterK(c);
+      onTickRef.current?.();
     }
   }, []);
 
@@ -362,8 +371,8 @@ export function PartReel({
   for (let k = centerK - half; k <= centerK + half; k++) slides.push(k);
 
   return (
-    <div className="select-none">
-      <div className="relative isolate">
+    <div className="select-none lg:grid lg:grid-cols-5 lg:items-center lg:gap-6">
+      <div className="relative isolate lg:col-span-3">
         {/* Edge fades hint that the strip goes on */}
         <div aria-hidden className="pointer-events-none absolute inset-y-0 start-0 z-[200] w-10 bg-gradient-to-r from-[#0D0E12] to-transparent lg:w-28 rtl:bg-gradient-to-l" />
         <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 z-[200] w-10 bg-gradient-to-l from-[#0D0E12] to-transparent lg:w-28 rtl:bg-gradient-to-r" />
@@ -467,11 +476,11 @@ export function PartReel({
 
       {/* Details of the centred part */}
       {current && (
-        <div className="mx-auto mt-1 max-w-sm px-6 text-center lg:max-w-xl" aria-live="polite">
-          <h3 className="truncate font-display text-lg font-medium uppercase tracking-[0.14em] text-white lg:text-xl">{current.name}</h3>
-          <p className="mt-1 truncate text-xs text-white/50 lg:text-sm">{[current.spec, currentFit].filter(Boolean).join(' · ')}</p>
-          <div className="mt-2 flex items-center justify-center gap-3">
-            <span className="text-base font-semibold tabular-nums text-[#D4AE62] lg:text-xl">{formatPrice(Number(current.price) || 0)}</span>
+        <div className="mx-auto mt-1 max-w-sm px-6 text-center lg:col-span-2 lg:mx-0 lg:mt-0 lg:max-w-none lg:px-6 lg:text-start xl:px-10" aria-live="polite">
+          <h3 className="truncate font-display text-lg font-medium uppercase tracking-[0.14em] text-white lg:whitespace-normal lg:text-2xl lg:leading-snug lg:tracking-[0.1em] lg:[display:-webkit-box] lg:[-webkit-box-orient:vertical] lg:[-webkit-line-clamp:3]">{current.name}</h3>
+          <p className="mt-1 truncate text-xs text-white/50 lg:mt-3 lg:whitespace-normal lg:text-[15px] lg:leading-relaxed lg:text-white/60 lg:[display:-webkit-box] lg:[-webkit-box-orient:vertical] lg:[-webkit-line-clamp:5]">{[current.spec, currentFit].filter(Boolean).join(' · ')}</p>
+          <div className="mt-2 flex items-center justify-center gap-3 lg:mt-5 lg:justify-start lg:gap-5">
+            <span className="text-base font-semibold tabular-nums text-[#D4AE62] lg:text-3xl">{formatPrice(Number(current.price) || 0)}</span>
             <button
               type="button"
               onClick={() => onToggle(current.id)}
@@ -484,7 +493,7 @@ export function PartReel({
               {isSelected ? selectedLabel : selectLabel}
             </button>
           </div>
-          <p className="mt-2 hidden text-[11px] tabular-nums tracking-[0.2em] text-white/30 2xl:block">
+          <p className="mt-2 hidden text-[11px] tabular-nums tracking-[0.2em] text-white/30 lg:mt-4 lg:block">
             {activeIdx + 1} / {n}
           </p>
         </div>
