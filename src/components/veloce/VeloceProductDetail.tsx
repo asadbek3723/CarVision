@@ -11,6 +11,9 @@ import {
   Sparkles,
   MapPin,
   Lock,
+  ShieldCheck,
+  Package,
+  ChevronRight,
 } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -179,27 +182,83 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
             ))}
           </div>
         )}
-
-
-        {/* Why the workshop stays hidden: a wide, boxless line right under the photo */}
-        <div className="mt-4 flex items-start gap-3 px-1">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
-          <p className="text-[11px] leading-relaxed text-white/55">
-            <span className="font-semibold text-white">{t('lockedTitle')}</span>{' '}
-            {t('lockedBody', { amount: formatPrice(deposit3PercentUSD) })}
-          </p>
-        </div>
         </div>
 
         {/* Clean Boxless Info */}
-        <div className="space-y-6 lg:col-span-6">
+        <div className="space-y-7 lg:col-span-6">
           <div>
             <p className="text-xs font-medium tracking-[0.25em] uppercase text-gold-500">
               {product.brand}
             </p>
-            <h1 className="mt-2 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+            <h1 className="mt-2 w-full font-heading text-3xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-4xl">
               {product.name}
             </h1>
+            {product.spec && (
+              <p className="mt-3 w-full whitespace-pre-line text-sm leading-relaxed text-white/60 sm:text-base">{product.spec}</p>
+            )}
+          </div>
+
+          {/* Price | stock — no box */}
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <ShieldCheck className="h-6 w-6 shrink-0 text-gold-500" />
+              <div className="min-w-0">
+                <p className="truncate font-display text-2xl font-semibold tabular-nums text-white sm:text-3xl">{formatPrice(normalizedUSD)}</p>
+                <p className="truncate text-xs text-white/45">{t('workshopFullPrice')}</p>
+              </div>
+            </div>
+            <span aria-hidden="true" className="h-10 w-px bg-gold-500/40" />
+            <div className="flex min-w-0 items-center gap-3">
+              <Package className={`h-6 w-6 shrink-0 ${outOfStock ? 'text-red-300' : 'text-gold-500'}`} />
+              <div className="min-w-0">
+                {outOfStock ? (
+                  <p className="truncate text-base font-semibold text-red-300">{t('outOfStock')}</p>
+                ) : (
+                  <>
+                    <p className="truncate font-display text-2xl font-semibold tabular-nums text-white sm:text-3xl">{t('stockCount', { count: product.stock })}</p>
+                    <p className="truncate text-xs text-white/45">{t('stockLeft')}</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 3% deposit — a plain row that starts the unlock */}
+          <button
+            type="button"
+            onClick={handleUnlockAddress}
+            disabled={outOfStock}
+            className="group flex w-full items-center gap-3 rounded-lg py-1 text-start text-sm text-white/80 transition hover:text-white disabled:opacity-50"
+          >
+            <ShieldCheck className="h-5 w-5 shrink-0 text-gold-500" />
+            <span className="min-w-0 flex-1">
+              {t.rich('depositToUnlock', {
+                b: (chunks) => <span className="font-semibold text-white">{chunks}</span>,
+                amount: formatPrice(deposit3PercentUSD),
+              })}
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white rtl:rotate-180" />
+          </button>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleUnlockAddress}
+              disabled={outOfStock}
+              className={buttonClasses({ size: 'lg', className: 'flex-1' })}
+            >
+              <MapPin className="h-4 w-4" />
+              <span>{t('unlockCta')}</span>
+            </button>
+
+            <Link
+              href={`/${locale}/customize?partId=${encodeURIComponent(product.id)}`}
+              className="flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-white/[0.05] px-6 py-4 text-xs font-semibold tracking-wider uppercase text-white transition hover:bg-white/[0.1]"
+            >
+              <Sparkles className="h-4 w-4 text-gold-500" />
+              <span>{t('tryOnCar')}</span>
+            </Link>
           </div>
 
           {/* Compatibility, exactly as entered by the workshop */}
@@ -229,44 +288,13 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
             )}
           </div>
 
-          {/* Price & 3% Lead Unlock Info */}
-          <div className="pt-2">
-            <p className="text-xs text-white/45">{t('workshopFullPrice')}</p>
-            <div className="mt-1 font-display text-3xl font-semibold text-white tabular-nums sm:text-4xl">
-              {formatPrice(normalizedUSD)}
-            </div>
-            <p className="mt-2 text-sm text-emerald-400">
-              {t.rich('depositToUnlock', {
-                b: (chunks) => <span className="font-mono font-bold">{chunks}</span>,
-                amount: formatPrice(deposit3PercentUSD),
-              })}
+          {/* Why the workshop stays hidden */}
+          <div className="flex items-start gap-3">
+            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
+            <p className="text-xs leading-relaxed text-white/55">
+              <span className="font-semibold text-white">{t('lockedTitle')}</span>{' '}
+              {t('lockedBody', { amount: formatPrice(deposit3PercentUSD) })}
             </p>
-          </div>
-
-          {product.spec && <p className="whitespace-pre-line text-sm leading-relaxed text-white/65">{product.spec}</p>}
-          <p className={`text-xs font-semibold ${outOfStock ? 'text-red-300' : 'text-emerald-400'}`}>
-            {outOfStock ? t('outOfStock') : t('inStock', { count: product.stock })}
-          </p>
-
-          {/* Actions */}
-          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={handleUnlockAddress}
-              disabled={outOfStock}
-              className={buttonClasses({ size: 'lg', className: 'flex-1' })}
-            >
-              <MapPin className="h-4 w-4" />
-              <span>{t('unlockCta')}</span>
-            </button>
-
-            <Link
-              href={`/${locale}/customize?partId=${encodeURIComponent(product.id)}`}
-              className="flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-white/[0.05] px-6 py-4 text-xs font-semibold tracking-wider uppercase text-white transition hover:bg-white/[0.1]"
-            >
-              <Sparkles className="h-4 w-4 text-gold-500" />
-              <span>{t('tryOnCar')}</span>
-            </Link>
           </div>
         </div>
       </div>

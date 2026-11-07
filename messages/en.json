@@ -510,7 +510,9 @@
       "lockedBody": "We don't sell the part ourselves. If you like it, pay 3% ({amount}) — we'll immediately give you the exact address of that tuning workshop and send your number to the workshop.",
       "unlockCta": "Pay 3% and get the address",
       "tryOnCar": "Try on my car",
-      "related": "Similar parts"
+      "related": "Similar parts",
+      "stockCount": "{count} pcs",
+      "stockLeft": "left in stock"
     },
     "cart": {
       "eyebrow": "Selected parts",

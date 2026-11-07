@@ -510,7 +510,9 @@
       "lockedBody": "Biz detalni oʻzimiz sotmaymiz. Agar u sizga maʼqul kelsa, 3% ({amount}) toʻlaysiz — biz darhol sizga oʻsha tuning servisning aniq manzilini beramiz va ustaxonaga raqamingizni yuboramiz.",
       "unlockCta": "3% toʻlab manzilni olish",
       "tryOnCar": "Mashinamda sinab koʻrish",
-      "related": "Oʻxshash detallar"
+      "related": "Oʻxshash detallar",
+      "stockCount": "{count} ta",
+      "stockLeft": "omborda qoldi"
     },
     "cart": {
       "eyebrow": "Tanlangan jihozlar",
