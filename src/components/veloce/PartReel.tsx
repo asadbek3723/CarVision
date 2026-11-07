@@ -35,15 +35,17 @@ interface Metrics {
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-function measure(width: number): Metrics {
+function measure(width: number, viewportH = 900): Metrics {
   const wide = width >= 900;
   const mid = width >= 560;
-  const size = wide ? 200 : mid ? 168 : clamp(width * 0.31, 104, 156);
+  const byWidth = wide ? 200 : mid ? 168 : clamp(width * 0.31, 104, 156);
+  // The page never scrolls: on short screens the cards shrink so everything still fits.
+  const size = Math.round(clamp(Math.min(byWidth, viewportH * (wide ? 0.155 : 0.19)), 84, byWidth));
   const gap = wide ? 28 : 12;
   const slot = size * 1.04 + gap;
   const step = wide ? 0.13 : 0.085;
   const top = Math.round(size * 0.09) + 12;
-  return { size, slot, step, top, height: Math.round(top + size * 1.09 + (wide ? 96 : 52)) };
+  return { size, slot, step, top, height: Math.round(top + size * 1.09 + (wide ? 70 : 52)) };
 }
 
 // Spring that overshoots a little: the strip "clicks" onto the next tooth like a cog.
@@ -212,7 +214,7 @@ export function PartReel({
     const stage = stageRef.current;
     if (!stage) return;
     const apply = () => {
-      const next = measure(stage.clientWidth || 360);
+      const next = measure(stage.clientWidth || 360, window.innerHeight);
       widthRef.current = stage.clientWidth || 360;
       dirRef.current = getComputedStyle(stage).direction === 'rtl' ? -1 : 1;
       metricsRef.current = next;
@@ -222,7 +224,11 @@ export function PartReel({
     apply();
     const ro = new ResizeObserver(apply);
     ro.observe(stage);
-    return () => ro.disconnect();
+    window.addEventListener('resize', apply);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', apply);
+    };
   }, [paint]);
 
   // New list (category / car changed): start again from the first part.
@@ -462,15 +468,15 @@ export function PartReel({
       {/* Details of the centred part */}
       {current && (
         <div className="mx-auto mt-1 max-w-sm px-6 text-center lg:max-w-xl" aria-live="polite">
-          <h3 className="truncate font-display text-lg font-medium uppercase tracking-[0.14em] text-white lg:text-2xl">{current.name}</h3>
+          <h3 className="truncate font-display text-lg font-medium uppercase tracking-[0.14em] text-white lg:text-xl">{current.name}</h3>
           <p className="mt-1 truncate text-xs text-white/50 lg:text-sm">{[current.spec, currentFit].filter(Boolean).join(' · ')}</p>
-          <div className="mt-3 flex items-center justify-center gap-3">
+          <div className="mt-2 flex items-center justify-center gap-3">
             <span className="text-base font-semibold tabular-nums text-[#D4AE62] lg:text-xl">{formatPrice(Number(current.price) || 0)}</span>
             <button
               type="button"
               onClick={() => onToggle(current.id)}
               aria-pressed={isSelected}
-              className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full px-4 text-xs font-semibold transition active:scale-95 lg:min-h-11 lg:px-6 lg:text-sm ${
+              className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full px-4 text-xs font-semibold transition active:scale-95 lg:min-h-10 lg:px-6 lg:text-sm ${
                 isSelected ? 'bg-emerald-400/15 text-emerald-300' : 'bg-white/[0.08] text-white/85 hover:bg-white/[0.14]'
               }`}
             >
@@ -478,7 +484,7 @@ export function PartReel({
               {isSelected ? selectedLabel : selectLabel}
             </button>
           </div>
-          <p className="mt-3 text-[11px] tabular-nums tracking-[0.2em] text-white/30">
+          <p className="mt-2 hidden text-[11px] tabular-nums tracking-[0.2em] text-white/30 2xl:block">
             {activeIdx + 1} / {n}
           </p>
         </div>

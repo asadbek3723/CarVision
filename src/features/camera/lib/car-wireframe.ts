@@ -95,6 +95,10 @@ interface Segment3 {
    * are drawn brighter, so the side to shoot reads at a glance. Omitted = neutral body line.
    */
   n?: Vec3 | undefined;
+  /** Drawn only when the face looks at the camera at least this much (head-on helpers). */
+  minFacing?: number | undefined;
+  /** Fixed brightness (silhouette edges). */
+  opacity?: number | undefined;
 }
 
 let cachedSegments: Segment3[] | null = null;
@@ -134,10 +138,10 @@ const unit = (v: Vec3): Vec3 => {
 export function buildCarSegments(): Segment3[] {
   if (cachedSegments) return cachedSegments;
   const segs: Segment3[] = [];
-  const line = (a: Vec3, b: Vec3, weight = 1, n?: Vec3) => segs.push({ a, b, weight, n });
-  const poly = (pts: Vec3[], closed: boolean, weight: number, n?: Vec3) => {
+  const line = (a: Vec3, b: Vec3, weight = 1, n?: Vec3, minFacing?: number) => segs.push({ a, b, weight, n, minFacing });
+  const poly = (pts: Vec3[], closed: boolean, weight: number, n?: Vec3, minFacing?: number) => {
     const last = closed ? pts.length : pts.length - 1;
-    for (let i = 0; i < last; i++) line(pts[i]!, pts[(i + 1) % pts.length]!, weight, n);
+    for (let i = 0; i < last; i++) line(pts[i]!, pts[(i + 1) % pts.length]!, weight, n, minFacing);
   };
   const stations = table();
   const sections = stations.map((st) => section(st).map(([x, y]) => [x, y, st[0]!] as Vec3));
@@ -145,10 +149,12 @@ export function buildCarSegments(): Segment3[] {
   const FRONT: Vec3 = [0, 0, 1];
   const REAR: Vec3 = [0, 0, -1];
 
-  // Body silhouette: sills, belt lines and roof edges, front → back.
-  for (let p = 0; p < 6; p++) {
+  // Shoulder (belt) and sill lines, drawn only on the side that faces the camera; the true outline
+  // of the body comes from the mesh silhouette (see `silhouetteSegments`).
+  for (const p of [0, 1, 4, 5]) {
+    const n: Vec3 = p < 3 ? [-1, 0, 0] : [1, 0, 0];
     for (let i = 0; i < sections.length - 1; i++) {
-      line(sections[i]![p]!, sections[i + 1]![p]!, p === 1 || p === 4 ? 1.15 : 1);
+      line(sections[i]![p]!, sections[i + 1]![p]!, p === 1 || p === 4 ? 1.15 : 0.8, n);
     }
   }
   // Nose and tail outlines (head-on views show a clear face, no cross-section clutter).
@@ -161,9 +167,6 @@ export function buildCarSegments(): Segment3[] {
   // Bonnet creases + roof panel.
   for (const x of [-0.5, 0, 0.5]) {
     poly(zs(2.1, 1.08, 6).map((z) => [x, stationAt(z)[3] + 0.005, z] as Vec3), false, 0.7, unit([0, 1, 0.35]));
-  }
-  for (const x of [-0.4, 0.4]) {
-    poly(zs(0.2, -1.35, 8).map((z) => [x, stationAt(z)[3] + 0.005, z] as Vec3), false, 0.6, [0, 1, 0]);
   }
 
   // Windscreen and rear screen.
@@ -196,7 +199,7 @@ export function buildCarSegments(): Segment3[] {
     line(lower[lower.length - 1]!, upper[upper.length - 1]!, 0.9, side);
     line(sidePoint(s, -0.32, 0.1), sidePoint(s, -0.32, 0.9), 0.9, side); // B-pillar
     // Door shut lines, handles and the character line along the flank.
-    for (const z of [0.78, -0.32, -1.4]) {
+    for (const z of [0.78]) {
       const [, w, , , , sill] = stationAt(z);
       line([s * w, sill + 0.05, z], sidePoint(s, z, 0.1), 0.8, side);
     }
@@ -340,7 +343,10 @@ export interface ProjectedPoint {
 }
 
 /** Camera orbiting the car at `bearing`, looking at the car's centre from slightly above. */
-export function makeCamera(bearing: number, distance = 12, height = 1.6) {
+export const CAM_DISTANCE = 20;
+export const CAM_HEIGHT = 1.25;
+
+export function makeCamera(bearing: number, distance = CAM_DISTANCE, height = CAM_HEIGHT) {
   const th = (bearing * Math.PI) / 180;
   const pos: Vec3 = [Math.sin(th) * distance, height, Math.cos(th) * distance];
   const target: Vec3 = [0, 0.75, 0];
@@ -357,12 +363,137 @@ export function makeCamera(bearing: number, distance = 12, height = 1.6) {
   };
 }
 
+/** Closed-polygon corner cutting: rounds the cross-section like a pressed body panel. */
+function chaikin(pts: Array<[number, number]>, rounds: number): Array<[number, number]> {
+  let cur = pts;
+  for (let r = 0; r < rounds; r++) {
+    const next: Array<[number, number]> = [];
+    for (let i = 0; i < cur.length; i++) {
+      const a = cur[i]!;
+      const b = cur[(i + 1) % cur.length]!;
+      next.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    cur = next;
+  }
+  return cur;
+}
+
+interface BodyMesh {
+  rings: Vec3[][];
+  /** Outward normals and centres of the quad faces [station][ring]. */
+  normals: Vec3[][];
+  centers: Vec3[][];
+}
+
+let cachedMesh: BodyMesh | null = null;
+
+/** Smooth lofted body: rounded cross-sections stacked along the car. */
+function bodyMesh(): BodyMesh {
+  if (cachedMesh) return cachedMesh;
+  const rings = table().map((st) => {
+    const z = st[0]!;
+    // Closed section: the underside joins the two sills.
+    const pts = chaikin(section(st), 2);
+    return pts.map(([x, y]) => [x, y, z] as Vec3);
+  });
+  const normals: Vec3[][] = [];
+  const centers: Vec3[][] = [];
+  for (let i = 0; i < rings.length - 1; i++) {
+    const rowN: Vec3[] = [];
+    const rowC: Vec3[] = [];
+    const m = rings[i]!.length;
+    for (let j = 0; j < m; j++) {
+      const A = rings[i]![j]!;
+      const B = rings[i]![(j + 1) % m]!;
+      const D = rings[i + 1]![j]!;
+      const C = rings[i + 1]![(j + 1) % m]!;
+      const centre: Vec3 = [(A[0] + B[0] + C[0] + D[0]) / 4, (A[1] + B[1] + C[1] + D[1]) / 4, (A[2] + B[2] + C[2] + D[2]) / 4];
+      let n = norm(cross(sub(B, A), sub(D, A)));
+      // Outward = away from the car's long axis.
+      if (dot(n, sub(centre, [0, 0.8, centre[2]])) < 0) n = [-n[0], -n[1], -n[2]];
+      rowN.push(n);
+      rowC.push(centre);
+    }
+    normals.push(rowN);
+    centers.push(rowC);
+  }
+  cachedMesh = { rings, normals, centers };
+  return cachedMesh;
+}
+
+/** Outline of the body as seen from `bearing`: edges between a face that looks at the camera and one that does not. */
+function silhouetteSegments(bearing: number): Segment3[] {
+  const mesh = bodyMesh();
+  const th = (bearing * Math.PI) / 180;
+  const cam: Vec3 = [Math.sin(th) * CAM_DISTANCE, CAM_HEIGHT, Math.cos(th) * CAM_DISTANCE];
+  const stations = mesh.rings.length;
+  const m = mesh.rings[0]!.length;
+
+  // Smooth facing per ring vertex (average of the faces around it), so the contour is a clean curve.
+  const facing: number[][] = mesh.rings.map((ring, i) =>
+    ring.map((v, j) => {
+      let nx = 0;
+      let ny = 0;
+      let nz = 0;
+      for (const ii of [i - 1, i]) {
+        if (ii < 0 || ii > stations - 2) continue;
+        for (const jj of [(j + m - 1) % m, j]) {
+          const n = mesh.normals[ii]![jj]!;
+          nx += n[0];
+          ny += n[1];
+          nz += n[2];
+        }
+      }
+      return dot([nx, ny, nz], sub(cam, v));
+    })
+  );
+
+  // Where the facing changes sign along a cross-section is a point of the contour.
+  const crossings = mesh.rings.map((ring, i) => {
+    const pts: Array<{ j: number; p: Vec3 }> = [];
+    for (let j = 0; j < m; j++) {
+      const j1 = (j + 1) % m;
+      const fa = facing[i]![j]!;
+      const fb = facing[i]![j1]!;
+      if (fa > 0 !== fb > 0) {
+        const t = fa / (fa - fb);
+        const a = ring[j]!;
+        const b = ring[j1]!;
+        pts.push({ j, p: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t] });
+      }
+    }
+    return pts;
+  });
+
+  const out: Segment3[] = [];
+  const headOn = Math.abs(Math.cos(th)) > 0.94;
+  const circ = (x: number, y: number) => Math.min(Math.abs(x - y), m - Math.abs(x - y));
+  for (let i = 0; i < stations - 1 && !headOn; i++) {
+    const here = crossings[i]!;
+    const next = crossings[i + 1]!;
+    if (!here.length || !next.length) continue;
+    for (const c of here) {
+      let best = next[0]!;
+      for (const d of next) if (circ(d.j, c.j) < circ(best.j, c.j)) best = d;
+      if (circ(best.j, c.j) <= 3) out.push({ a: c.p, b: best.p, weight: 1.4, opacity: 0.78 });
+    }
+  }
+  // Head-on / from behind the body envelope (widest, tallest section) is what reads as "a car".
+  if (headOn) {
+    const mid = mesh.rings[Math.round((stations - 1) * 0.55)]!;
+    for (let j = 0; j < mid.length; j++) {
+      out.push({ a: mid[j]!, b: mid[(j + 1) % mid.length]!, weight: 1.2, opacity: 0.6 });
+    }
+  }
+  return out;
+}
+
 /** Opacity steps: segments are grouped into one SVG path per step. */
 const OPACITY_STEP = 0.04;
 
 /** Brightness of one line: calm body lines by depth, lines on a face that looks at the camera lift clearly. */
 function lineOpacity(near: number, facing: number | null, weight: number): number {
-  if (facing === null) return 0.16 + 0.26 * near;
+  if (facing === null) return 0.14 + 0.2 * near;
   if (facing <= 0.04) return 0.07;
   return Math.min(0.8, 0.2 + 0.6 * Math.pow(facing, 0.6) * (0.65 + 0.35 * near) * (0.85 + 0.15 * weight));
 }
@@ -375,12 +506,12 @@ function lineOpacity(near: number, facing: number | null, weight: number): numbe
 export function projectGhost(bearing: number, fill = 0.8): GhostWireframe {
   const { width, height } = GHOST_VIEWBOX;
   const cam = makeCamera(bearing);
-  const segs = buildCarSegments();
-  const proj = segs.map((s) => ({ a: cam.project(s.a), b: cam.project(s.b), weight: s.weight, n: s.n }));
+  const segs = [...buildCarSegments(), ...silhouetteSegments(bearing)];
+  const proj = segs.map((s) => ({ a: cam.project(s.a), b: cam.project(s.b), weight: s.weight, n: s.n, minFacing: s.minFacing, opacity: s.opacity }));
 
   // Unit vector from the car's centre towards the camera.
   const th = (bearing * Math.PI) / 180;
-  const toCam = norm([Math.sin(th) * 12, 1.6 - 0.75, Math.cos(th) * 12]);
+  const toCam = norm([Math.sin(th) * CAM_DISTANCE, CAM_HEIGHT - 0.75, Math.cos(th) * CAM_DISTANCE]);
 
   let minX = Infinity;
   let maxX = -Infinity;
@@ -414,7 +545,8 @@ export function projectGhost(bearing: number, fill = 0.8): GhostWireframe {
     const mid = (s.a.depth + s.b.depth) / 2;
     const near = 1 - (mid - minD) / (maxD - minD || 1); // 1 = nearest
     const facing = s.n ? dot(s.n, toCam) : null;
-    const step = Math.round(lineOpacity(near, facing, s.weight) / OPACITY_STEP);
+    if (facing !== null && (facing <= 0.04 || facing < (s.minFacing ?? 0))) continue; // hidden face: no see-through clutter
+    const step = Math.round((s.opacity ?? lineOpacity(near, facing, s.weight)) / OPACITY_STEP);
     const a = toSvg(s.a);
     const b = toSvg(s.b);
     const list = groups.get(step) ?? [];

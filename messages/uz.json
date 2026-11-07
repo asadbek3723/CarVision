@@ -463,6 +463,9 @@
     "saveError": "Saqlab bo'lmadi. Ismni tekshiring (kamida 2 belgi)."
   },
   "customize": {
+    "saveConfig": "Konfiguratsiyani saqlash",
+    "configSaved": "Saqlandi",
+    "clearBuild": "Tanlovni tozalash",
     "angles": {
       "front": "Oldi tomon",
       "rear": "Orqa tomon",
@@ -569,6 +572,7 @@
     "viewResult": "Natijani koʻrish ({count} ta rakurs)"
   },
   "result": {
+    "fullscreen": "To'liq ekran",
     "editParts": "Oʻzgartirish (boshqa detallarni sinash)",
     "download": "Rasmni yuklab olish",
     "watchVideo": "Video sifatida koʻrish",

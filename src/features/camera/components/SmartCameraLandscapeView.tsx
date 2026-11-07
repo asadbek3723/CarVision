@@ -7,7 +7,6 @@ import {
   Camera,
   ChevronUp,
   Check,
-  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCameraStream } from '../hooks/useCameraStream';
@@ -187,7 +186,6 @@ export function SmartCameraLandscapeView({
   const [capturedResults, setCapturedResults] = React.useState<Record<number, CompressResult>>({});
   const [isCapturing, setIsCapturing] = React.useState(false);
   const [flash, setFlash] = React.useState(false);
-  const [stepFeedback, setStepFeedback] = React.useState<string | null>(null);
 
   const completedAngles = React.useMemo(
     () => Object.keys(capturedResults).map(Number),
@@ -297,22 +295,11 @@ export function SmartCameraLandscapeView({
 
           const nextStepIndex = currentStepIndex + 1;
           if (nextStepIndex < SCAN_5_ANGLES.length) {
-            const nextAngle = SCAN_5_ANGLES[nextStepIndex]!;
-            setStepFeedback(
-              t('captured', {
-                angle: tAngle(`${activeAngle.key}.title`),
-                done: nextStepIndex,
-                total: SCAN_5_ANGLES.length,
-                next: tAngle(`${nextAngle.key}.title`),
-              })
-            );
             setCurrentStepIndex(nextStepIndex);
-            setTimeout(() => setStepFeedback(null), 2200);
           } else {
             // All 5 required angles have been captured!
             playLock();
             vibrate([40, 60, 40]);
-            setStepFeedback(t('allCaptured', { total: SCAN_5_ANGLES.length }));
             onAllPhotosCaptured?.(updatedMap);
           }
         }
@@ -549,23 +536,6 @@ export function SmartCameraLandscapeView({
             <div className="pointer-events-none absolute top-3.5 end-3.5 sm:top-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-e-[2.5px] border-[#E5C175] rounded-se-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
             <div className="pointer-events-none absolute bottom-3.5 start-3.5 sm:bottom-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-s-[2.5px] border-[#E5C175] rounded-es-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
             <div className="pointer-events-none absolute bottom-3.5 end-3.5 sm:bottom-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-e-[2.5px] border-[#E5C175] rounded-ee-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
-
-            {/* Step Transition Feedback Toast (Appears briefly when advancing between required angles) */}
-            <AnimatePresence>
-              {stepFeedback && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="pointer-events-none absolute top-4 inset-x-6 z-30 flex justify-center"
-                >
-                  <div className="inline-flex items-center gap-2 rounded-full bg-[#0D0F14]/90 px-4 py-1.5 text-xs font-medium text-[#F7DFA0] ring-1 ring-[#E5C175]/45 shadow-[0_12px_32px_rgba(0,0,0,0.85)] backdrop-blur-xl">
-                    <Sparkles className="h-3.5 w-3.5 text-[#E5C175]" />
-                    <span>{stepFeedback}</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
 

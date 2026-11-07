@@ -463,6 +463,9 @@
     "saveError": "تعذّر الحفظ. تحقق من الاسم (حرفان على الأقل)."
   },
   "customize": {
+    "saveConfig": "حفظ التهيئة",
+    "configSaved": "تم الحفظ",
+    "clearBuild": "مسح التحديد",
     "angles": {
       "front": "الأمام",
       "rear": "الخلف",
@@ -569,6 +572,7 @@
     "viewResult": "عرض النتيجة ({count})"
   },
   "result": {
+    "fullscreen": "ملء الشاشة",
     "editParts": "تعديل (جرّب قطعًا أخرى)",
     "download": "تنزيل الصورة",
     "watchVideo": "المشاهدة كفيديو",

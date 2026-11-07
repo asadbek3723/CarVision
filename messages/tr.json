@@ -463,6 +463,9 @@
     "saveError": "Kaydedilemedi. Adı kontrol edin (en az 2 karakter)."
   },
   "customize": {
+    "saveConfig": "Yapılandırmayı kaydet",
+    "configSaved": "Kaydedildi",
+    "clearBuild": "Seçimi temizle",
     "angles": {
       "front": "Ön",
       "rear": "Arka",
@@ -569,6 +572,7 @@
     "viewResult": "Sonucu gör ({count} açı)"
   },
   "result": {
+    "fullscreen": "Tam ekran",
     "editParts": "Değiştir (diğer parçaları dene)",
     "download": "Görseli indir",
     "watchVideo": "Video olarak izle",

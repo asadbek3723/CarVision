@@ -9,7 +9,11 @@ import {
   ChevronRight,
   Download,
   Camera,
+  Bookmark,
+  Check,
   Layers,
+  MoreHorizontal,
+  Maximize2,
   SlidersHorizontal,
   X,
 } from 'lucide-react';
@@ -161,6 +165,22 @@ export function VeloceCustomize() {
     }
   }, [requestedPartId, catalogProducts, selectedPartIds, setSelectedPartIds]);
 
+  // Bring back the build saved with "Save config" (once, and only when nothing is picked yet).
+  const restoredBuild = React.useRef(false);
+  React.useEffect(() => {
+    if (restoredBuild.current || catalogProducts.length === 0) return;
+    restoredBuild.current = true;
+    if (selectedPartIds.length > 0 || requestedPartId) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem('carvision_saved_build') ?? '[]') as unknown;
+      if (!Array.isArray(saved)) return;
+      const ids = saved.filter((id): id is string => typeof id === 'string' && catalogProducts.some((p) => p.id === id));
+      if (ids.length) setSelectedPartIds(onePerSlot(ids, catalogProducts));
+    } catch {
+      /* nothing saved */
+    }
+  }, [catalogProducts, selectedPartIds, requestedPartId, setSelectedPartIds]);
+
   // Filter products for the filmstrip carousel
   const filteredProducts = React.useMemo(() => {
     if (catalogProducts.length === 0) return [];
@@ -190,6 +210,23 @@ export function VeloceCustomize() {
   const hasAfter = Boolean(afterPhoto);
   const [sliderPos, setSliderPos] = React.useState(50);
   const sliderRef = React.useRef<HTMLDivElement | null>(null);
+  const stageRef = React.useRef<HTMLDivElement | null>(null);
+  const [configSaved, setConfigSaved] = React.useState(false);
+  const saveConfig = () => {
+    try {
+      localStorage.setItem('carvision_saved_build', JSON.stringify(selectedPartIds));
+    } catch {
+      /* storage blocked: nothing to remember */
+    }
+    setConfigSaved(true);
+    window.setTimeout(() => setConfigSaved(false), 2200);
+  };
+  const toggleFullscreen = () => {
+    const el = stageRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void el.requestFullscreen?.();
+  };
   const sliderDrag = React.useRef(false);
   const moveSlider = (clientX: number) => {
     const rect = sliderRef.current?.getBoundingClientRect();
@@ -299,13 +336,26 @@ export function VeloceCustomize() {
       disabled={isApplying}
       className="shimmer inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-gold-gradient px-6 text-[13px] font-bold uppercase tracking-[0.2em] text-black shadow-[0_14px_36px_rgba(212,174,98,0.35)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
     >
-      <Layers className="h-4 w-4" />
+      <Layers className="h-[18px] w-[18px]" />
       <span>{t('viewResult')}</span>
       {renderPlan.creditsNeeded > 0 && (
         <span className="rounded-full bg-black/15 px-2.5 py-1 text-[10px] tracking-wider">
           {t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}
         </span>
       )}
+    </button>
+  );
+  const applyButtonDesktop = (
+    <button
+      type="button"
+      onClick={handleApplyChanges}
+      disabled={isApplying}
+      className="relative inline-flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 overflow-hidden rounded-full border border-[#F0D79A]/55 bg-[linear-gradient(180deg,#E9CB8A_0%,#C9A257_48%,#A98337_100%)] px-6 text-[15px] font-semibold uppercase tracking-[0.1em] text-[#1A1409] shadow-[inset_0_1px_0_rgba(255,244,214,0.65),inset_0_-10px_18px_rgba(120,84,20,0.28),0_10px_30px_-10px_rgba(212,174,98,0.5)] transition hover:brightness-105 active:scale-[0.99] disabled:opacity-50"
+    >
+      <span aria-hidden className="pointer-events-none absolute inset-x-6 top-0 h-1/2 rounded-b-[50%] bg-gradient-to-b from-white/25 to-transparent" />
+      <Layers className="relative h-[22px] w-[22px]" strokeWidth={2} />
+      <span className="relative">{t('viewResult')}</span>
+      <ChevronRight className="relative h-4 w-4 rtl:rotate-180" strokeWidth={2.5} />
     </button>
   );
   const creditsNote = notEnoughCredits && (
@@ -318,7 +368,7 @@ export function VeloceCustomize() {
   const showGate = carChecked && !carConfirmed && Boolean(user) && Boolean(photo);
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-3xl flex-col px-4 pt-[max(env(safe-area-inset-top),14px)] md:min-h-[calc(100dvh-81px)] md:px-8 md:pt-6 lg:max-w-7xl lg:px-10">
+    <div className="mx-auto flex h-[100dvh] max-w-3xl flex-col overflow-hidden px-4 pt-[max(env(safe-area-inset-top),12px)] md:h-[calc(100dvh-81px)] md:px-8 md:pt-4 lg:max-w-[1680px] lg:px-10 lg:pb-5 xl:px-14">
       {showProgress && (
         <RenderProgress
           states={render.states}
@@ -336,37 +386,37 @@ export function VeloceCustomize() {
       {showGate && <CarIdentifyGate photo={multiAngles['front'] || photo || ''} onDone={confirmCar} />}
 
       {/* Top bar: back, title, photo counter */}
-      <div className="grid grid-cols-[44px_1fr_auto] items-center gap-2">
+      <div className="grid grid-cols-[44px_1fr_auto] items-center gap-2 lg:grid-cols-[44px_1fr] lg:gap-10 lg:pt-1">
         <Link
           href={isSeller ? `/${locale}/seller?tab=dashboard` : `/${locale}/shop`}
           aria-label={t('back')}
-          className="grid h-11 w-11 place-items-center rounded-full text-white/80 transition hover:bg-white/[0.07] hover:text-white"
+          className="grid h-11 w-11 place-items-center rounded-full text-white/80 transition hover:bg-white/[0.07] hover:text-white lg:border lg:border-white/15 lg:bg-white/[0.02]"
         >
           <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
         </Link>
 
-        <div className="min-w-0 text-center">
-          <h1 className="font-display text-[12px] leading-snug font-medium uppercase tracking-[0.28em] ps-[0.28em] text-white">
+        <div className="min-w-0 text-center lg:text-start">
+          <h1 className="font-display text-[12px] leading-snug font-medium uppercase tracking-[0.28em] ps-[0.28em] text-white lg:ps-0 lg:text-[17px] lg:font-light lg:tracking-[0.42em]">
             {isSeller ? t('titleSeller') : t('titleUser')}
           </h1>
-          <p className="mt-0.5 truncate text-[11px] text-white/40">{myCar ? `${myCar.label}${myCar.year ? ` · ${myCar.year}` : ''}` : t('subtitle')}</p>
+          <p className="mt-0.5 truncate text-[11px] text-white/40 lg:mt-1 lg:text-sm">{myCar ? `${myCar.label}${myCar.year ? ` · ${myCar.year}` : ''}` : t('subtitle')}</p>
         </div>
 
         <button
           type="button"
           onClick={openCamera}
           aria-label={t('refreshPhoto')}
-          className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-[#D4AE62] transition hover:bg-[#D4AE62]/10"
+          className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-[#D4AE62] transition hover:bg-[#D4AE62]/10 lg:hidden"
         >
           <Camera className="h-[18px] w-[18px]" />
           <span className="tabular-nums">{capturedAnglesCount}/5</span>
         </button>
       </div>
 
-      <div className="lg:mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
+      <div className="mt-2 min-h-[130px] flex-1 lg:mt-3 lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
       {/* Car viewport */}
-      <div className="relative mt-3 overflow-hidden rounded-[28px] lg:mt-0 bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
-        <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(212,174,98,0.10),transparent_70%)]" />
+      <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] border border-white/[0.08] lg:mt-0 bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(212,174,98,0.10),transparent_70%)] lg:hidden" />
         <div
           ref={sliderRef}
           onPointerDown={(e) => {
@@ -384,7 +434,7 @@ export function VeloceCustomize() {
           onPointerCancel={() => {
             sliderDrag.current = false;
           }}
-          className={`relative aspect-[16/10] w-full overflow-hidden md:aspect-[2/1] ${hasAfter ? 'cursor-ew-resize touch-none select-none' : ''}`}
+          className={`relative h-full w-full overflow-hidden ${hasAfter ? 'cursor-ew-resize touch-none select-none' : ''}`}
         >
           {hasAfter ? (
             <>
@@ -416,9 +466,11 @@ export function VeloceCustomize() {
               </button>
             </>
           ) : (
-            <img src={currentAnglePhoto} alt={t('photoAlt')} className="h-full w-full object-cover transition-opacity duration-300" />
+            <>
+              <img src={currentAnglePhoto} alt={t('photoAlt')} className="h-full w-full object-cover transition-opacity duration-300" />
+            </>
           )}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0B0D13] via-[#0B0D13]/40 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0B0D13] via-[#0B0D13]/40 to-transparent lg:hidden" />
 
           {/* Other sides */}
           <button
@@ -426,7 +478,7 @@ export function VeloceCustomize() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => stepAngle(-1)}
             aria-label={tr('prevAngle')}
-            className="absolute start-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75"
+            className="absolute start-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:start-6 lg:h-12 lg:w-12 lg:border lg:border-white/15 lg:bg-black/40"
           >
             <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
           </button>
@@ -435,20 +487,32 @@ export function VeloceCustomize() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => stepAngle(1)}
             aria-label={tr('nextAngle')}
-            className="absolute end-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75"
+            className="absolute end-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:end-6 lg:h-12 lg:w-12 lg:border lg:border-white/15 lg:bg-black/40"
           >
             <ChevronRight className="h-5 w-5 rtl:rotate-180" />
           </button>
 
+          {!hasAfter && (
+            <div onPointerDown={(e) => e.stopPropagation()} className="absolute end-5 top-4 z-[3] hidden items-center gap-1 lg:flex">
+              <button type="button" onClick={toggleFullscreen} aria-label={tr('fullscreen')} className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white">
+                <Maximize2 className="h-[18px] w-[18px]" />
+              </button>
+              <button type="button" onClick={openCamera} aria-label={t('refreshPhoto')} className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white">
+                <Camera className="h-[18px] w-[18px]" />
+              </button>
+            </div>
+          )}
+
           {selectedProducts.length > 0 && !hasAfter && (
-            <div className="absolute start-3 top-3 z-[2] flex items-center gap-1.5 rounded-full bg-[#090A0F]/80 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md">
-              <SlidersHorizontal className="h-3.5 w-3.5 text-[#D4AE62]" />
+            <div className="absolute start-3 top-3 z-[2] flex items-center gap-1.5 rounded-full bg-[#090A0F]/80 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md lg:start-5 lg:top-5 lg:gap-2.5 lg:border lg:border-white/12 lg:bg-black/30 lg:px-4 lg:py-2.5 lg:text-[13px] lg:font-medium">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-[#D4AE62] lg:hidden" />
+              <span aria-hidden className="hidden h-2.5 w-2.5 rounded-full bg-[#D4AE62] lg:block" />
               {t('selectedCount', { count: selectedProducts.length })}
             </div>
           )}
 
           {/* Angle pills */}
-          <div onPointerDown={(e) => e.stopPropagation()} className="absolute inset-x-3 bottom-3 z-[2] flex items-center gap-1 overflow-x-auto rounded-full bg-[#090A0F]/80 p-1 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div onPointerDown={(e) => e.stopPropagation()} className="absolute inset-x-3 bottom-3 z-[2] flex items-center gap-1 overflow-x-auto rounded-full bg-[#090A0F]/80 p-1 backdrop-blur-md lg:inset-x-auto lg:bottom-5 lg:start-5 lg:max-w-[calc(100%-2.5rem)] lg:gap-2 lg:bg-transparent lg:p-0 lg:backdrop-blur-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {FIVE_CAR_ANGLES.map((ang) => {
               const isActive = activeAngleId === ang.id;
               const hasCaptured = Boolean(multiAngles[ang.id]);
@@ -458,12 +522,14 @@ export function VeloceCustomize() {
                   type="button"
                   onClick={() => setActiveAngleId(ang.id)}
                   aria-pressed={isActive}
-                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition ${
-                    isActive ? 'bg-[#D4AE62] text-black' : 'text-white/70 hover:text-white'
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition lg:gap-2 lg:border lg:px-4 lg:py-2.5 lg:text-[13px] lg:font-medium ${
+                    isActive ? 'bg-[#D4AE62] text-black lg:border-[#D4AE62]' : 'text-white/70 hover:text-white lg:border-white/12 lg:bg-black/35'
                   }`}
                 >
+                  <span aria-hidden className={`hidden h-2 w-2 rounded-full lg:block ${isActive ? 'bg-black/70' : hasCaptured ? 'bg-emerald-400' : 'bg-white/25'}`} />
                   <span>{t(`anglesShort.${ang.key}`)}</span>
-                  {hasCaptured && <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-black' : 'bg-emerald-400'}`} />}
+                  {hasCaptured && <span className={`h-1.5 w-1.5 rounded-full lg:hidden ${isActive ? 'bg-black' : 'bg-emerald-400'}`} />}
+                  <span aria-hidden className={`hidden h-1.5 w-1.5 rounded-full lg:block ${isActive ? 'bg-black/60' : 'bg-[#D4AE62]'}`} />
                 </button>
               );
             })}
@@ -472,21 +538,30 @@ export function VeloceCustomize() {
       </div>
 
       {/* Desktop build panel: what is on the car right now, one part per slot */}
-      <aside className="mt-0 hidden flex-col rounded-[28px] border border-white/[0.07] bg-[#11141D] p-5 lg:flex">
+      <aside className="mt-0 hidden min-h-0 flex-col rounded-[28px] border border-white/[0.08] bg-gradient-to-b from-[#14171F] to-[#0E1016] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.5)] lg:flex">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white">{t('yourBuild')}</h2>
-          <span className="text-xs tabular-nums text-white/40">{selectedProducts.length}</span>
+          <h2 className="flex items-center gap-3 font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white"><span aria-hidden className="h-5 w-[3px] rounded-full bg-[#D4AE62]" />{t('yourBuild')}</h2>
+          <button
+            type="button"
+            onClick={() => setSelectedPartIds([])}
+            disabled={selectedProducts.length === 0}
+            aria-label={t('clearBuild')}
+            title={t('clearBuild')}
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-white/55 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
         </div>
-        <ul className="mt-4 flex-1 space-y-2 overflow-y-auto pe-1">
+        <ul className="mt-5 flex-1 space-y-3 overflow-y-auto pe-1">
           {selectedProducts.length === 0 && <li className="py-6 text-center text-sm text-white/45">{t('pickParts')}</li>}
           {selectedProducts.map((p) => (
-            <li key={p.id} className="flex items-center gap-3 rounded-2xl bg-white/[0.04] p-2">
-              <span className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#0E1016]">
+            <li key={p.id} className="flex items-center gap-4 rounded-[20px] border border-white/[0.06] bg-white/[0.03] p-2.5">
+              <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-[#0E1016]">
                 {p.swatch ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-white">{p.name}</span>
-                <span className="block text-xs tabular-nums text-[#D4AE62]">{formatPrice(getUSDPrice(p.price))}</span>
+                <span className="block truncate text-[15px] font-medium text-white">{p.name}</span>
+                <span className="mt-0.5 block text-sm tabular-nums text-[#D4AE62]">{formatPrice(getUSDPrice(p.price))}</span>
               </span>
               <button
                 type="button"
@@ -499,13 +574,31 @@ export function VeloceCustomize() {
             </li>
           ))}
         </ul>
-        <div className="mt-4 border-t border-white/[0.07] pt-4">
-          <div className="mb-3 flex items-center justify-between px-1 text-xs">
-            <span className="text-white/50">{selectedProducts.length > 0 ? t('selectedCount', { count: selectedProducts.length }) : t('tapHint')}</span>
-            {selectedProducts.length > 0 && <span className="text-base font-semibold tabular-nums text-white">{t('total', { amount: formatPrice(totalSelectedUSD) })}</span>}
+        <div className="mt-5 border-t border-white/[0.07] pt-5">
+          <div className="mb-4 flex items-center justify-between px-1 text-sm">
+            <span className="text-white/45">{selectedProducts.length > 0 ? t('selectedCount', { count: selectedProducts.length }) : t('tapHint')}</span>
+            {selectedProducts.length > 0 && (
+              <span className="text-[17px] tabular-nums text-white/85">
+                {t('total', { amount: '§' }).split('§')[0]}
+                <span className="text-[22px] font-semibold text-white">{formatPrice(totalSelectedUSD)}</span>
+                {t('total', { amount: '§' }).split('§')[1]}
+              </span>
+            )}
           </div>
           {creditsNote}
-          {applyButton}
+          {applyButtonDesktop}
+          {renderPlan.creditsNeeded > 0 && (
+            <p className="mt-2 text-center text-[11px] text-white/40">{t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}</p>
+          )}
+          <button
+            type="button"
+            onClick={saveConfig}
+            disabled={selectedProducts.length === 0}
+            className="mt-4 inline-flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-[#D4AE62]/35 bg-black/20 text-[15px] font-medium uppercase tracking-[0.1em] text-[#F1E6CC] transition hover:border-[#D4AE62]/65 hover:bg-[#D4AE62]/[0.05] active:scale-[0.99] disabled:cursor-default disabled:opacity-40"
+          >
+            {configSaved ? <Check className="h-5 w-5 text-emerald-400" /> : <Bookmark className="h-5 w-5" strokeWidth={1.6} />}
+            <span>{configSaved ? t('configSaved') : t('saveConfig')}</span>
+          </button>
         </div>
       </aside>
       </div>
@@ -520,7 +613,7 @@ export function VeloceCustomize() {
       )}
 
       {/* Category tabs */}
-      <div role="tablist" aria-label={t('subtitle')} className="mt-5 flex gap-6 overflow-x-auto border-b border-white/[0.07] px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
+      <div role="tablist" aria-label={t('subtitle')} className="mt-2 flex shrink-0 gap-6 overflow-x-auto border-b border-white/[0.07] px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
         {CATEGORIES.map((cat) => {
           const active = activeCategory === cat.id;
           return (
@@ -530,7 +623,7 @@ export function VeloceCustomize() {
               role="tab"
               aria-selected={active}
               onClick={() => setActiveCategory(cat.id)}
-              className={`relative shrink-0 cursor-pointer py-3 text-[11px] font-medium uppercase tracking-[0.2em] transition-colors ${
+              className={`relative shrink-0 cursor-pointer py-2.5 text-[11px] font-medium uppercase tracking-[0.2em] transition-colors ${
                 active ? 'text-white' : 'text-white/40 hover:text-white/70'
               }`}
             >
@@ -542,7 +635,7 @@ export function VeloceCustomize() {
       </div>
 
       {/* Parts reel */}
-      <div className="mt-1 flex-1">
+      <div className="shrink-0">
         {isLoadingCatalog ? (
           <div className="flex items-center justify-center gap-3 py-10" aria-hidden>
             {[0.5, 0.75, 1, 0.75, 0.5].map((o, n) => (
@@ -581,9 +674,8 @@ export function VeloceCustomize() {
         )}
       </div>
 
-      {/* Apply changes: fixed to the bottom on phones / tablets, lives in the build panel on desktop */}
-      <div aria-hidden className="h-44 shrink-0 lg:hidden" />
-      <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-[#0D0E12] via-[#0D0E12]/95 to-transparent px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-8 md:start-24 md:px-8 lg:hidden">
+      {/* Apply changes: pinned to the bottom of the screen on phones / tablets, lives in the build panel on desktop */}
+      <div className="shrink-0 pb-[max(env(safe-area-inset-bottom),12px)] pt-1 lg:hidden">
         <div className="mx-auto max-w-md">
           <div className="mb-2 flex items-center justify-between gap-3 px-2 text-xs">
             <span className="text-white/50">{selectedProducts.length > 0 ? t('selectedCount', { count: selectedProducts.length }) : t('pickParts')}</span>

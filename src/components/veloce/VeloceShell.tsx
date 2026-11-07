@@ -237,8 +237,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
       {/* Sticky Header */}
       <header
-        className={`sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center bg-[#0D0E12]/70 px-5 py-4 backdrop-blur-xl md:border-b md:border-[#D4AE62]/15 md:px-10 ${
-          isImmersive ? 'max-md:hidden' : ''
+        className={`sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center bg-[#0D0E12]/70 px-5 py-4 backdrop-blur-xl md:px-10 ${
+          isImmersive ? 'max-md:hidden' : 'md:border-b md:border-[#D4AE62]/15'
         }`}
       >
         <button
@@ -367,7 +367,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
       </header>
 
       {/* Main Content */}
-      <main className={isImmersive ? 'md:pb-12' : 'pb-28 md:pb-12'}>{children}</main>
+      <main className={isImmersive ? 'md:pb-0' : 'pb-28 md:pb-12'}>{children}</main>
 
       {/* Mobile bottom dock: Home, Garage, [Create], Shop, Dashboard. Profile is the icon in the header. */}
       {!isImmersive && (

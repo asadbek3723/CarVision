@@ -463,6 +463,9 @@
     "saveError": "Couldn't save. Check the name (at least 2 characters)."
   },
   "customize": {
+    "saveConfig": "Save config",
+    "configSaved": "Saved",
+    "clearBuild": "Clear build",
     "angles": {
       "front": "Front",
       "rear": "Rear",
@@ -569,6 +572,7 @@
     "viewResult": "{count, plural, one {See result (# angle)} other {See result (# angles)}}"
   },
   "result": {
+    "fullscreen": "Fullscreen",
     "editParts": "Change (try other parts)",
     "download": "Download image",
     "watchVideo": "Watch as video",
