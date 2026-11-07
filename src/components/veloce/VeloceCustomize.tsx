@@ -262,9 +262,25 @@ export function VeloceCustomize() {
     }
   };
 
+  // Full-screen studio on phones: the page itself must not scroll or rubber-band while the
+  // wheel and the photo are dragged (only the studio's own controls move).
+  React.useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = [html.style.overflow, body.style.overflow, html.style.overscrollBehavior, body.style.overscrollBehavior];
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    body.style.overscrollBehavior = 'none';
+    return () => {
+      [html.style.overflow, body.style.overflow, html.style.overscrollBehavior, body.style.overscrollBehavior] = prev as [string, string, string, string];
+    };
+  }, []);
+
   const capturedAnglesCount = React.useMemo(() => {
-    const keys = Object.keys(multiAngles);
-    if (keys.length > 0) return keys.length;
+    // Only the five studio sides count (the store also keeps extra frames, e.g. guided-scan shots).
+    const sides = FIVE_CAR_ANGLES.filter((a) => Boolean(multiAngles[a.id])).length;
+    if (sides > 0) return sides;
     return photo ? 1 : 0;
   }, [multiAngles, photo]);
 
