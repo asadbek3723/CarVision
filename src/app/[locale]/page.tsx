@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import GoldenLandingPage from '@/components/landing/GoldenLandingPage';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { JsonLd, faqLd, softwareApplicationLd } from '@/lib/seo/jsonld';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { buildMetadata } from '@/lib/seo/metadata';
@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   const l = isLocale(locale) ? locale : DEFAULT_LOCALE;
+  setRequestLocale(l);
   const t = await getTranslations({ locale: l, namespace: 'landing.faq' });
   const faq = (['1', '2', '3', '4'] as const).map((n) => ({ q: t(`q${n}`), a: t(`a${n}`) }));
   return (

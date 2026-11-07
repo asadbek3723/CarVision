@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { StudioLock } from '@/features/seller/components/StudioLock';
 import { LeadDetail, type SellerLeadOrder } from '@/features/seller/components/LeadDetail';
@@ -58,9 +57,9 @@ export default function SellerOrderDetailPage() {
   };
 
   const shell = (children: React.ReactNode) => (
-    <VeloceShell>
+    <>
       <div className="mx-auto max-w-xl px-4 pb-32 pt-4 md:px-8">{children}</div>
-    </VeloceShell>
+    </>
   );
 
   if (isLoading || loading) return shell(<div className="flex justify-center py-24"><Loader2 className="h-7 w-7 animate-spin text-gold-500" /></div>);

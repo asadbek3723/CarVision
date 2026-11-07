@@ -16,7 +16,6 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react';
-import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { FIVE_CAR_ANGLES } from '@/components/veloce/VeloceCustomize';
 import {
   CinematicVideoStudio,
@@ -216,7 +215,7 @@ export default function CustomizeResultPage() {
     'inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-semibold text-white/80 transition hover:bg-white/[0.07] hover:text-white disabled:opacity-40 cursor-pointer md:text-sm';
 
   return (
-    <VeloceShell>
+    <>
       <div className="mx-auto w-full max-w-[1600px] px-4 pb-28 pt-3 md:px-8 lg:px-10 lg:pb-8">
         {/* Action bar: edit on the left, downloads + video on the right */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 lg:mb-6">
@@ -456,6 +455,6 @@ export default function CustomizeResultPage() {
         angles={studioAngles}
         selectedParts={selectedParts}
       />
-    </VeloceShell>
+    </>
   );
 }

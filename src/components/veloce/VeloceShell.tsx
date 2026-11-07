@@ -59,7 +59,7 @@ function DockLink({ href, icon: Icon, label, active, locked = false }: DockLinkP
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`relative flex min-w-0 flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] transition-colors ${
+      className={`relative flex min-w-0 flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] transition-[color,transform] duration-150 active:scale-90 ${
  active ? 'text-gold-500' : 'text-white/45 hover:text-[#E8CF94]'
  }`}
     >
@@ -132,7 +132,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
   return (
     <div className="min-h-screen md:ps-24 lg:ps-28 bg-surface-0 text-foreground">
       {/* Desktop Sidebar */}
-      <aside className="fixed inset-y-0 start-0 z-40 hidden w-24 lg:w-28 flex-col items-center justify-between bg-surface-0/80 py-8 backdrop-blur-xl md:flex">
+      <aside className="fixed inset-y-0 start-0 z-40 hidden w-24 lg:w-28 flex-col items-center justify-between bg-surface-0 py-8 md:flex">
         <div className="flex flex-col items-center gap-10">
           <Link
             href={`/${locale}/seller`}
@@ -238,7 +238,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
       {/* Sticky Header */}
       <header
-        className={`sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center bg-surface-0/70 px-5 py-4 backdrop-blur-xl md:px-10 ${
+        className={`sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center bg-surface-0/95 px-5 py-4 md:px-10 ${
  isImmersive ? 'max-md:hidden' : ''
  }`}
       >
@@ -275,7 +275,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
                   className="fixed inset-0 z-40"
                   onClick={() => setLocaleMenuOpen(false)}
                 />
-                <div className="absolute end-0 top-12 z-50 w-72 rounded-2xl bg-[#13151B]/95 p-4 shadow-[0_24px_60px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
+                <div className="absolute end-0 top-12 z-50 w-72 rounded-2xl bg-[#13151B]/95 p-4 shadow-[0_24px_60px_rgba(0,0,0,0.75)]">
                   <div className="mb-3">
                     <div className="mb-2 text-[9px] font-semibold tracking-[0.25em] uppercase text-white/40">
                       {t('language')}
@@ -371,7 +371,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
       {!isImmersive && (
         <nav
           aria-label={t('menu')}
-          className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/65 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-2xl backdrop-saturate-150 md:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] md:hidden"
         >
           <span
             aria-hidden
@@ -387,7 +387,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
               aria-label={isSeller ? t('showroom') : t('create')}
               className="group relative flex cursor-pointer flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] text-gold-500 outline-none"
             >
-              <span className="grid h-8 w-11 place-items-center rounded-xl bg-gradient-to-b from-gold-500/20 to-gold-500/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-all duration-200  group-hover:from-gold-500/28 group-active:scale-95 group-focus-visible:ring-2 group-focus-visible:ring-gold-500/60 motion-reduce:transition-none">
+              <span className="grid h-8 w-11 place-items-center rounded-xl bg-gradient-to-b from-gold-500/20 to-gold-500/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-200  group-hover:from-gold-500/28 group-active:scale-95 group-focus-visible:ring-2 group-focus-visible:ring-gold-500/60 motion-reduce:transition-none">
                 <Plus className="h-[18px] w-[18px]" strokeWidth={2} />
               </span>
               <span>{isSeller ? t('showroom') : t('create')}</span>
@@ -403,7 +403,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/80 transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
           <div className="fixed inset-y-0 start-0 w-72 bg-surface-0 p-6 flex flex-col justify-between">

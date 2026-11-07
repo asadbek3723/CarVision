@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Check, Loader2, Lock } from 'lucide-react';
-import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 
@@ -49,7 +48,7 @@ export default function PlansPage() {
   const current = user?.plan?.code ?? 'FREE_TRIAL';
 
   return (
-    <VeloceShell>
+    <>
       <div className="mx-auto max-w-6xl px-5 pb-32 pt-8 md:px-10 md:pt-12">
         <div className="text-center">
           <p className="text-xs font-medium uppercase tracking-widest text-gold-500">{t('eyebrow')}</p>
@@ -113,6 +112,6 @@ export default function PlansPage() {
           </p>
         )}
       </div>
-    </VeloceShell>
+    </>
   );
 }

@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
-import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -132,9 +131,9 @@ export default function CheckoutPage() {
   };
 
   const shell = (children: React.ReactNode) => (
-    <VeloceShell>
+    <>
       <div className="mx-auto max-w-2xl px-4 pb-32 pt-4 md:px-8">{children}</div>
-    </VeloceShell>
+    </>
   );
 
   if (authLoading || loadingProducts) {

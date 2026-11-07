@@ -659,16 +659,16 @@ html {
   letter-spacing: 0.35em;
 }
 
+/* Blur radius is what makes backdrop-filter expensive (it is re-rendered on every scroll frame).
+   A small radius over an almost opaque tint looks the same and keeps scrolling at 60fps on phones. */
 .glass-nav {
-  -webkit-backdrop-filter: blur(60px) saturate(180%);
-  backdrop-filter: blur(60px) saturate(180%);
-  background: oklch(9% 0.004 70 / 0.93);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  background: oklch(9% 0.004 70 / 0.96);
 }
 
 .glass {
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  backdrop-filter: blur(20px) saturate(140%);
-  background: oklch(13% 0.006 70 / 0.65);
+  background: oklch(13% 0.006 70 / 0.88);
 }
 
 .shimmer-text {
@@ -762,4 +762,75 @@ div[data-nextjs-route-announcer] {
 @keyframes scan {
   0% { top: -25%; }
   100% { top: 105%; }
+}
+
+
+/* ===================================================================
+   App-like feel: instant taps, smooth page changes, cheap off-screen content
+   =================================================================== */
+
+/* No grey flash on tap; taps respond at once (no 300ms wait for a possible double-tap zoom). */
+a,
+button,
+[role='button'],
+summary,
+label {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Every in-app page fades and rises a few pixels when it opens (see (app)/template.tsx).
+   Only opacity and transform change, so it runs on the GPU and never blocks the main thread.
+   `backwards` (not `both`) leaves no transform behind afterwards, so fixed overlays inside a page
+   keep positioning against the screen. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+}
+.page-enter {
+  animation: page-in 280ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Shimmering placeholder used by loading screens. */
+@keyframes skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.04);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+/* Landing sections below the first screen are not laid out or painted until they near the viewport;
+   `auto` remembers the real height once seen, so anchors and the scrollbar stay steady. */
+main > section:not(#top) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
+}
+
+/* Smooth momentum scrolling in inner scrollers on iOS. */
+.overflow-x-auto,
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+  .skeleton::after {
+    animation: none;
+  }
 }

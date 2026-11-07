@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { VeloceProductDetail } from '@/components/veloce/VeloceProductDetail';
 import { JsonLd, breadcrumbLd, productLd } from '@/lib/seo/jsonld';
 import { SEO_COPY } from '@/lib/seo/copy';
@@ -46,7 +45,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const text = item ? localizedText(item, l) : null;
 
   return (
-    <VeloceShell>
+    <>
       {item && (
         <JsonLd
           data={[
@@ -70,6 +69,6 @@ export default async function ProductDetailPage({ params }: Props) {
         />
       )}
       <VeloceProductDetail id={id} />
-    </VeloceShell>
+    </>
   );
 }

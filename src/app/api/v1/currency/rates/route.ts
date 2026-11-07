@@ -52,7 +52,7 @@ export async function GET() {
       base: 'USD',
       rates,
       updatedAt: data?.time_last_update_utc || new Date().toISOString(),
-    });
+    }, { headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' } });
   } catch (error) {
     console.warn('Currency rates API fallback active:', error);
     return NextResponse.json({

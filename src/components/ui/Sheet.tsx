@@ -113,7 +113,7 @@ function Dialog({ placement, open, onClose, title, description, footer, size = '
       {open && (
         <div className={cn('fixed inset-0 z-[80] flex justify-center', asSheet ? 'items-end' : 'items-center p-4 sm:p-6')}>
           <motion.div
-            className="absolute inset-0 bg-surface-0/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-surface-0/80"
             onClick={onClose}
             aria-hidden="true"
             initial={{ opacity: 0 }}

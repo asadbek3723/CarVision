@@ -97,7 +97,12 @@ export async function GET(request: NextRequest) {
     const brands = [...new Set((facetRows ?? []).map((r) => (r.brand as string | null)?.trim()).filter((b): b is string => Boolean(b)))].sort((a, b) => a.localeCompare(b));
     const categories = [...new Set((facetRows ?? []).map((r) => veloceCategory(r.category as string, r.attributes as Record<string, unknown> | null)))];
 
-    return NextResponse.json({ success: true, products, facets: { brands, categories } });
+    // Public, published-only data: the CDN may serve it for 30 s and refresh it in the background for
+    // 5 min, so most shop visits never wait for the database.
+    return NextResponse.json(
+      { success: true, products, facets: { brands, categories } },
+      { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=300' } }
+    );
   } catch (err) {
     console.error('products list error:', err);
     return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });

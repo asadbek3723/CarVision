@@ -7,7 +7,6 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { AlertTriangle, ArrowLeft, Camera, Check, ChevronDown, Loader2, Plus, Sparkles, X } from 'lucide-react';
-import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { VehiclePicker, type PickedVehicle } from '@/features/seller/components/VehiclePicker';
 import { ProductPhotoModal } from '@/features/seller/components/ProductPhotoModal';
@@ -304,9 +303,9 @@ export default function SellerNewPartPage() {
 
   // ---- screens -------------------------------------------------------------------------------------
   const shell = (children: React.ReactNode) => (
-    <VeloceShell>
+    <>
       <div className="mx-auto max-w-xl px-4 pb-40 pt-4 md:px-8 lg:max-w-6xl">{children}</div>
-    </VeloceShell>
+    </>
   );
 
   if (isLoading || loadingItem) {

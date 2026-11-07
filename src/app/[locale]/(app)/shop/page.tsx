@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { VeloceShop } from '@/components/veloce/VeloceShop';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { buildMetadata } from '@/lib/seo/metadata';
@@ -14,8 +13,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default function ShopPage() {
   return (
-    <VeloceShell>
+    <>
       <VeloceShop />
-    </VeloceShell>
+    </>
   );
 }

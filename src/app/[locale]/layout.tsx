@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { routing, type Locale } from '@/i18n/routing';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { VeloceStoreProvider } from '@/context/VeloceStore';
@@ -10,18 +10,23 @@ import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt';
 import { JsonLd, organizationLd, websiteLd } from '@/lib/seo/jsonld';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { DEFAULT_LOCALE, SITE_NAME, SITE_URL, isLocale } from '@/lib/seo/site';
-import { Cinzel, Cormorant_Garamond, JetBrains_Mono, Manrope, Montserrat, Noto_Sans_Arabic, Outfit, Plus_Jakarta_Sans } from 'next/font/google';
+import { JetBrains_Mono, Montserrat, Noto_Sans_Arabic, Outfit, Plus_Jakarta_Sans } from 'next/font/google';
 
-const fOutfit = Outfit({ subsets: ['latin', 'latin-ext'], weight: ['300', '400', '500', '600', '700', '800', '900'], display: 'swap', variable: '--nf-outfit' });
-const fJakarta = Plus_Jakarta_Sans({ subsets: ['latin', 'latin-ext', 'cyrillic-ext'], weight: ['400', '500', '600', '700'], display: 'swap', variable: '--nf-jakarta', preload: false });
-const fMono = JetBrains_Mono({ subsets: ['latin', 'latin-ext', 'cyrillic'], weight: ['400', '500', '600', '700'], display: 'swap', variable: '--nf-mono', preload: false });
-const fCinzel = Cinzel({ subsets: ['latin', 'latin-ext'], weight: ['600', '700', '800'], display: 'swap', variable: '--nf-cinzel', preload: false });
-const fCormorant = Cormorant_Garamond({ subsets: ['latin', 'latin-ext', 'cyrillic'], weight: ['500', '600', '700'], display: 'swap', variable: '--nf-cormorant' });
-const fManrope = Manrope({ subsets: ['latin', 'latin-ext', 'cyrillic'], weight: ['300', '400', '500', '600', '700'], display: 'swap', variable: '--nf-manrope' });
-const fMontserrat = Montserrat({ subsets: ['latin', 'latin-ext', 'cyrillic'], weight: ['200', '300', '400', '500', '600', '700'], display: 'swap', variable: '--nf-montserrat' });
-const fArabic = Noto_Sans_Arabic({ subsets: ['arabic'], weight: ['400', '500', '600', '700'], display: 'swap', variable: '--nf-noto-arabic', preload: false });
-const FONT_VARS = [fOutfit, fJakarta, fMono, fCinzel, fCormorant, fManrope, fMontserrat, fArabic].map((f) => f.variable).join(' ');
+// Only fonts the UI really uses (Outfit = body/headings, Montserrat = display). Cormorant, Cinzel and
+// Manrope were never referenced by any class, yet two of them were preloaded on every page.
+// `weight: 'variable'` ships one file per font instead of one per weight.
+const fOutfit = Outfit({ subsets: ['latin', 'latin-ext'], weight: 'variable', display: 'swap', variable: '--nf-outfit' });
+const fMontserrat = Montserrat({ subsets: ['latin', 'latin-ext', 'cyrillic'], weight: 'variable', display: 'swap', variable: '--nf-montserrat' });
+const fJakarta = Plus_Jakarta_Sans({ subsets: ['latin', 'latin-ext', 'cyrillic-ext'], weight: 'variable', display: 'swap', variable: '--nf-jakarta', preload: false });
+const fMono = JetBrains_Mono({ subsets: ['latin', 'latin-ext', 'cyrillic'], weight: 'variable', display: 'swap', variable: '--nf-mono', preload: false });
+const fArabic = Noto_Sans_Arabic({ subsets: ['arabic'], weight: 'variable', display: 'swap', variable: '--nf-noto-arabic', preload: false });
+const FONT_VARS = [fOutfit, fMontserrat, fJakarta, fMono, fArabic].map((f) => f.variable).join(' ');
 import '../../../styles/globals.css';
+
+/** Every locale's pages are built ahead of time and served from the CDN instead of rendering per request. */
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -73,7 +78,8 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = await getMessages();
+  setRequestLocale(locale);
+  const messages = await getMessages({ locale });
   const isRtl = locale === 'ar';
 
   return (

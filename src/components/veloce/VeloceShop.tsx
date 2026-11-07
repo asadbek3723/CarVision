@@ -18,6 +18,14 @@ interface Facets {
   categories: string[];
 }
 
+/**
+ * Last answer per query, kept for the life of the tab. Coming back to the shop (tab switch, back
+ * button) paints the previous list at once and refreshes it quietly, instead of showing skeletons.
+ */
+const listCache = new Map<string, { products: VeloceProduct[]; facets: Facets }>();
+/** Cards drawn first; the rest follow as the visitor scrolls, so 120 products never block one frame. */
+const PAGE = 24;
+
 export function VeloceShop() {
   const t = useTranslations('shop.list');
   const categoryLabel = useCategoryLabel();
@@ -33,23 +41,33 @@ export function VeloceShop() {
   const [category, setCategory] = React.useState('All');
   const [brand, setBrand] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
+  const [visible, setVisible] = React.useState(PAGE);
 
   React.useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const qs = ['limit=120', `locale=${locale}`, filterQuery].filter(Boolean).join('&');
+    const cached = listCache.get(qs);
+    if (cached) {
+      setProducts(cached.products);
+      setFacets(cached.facets);
+      setLoading(false);
+    } else {
       setLoading(true);
-      setError(false);
+    }
+    setError(false);
+    (async () => {
       try {
-        const qs = ['limit=120', `locale=${locale}`, filterQuery].filter(Boolean).join('&');
-        const res = await fetch(`/api/v1/products?${qs}`, { cache: 'no-store' });
+        const res = await fetch(`/api/v1/products?${qs}`);
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error('load failed');
+        const next = { products: (data.products ?? []) as VeloceProduct[], facets: (data.facets ?? { brands: [], categories: [] }) as Facets };
+        listCache.set(qs, next);
         if (!cancelled) {
-          setProducts(data.products ?? []);
-          setFacets(data.facets ?? { brands: [], categories: [] });
+          setProducts(next.products);
+          setFacets(next.facets);
         }
       } catch {
-        if (!cancelled) setError(true);
+        if (!cancelled && !cached) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -58,6 +76,9 @@ export function VeloceShop() {
       cancelled = true;
     };
   }, [filterQuery, locale]);
+
+  // A new filter or search starts again from the first screenful.
+  React.useEffect(() => setVisible(PAGE), [category, brand, query]);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -163,9 +184,10 @@ export function VeloceShop() {
         <div className="py-20 text-center text-sm text-red-300">{t('loadError')}</div>
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 pb-16 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
-          {filtered.map((p, idx) => (
+          {filtered.slice(0, visible).map((p, idx) => (
             <ProductCard key={p.id} p={p} i={idx} />
           ))}
+          {visible < filtered.length && <MoreSentinel onVisible={() => setVisible((v) => v + PAGE)} />}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center text-muted-foreground">
@@ -175,4 +197,20 @@ export function VeloceShop() {
       )}
     </div>
   );
+}
+
+/** Invisible marker at the end of the list: when it nears the screen the next batch of cards is added. */
+function MoreSentinel({ onVisible }: { onVisible: () => void }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      onVisible();
+      return;
+    }
+    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && onVisible(), { rootMargin: '600px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [onVisible]);
+  return <div ref={ref} aria-hidden className="col-span-full h-px" />;
 }
