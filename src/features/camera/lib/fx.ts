@@ -27,13 +27,44 @@ function reducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-export function vibrate(pattern: number | number[]): void {
-  if (typeof navigator === 'undefined' || !('vibrate' in navigator) || reducedMotion()) return;
+let iosSwitch: HTMLLabelElement | null = null;
+
+/**
+ * iPhone Safari has no Vibration API. Since iOS 18, toggling a native `<input type="checkbox" switch>`
+ * plays the system haptic, so a hidden one is clicked instead (works while the user is touching).
+ */
+function iosHaptic(): void {
+  if (typeof document === 'undefined') return;
   try {
-    navigator.vibrate(pattern);
+    if (!iosSwitch) {
+      const label = document.createElement('label');
+      label.setAttribute('aria-hidden', 'true');
+      label.style.cssText = 'position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:-9999px;top:0';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.setAttribute('switch', '');
+      input.tabIndex = -1;
+      label.appendChild(input);
+      document.body.appendChild(label);
+      iosSwitch = label;
+    }
+    iosSwitch.click();
   } catch {
     /* noop */
   }
+}
+
+export function vibrate(pattern: number | number[]): void {
+  if (typeof navigator === 'undefined' || reducedMotion()) return;
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch {
+      /* noop */
+    }
+    return;
+  }
+  iosHaptic();
 }
 
 let audio: AudioContext | null = null;

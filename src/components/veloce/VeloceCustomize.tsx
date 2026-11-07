@@ -184,6 +184,18 @@ export function VeloceCustomize() {
     }
   }, [catalogProducts, selectedPartIds, requestedPartId, setSelectedPartIds]);
 
+  // Only tabs that have parts right now: an empty tab is a dead end.
+  const visibleCategories = React.useMemo(
+    () =>
+      catalogProducts.length === 0
+        ? CATEGORIES.filter((c) => c.id === 'All')
+        : CATEGORIES.filter((c) => c.id === 'All' || catalogProducts.some((p) => partSlot(p) === c.id.toLowerCase())),
+    [catalogProducts]
+  );
+  React.useEffect(() => {
+    if (!visibleCategories.some((c) => c.id === activeCategory)) setActiveCategory('All');
+  }, [visibleCategories, activeCategory]);
+
   // Filter products for the filmstrip carousel
   const filteredProducts = React.useMemo(() => {
     if (catalogProducts.length === 0) return [];
@@ -618,7 +630,7 @@ export function VeloceCustomize() {
 
       {/* Category tabs */}
       <div role="tablist" aria-label={t('subtitle')} className="mt-2 flex shrink-0 gap-6 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
-        {CATEGORIES.map((cat) => {
+        {visibleCategories.map((cat) => {
           const active = activeCategory === cat.id;
           return (
             <button
