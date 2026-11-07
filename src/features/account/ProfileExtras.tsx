@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useParams } from 'next/navigation';
 import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, KeyRound, Loader2, Receipt } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { readJson } from '@/lib/safe-json';
 
@@ -16,8 +16,6 @@ interface Entry {
   description: string;
   at: string;
 }
-
-type PanelId = 'credits' | 'password';
 
 const TYPES = new Set(['TRIAL_BONUS', 'MONTHLY_FREE', 'PLAN_ASSIGNED', 'RESERVED', 'COMMITTED', 'REFUNDED', 'REFERRAL_REWARD', 'ADMIN_ADJUSTMENT']);
 
@@ -32,53 +30,8 @@ const when = (iso: string) => {
 
 const fieldCls = `w-full rounded-2xl bg-white/[0.06] px-4 py-3.5 text-base text-white placeholder:text-white/35 ${focusRing}`;
 
-/** Credit history and password change for the signed-in account. */
-export function ProfileExtras() {
-  const t = useTranslations('profileExtras');
-  const { user } = useAuth();
-  const [open, setOpen] = React.useState<PanelId | null>(null);
-
-  if (!user) return null;
-  return (
-    <div className="space-y-1">
-      <Panel id="credits" open={open} onToggle={setOpen} icon={<Receipt className="h-5 w-5" />} title={t('creditHistory')} hint={t('balance', { count: user.credits_balance })}>
-        <CreditHistory />
-      </Panel>
-      <Panel id="password" open={open} onToggle={setOpen} icon={<KeyRound className="h-5 w-5" />} title={t('changePassword')} hint={t('security')}>
-        <PasswordForm />
-      </Panel>
-    </div>
-  );
-}
-
-function Panel({ id, open, onToggle, icon, title, hint, children }: { id: PanelId; open: PanelId | null; onToggle: (v: PanelId | null) => void; icon: React.ReactNode; title: string; hint: string; children: React.ReactNode }) {
-  const isOpen = open === id;
-  return (
-    <section>
-      <button
-        type="button"
-        onClick={() => onToggle(isOpen ? null : id)}
-        aria-expanded={isOpen}
-        aria-controls={`panel-${id}`}
-        className={`group flex min-h-14 w-full items-center gap-4 rounded-lg py-3 text-start ${focusRing}`}
-      >
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center text-gold-500">{icon}</span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-base font-medium text-white transition group-hover:text-gold-300">{title}</span>
-          <span className="block truncate text-sm text-white/45">{hint}</span>
-        </span>
-        <ChevronDown className={`h-5 w-5 shrink-0 text-white/40 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      {isOpen && (
-        <div id={`panel-${id}`} className="max-w-2xl pb-6 ps-9">
-          {children}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function CreditHistory() {
+/** Credit history and password change pieces, used on the profile settings and edit pages. */
+export function CreditHistory() {
   const t = useTranslations('profileExtras');
   const [entries, setEntries] = React.useState<Entry[] | null>(null);
   const [error, setError] = React.useState(false);
@@ -120,7 +73,7 @@ function CreditHistory() {
   );
 }
 
-function PasswordForm() {
+export function PasswordForm() {
   const t = useTranslations('profileExtras');
   const apiError = useApiError();
   const { refreshProfile, signOut } = useAuth();

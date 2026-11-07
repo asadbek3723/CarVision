@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { PageHeader } from '@/components/ui';
+import { pageWrap } from '@/features/account/preferences';
 
 interface LedgerEntry {
   amount: number;
@@ -42,19 +43,19 @@ async function getJson<T>(url: string): Promise<T | null> {
 
 function Tile({ label, value, hint }: { label: string; value: string; hint?: string | undefined }) {
   return (
-    <div className="rounded-2xl bg-white/[0.04] p-4">
-      <p className="text-[12px] text-white/50">{label}</p>
-      <p className="mt-1.5 font-display text-2xl font-semibold tabular-nums text-white sm:text-3xl">{value}</p>
-      {hint && <p className="mt-1 text-[11px] text-white/40">{hint}</p>}
+    <div className="min-w-0">
+      <p className="truncate font-display text-3xl font-semibold tabular-nums tracking-[-0.02em] text-white md:text-5xl">{value}</p>
+      <p className="mt-1.5 truncate text-xs text-white/50 md:text-sm">{label}</p>
+      {hint && <p className="mt-0.5 text-[11px] text-white/35 md:text-xs">{hint}</p>}
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-8 first:mt-0">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">{title}</h2>
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">{children}</div>
+    <section className="grid gap-6 py-8 md:py-12 lg:grid-cols-[minmax(220px,320px)_1fr] lg:gap-16">
+      <h2 className="font-heading text-base font-semibold text-white md:text-lg">{title}</h2>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 xl:grid-cols-4 md:gap-x-10">{children}</div>
     </section>
   );
 }
@@ -111,7 +112,7 @@ export function ProfileStats() {
   const unlockedValue = unlocked.reduce((s, b) => s + (Number(b.totalUSD) || 0), 0);
 
   return (
-    <div className="mx-auto max-w-3xl px-5 pb-28 pt-6 md:px-8 md:pt-12">
+    <div className={pageWrap}>
       <PageHeader title={t('title')} subtitle={t('subtitle')} back={{ href: `/${locale}/profile` }} />
 
       {loading ? (

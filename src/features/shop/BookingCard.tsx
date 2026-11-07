@@ -30,13 +30,13 @@ export interface PaymentInfo {
   bank?: string;
 }
 
-const STATUS_STYLE: Record<BookingView['status'], { key: string; cls: string }> = {
-  AWAITING_PAYMENT: { key: 'statusAwaiting', cls: 'bg-amber-500/15 text-amber-300' },
-  PENDING_ADMIN_APPROVAL: { key: 'statusPending', cls: 'bg-sky-500/15 text-sky-300' },
-  UNLOCKED: { key: 'statusUnlocked', cls: 'bg-emerald-500/15 text-emerald-300' },
-  REDEEMED: { key: 'statusRedeemed', cls: 'bg-white/10 text-white/70' },
-  REJECTED: { key: 'statusRejected', cls: 'bg-red-500/15 text-red-300' },
-  CANCELLED: { key: 'statusCancelled', cls: 'bg-white/10 text-white/50' },
+export const BOOKING_STATUS_STYLE: Record<BookingView['status'], { key: string; cls: string; text: string; dot: string }> = {
+  AWAITING_PAYMENT: { key: 'statusAwaiting', cls: 'bg-amber-500/15 text-amber-300', text: 'text-amber-300', dot: 'bg-amber-300' },
+  PENDING_ADMIN_APPROVAL: { key: 'statusPending', cls: 'bg-sky-500/15 text-sky-300', text: 'text-sky-300', dot: 'bg-sky-300' },
+  UNLOCKED: { key: 'statusUnlocked', cls: 'bg-emerald-500/15 text-emerald-300', text: 'text-emerald-300', dot: 'bg-emerald-300' },
+  REDEEMED: { key: 'statusRedeemed', cls: 'bg-white/10 text-white/70', text: 'text-white/70', dot: 'bg-white/70' },
+  REJECTED: { key: 'statusRejected', cls: 'bg-red-500/15 text-red-300', text: 'text-red-300', dot: 'bg-red-300' },
+  CANCELLED: { key: 'statusCancelled', cls: 'bg-white/10 text-white/50', text: 'text-white/50', dot: 'bg-white/40' },
 };
 
 interface Props {
@@ -47,17 +47,66 @@ interface Props {
   flat?: boolean;
 }
 
-/** One booking: payment instructions, receipt upload, approval status and (after approval) the workshop. */
+/** One booking as a card (checkout): number, status, items, totals and the actions below. */
 export function BookingCard({ booking, payment, onChanged, flat = false }: Props) {
   const t = useTranslations('checkout.booking');
-  const apiError = useApiError();
+  const status = BOOKING_STATUS_STYLE[booking.status];
+  return (
+    <article className={flat ? 'py-2' : 'rounded-3xl bg-surface-1 p-5'}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-mono text-sm font-bold text-white">#{booking.bookingNumber}</p>
+        <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${status.cls}`}>{t(status.key)}</span>
+      </div>
+      <BookingItems booking={booking} />
+      <BookingActions booking={booking} payment={payment} onChanged={onChanged} flat={flat} />
+    </article>
+  );
+}
+
+/** The booked items with the total due at the workshop and the 3% deposit. */
+export function BookingItems({ booking, large = false }: { booking: BookingView; large?: boolean }) {
+  const t = useTranslations('checkout.booking');
   const locale = useLocale();
   const { formatPrice } = useCurrency();
+  const thumb = large ? 'h-20 w-20 md:h-24 md:w-24 rounded-2xl' : 'h-12 w-12 rounded-xl';
+  return (
+    <>
+      <ul className={large ? 'space-y-5' : 'mt-4 space-y-3'}>
+        {booking.items.map((it, i) => (
+          <li key={`${it.name}-${i}`} className="flex items-center gap-4">
+            <div className={`${thumb} shrink-0 overflow-hidden bg-black`}>{it.image && <img src={it.image} alt="" className="h-full w-full object-cover" />}</div>
+            <div className="min-w-0 flex-1">
+              <p className={`truncate font-semibold text-white ${large ? 'text-base md:text-lg' : 'text-sm'}`}>{it.name}</p>
+              <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{it.brand}{it.quantity > 1 ? ` · ×${it.quantity}` : ''}</p>
+            </div>
+            <p className={`font-semibold text-white/85 ${large ? 'text-base' : 'text-sm'}`}>{formatPrice(it.unitUSD * it.quantity)}</p>
+          </li>
+        ))}
+      </ul>
+
+      <div className={`flex items-end justify-between ${large ? 'mt-8 pt-2' : 'mt-4 pt-4'}`}>
+        <div>
+          <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{t('totalAtWorkshop')}</p>
+          <p className={`font-bold text-white ${large ? 'text-2xl md:text-3xl' : 'text-lg'}`}>{formatPrice(booking.totalUSD)}</p>
+        </div>
+        <div className="text-end">
+          <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{t('deposit')}</p>
+          <p className={`font-bold text-gold-500 ${large ? 'text-2xl md:text-3xl' : 'text-lg'}`}>{new Intl.NumberFormat(locale, { style: 'currency', currency: 'UZS', maximumFractionDigits: 0 }).format(booking.depositUZS)}</p>
+          <p className="text-[11px] text-white/40">≈ {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(booking.depositUSD)}</p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Payment instructions, receipt upload, approval status and (after approval) the workshop. */
+export function BookingActions({ booking, payment, onChanged, flat = false }: Props) {
+  const t = useTranslations('checkout.booking');
+  const apiError = useApiError();
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const status = STATUS_STYLE[booking.status];
   const needsPayment = booking.status === 'AWAITING_PAYMENT' || booking.status === 'REJECTED';
 
   // While the admin is reviewing, check again every 10 seconds
@@ -96,37 +145,7 @@ export function BookingCard({ booking, payment, onChanged, flat = false }: Props
   };
 
   return (
-    <article className={flat ? 'py-2' : 'rounded-3xl bg-surface-1 p-5'}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-mono text-sm font-bold text-white">#{booking.bookingNumber}</p>
-        <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${status.cls}`}>{t(status.key)}</span>
-      </div>
-
-      <ul className="mt-4 space-y-3">
-        {booking.items.map((it, i) => (
-          <li key={`${it.name}-${i}`} className="flex items-center gap-3">
-            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-black">{it.image && <img src={it.image} alt="" className="h-full w-full object-cover" />}</div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-white">{it.name}</p>
-              <p className="text-[11px] text-white/45">{it.brand}{it.quantity > 1 ? ` · ×${it.quantity}` : ''}</p>
-            </div>
-            <p className="text-sm font-semibold text-white/85">{formatPrice(it.unitUSD * it.quantity)}</p>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-4 flex items-end justify-between pt-4">
-        <div>
-          <p className="text-[11px] text-white/45">{t('totalAtWorkshop')}</p>
-          <p className="text-lg font-bold text-white">{formatPrice(booking.totalUSD)}</p>
-        </div>
-        <div className="text-end">
-          <p className="text-[11px] text-white/45">{t('deposit')}</p>
-          <p className="text-lg font-bold text-gold-500">{new Intl.NumberFormat(locale, { style: 'currency', currency: 'UZS', maximumFractionDigits: 0 }).format(booking.depositUZS)}</p>
-          <p className="text-[11px] text-white/40">≈ {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(booking.depositUSD)}</p>
-        </div>
-      </div>
-
+    <>
       {needsPayment && (
         <div className={`mt-5 space-y-4 ${flat ? '' : 'rounded-2xl bg-white/[0.03] p-4'}`}>
           {booking.status === 'REJECTED' && (
@@ -205,6 +224,6 @@ export function BookingCard({ booking, payment, onChanged, flat = false }: Props
           )}
         </div>
       )}
-    </article>
+    </>
   );
 }

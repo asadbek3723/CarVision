@@ -672,7 +672,18 @@
     "statsTitle": "Statistics",
     "statRenders": "Renders",
     "statBookings": "Bookings",
-    "viewStats": "View statistics"
+    "viewStats": "View statistics",
+    "settings": "Settings",
+    "settingsSub": "Language, currency and account",
+    "editSub": "Change your name and password",
+    "nameLabel": "Name",
+    "contactLabel": "Phone or email",
+    "contactHint": "Used to sign in, can’t be changed.",
+    "passwordTitle": "Password",
+    "bookingNotFound": "Booking not found",
+    "backToProfile": "Back to profile",
+    "itemsCount": "{count, plural, one {# part} other {# parts}}",
+    "bookedOn": "Booked on {date}"
   },
   "customize": {
     "saveConfig": "Save config",

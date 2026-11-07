@@ -672,7 +672,18 @@
     "statsTitle": "Статистика",
     "statRenders": "Рендерлер",
     "statBookings": "Броньдор",
-    "viewStats": "Статистиканы көрүү"
+    "viewStats": "Статистиканы көрүү",
+    "settings": "Жөндөөлөр",
+    "settingsSub": "Тил, валюта жана аккаунт",
+    "editSub": "Атыңызды жана сырсөздү өзгөртүңүз",
+    "nameLabel": "Аты",
+    "contactLabel": "Телефон же email",
+    "contactHint": "Кирүү үчүн колдонулат, өзгөртүүгө болбойт.",
+    "passwordTitle": "Сырсөз",
+    "bookingNotFound": "Брондоо табылган жок",
+    "backToProfile": "Профилге кайтуу",
+    "itemsCount": "{count} тетик",
+    "bookedOn": "{date} брондолгон"
   },
   "customize": {
     "saveConfig": "Конфигурацияны сактоо",

@@ -672,7 +672,18 @@
     "statsTitle": "Омор",
     "statRenders": "Рендерҳо",
     "statBookings": "Броньҳо",
-    "viewStats": "Дидани омор"
+    "viewStats": "Дидани омор",
+    "settings": "Танзимот",
+    "settingsSub": "Забон, асъор ва ҳисоб",
+    "editSub": "Ном ва паролро иваз кунед",
+    "nameLabel": "Ном",
+    "contactLabel": "Телефон ё email",
+    "contactHint": "Барои воридшавӣ истифода мешавад, иваз намешавад.",
+    "passwordTitle": "Парол",
+    "bookingNotFound": "Брон ёфт нашуд",
+    "backToProfile": "Бозгашт ба профил",
+    "itemsCount": "{count} қисм",
+    "bookedOn": "{date} брон шудааст"
   },
   "customize": {
     "saveConfig": "Нигоҳ доштани танзим",
