@@ -798,7 +798,8 @@
     "unlockHint": "Pay a 3% deposit ({amount}) to unlock the workshop address and phone",
     "confirmOrder": "Confirm order",
     "buy": "Buy ({amount} deposit)",
-    "customize": "Customize my car"
+    "customize": "Customize my car",
+    "downloadAll": "Download all ({count})"
   },
   "scanModal": {
     "back": "Back",

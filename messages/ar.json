@@ -798,7 +798,8 @@
     "unlockHint": "ادفع عربون 3% ({amount}) لكشف عنوان الورشة ورقم هاتفها",
     "confirmOrder": "تأكيد الطلب",
     "buy": "شراء (عربون {amount})",
-    "customize": "خصّص سيارتي"
+    "customize": "خصّص سيارتي",
+    "downloadAll": "تحميل الكل ({count})"
   },
   "scanModal": {
     "back": "رجوع",

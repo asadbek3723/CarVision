@@ -798,7 +798,8 @@
     "unlockHint": "%3 kapora ({amount}) ödeyerek atölyenin adresini ve telefonunu açarsınız",
     "confirmOrder": "Siparişi onayla",
     "buy": "Satın al ({amount} kapora)",
-    "customize": "Aracı özelleştir"
+    "customize": "Aracı özelleştir",
+    "downloadAll": "Tümünü indir ({count})"
   },
   "scanModal": {
     "back": "Geri",
