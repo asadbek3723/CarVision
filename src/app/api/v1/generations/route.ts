@@ -24,12 +24,14 @@ const MAX_PER_MINUTE = 6;
 const MAX_IN_FLIGHT = 3;
 
 const short = (max: number) => z.string().trim().max(max);
+/** Descriptive text only feeds the prompt: shorten it instead of rejecting the whole render. */
+const clip = (max: number) => z.string().trim().transform((v) => v.slice(0, max));
 
 const partInputSchema = z.object({
   id: short(80).min(1),
-  name: short(200).min(1),
+  name: clip(200).pipe(z.string().min(1)),
   category: short(80).min(1),
-  spec: short(200).optional(),
+  spec: clip(200).optional(),
   image: short(2000).optional(),
   angleImage: short(2000).optional(),
   swatch: short(40).optional(),
@@ -39,9 +41,9 @@ const requestSchema = z.object({
   photo: z.string().min(5).max(MAX_PHOTO_CHARS),
   angleId: short(40).optional(),
   partId: short(80).min(1),
-  partName: short(400).min(1),
+  partName: clip(400).pipe(z.string().min(1)),
   partCategory: short(80).min(1),
-  partSpec: short(200).optional(),
+  partSpec: clip(200).optional(),
   partImage: short(2000).optional(),
   partAngleImage: short(2000).optional(),
   partPrice: z.number().nonnegative().max(10_000_000).optional(),
