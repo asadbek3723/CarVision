@@ -92,14 +92,14 @@ export function VeloceGarage() {
           <p className="text-xs font-medium uppercase tracking-widest text-gold-500">{t('eyebrow')}</p>
           <h1 className="mt-1 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{user?.shop?.shop_name ?? t('defaultName')}</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={openCamera} className="flex cursor-pointer items-center gap-2 rounded-2xl bg-white/[0.06] px-5 py-3.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]">
-            <Camera className="h-4 w-4 text-gold-500" />
-            <span>{t('tryOnCustomer')}</span>
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center">
+          <button type="button" onClick={openCamera} className="flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-white/[0.06] px-4 py-3.5 text-xs font-semibold text-white transition hover:bg-white/[0.12] sm:px-5">
+            <Camera className="h-4 w-4 shrink-0 text-gold-500" />
+            <span className="truncate">{t('tryOnCustomer')}</span>
           </button>
-          <Link href={`/${locale}/seller/new-part`} className={buttonClasses({ size: 'md' })}>
-            <Plus className="h-4 w-4" />
-            <span>{t('addPart')}</span>
+          <Link href={`/${locale}/seller/new-part`} className={buttonClasses({ size: 'md', className: 'min-w-0' })}>
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="truncate">{t('addPart')}</span>
           </Link>
         </div>
       </div>
@@ -112,48 +112,48 @@ export function VeloceGarage() {
         </div>
       ) : (
         <>
-          <div className="mb-8 flex flex-wrap items-center gap-2">
+          <div className="-mx-5 mb-6 flex items-center gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:mb-8 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
             {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setActiveCategory(cat)}
-                className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs font-medium transition ${activeCategory === cat ? 'bg-gold-500 font-semibold text-black' : 'bg-white/[0.04] text-white/65 hover:text-white'}`}
+                className={`shrink-0 cursor-pointer whitespace-nowrap rounded-2xl px-4 py-2.5 text-xs font-medium transition ${activeCategory === cat ? 'bg-gold-500 font-semibold text-black' : 'bg-white/[0.04] text-white/65 hover:text-white'}`}
               >
                 {cat === ALL ? t('all') : tCat(cat)}
               </button>
             ))}
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-6 lg:grid-cols-4">
             {visible.map((item) => (
-              <div key={item.id} className="group flex flex-col justify-between">
+              <div key={item.id} className="group flex min-w-0 flex-col justify-between">
                 <div>
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#11131A] shadow-[0_16px_40px_rgba(0,0,0,0.55)]">
                     {item.coverImageUrl && (
                       <ProductImage
                         src={item.coverImageUrl}
                         alt={item.name}
-                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                        sizes="(min-width: 1024px) 25vw, 50vw"
                         className="object-cover transition duration-500 group-hover:scale-105"
                       />
                     )}
                   </div>
-                  <div className="mt-3">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gold-500">
-                      <Car className="h-3.5 w-3.5" />
-                      <span>{item.isUniversal ? t('allCars') : item.fitment[0]?.label ?? '—'}</span>
+                  <div className="mt-2.5 min-w-0 sm:mt-3">
+                    <span className="flex min-w-0 items-center gap-1 text-[11px] font-medium text-gold-500">
+                      <Car className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{item.isUniversal ? t('allCars') : item.fitment[0]?.label ?? '—'}</span>
                     </span>
                     <h3 className="mt-0.5 line-clamp-1 text-sm font-medium text-white">{item.name}</h3>
-                    <p className="mt-1 font-mono text-sm font-bold tabular-nums text-white/90">{formatPrice(item.priceUSD)}</p>
+                    <p className="mt-1 truncate font-mono text-sm font-bold tabular-nums text-white/90">{formatPrice(item.priceUSD)}</p>
                     <p className={`mt-0.5 text-[11px] ${item.stock === 0 ? 'text-red-300' : 'text-white/45'}`}>{t('stock', { count: item.stock })}</p>
                   </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <Link href={`/${locale}/seller/new-part?id=${item.id}`} className="text-xs text-white/55 hover:text-white">
+                <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+                  <Link href={`/${locale}/seller/new-part?id=${item.id}`} className="flex min-h-9 items-center text-xs text-white/55 hover:text-white">
                     {t('edit')}
                   </Link>
-                  <Link href={`/${locale}/customize?partId=${encodeURIComponent(item.id)}`} className="text-xs font-semibold text-gold-500 hover:underline">
+                  <Link href={`/${locale}/customize?partId=${encodeURIComponent(item.id)}`} className="flex min-h-9 items-center truncate text-xs font-semibold text-gold-500 hover:underline">
                     {t('tryOn')}
                   </Link>
                 </div>
