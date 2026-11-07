@@ -508,7 +508,7 @@
       "inStock": "Omborda mavjud: {count} ta",
       "lockedTitle": "Qaysi tuning servisda borligi 3% toʻlovdan soʻng ochiladi",
       "lockedBody": "Biz detalni oʻzimiz sotmaymiz. Agar u sizga maʼqul kelsa, 3% ({amount}) toʻlaysiz — biz darhol sizga oʻsha tuning servisning aniq manzilini beramiz va ustaxonaga raqamingizni yuboramiz.",
-      "unlockCta": "3% toʻlab manzilni olish ({amount})",
+      "unlockCta": "3% toʻlab manzilni olish",
       "tryOnCar": "Mashinamda sinab koʻrish",
       "related": "Oʻxshash detallar"
     },

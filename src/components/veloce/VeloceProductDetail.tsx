@@ -11,7 +11,6 @@ import {
   Sparkles,
   MapPin,
   Lock,
-  ArrowRight,
 } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -237,13 +236,12 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
               className={buttonClasses({ size: 'lg', className: 'flex-1' })}
             >
               <MapPin className="h-4 w-4" />
-              <span>{t('unlockCta', { amount: formatPrice(deposit3PercentUSD) })}</span>
-              <ArrowRight className="h-4 w-4" />
+              <span>{t('unlockCta')}</span>
             </button>
 
             <Link
               href={`/${locale}/customize?partId=${encodeURIComponent(product.id)}`}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-white/[0.05] px-6 py-4 text-xs font-semibold tracking-wider uppercase text-white transition hover:bg-white/[0.1]"
+              className="flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-white/[0.05] px-6 py-4 text-xs font-semibold tracking-wider uppercase text-white transition hover:bg-white/[0.1]"
             >
               <Sparkles className="h-4 w-4 text-gold-500" />
               <span>{t('tryOnCar')}</span>
