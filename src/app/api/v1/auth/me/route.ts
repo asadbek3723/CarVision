@@ -5,11 +5,24 @@ import { getSession, loadSession } from '@/server/auth/session';
 
 export const dynamic = 'force-dynamic';
 
+// The monthly top-up takes a row lock and only matters once per 30 days, so it is claimed at most
+// once per 10 minutes per user per server instance instead of on every profile refresh.
+const CLAIM_EVERY_MS = 10 * 60 * 1000;
+const lastClaim = new Map<string, number>();
+function shouldClaim(userId: string): boolean {
+  const now = Date.now();
+  if ((lastClaim.get(userId) ?? 0) > now - CLAIM_EVERY_MS) return false;
+  if (lastClaim.size > 5000) lastClaim.clear();
+  lastClaim.set(userId, now);
+  return true;
+}
+
 export async function GET() {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ success: false, code: 'UNAUTHENTICATED', error: 'Kirish talab qilinadi' }, { status: 401 });
   }
+  if (!shouldClaim(session.userId)) return NextResponse.json({ success: true, user: session.profile });
   await createAdminClient().rpc('claim_monthly_credits', { p_user_id: session.userId });
   const fresh = (await loadSession(session.userId)) ?? session;
   return NextResponse.json({ success: true, user: fresh.profile });

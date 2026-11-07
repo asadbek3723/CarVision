@@ -2,14 +2,13 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
+import { recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 const MAX_PHOTO_CHARS = 3_000_000;
 const MAX_PER_MINUTE = 8;
-const hits = new Map<string, number[]>();
-
 const bodySchema = z.object({
   photo: z.string().min(50).max(MAX_PHOTO_CHARS).regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/),
 });
@@ -17,14 +16,6 @@ const bodySchema = z.object({
 interface Candidate {
   id: string;
   label: string;
-}
-
-function rateLimited(userId: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(userId) ?? []).filter((t) => now - t < 60_000);
-  recent.push(now);
-  hits.set(userId, recent);
-  return recent.length > MAX_PER_MINUTE;
 }
 
 /** Asks Gemini which car is in the photo. Returns null when no key is set or the call fails. */
@@ -109,9 +100,13 @@ export async function POST(request: NextRequest) {
   try {
     const guard = await requireUser();
     if (!guard.ok) return guard.response;
-    if (rateLimited(guard.value.userId)) {
+    // Database backed (works across serverless instances, unlike an in-memory Map).
+    const limitKey = `detect:${guard.value.userId}`;
+    if ((await recentFailures('login_key', limitKey, 'vehicle_detect', 60_000, true)) >= MAX_PER_MINUTE) {
       return NextResponse.json({ success: false, error: 'Juda ko‘p urinish. Biroz kutib qayta urining' }, { status: 429 });
     }
+
+    await recordAttempt('vehicle_detect', limitKey, 'user', true);
 
     const parsed = bodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return NextResponse.json({ success: false, error: 'Rasm noto‘g‘ri' }, { status: 400 });

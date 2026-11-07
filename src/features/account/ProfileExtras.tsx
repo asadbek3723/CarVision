@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, KeyRound, Loader2, Receipt } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { InstallAppButton } from '@/components/pwa/PwaInstallPrompt';
@@ -15,15 +16,15 @@ interface Entry {
   at: string;
 }
 
-const TYPE_LABEL: Record<string, string> = {
-  TRIAL_BONUS: 'Ro‘yxatdan o‘tish bonusi',
-  MONTHLY_FREE: 'Oylik bepul kredit',
-  PLAN_ASSIGNED: 'Tarif krediti',
-  RESERVED: 'AI render',
-  COMMITTED: 'AI render',
-  REFUNDED: 'Qaytarildi (xato)',
-  REFERRAL_REWARD: 'Taklif mukofoti',
-  ADMIN_ADJUSTMENT: 'Admin tuzatishi',
+const TYPE_KEY: Record<string, string> = {
+  TRIAL_BONUS: 'tBonus',
+  MONTHLY_FREE: 'tMonthly',
+  PLAN_ASSIGNED: 'tPlan',
+  RESERVED: 'tRender',
+  COMMITTED: 'tRender',
+  REFUNDED: 'tRefund',
+  REFERRAL_REWARD: 'tReferral',
+  ADMIN_ADJUSTMENT: 'tAdmin',
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -37,16 +38,17 @@ const fieldCls = 'w-full rounded-2xl bg-white/[0.06] px-4 py-3.5 text-base text-
 /** Credit history and password change for the signed-in account (borderless, mobile first). */
 export function ProfileExtras() {
   const { user } = useAuth();
+  const t = useTranslations('account');
   const [open, setOpen] = React.useState<'credits' | 'password' | null>(null);
 
   if (!user) return null;
   return (
     <div className="mx-auto max-w-4xl space-y-3 px-5 pb-28 md:px-10">
-      <InstallAppButton />
-      <Accordion id="credits" open={open} onToggle={setOpen} icon={<Receipt className="h-5 w-5" />} title="Kredit tarixi" hint={`Balans: ${user.credits_balance}`}>
+      <InstallAppButton label={t('install')} />
+      <Accordion id="credits" open={open} onToggle={setOpen} icon={<Receipt className="h-5 w-5" />} title={t('creditsTitle')} hint={t('balance', { n: user.credits_balance })}>
         <CreditHistory />
       </Accordion>
-      <Accordion id="password" open={open} onToggle={setOpen} icon={<KeyRound className="h-5 w-5" />} title="Parolni almashtirish" hint="Xavfsizlik">
+      <Accordion id="password" open={open} onToggle={setOpen} icon={<KeyRound className="h-5 w-5" />} title={t('passwordTitle')} hint={t('passwordHint')}>
         <PasswordForm />
       </Accordion>
     </div>
@@ -71,6 +73,7 @@ function Accordion({ id, open, onToggle, icon, title, hint, children }: { id: 'c
 }
 
 function CreditHistory() {
+  const t = useTranslations('account');
   const [entries, setEntries] = React.useState<Entry[] | null>(null);
   const [error, setError] = React.useState(false);
 
@@ -89,16 +92,16 @@ function CreditHistory() {
     };
   }, []);
 
-  if (error) return <p className="text-sm text-red-300">Tarixni yuklab bo‘lmadi.</p>;
+  if (error) return <p className="text-sm text-red-300">{t('historyError')}</p>;
   if (!entries) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-[#D4AE62]" /></div>;
-  if (entries.length === 0) return <p className="text-sm text-white/50">Hali harakat yo‘q.</p>;
+  if (entries.length === 0) return <p className="text-sm text-white/50">{t('historyEmpty')}</p>;
 
   return (
     <ul className="divide-y divide-white/[0.06]">
       {entries.map((e) => (
         <li key={e.id} className="flex items-center justify-between gap-3 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">{TYPE_LABEL[e.type] ?? e.type}</p>
+            <p className="truncate text-sm font-semibold text-white">{TYPE_KEY[e.type] ? t(TYPE_KEY[e.type]!) : e.type}</p>
             <p className="text-xs text-white/40">{when(e.at)}{e.description && e.type === 'ADMIN_ADJUSTMENT' ? ` · ${e.description}` : ''}</p>
           </div>
           <div className="shrink-0 text-end">
@@ -111,15 +114,16 @@ function CreditHistory() {
   );
 }
 
-const PASSWORD_ERRORS: Record<string, string> = {
-  WRONG_PASSWORD: 'Joriy parol noto‘g‘ri',
-  WEAK_PASSWORD: 'Yangi parol kamida 8 belgi bo‘lib, harf va raqam bo‘lishi kerak',
-  SAME_PASSWORD: 'Yangi parol eskisidan farq qilishi kerak',
-  RATE_LIMITED: 'Juda ko‘p xato urinish. 15 daqiqadan keyin urinib ko‘ring',
-  UNAUTHENTICATED: 'Sessiya tugagan. Qaytadan tizimga kiring',
+const PASSWORD_ERROR_KEY: Record<string, string> = {
+  WRONG_PASSWORD: 'errWrong',
+  WEAK_PASSWORD: 'errWeak',
+  SAME_PASSWORD: 'errSame',
+  RATE_LIMITED: 'errRate',
+  UNAUTHENTICATED: 'errSession',
 };
 
 function PasswordForm() {
+  const t = useTranslations('account');
   const { refreshProfile, signOut } = useAuth();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -134,10 +138,10 @@ function PasswordForm() {
     if (busy) return;
     setMsg(null);
     if (next.length < 8 || !/[A-Za-z]/.test(next) || !/\d/.test(next)) {
-      return setMsg({ ok: false, text: PASSWORD_ERRORS['WEAK_PASSWORD']! });
+      return setMsg({ ok: false, text: t('errWeak') });
     }
-    if (next !== again) return setMsg({ ok: false, text: 'Yangi parollar bir xil emas' });
-    if (next === current) return setMsg({ ok: false, text: PASSWORD_ERRORS['SAME_PASSWORD']! });
+    if (next !== again) return setMsg({ ok: false, text: t('errMismatch') });
+    if (next === current) return setMsg({ ok: false, text: t('errSame') });
     setBusy(true);
     try {
       const res = await fetch('/api/v1/auth/password', {
@@ -147,7 +151,7 @@ function PasswordForm() {
       });
       const data = (await res.json().catch(() => ({}))) as { success?: boolean; code?: string; error?: string };
       if (res.ok && data.success) {
-        setMsg({ ok: true, text: 'Parol almashtirildi' });
+        setMsg({ ok: true, text: t('success') });
         setCurrent('');
         setNext('');
         setAgain('');
@@ -156,17 +160,17 @@ function PasswordForm() {
       }
       if (res.status === 401 && data.code === 'UNAUTHENTICATED') {
         // The cached profile outlived the server session: sign out cleanly and ask to log in again.
-        setMsg({ ok: false, text: PASSWORD_ERRORS['UNAUTHENTICATED']! });
+        setMsg({ ok: false, text: t('errSession') });
         await signOut();
         setTimeout(() => {
           window.location.href = `/${locale}/login`;
         }, 1200);
         return;
       }
-      const fallback = res.status >= 500 ? 'Serverda xatolik. Birozdan keyin qayta urinib ko‘ring' : 'Almashtirib bo‘lmadi';
-      setMsg({ ok: false, text: (data.code && PASSWORD_ERRORS[data.code]) || data.error || fallback });
+      const key = data.code ? PASSWORD_ERROR_KEY[data.code] : undefined;
+      setMsg({ ok: false, text: key ? t(key) : res.status >= 500 ? t('errServer') : t('errFailed') });
     } catch {
-      setMsg({ ok: false, text: 'Internet bilan aloqa yo‘q. Qayta urinib ko‘ring' });
+      setMsg({ ok: false, text: t('errNetwork') });
     } finally {
       setBusy(false);
     }
@@ -174,13 +178,13 @@ function PasswordForm() {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-3">
-      <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="Joriy parol" maxLength={72} className={fieldCls} />
-      <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder="Yangi parol (8+ belgi, harf va raqam)" maxLength={72} className={fieldCls} />
-      <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder="Yangi parolni takrorlang" maxLength={72} className={fieldCls} />
+      <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder={t('currentPassword')} maxLength={72} className={fieldCls} />
+      <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t('newPassword')} maxLength={72} className={fieldCls} />
+      <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder={t('repeatPassword')} maxLength={72} className={fieldCls} />
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`text-sm ${msg.ok ? 'text-emerald-300' : 'text-red-300'}`}>{msg.text}</p>}
       <button type="submit" disabled={busy || !current || !next || !again} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-3.5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-50">
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-        Parolni almashtirish
+        {t('submit')}
       </button>
     </form>
   );

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 
@@ -7,8 +8,15 @@ import { createAdminClient } from '@/lib/supabase/server';
  */
 
 export function clientIp(request: NextRequest): string {
-  const fwd = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  return fwd || request.headers.get('x-real-ip') || 'unknown';
+  const h = request.headers;
+  // Platform-set headers first: they cannot be forged by the client (Vercel / Cloudflare overwrite them).
+  const trusted = h.get('x-vercel-forwarded-for') || h.get('cf-connecting-ip') || h.get('x-real-ip');
+  const fwd = h.get('x-forwarded-for')?.split(',')[0]?.trim();
+  const ip = (trusted || fwd || '').trim();
+  if (ip) return ip.slice(0, 64);
+  // No address at all: do not let every such client share one bucket. Partition by a fingerprint.
+  const fp = `${h.get('user-agent') ?? ''}|${h.get('accept-language') ?? ''}`;
+  return `unknown:${createHash('sha256').update(fp).digest('hex').slice(0, 16)}`;
 }
 
 export async function recentFailures(

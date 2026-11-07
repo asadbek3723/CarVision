@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     const ip = clientIp(request);
-    if ((await recentFailures('ip', ip, 'camera_session', 60 * 60 * 1000, true)) >= 40) {
+    if ((await recentFailures('ip', ip, 'camera_session', 60 * 60 * 1000, true)) >= 20) {
       return NextResponse.json({ success: false, error: 'Juda ko‘p so‘rov' }, { status: 429 });
     }
     await recordAttempt('camera_session', 'create', ip, true);

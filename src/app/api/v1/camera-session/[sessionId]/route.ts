@@ -3,7 +3,8 @@ import { MAX_SESSION_UPLOADS, getCameraSession, getCameraSessionLight, getSessio
 
 export const dynamic = 'force-dynamic';
 
-const MAX_DATA_URL_CHARS = 4_600_000; // ~3.4MB of image data
+// The client compresses every photo to <= ~1.2MB (~1.65M chars); anything bigger is not ours.
+const MAX_DATA_URL_CHARS = 2_400_000;
 const IMAGE_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 
 /**
