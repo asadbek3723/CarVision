@@ -672,7 +672,18 @@
     "statsTitle": "İstatistikler",
     "statRenders": "Render",
     "statBookings": "Rezervasyonlar",
-    "viewStats": "İstatistikleri gör"
+    "viewStats": "İstatistikleri gör",
+    "settings": "Ayarlar",
+    "settingsSub": "Dil, para birimi ve hesap",
+    "editSub": "Adınızı ve şifrenizi değiştirin",
+    "nameLabel": "Ad",
+    "contactLabel": "Telefon veya e-posta",
+    "contactHint": "Giriş için kullanılır, değiştirilemez.",
+    "passwordTitle": "Şifre",
+    "bookingNotFound": "Rezervasyon bulunamadı",
+    "backToProfile": "Profile dön",
+    "itemsCount": "{count} parça",
+    "bookedOn": "{date} tarihinde rezerve edildi"
   },
   "customize": {
     "saveConfig": "Yapılandırmayı kaydet",

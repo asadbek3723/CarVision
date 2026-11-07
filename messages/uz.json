@@ -672,7 +672,18 @@
     "statsTitle": "Statistika",
     "statRenders": "Renderlar",
     "statBookings": "Bronlar",
-    "viewStats": "Statistikani ko'rish"
+    "viewStats": "Statistikani ko'rish",
+    "settings": "Sozlamalar",
+    "settingsSub": "Til, valyuta va hisob",
+    "editSub": "Ism va parolni o‘zgartiring",
+    "nameLabel": "Ism",
+    "contactLabel": "Telefon yoki email",
+    "contactHint": "Tizimga kirish uchun ishlatiladi, o‘zgartirib bo‘lmaydi.",
+    "passwordTitle": "Parol",
+    "bookingNotFound": "Bron topilmadi",
+    "backToProfile": "Profilga qaytish",
+    "itemsCount": "{count} ta detal",
+    "bookedOn": "{date} kuni bron qilingan"
   },
   "customize": {
     "saveConfig": "Konfiguratsiyani saqlash",

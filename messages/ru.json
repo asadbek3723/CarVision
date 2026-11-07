@@ -672,7 +672,18 @@
     "statsTitle": "Статистика",
     "statRenders": "Рендеры",
     "statBookings": "Брони",
-    "viewStats": "Вся статистика"
+    "viewStats": "Вся статистика",
+    "settings": "Настройки",
+    "settingsSub": "Язык, валюта и аккаунт",
+    "editSub": "Измените имя и пароль",
+    "nameLabel": "Имя",
+    "contactLabel": "Телефон или email",
+    "contactHint": "Используется для входа, изменить нельзя.",
+    "passwordTitle": "Пароль",
+    "bookingNotFound": "Бронь не найдена",
+    "backToProfile": "Вернуться в профиль",
+    "itemsCount": "{count, plural, one {# деталь} few {# детали} other {# деталей}}",
+    "bookedOn": "Забронировано {date}"
   },
   "customize": {
     "saveConfig": "Сохранить конфигурацию",

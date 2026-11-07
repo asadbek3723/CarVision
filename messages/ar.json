@@ -672,7 +672,18 @@
     "statsTitle": "الإحصائيات",
     "statRenders": "التصاميم",
     "statBookings": "الحجوزات",
-    "viewStats": "عرض الإحصائيات"
+    "viewStats": "عرض الإحصائيات",
+    "settings": "الإعدادات",
+    "settingsSub": "اللغة والعملة والحساب",
+    "editSub": "غيّر اسمك وكلمة المرور",
+    "nameLabel": "الاسم",
+    "contactLabel": "الهاتف أو البريد الإلكتروني",
+    "contactHint": "يُستخدم لتسجيل الدخول ولا يمكن تغييره.",
+    "passwordTitle": "كلمة المرور",
+    "bookingNotFound": "الحجز غير موجود",
+    "backToProfile": "العودة إلى الملف الشخصي",
+    "itemsCount": "{count, plural, one {قطعة واحدة} two {قطعتان} few {# قطع} other {# قطعة}}",
+    "bookedOn": "تم الحجز في {date}"
   },
   "customize": {
     "saveConfig": "حفظ التهيئة",

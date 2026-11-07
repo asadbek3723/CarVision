@@ -11,11 +11,9 @@ import {
   CheckCircle2,
   ImageIcon,
   RotateCcw,
-  ArrowRight,
   Wifi,
   WifiOff,
   ShieldCheck,
-  Lock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'next/navigation';
@@ -228,8 +226,6 @@ export function VeloceSmartCameraModal({
   const angleTitle = t(`angles.${currentAngle.key}.title`);
   const currentAnglePhoto = uploadedAngles[currentAngle.id];
   const uploadedAngleIds = Object.keys(uploadedAngles).map(Number);
-  const uploadedCount = uploadedAngleIds.length;
-  const allAnglesUploaded = uploadedCount >= REQUIRED_ANGLE_COUNT;
 
   const sessionUrl =
     typeof window !== 'undefined' && sessionId
@@ -249,10 +245,13 @@ export function VeloceSmartCameraModal({
         playShutter();
         vibrate(30);
         const targetAngleId = currentAngle.id;
-        setUploadedAngles((prev) => ({
-          ...prev,
-          [targetAngleId]: dataUrl,
-        }));
+        const next = { ...uploadedAngles, [targetAngleId]: dataUrl };
+        setUploadedAngles(next);
+        // Last required photo in: go straight to the studio (no Continue button).
+        if (Object.keys(next).length >= REQUIRED_ANGLE_COUNT) {
+          setTimeout(() => handleProceedToStudio(next[1] || dataUrl, next), 350);
+          return;
+        }
         if (currentStepIndex < GUIDED_SCAN_ANGLES.length - 1) {
           const nextIdx = currentStepIndex + 1;
           setTimeout(() => {
@@ -703,62 +702,6 @@ export function VeloceSmartCameraModal({
                       )}
                     </div>
 
-                    {/* Mandatory All-Angles Status & Davom Etish Gate */}
-                    <div className="w-full pt-2 space-y-3">
-
-                      <div className="w-full flex items-center justify-between gap-3">
-                        <button
-                          type="button"
-                          disabled={currentStepIndex === 0}
-                          onClick={() =>
-                            setCurrentStepIndex((prev) => Math.max(0, prev - 1))
-                          }
-                          className="inline-flex items-center gap-1.5 rounded-full bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-medium text-muted-foreground hover:text-white disabled:opacity-25 disabled:pointer-events-none transition cursor-pointer"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          <span>{t('prev')}</span>
-                        </button>
-
-                        <div className="flex items-center gap-2.5">
-                          {currentStepIndex < GUIDED_SCAN_ANGLES.length - 1 && (
-                            <button
-                              type="button"
-                              disabled={!currentAnglePhoto}
-                              onClick={() => {
-                                if (!currentAnglePhoto) return;
-                                setCurrentStepIndex((prev) =>
-                                  Math.min(GUIDED_SCAN_ANGLES.length - 1, prev + 1)
-                                );
-                              }}
-                              className="inline-flex items-center gap-1.5 rounded-2xl bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-medium text-white disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
-                            >
-                              <span>{t('nextAngle')}</span>
-                              <ChevronRight className="h-4 w-4" />
-                            </button>
-                          )}
-
-                          <button
-                            type="button"
-                            disabled={!allAnglesUploaded}
-                            onClick={() => {
-                              if (!allAnglesUploaded) return;
-                              handleProceedToStudio();
-                            }}
-                            className={`inline-flex items-center gap-2 rounded-2xl px-6 py-2.5 text-xs font-semibold tracking-wide transition ${
- allAnglesUploaded
- ? 'bg-gold-gradient text-black shadow-gold hover:brightness-110 active:scale-95 cursor-pointer'
-                                : 'bg-white/5 text-white/30 cursor-not-allowed'
-                            }`}
-                          >
-                            {!allAnglesUploaded && <Lock className="h-3.5 w-3.5" />}
-                            <span>
-                              {t('continue', { uploaded: uploadedCount, total: REQUIRED_ANGLE_COUNT })}
-                            </span>
-                            <ArrowRight className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </motion.div>
