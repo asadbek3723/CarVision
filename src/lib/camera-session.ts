@@ -70,6 +70,28 @@ export async function getCameraSession(id: string): Promise<CameraSessionData | 
   return toData(row);
 }
 
+/** Status-only view for polling: never loads the (multi-MB) photo columns. */
+export interface CameraSessionLight {
+  id: string;
+  kind: CameraSessionKind;
+  status: 'waiting' | 'connected' | 'captured';
+  uploads: number;
+  lastHeartbeat: number;
+}
+
+export async function getCameraSessionLight(id: string): Promise<CameraSessionLight | null> {
+  if (!isValidSessionId(id)) return null;
+  const { data } = await createAdminClient()
+    .from('camera_sessions')
+    .select('id, kind, status, uploads, created_at, last_heartbeat')
+    .eq('id', id)
+    .maybeSingle();
+  if (!data) return null;
+  const row = data as Pick<Row, 'id' | 'kind' | 'status' | 'uploads' | 'created_at' | 'last_heartbeat'>;
+  if (Date.now() - new Date(row.created_at).getTime() > SESSION_TTL_MS) return null;
+  return { id: row.id, kind: row.kind, status: row.status, uploads: row.uploads, lastHeartbeat: new Date(row.last_heartbeat).getTime() };
+}
+
 export async function getSessionRow(id: string): Promise<(CameraSessionData & { uploads: number; userId: string | null }) | null> {
   if (!isValidSessionId(id)) return null;
   const { data } = await createAdminClient().from('camera_sessions').select('*, user_id').eq('id', id).maybeSingle();

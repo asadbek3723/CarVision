@@ -12,6 +12,7 @@ import { StudioLock } from '@/features/seller/components/StudioLock';
 import { analyzeQuality, compressForUpload, composeStudioImage, loadImage, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { dataUrlToBlob } from '@/features/seller/lib/photo-input';
 import { CATALOG_CATEGORIES, MAX_ITEM_IMAGES, PRICE_CURRENCIES, type CatalogCategory, type CatalogItemDTO } from '@/domain/catalog';
+import { readJson } from '@/lib/safe-json';
 
 interface PhotoEntry {
   id: string;
@@ -27,7 +28,7 @@ async function uploadBlob(blob: Blob): Promise<string> {
   const form = new FormData();
   form.append('file', new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' }));
   const res = await fetch('/api/v1/seller/inventory/upload', { method: 'POST', body: form });
-  const data = await res.json().catch(() => ({}));
+  const data = (await readJson(res)).data;
   if (!res.ok || !data.success) throw new Error(data.error || 'Rasmni yuklab bo‘lmadi');
   return data.url as string;
 }
@@ -79,7 +80,7 @@ export default function SellerNewPartPage() {
     (async () => {
       try {
         const res = await fetch(`/api/v1/seller/inventory?id=${encodeURIComponent(editId)}`, { cache: 'no-store' });
-        const data = await res.json();
+        const data = (await readJson(res)).data;
         const item: CatalogItemDTO | undefined = data.items?.[0];
         if (cancelled) return;
         if (!item) return setError('Mahsulot topilmadi');
@@ -154,7 +155,7 @@ export default function SellerNewPartPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description, brand, category }),
       });
-      const data = await res.json();
+      const data = (await readJson(res)).data;
       if (!res.ok || !data.success) throw new Error(data.error || 'Yaxshilab bo‘lmadi');
       setSuggestion({ name: data.name, description: data.description });
     } catch (err) {
@@ -176,7 +177,7 @@ export default function SellerNewPartPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl: main.url }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await readJson(res)).data;
       if (!res.ok || !data.success) throw new Error(data.error || 'Rasmni yaxshilab bo‘lmadi');
       const composed = await composeStudioImage(await loadImage(data.cutoutUrl as string));
       setStudioCandidate({ url: await uploadBlob(composed), preview: URL.createObjectURL(composed) });
@@ -225,7 +226,7 @@ export default function SellerNewPartPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editId ? { id: editId, ...body } : body),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await readJson(res)).data;
       if (!res.ok || !data.success) throw new Error(data.error || 'Saqlab bo‘lmadi');
       setDone(true);
     } catch (err) {

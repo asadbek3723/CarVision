@@ -10,6 +10,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { BookingCard, type BookingView, type PaymentInfo } from '@/features/shop/BookingCard';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
+import { readJson } from '@/lib/safe-json';
 
 const fieldCls =
   'w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
@@ -73,7 +74,7 @@ export default function CheckoutPage() {
   const reloadBookings = React.useCallback(async () => {
     try {
       const res = await fetch('/api/v1/bookings', { cache: 'no-store' });
-      const data = await res.json();
+      const data = (await readJson(res)).data;
       if (data.success) {
         setPayment(data.payment);
         setBookings((prev) => {
@@ -113,7 +114,7 @@ export default function CheckoutPage() {
           note: note.trim() || undefined,
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await readJson(res)).data;
       if (!res.ok || !data.success) throw new Error(data.error || 'Bron yaratib bo‘lmadi');
       setPayment(data.payment);
       setBookings(data.bookings);

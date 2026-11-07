@@ -11,8 +11,11 @@ const loginSchema = z.object({
 });
 
 const WINDOW_MS = 15 * 60 * 1000;
-const MAX_PER_ACCOUNT = 5;
-const MAX_PER_IP = 20;
+// Lockouts are keyed by phone AND ip: a stranger guessing passwords from his own IP only locks
+// himself out, never the real owner. The global per-phone cap stops distributed guessing.
+const MAX_PER_ACCOUNT_AND_IP = 5;
+const MAX_PER_ACCOUNT_GLOBAL = 40;
+const MAX_PER_IP = 40; // each failure is logged twice (phone|ip and phone), so this is ~20 failures
 
 function fail(status: number, code: string, error: string) {
   return NextResponse.json({ success: false, code, error }, { status });
@@ -27,11 +30,13 @@ export async function POST(request: NextRequest) {
     if (!phone) return fail(400, 'INVALID_PHONE', "Telefon raqam noto'g'ri");
 
     const ip = clientIp(request);
-    const [byAccount, byIp] = await Promise.all([
+    const pairKey = `${phone}|${ip}`;
+    const [byPair, byAccount, byIp] = await Promise.all([
+      recentFailures('login_key', pairKey, 'login', WINDOW_MS),
       recentFailures('login_key', phone, 'login', WINDOW_MS),
       recentFailures('ip', ip, 'login', WINDOW_MS),
     ]);
-    if (byAccount >= MAX_PER_ACCOUNT || byIp >= MAX_PER_IP) {
+    if (byPair >= MAX_PER_ACCOUNT_AND_IP || byAccount >= MAX_PER_ACCOUNT_GLOBAL || byIp >= MAX_PER_IP) {
       return fail(429, 'RATE_LIMITED', "Juda ko'p xato urinish. 15 daqiqadan keyin qayta urinib ko'ring");
     }
 
@@ -42,7 +47,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error || !data.user) {
-      await recordAttempt('login', phone, ip, false);
+      await Promise.all([recordAttempt('login', pairKey, ip, false), recordAttempt('login', phone, ip, false)]);
       return fail(401, 'INVALID_CREDENTIALS', "Telefon raqam yoki parol noto'g'ri");
     }
 
@@ -56,7 +61,7 @@ export async function POST(request: NextRequest) {
       return fail(403, 'ACCOUNT_BLOCKED', 'Akkaunt bloklangan');
     }
 
-    await recordAttempt('login', phone, ip, true);
+    await recordAttempt('login', pairKey, ip, true);
 
     // Monthly free credits (idempotent, once per 30 days)
     await createAdminClient().rpc('claim_monthly_credits', { p_user_id: session.userId });

@@ -222,29 +222,36 @@ export function VeloceSmartCameraModal({
   React.useEffect(() => {
     if (!isOpen || !sessionId || isMobileDevice) return;
 
+    let busy = false;
     const interval = setInterval(async () => {
+      if (busy) return;
+      busy = true;
       try {
-        const res = await fetch(`/api/v1/camera-session/${sessionId}`);
+        // 1. Cheap poll: status + number of uploaded photos only.
+        const res = await fetch(`/api/v1/camera-session/${sessionId}`, { cache: 'no-store' });
         const data = await res.json();
-        if (data.success && data.session) {
-          setSessionStatus(data.session.status);
-          const remoteAngles: Record<number, string> = data.session.angles || {};
+        if (!data.success || !data.session) return;
+        setSessionStatus(data.session.status);
+        setRemoteCapturedCount(Math.min(Number(data.session.uploads) || 0, REQUIRED_ANGLE_COUNT));
+
+        // 2. Only when every photo should be there, download them once.
+        if (data.session.status === 'captured' && Number(data.session.uploads) >= REQUIRED_ANGLE_COUNT) {
+          const fullRes = await fetch(`/api/v1/camera-session/${sessionId}?full=1`, { cache: 'no-store' });
+          const full = await fullRes.json();
+          const remoteAngles: Record<number, string> = full.session?.angles || {};
           const count = Object.keys(remoteAngles).length;
           setRemoteCapturedCount(count);
-
-          if (
-            data.session.status === 'captured' &&
-            count >= REQUIRED_ANGLE_COUNT
-          ) {
+          if (count >= REQUIRED_ANGLE_COUNT) {
             clearInterval(interval);
-            const primary = remoteAngles[1] || data.session.imageUrl;
-            handleProceedToStudio(primary, remoteAngles);
+            handleProceedToStudio(remoteAngles[1] || full.session.imageUrl, remoteAngles);
           }
         }
       } catch {
-        // Retry
+        // Retry on the next tick
+      } finally {
+        busy = false;
       }
-    }, 800);
+    }, 1500);
 
     return () => clearInterval(interval);
   }, [isOpen, sessionId, isMobileDevice, handleProceedToStudio]);

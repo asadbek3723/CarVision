@@ -8,6 +8,7 @@ import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { StudioLock } from '@/features/seller/components/StudioLock';
 import { LeadDetail, formatDate, type SellerLeadOrder } from '@/features/seller/components/LeadDetail';
+import { readJson } from '@/lib/safe-json';
 
 /** Voucher terminal: the customer shows a code, the workshop looks it up and accepts it. */
 export default function SellerRedeemVoucherPage() {
@@ -26,7 +27,7 @@ export default function SellerRedeemVoucherPage() {
   const loadRecent = React.useCallback(async () => {
     try {
       const res = await fetch('/api/v1/seller/orders', { cache: 'no-store' });
-      const data = await res.json();
+      const data = (await readJson(res)).data;
       if (res.ok && data.success) setRecent(data.orders ?? []);
     } catch {
       // list is optional
@@ -49,7 +50,7 @@ export default function SellerRedeemVoucherPage() {
     setMatch(null);
     try {
       const res = await fetch('/api/v1/seller/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: value, action: 'lookup' }) });
-      const data = await res.json().catch(() => ({}));
+      const data = (await readJson(res)).data;
       if (!res.ok || !data.success || !data.order) throw new Error(data.error || 'Vaucher topilmadi');
       setMatch(data.order);
     } catch (err) {
@@ -62,7 +63,7 @@ export default function SellerRedeemVoucherPage() {
   const redeem = async (order: SellerLeadOrder): Promise<string | null> => {
     try {
       const res = await fetch('/api/v1/seller/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: order.voucherCode, action: 'redeem' }) });
-      const data = await res.json().catch(() => ({}));
+      const data = (await readJson(res)).data;
       if (!res.ok || !data.success) return data.error || 'Qabul qilib bo‘lmadi';
       setMatch(data.order);
       setRecent((prev) => prev.map((o) => (o.id === data.order.id ? data.order : o)));

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Check, Clock, Loader2, MapPin, Phone, Upload, XCircle } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { compressForUpload, loadImageFromBlob } from '@/features/seller/lib/image-tools';
+import { readJson } from '@/lib/safe-json';
 
 export interface BookingView {
   id: string;
@@ -68,7 +69,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
       const form = new FormData();
       form.append('file', new File([blob], 'receipt.jpg', { type: 'image/jpeg' }));
       const res = await fetch(`/api/v1/bookings/${booking.id}/receipt`, { method: 'POST', body: form });
-      const data = await res.json().catch(() => ({}));
+      const data = (await readJson(res)).data;
       if (!res.ok || !data.success) throw new Error(data.error || 'Chekni yuborib bo‘lmadi');
       onChanged();
     } catch (err) {

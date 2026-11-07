@@ -62,21 +62,34 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
 
   React.useEffect(() => {
     if (!isOpen || mobile !== false || !sessionId) return;
+    let busy = false;
+    let seenUploads = 0;
     const t = setInterval(async () => {
+      if (busy) return;
+      busy = true;
       try {
+        // Cheap poll first; the photo itself is downloaded only when a new one arrived.
         const res = await fetch(`/api/v1/camera-session/${sessionId}`, { cache: 'no-store' });
         const d = await res.json();
         if (!d.success) return;
         setStatus(d.session.status);
-        const img: string | undefined = d.session.imageUrl;
-        if (img && img !== lastSeen.current) {
-          lastSeen.current = img;
-          onPhoto(img);
+        const uploads = Number(d.session.uploads) || 0;
+        if (uploads > seenUploads) {
+          const fullRes = await fetch(`/api/v1/camera-session/${sessionId}?full=1`, { cache: 'no-store' });
+          const full = await fullRes.json();
+          const img: string | undefined = full.session?.imageUrl;
+          if (img && img !== lastSeen.current) {
+            lastSeen.current = img;
+            onPhoto(img);
+          }
+          seenUploads = uploads;
         }
       } catch {
         // retry on the next tick
+      } finally {
+        busy = false;
       }
-    }, 1000);
+    }, 1500);
     return () => clearInterval(t);
   }, [isOpen, mobile, sessionId, onPhoto]);
 
