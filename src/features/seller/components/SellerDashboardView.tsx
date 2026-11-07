@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Camera, Eye, EyeOff, Loader2, Minus, Package, Pencil, Phone, Plus, Sparkles, Trash2, Users } from 'lucide-react';
@@ -38,7 +39,20 @@ async function patchItem(body: Record<string, unknown>): Promise<boolean> {
   }
 }
 
+const CAT_KEY: Record<string, string> = {
+  wheels: 'catWheels',
+  body_kit: 'catBodyKit',
+  lighting: 'catLighting',
+  spoiler: 'catSpoiler',
+  suspension: 'catSuspension',
+  interior: 'catInterior',
+  exhaust: 'catExhaust',
+  wrap_paint: 'catWrapPaint',
+  other: 'catOther',
+};
+
 export function SellerDashboardView() {
+  const t = useTranslations('seller');
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { formatPrice } = useCurrency();
@@ -63,16 +77,16 @@ export function SellerDashboardView() {
         fetch('/api/v1/seller/orders', { cache: 'no-store' }).catch(() => null),
       ]);
       const inv = await invRes.json().catch(() => ({}));
-      if (!invRes.ok || !inv.success) throw new Error(inv.error || 'Mahsulotlarni yuklab bo‘lmadi');
+      if (!invRes.ok || !inv.success) throw new Error(inv.error || t('errLoadProducts'));
       setItems(inv.items ?? []);
       const ord = ordRes && ordRes.ok ? await ordRes.json().catch(() => null) : null;
       setLeads(ord?.success && Array.isArray(ord.orders) ? ord.orders : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
+      setError(err instanceof Error ? err.message : t('genericError'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     if (isSeller) void load();
@@ -85,7 +99,7 @@ export function SellerDashboardView() {
     setItems((list) => list.map((i) => (i.id === item.id ? { ...i, stock } : i)));
     if (!(await patchItem({ id: item.id, stock }))) {
       setItems((list) => list.map((i) => (i.id === item.id ? { ...i, stock: prev } : i)));
-      setError('Sonini saqlab bo‘lmadi');
+      setError(t('errStock'));
     }
   };
 
@@ -94,12 +108,12 @@ export function SellerDashboardView() {
     setBusyId(item.id);
     const ok = await patchItem({ id: item.id, status });
     if (ok) setItems((list) => list.map((i) => (i.id === item.id ? { ...i, status } : i)));
-    else setError('Holatni o‘zgartirib bo‘lmadi');
+    else setError(t('errStatus'));
     setBusyId(null);
   };
 
   const remove = async (item: CatalogItemDTO) => {
-    if (!window.confirm(`"${item.name}" mahsulotini o‘chirasizmi?`)) return;
+    if (!window.confirm(t('confirmDelete', { name: item.name }))) return;
     setBusyId(item.id);
     try {
       const res = await fetch(`/api/v1/seller/inventory?productId=${encodeURIComponent(item.id)}`, { method: 'DELETE' });
@@ -107,7 +121,7 @@ export function SellerDashboardView() {
       if (!res.ok || !data.success) throw new Error();
       setItems((list) => list.filter((i) => i.id !== item.id));
     } catch {
-      setError('O‘chirib bo‘lmadi');
+      setError(t('errDelete'));
     }
     setBusyId(null);
   };
@@ -123,14 +137,14 @@ export function SellerDashboardView() {
     );
   }
 
-  if (user && !isSeller) return <StudioLock title="Dashboard" />;
+  if (user && !isSeller) return <StudioLock title={t('tDashboard')} />;
 
   if (!user) {
     return (
       <div className="mx-auto mt-10 max-w-md rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-6 text-center">
-        <p className="text-sm text-white/80">Dashboard faqat studiya akkauntlari uchun.</p>
+        <p className="text-sm text-white/80">{t('onlyStudio')}</p>
         <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
-          Kirish
+          {t('login')}
         </Link>
       </div>
     );
@@ -141,21 +155,21 @@ export function SellerDashboardView() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs text-white/50">Studiya</p>
-          <h1 className="text-xl font-bold text-white md:text-2xl">{user.shop?.shop_name ?? 'Mening studiyam'}</h1>
+          <p className="text-xs text-white/50">{t('studio')}</p>
+          <h1 className="text-xl font-bold text-white md:text-2xl">{user.shop?.shop_name ?? t('myStudio')}</h1>
         </div>
         <div className="flex items-center gap-3">
           <div className="rounded-2xl border border-[#D4AE62]/25 bg-[#D4AE62]/[0.07] px-4 py-2 text-center">
-            <p className="text-[10px] font-semibold tracking-wide text-[#D4AE62]">KREDIT</p>
+            <p className="text-[10px] font-semibold tracking-wide text-[#D4AE62]">{t('credit')}</p>
             <p className="text-lg font-bold text-white">{user.role === 'super_admin' ? '∞' : user.credits_balance}</p>
           </div>
           <button type="button" onClick={openCamera} className="inline-flex items-center gap-2 rounded-full bg-white/[0.07] px-4 py-3 text-xs font-semibold text-white hover:bg-white/[0.12]">
             <Camera className="h-4 w-4" />
-            <span className="hidden sm:inline">Rasmga olish</span>
+            <span className="hidden sm:inline">{t('scan')}</span>
           </button>
           <Link href={`/${locale}/seller/new-part`} className="inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-xs font-bold text-black hover:brightness-110">
             <Plus className="h-4 w-4" />
-            Mahsulot qo‘shish
+            {t('addProductBtn')}
           </Link>
         </div>
       </div>
@@ -163,10 +177,10 @@ export function SellerDashboardView() {
       {/* Stats */}
       <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
-          { label: 'Do‘konda', value: published.length, icon: Package },
-          { label: 'Qoralama', value: items.length - published.length, icon: EyeOff },
-          { label: 'Qolmagan', value: lowStock, icon: Sparkles },
-          { label: 'Buyurtmalar', value: leads.length, icon: Users },
+          { label: t('live'), value: published.length, icon: Package },
+          { label: t('draft'), value: items.length - published.length, icon: EyeOff },
+          { label: t('soldOut'), value: lowStock, icon: Sparkles },
+          { label: t('tOrders'), value: leads.length, icon: Users },
         ].map((s) => (
           <div key={s.label} className="rounded-2xl border border-white/[0.07] bg-[#0B0D13] p-4">
             <s.icon className="h-4 w-4 text-[#D4AE62]" />
@@ -179,7 +193,7 @@ export function SellerDashboardView() {
       {error && (
         <p role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           <span>{error}</span>
-          <button type="button" onClick={() => void load()} className="shrink-0 text-xs font-semibold underline">Qayta yuklash</button>
+          <button type="button" onClick={() => void load()} className="shrink-0 text-xs font-semibold underline">{t('reload')}</button>
         </p>
       )}
 
@@ -187,8 +201,8 @@ export function SellerDashboardView() {
       <div className="mt-6 flex gap-2">
         {(
           [
-            ['parts', `Mahsulotlar (${items.length})`],
-            ['leads', `Buyurtmalar (${leads.length})`],
+            ['parts', t('tabParts', { n: items.length })],
+            ['leads', t('tabLeads', { n: leads.length })],
           ] as Array<[Tab, string]>
         ).map(([key, label]) => (
           <button
@@ -206,10 +220,10 @@ export function SellerDashboardView() {
         <div className="mt-4 space-y-3">
           {items.length === 0 && (
             <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center">
-              <p className="text-sm text-white/70">Hali mahsulot yo‘q. Birinchi mahsulotni qo‘shing, mijozlar uni do‘konda ko‘radi.</p>
+              <p className="text-sm text-white/70">{t('emptyParts')}</p>
               <Link href={`/${locale}/seller/new-part`} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-xs font-bold text-black">
                 <Plus className="h-4 w-4" />
-                Mahsulot qo‘shish
+                {t('addProductBtn')}
               </Link>
             </div>
           )}
@@ -224,15 +238,15 @@ export function SellerDashboardView() {
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="truncate text-sm font-bold text-white">{item.name}</h3>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.status === 'PUBLISHED' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/10 text-white/60'}`}>
-                    {item.status === 'PUBLISHED' ? 'Do‘konda' : 'Qoralama'}
+                    {item.status === 'PUBLISHED' ? t('live') : t('draft')}
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-white/50">
-                  {item.categoryLabel}
+                  {t(CAT_KEY[item.category] ?? 'catOther')}
                   {item.brand ? ` · ${item.brand}` : ''}
                 </p>
                 <p className="mt-0.5 truncate text-xs text-white/40">
-                  {item.isUniversal ? 'Barcha mashinalarga' : item.fitment.map((f) => f.label).slice(0, 3).join(', ')}
+                  {item.isUniversal ? t('allVehicles') : item.fitment.map((f) => f.label).slice(0, 3).join(', ')}
                   {!item.isUniversal && item.fitment.length > 3 ? ` +${item.fitment.length - 3}` : ''}
                 </p>
                 <p className="mt-1 text-sm font-semibold text-[#D4AE62]">
@@ -244,22 +258,22 @@ export function SellerDashboardView() {
 
               <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
                 <div className="flex items-center gap-2">
-                  <button type="button" aria-label="Kamaytirish" onClick={() => void setStock(item, item.stock - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                  <button type="button" aria-label={t('decrease')} onClick={() => void setStock(item, item.stock - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <Minus className="h-3.5 w-3.5" />
                   </button>
                   <span className={`w-10 text-center text-sm font-bold ${item.stock === 0 ? 'text-red-300' : 'text-white'}`}>{item.stock}</span>
-                  <button type="button" aria-label="Ko‘paytirish" onClick={() => void setStock(item, item.stock + 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                  <button type="button" aria-label={t('increase')} onClick={() => void setStock(item, item.stock + 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <Plus className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Link href={`/${locale}/seller/new-part?id=${item.id}`} aria-label="Tahrirlash" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                  <Link href={`/${locale}/seller/new-part?id=${item.id}`} aria-label={t('edit')} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <Pencil className="h-3.5 w-3.5" />
                   </Link>
-                  <button type="button" disabled={busyId === item.id} aria-label={item.status === 'PUBLISHED' ? 'Yashirish' : 'Nashr qilish'} onClick={() => void toggleStatus(item)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50">
+                  <button type="button" disabled={busyId === item.id} aria-label={item.status === 'PUBLISHED' ? t('hide') : t('publishAction')} onClick={() => void toggleStatus(item)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50">
                     {item.status === 'PUBLISHED' ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
-                  <button type="button" disabled={busyId === item.id} aria-label="O‘chirish" onClick={() => void remove(item)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-red-600 disabled:opacity-50">
+                  <button type="button" disabled={busyId === item.id} aria-label={t('remove')} onClick={() => void remove(item)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-red-600 disabled:opacity-50">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -272,12 +286,12 @@ export function SellerDashboardView() {
       {tab === 'leads' && (
         <div className="mt-4 space-y-3">
           <Link href={`/${locale}/seller/redeem`} className="flex items-center justify-between rounded-3xl bg-[#D4AE62]/15 px-5 py-4 text-sm font-bold text-[#D4AE62] hover:bg-[#D4AE62]/25">
-            Vaucher qabul qilish
+            {t('redeemVoucher')}
             <span aria-hidden>→</span>
           </Link>
           {leads.length === 0 && (
             <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-sm text-white/60">
-              Hali buyurtma yo‘q. Mijozlar bron qilganda shu yerda ko‘rinadi.
+              {t('emptyLeads')}
             </div>
           )}
           {leads.map((lead) => (
@@ -285,15 +299,15 @@ export function SellerDashboardView() {
               <Link href={`/${locale}/seller/orders/${lead.id}`} className="block min-w-0 hover:opacity-80">
                 <p className="text-sm font-bold text-white">{lead.customerName}</p>
                 <p className="text-xs text-white/50">{lead.partName}</p>
-                <p className="mt-1 text-xs text-white/40">Kod: {lead.voucherCode}</p>
+                <p className="mt-1 text-xs text-white/40">{t('codeLabel', { code: lead.voucherCode })}</p>
               </Link>
               <div className="text-end">
                 <p className="text-sm font-semibold text-[#D4AE62]">{formatPrice(lead.totalPriceUSD, 'USD')}</p>
-                <p className="text-[11px] text-white/45">Zakalat: {formatPrice(lead.depositUSD, 'USD')}</p>
+                <p className="text-[11px] text-white/45">{t('depositLabel', { amount: formatPrice(lead.depositUSD, 'USD') })}</p>
               </div>
               <a href={`tel:${lead.customerPhone}`} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">
                 <Phone className="h-3.5 w-3.5" />
-                Qo‘ng‘iroq
+                {t('call')}
               </a>
             </article>
           ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Camera, ImagePlus, Loader2 } from 'lucide-react';
 
 interface Props {
@@ -18,6 +19,7 @@ const MAX_EDGE = 1600;
  * Falls back gracefully to upload-only when the camera is unavailable or denied.
  */
 export function LiveCamera({ onShot, onFile, busy }: Props) {
+  const t = useTranslations('seller');
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
@@ -28,7 +30,7 @@ export function LiveCamera({ onShot, onFile, busy }: Props) {
     let cancelled = false;
     (async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setError('Bu qurilmada kamera mavjud emas. Qurilmadan rasm yuklang.');
+        setError(t('noCamera'));
         return;
       }
       try {
@@ -47,7 +49,7 @@ export function LiveCamera({ onShot, onFile, busy }: Props) {
           setReady(true);
         }
       } catch {
-        if (!cancelled) setError('Kameraga ruxsat berilmadi. Brauzer sozlamalaridan ruxsat bering yoki qurilmadan rasm yuklang.');
+        if (!cancelled) setError(t('cameraDenied'));
       }
     })();
     return () => {
@@ -55,7 +57,7 @@ export function LiveCamera({ onShot, onFile, busy }: Props) {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, []);
+  }, [t]);
 
   const shoot = () => {
     const v = videoRef.current;
@@ -104,13 +106,13 @@ export function LiveCamera({ onShot, onFile, busy }: Props) {
         />
         <button type="button" onClick={() => fileRef.current?.click()} className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-3 text-xs font-semibold text-white transition hover:bg-white/20">
           <ImagePlus className="h-4 w-4" />
-          Qurilmadan yuklash
+          {t('uploadFromDevice')}
         </button>
         <button
           type="button"
           onClick={shoot}
           disabled={!ready || busy}
-          aria-label="Suratga olish"
+          aria-label={t('shoot')}
           className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-white/80 bg-white/15 transition active:scale-90 disabled:opacity-40"
         >
           {busy ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : <Camera className="h-7 w-7 text-white" />}

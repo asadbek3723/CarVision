@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Plus, Search, X } from 'lucide-react';
 
 export interface PickedVehicle {
@@ -27,6 +28,7 @@ const inputCls =
 
 /** Searchable picker over the full vehicle database, with per-vehicle year range. */
 export function VehiclePicker({ value, onChange }: Props) {
+  const t = useTranslations('seller');
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<ModelResult[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -85,15 +87,15 @@ export function VehiclePicker({ value, onChange }: Props) {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Mashina yoki brend qidiring (masalan: Gentra, Toyota, BYD)"
+          placeholder={t('searchPh')}
           className={`${inputCls} ps-9`}
         />
       </div>
 
       {query.trim().length >= 2 && (
         <div className="max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-[#0B0D13]">
-          {loading && <p className="px-3 py-3 text-xs text-white/50">Qidirilmoqda…</p>}
-          {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">Topilmadi. Pastdan qo‘lda yozing.</p>}
+          {loading && <p className="px-3 py-3 text-xs text-white/50">{t('searching')}</p>}
+          {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">{t('notFoundManual')}</p>}
           {results.map((r) => (
             <button
               key={r.id}
@@ -115,7 +117,7 @@ export function VehiclePicker({ value, onChange }: Props) {
         <input
           value={custom}
           onChange={(e) => setCustom(e.target.value)}
-          placeholder="Ro‘yxatda yo‘qmi? Mashina nomini qo‘lda yozing"
+          placeholder={t('customPh')}
           className={inputCls}
         />
         <button
@@ -128,7 +130,7 @@ export function VehiclePicker({ value, onChange }: Props) {
           }}
           className="shrink-0 rounded-xl bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:bg-white/[0.14] disabled:opacity-40"
         >
-          Qo‘shish
+          {t('add')}
         </button>
       </div>
 
@@ -137,13 +139,13 @@ export function VehiclePicker({ value, onChange }: Props) {
           {value.map((v) => (
             <li key={v.key} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#D4AE62]/25 bg-[#D4AE62]/[0.07] px-3 py-2">
               <span className="me-auto text-sm font-semibold text-white">{v.label}</span>
-              <span className="text-[11px] text-white/45">yil</span>
-              {yearInput(v.key, 'yearFrom', v.yearFrom, 'dan')}
+              <span className="text-[11px] text-white/45">{t('year')}</span>
+              {yearInput(v.key, 'yearFrom', v.yearFrom, t('from'))}
               <span className="text-white/30">–</span>
-              {yearInput(v.key, 'yearTo', v.yearTo, 'gacha')}
+              {yearInput(v.key, 'yearTo', v.yearTo, t('to'))}
               <button
                 type="button"
-                aria-label="Olib tashlash"
+                aria-label={t('removeVehicle')}
                 onClick={() => onChange(value.filter((x) => x.key !== v.key))}
                 className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20"
               >

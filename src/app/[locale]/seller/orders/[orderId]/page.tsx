@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -10,6 +11,7 @@ import { StudioLock } from '@/features/seller/components/StudioLock';
 import { LeadDetail, type SellerLeadOrder } from '@/features/seller/components/LeadDetail';
 
 export default function SellerOrderDetailPage() {
+  const t = useTranslations('seller');
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const orderId = params?.['orderId'] as string;
@@ -31,24 +33,24 @@ export default function SellerOrderDetailPage() {
       .then((d) => {
         if (cancelled) return;
         if (d.success && d.order) setOrder(d.order);
-        else setError('Buyurtma topilmadi');
+        else setError(t('orderNotFound'));
       })
-      .catch(() => !cancelled && setError('Yuklab bo‘lmadi'))
+      .catch(() => !cancelled && setError(t('loadFail')))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [orderId, unlocked]);
+  }, [orderId, unlocked, t]);
 
   const redeem = async (o: SellerLeadOrder): Promise<string | null> => {
     try {
       const res = await fetch('/api/v1/seller/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: o.id, status: 'completed' }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) return data.error || 'Qabul qilib bo‘lmadi';
+      if (!res.ok || !data.success) return data.error || t('redeemFail');
       setOrder(data.order);
       return null;
     } catch {
-      return 'Tarmoq xatosi. Qayta urinib ko‘ring';
+      return t('networkRetry');
     }
   };
 
@@ -59,18 +61,18 @@ export default function SellerOrderDetailPage() {
   );
 
   if (isLoading || loading) return shell(<div className="flex justify-center py-24"><Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" /></div>);
-  if (!user) return shell(<div className="mt-10 text-center"><Link href={`/${locale}/login`} className="inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">Kirish</Link></div>);
-  if (!unlocked) return shell(<StudioLock title="Buyurtmalar" />);
+  if (!user) return shell(<div className="mt-10 text-center"><Link href={`/${locale}/login`} className="inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link></div>);
+  if (!unlocked) return shell(<StudioLock title={t('tOrders')} />);
 
   return shell(
     <>
       <div className="mb-5 flex items-center gap-3">
-        <Link href={`/${locale}/seller?tab=dashboard`} aria-label="Orqaga" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
+        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
           <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Link>
-        <h1 className="text-lg font-bold text-white">Buyurtma</h1>
+        <h1 className="text-lg font-bold text-white">{t('order')}</h1>
       </div>
-      {order ? <LeadDetail order={order} onRedeem={redeem} /> : <p role="alert" className="rounded-3xl bg-white/[0.04] px-5 py-10 text-center text-sm text-white/60">{error ?? 'Buyurtma topilmadi'}</p>}
+      {order ? <LeadDetail order={order} onRedeem={redeem} /> : <p role="alert" className="rounded-3xl bg-white/[0.04] px-5 py-10 text-center text-sm text-white/60">{error ?? t('orderNotFound')}</p>}
     </>
   );
 }
