@@ -26,6 +26,35 @@ interface Props {
 
 const STAGES = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5'] as const;
 
+/**
+ * The real progress only moves in big steps (one per finished side). Shown alone it jumps
+ * 0 -> 20 -> 40 and looks frozen in between, so the counter creeps up one percent at a time
+ * towards (never past) the end of the side being drawn, and catches up quickly when a side
+ * really finishes. It never shows 100 before the work is done.
+ */
+function useSmoothPercent(real: number, running: boolean, sides: number): number {
+  const [shown, setShown] = React.useState(real);
+  const valueRef = React.useRef(real);
+  React.useEffect(() => {
+    const step = 100 / Math.max(sides, 1);
+    const timer = setInterval(() => {
+      const v = valueRef.current;
+      const ceiling = running ? Math.min(99, real + step * 0.92) : real;
+      let next = v;
+      if (v < real) next = v + Math.max(1, (real - v) * 0.3); // a side finished: catch up fast
+      else if (v < ceiling) next = v + Math.max(0.08, (ceiling - v) * 0.025); // waiting: slow creep
+      else if (!running && v > real) next = real;
+      next = Math.min(next, running ? ceiling : real);
+      if (next !== v) {
+        valueRef.current = next;
+        setShown(Math.floor(next));
+      }
+    }, 120);
+    return () => clearInterval(timer);
+  }, [real, running, sides]);
+  return shown;
+}
+
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Full-screen render progress: the customer's photo under a slow scan line, one quiet row per car side, honest states (no fake results). */
@@ -37,6 +66,21 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
   const done = states.filter((s) => s.status === 'done').length;
   const failed = states.filter((s) => s.status === 'failed');
   const [retrying, setRetrying] = React.useState(false);
+  const shown = useSmoothPercent(percent, running, states.length);
+
+  // While this full-screen view is open the page behind it must not move or rubber-band.
+  React.useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = [html.style.overflow, body.style.overflow, html.style.overscrollBehavior, body.style.overscrollBehavior];
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    body.style.overscrollBehavior = 'none';
+    return () => {
+      [html.style.overflow, body.style.overflow, html.style.overscrollBehavior, body.style.overscrollBehavior] = prev as [string, string, string, string];
+    };
+  }, []);
   // One after another: the server allows only a few renders in flight per user.
   const retryAll = async () => {
     setRetrying(true);
@@ -95,14 +139,14 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
         <div className="flex flex-col">
           <div className="flex items-end justify-between gap-4">
             <p className="text-6xl font-extralight leading-none tabular-nums text-white md:text-7xl">
-              {percent}
+              {shown}
               <span className="ms-1 text-2xl text-gold-500">%</span>
             </p>
             {demo && <span className="mb-1 rounded-full bg-amber-400/10 px-3 py-1 text-[11px] text-amber-200">{t('demoNotice')}</span>}
           </div>
 
-          <div className="mt-5 h-px w-full overflow-hidden bg-white/10" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
-            <motion.div className="h-full bg-gradient-to-r from-gold-500 to-[#F1D790]" animate={{ width: `${percent}%` }} transition={{ duration: 0.6, ease: EASE }} />
+          <div className="mt-5 h-px w-full overflow-hidden bg-white/10" role="progressbar" aria-valuenow={shown} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full bg-gradient-to-r from-gold-500 to-[#F1D790] transition-[width] duration-200 ease-linear" style={{ width: `${shown}%` }} />
           </div>
 
           <div className="mt-5 min-h-[3.25rem]" aria-live="polite">
@@ -163,7 +207,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
               type="button"
               disabled={retrying}
               onClick={() => void retryAll()}
-              className={buttonClasses({ variant: 'quiet', size: 'lg', fullWidth: true, className: 'mt-5 gap-2.5 px-5' })}
+              className={buttonClasses({ variant: 'gold', size: 'lg', fullWidth: true, className: 'mt-5 gap-2.5 px-5' })}
             >
               <RefreshCw className={`h-4 w-4 shrink-0 ${retrying && !reduce ? 'animate-spin' : ''}`} />
               <span className="min-w-0 truncate whitespace-nowrap">{t('retryAll', { count: failed.length })}</span>
