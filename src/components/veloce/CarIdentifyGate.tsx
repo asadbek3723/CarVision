@@ -158,7 +158,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={t('dialog')} className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-[#07080C] px-5 py-8">
+    <div role="dialog" aria-modal="true" aria-label={t('dialog')} className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto overflow-x-hidden overscroll-contain bg-[#07080C] px-5 py-8">
       {/* Ambient backdrop: blurred photo + gold glow */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <img src={photo} alt="" className="h-full w-full scale-110 object-cover opacity-[0.18] blur-3xl" />

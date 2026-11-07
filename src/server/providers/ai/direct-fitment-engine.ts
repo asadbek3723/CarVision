@@ -38,7 +38,7 @@ export interface DirectFitmentResponse {
   afterImageUrl: string | null;
   promptUsed: string;
   durationMs: number;
-  outcome?: 'no_provider' | 'failed' | 'busy' | 'invalid_image' | undefined;
+  outcome?: 'no_provider' | 'failed' | 'busy' | 'no_quota' | 'invalid_image' | undefined;
 }
 
 const PROVIDER_LABEL: Record<ProviderId, Exclude<DirectFitmentResponse['providerUsed'], 'local-neural-compositor'>> = {
@@ -289,7 +289,7 @@ export async function executeDirectAiFitment(
       afterImageUrl: null,
       promptUsed,
       durationMs: Date.now() - startMs,
-      outcome: chain.reason === 'busy' ? 'busy' : 'failed',
+      outcome: chain.reason === 'busy' ? 'busy' : chain.reason === 'no_quota' ? 'no_quota' : 'failed',
     };
   }
 

@@ -1778,7 +1778,8 @@
     "SMS_DISABLED": "SMS tasdiqlash hozircha mavjud emas.",
     "AI_BUSY": "Hozir AI modellar band. Kredit qaytarildi, 1-2 daqiqadan keyin qayta urinib ko'ring",
     "AI_TIMEOUT": "Rasm yaratish juda uzoq davom etdi. Kredit qaytarildi, qayta urinib ko'ring",
-    "VALIDATION_FAILED": "So'rov ma'lumotlari noto'g'ri. Sahifani yangilab qayta urinib ko'ring"
+    "VALIDATION_FAILED": "So'rov ma'lumotlari noto'g'ri. Sahifani yangilab qayta urinib ko'ring",
+    "AI_NO_QUOTA": "AI kalitida rasm yaratish uchun limit yo'q (billing yoqilmagan). Kredit qaytarildi. Administrator kalitni tekshirishi kerak"
   },
   "capturePage": {
     "sent": "Rasm kompyuterga yuborildi",

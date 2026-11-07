@@ -43,7 +43,7 @@ export interface ChainAttempt {
 
 export type ChainResult =
   | { ok: true; image: string; provider: ProviderId; model: string; attempts: ChainAttempt[] }
-  | { ok: false; reason: 'no_provider' | 'busy' | 'failed'; attempts: ChainAttempt[] };
+  | { ok: false; reason: 'no_provider' | 'busy' | 'no_quota' | 'failed'; attempts: ChainAttempt[] };
 
 export interface ChainOptions {
   deadlineMs?: number;
@@ -82,6 +82,7 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
 
   const attempts: ChainAttempt[] = [];
   let limited = 0; // rate limit / quota / cooling down: "come back later"
+  let quotaFails = 0; // keys that said they have no allowance at all
   let hardFails = 0; // model really failed on a real attempt
 
   for (const spec of plan) {
@@ -124,6 +125,7 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
         case 'quota':
           setCooldown(keyScope(spec.provider, index), COOLDOWN_MS.quota, t);
           limited += 1;
+          quotaFails += 1;
           break;
         case 'auth':
           setCooldown(keyScope(spec.provider, index), COOLDOWN_MS.auth, t);
@@ -152,5 +154,10 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
     }
   }
 
-  return { ok: false, reason: limited > 0 && hardFails === 0 ? 'busy' : 'failed', attempts };
+  if (limited > 0 && hardFails === 0) {
+    // Every key said "no allowance" (or was parked for it): waiting a minute will not help.
+    const onlyQuota = quotaFails > 0 && attempts.every((a) => a.kind === 'quota' || a.kind === 'skipped_cooldown');
+    return { ok: false, reason: onlyQuota ? 'no_quota' : 'busy', attempts };
+  }
+  return { ok: false, reason: 'failed', attempts };
 }

@@ -301,6 +301,11 @@ export async function POST(request: NextRequest) {
     if (!ai.afterImageUrl) {
       await refund(db, session, generationId, ai.outcome === 'invalid_image' ? 'Invalid input image' : 'AI provider failed');
       reserved = null;
+      if (ai.outcome === 'no_quota') {
+        return errorResponse(503, 'AI_NO_QUOTA', "AI kalitida rasm yaratish limiti yo'q (to'lov/billing yoqilmagan). Kredit qaytarildi", {
+          creditsRemaining: currentBalance,
+        });
+      }
       if (ai.outcome === 'busy') {
         return errorResponse(503, 'AI_BUSY', "Hozir so'rovlar ko'p, barcha AI modellar band. Kredit qaytarildi, 1-2 daqiqadan keyin qayta urinib ko'ring", {
           creditsRemaining: currentBalance,

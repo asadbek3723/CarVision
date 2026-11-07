@@ -1778,7 +1778,8 @@
     "SMS_DISABLED": "SMS ырастоо азырынча жеткиликсиз.",
     "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
-    "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again"
+    "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
+    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key"
   },
   "capturePage": {
     "sent": "Сүрөт компьютерге жөнөтүлдү",

@@ -50,6 +50,8 @@ export function parseRetryAfter(value: string | null, now = Date.now()): number 
 
 type HttpOutcome = { res: Response } | { fail: AttemptResult & { ok: false } };
 
+const QUOTA_HINT = /limit:\s*0\b|free[_ ]tier|exceeded your current quota|billing|insufficient[_ ](credits|balance|quota)|payment required/i;
+
 /** POST with timeout. Turns transport errors into typed failures and non-2xx into classified ones. */
 async function post(
   url: string,
@@ -66,10 +68,17 @@ async function post(
     });
     if (!res.ok) {
       const retryAfterMs = parseRetryAfter(res.headers.get('retry-after'));
+      const detail = (await res.text().catch(() => '')).slice(0, 2000);
+      let kind = classifyStatus(res.status);
+      // A 429 that says the key has no allowance at all (free tier "limit: 0", no billing, no
+      // credits) will never clear by waiting: treat it as out of quota, not as "busy".
+      if (kind === 'rate_limit' && QUOTA_HINT.test(detail)) kind = 'quota';
+      // Operators need the provider's own reason in the logs (no keys or images are in it).
+      console.warn(`image provider ${new URL(url).host} ${res.status} (${kind}):`, detail.replace(/\s+/g, ' ').slice(0, 300));
       return {
         fail: {
           ok: false,
-          kind: classifyStatus(res.status),
+          kind,
           ...(retryAfterMs !== undefined ? { retryAfterMs } : {}),
         },
       };
