@@ -2,7 +2,14 @@
 
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { VeloceSmartCameraModal } from '@/components/camera/VeloceSmartCameraModal';
+import dynamic from 'next/dynamic';
+
+// The camera (≈800 lines + animation + QR code) is downloaded only the first time it is opened,
+// not with every page of the site.
+const VeloceSmartCameraModal = dynamic(
+  () => import('@/components/camera/VeloceSmartCameraModal').then((m) => m.VeloceSmartCameraModal),
+  { ssr: false }
+);
 
 interface VeloceStoreContextType {
   cart: Record<string, number>;
@@ -40,6 +47,11 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   const [multiAngles, setMultiAnglesState] = React.useState<Record<string, string>>({});
   const [generatedAngles, setGeneratedAnglesState] = React.useState<Record<string, string>>({});
   const [isCameraOpen, setIsCameraOpen] = React.useState(false);
+  // Once opened the modal stays mounted (it keeps its own state between openings).
+  const [cameraWanted, setCameraWanted] = React.useState(false);
+  React.useEffect(() => {
+    if (isCameraOpen) setCameraWanted(true);
+  }, [isCameraOpen]);
   const [captureStamp, setCaptureStamp] = React.useState('none');
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -237,11 +249,13 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
         onChange={handleFileChange}
       />
       {children}
-      <VeloceSmartCameraModal
-        isOpen={isCameraOpen}
-        onClose={closeCamera}
-        onCaptured={handleCameraCaptured}
-      />
+      {(cameraWanted || isCameraOpen) && (
+        <VeloceSmartCameraModal
+          isOpen={isCameraOpen}
+          onClose={closeCamera}
+          onCaptured={handleCameraCaptured}
+        />
+      )}
     </VeloceStoreContext.Provider>
   );
 }

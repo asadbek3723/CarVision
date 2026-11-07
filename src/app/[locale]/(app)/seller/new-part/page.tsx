@@ -64,7 +64,7 @@ async function uploadBlob(blob: Blob, apiError: (b: { code?: string; error?: str
   return data.url as string;
 }
 
-export default function SellerNewPartPage() {
+function SellerNewPartPageInner() {
   const t = useTranslations('newPart');
   const apiError = useApiError();
   const tc = useTranslations('catalogCat');
@@ -613,5 +613,14 @@ export default function SellerNewPartPage() {
         </button>
       </div>
     </>
+  );
+}
+
+// useSearchParams lives inside Suspense so the page can be prebuilt and prefetched.
+export default function SellerNewPartPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <SellerNewPartPageInner />
+    </React.Suspense>
   );
 }

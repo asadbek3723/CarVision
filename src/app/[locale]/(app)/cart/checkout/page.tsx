@@ -17,7 +17,7 @@ import { buttonClasses } from '@/components/ui';
 const fieldCls =
   'w-full rounded-xl  bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition ';
 
-export default function CheckoutPage() {
+function CheckoutPageInner() {
   const t = useTranslations('checkout');
   const apiError = useApiError();
   const params = useParams();
@@ -252,5 +252,14 @@ export default function CheckoutPage() {
         </button>
       </form>
     </>
+  );
+}
+
+// useSearchParams lives inside Suspense so the page can be prebuilt and prefetched.
+export default function CheckoutPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <CheckoutPageInner />
+    </React.Suspense>
   );
 }

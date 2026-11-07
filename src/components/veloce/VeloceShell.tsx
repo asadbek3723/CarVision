@@ -46,6 +46,19 @@ const CURRENCY_OPTIONS: { code: SupportedCurrency; label: string }[] = [
   { code: 'RUB', label: 'RUB' },
 ];
 
+interface QueryState {
+  tab: string | null;
+  qs: string;
+}
+
+function QuerySync({ onChange }: { onChange: (q: QueryState) => void }) {
+  const sp = useSearchParams();
+  const tab = sp?.get('tab') ?? null;
+  const qs = sp?.toString() ?? '';
+  React.useEffect(() => onChange({ tab, qs }), [tab, qs, onChange]);
+  return null;
+}
+
 interface DockLinkProps {
   href: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -87,8 +100,11 @@ export function VeloceShell({ children }: VeloceShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const searchParams = useSearchParams();
-  const currentTab = searchParams ? searchParams.get('tab') : null;
+  // `?tab=` and the query string arrive from <QuerySync>, which reads them inside a Suspense
+  // boundary. Reading them here directly would force every in-app page to render on the server per
+  // request, so taps could not be prefetched and each tab switch waited for the network.
+  const [query, setQuery] = React.useState<QueryState>({ tab: null, qs: '' });
+  const currentTab = query.tab;
   const locale = (params?.['locale'] as string) || 'uz';
   const { count, openCamera } = useVeloceStore();
   const { user, isLoading, signOut } = useAuth();
@@ -114,7 +130,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
   const buildLocalizedHref = (targetLocale: string) => {
     const base = pathname.replace(/^\/(uz|ru|en|ar|tr|kk|ky|tg)(?=\/|$)/, `/${targetLocale}`);
-    const qs = searchParams?.toString();
+    const qs = query.qs;
     return qs ? `${base}?${qs}` : base;
   };
 
@@ -131,6 +147,9 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
   return (
     <div className="min-h-screen md:ps-24 lg:ps-28 bg-surface-0 text-foreground">
+      <React.Suspense fallback={null}>
+        <QuerySync onChange={setQuery} />
+      </React.Suspense>
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 start-0 z-40 hidden w-24 lg:w-28 flex-col items-center justify-between bg-surface-0 py-8 md:flex">
         <div className="flex flex-col items-center gap-10">

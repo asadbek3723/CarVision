@@ -7,6 +7,13 @@ import { DEFAULT_LOCALE, isLocale, localePath } from '@/lib/seo/site';
 import { getPublishedItem } from '@/server/catalog-public';
 import { localizedText } from '@/domain/catalog';
 
+// Product pages are built on first visit and then served from cache, refreshed at most once a minute,
+// so opening a part does not wait for the database every time.
+export const revalidate = 60;
+export function generateStaticParams() {
+  return [];
+}
+
 type Props = { params: Promise<{ locale: string; id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
