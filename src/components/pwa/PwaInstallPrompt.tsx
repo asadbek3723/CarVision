@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Share2, PlusSquare, X } from 'lucide-react';
+import { buttonClasses } from '@/components/ui';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -237,7 +238,7 @@ export const PwaInstallPrompt: React.FC = () => {
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="btn-gold mt-4 w-full py-3 px-4 rounded-full text-xs font-bold tracking-[0.16em] flex items-center justify-center gap-2.5 transition-all shadow-gold hover:scale-[1.01] active:scale-[0.98]"
+                className={buttonClasses({ size: 'md', fullWidth: true, className: 'mt-4' })}
               >
                 <Download className="w-4 h-4 stroke-[2.2]" />
                 <span>{copy.installBtn}</span>

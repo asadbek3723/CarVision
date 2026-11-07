@@ -5,6 +5,7 @@ import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, ArrowLeft, Loader2, Lock, Shield } from 'lucide-react';
 import { Link } from '@/i18n/routing';
+import { buttonClasses } from '@/components/ui';
 
 interface Props {
   onSuccess: () => void;
@@ -89,7 +90,7 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
           <p role="alert" className="mt-4 flex items-start justify-center gap-2 text-sm text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>
         ) : null}
 
-        <button type="submit" disabled={pin.length < 6 || submitting || lockedFor > 0} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gold-500 py-4 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-40">
+        <button type="submit" disabled={pin.length < 6 || submitting || lockedFor > 0} className={buttonClasses({ size: 'lg', fullWidth: true, className: 'mt-5' })}>
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           {t('submit')}
         </button>

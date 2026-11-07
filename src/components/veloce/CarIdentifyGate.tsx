@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Check, ChevronRight, Loader2, Search, Sparkles } from 'lucide-react';
 import { useMyCar } from '@/features/shop/useMyCar';
+import { buttonClasses } from '@/components/ui';
 
 type Phase = 'scan' | 'confirm' | 'manual' | 'year' | 'done';
 
@@ -263,7 +264,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                   </div>
                 )}
                 <div className="mt-8 grid gap-3">
-                  <button type="button" onClick={() => setPhase('year')} className="shimmer inline-flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gold-gradient text-sm font-bold uppercase tracking-wider text-black shadow-[0_14px_40px_rgba(212,174,98,0.3)] transition hover:brightness-110 active:scale-[0.98]">
+                  <button type="button" onClick={() => setPhase('year')} className={buttonClasses({ size: 'lg' })}>
                     {t('confirmYes')} <ChevronRight className="h-4 w-4" />
                   </button>
                   <button
@@ -368,7 +369,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                     </button>
                   ))}
                 </div>
-                <button type="button" onClick={finish} className="shimmer mt-7 inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gold-gradient text-sm font-bold uppercase tracking-wider text-black shadow-[0_14px_40px_rgba(212,174,98,0.3)] transition hover:brightness-110 active:scale-[0.98]">
+                <button type="button" onClick={finish} className={buttonClasses({ size: 'lg', fullWidth: true, className: 'mt-7' })}>
                   {t('showParts')} <ChevronRight className="h-4 w-4" />
                 </button>
               </motion.div>

@@ -11,6 +11,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { StudioLock } from '@/features/seller/components/StudioLock';
 import { LeadDetail, formatDate, type SellerLeadOrder } from '@/features/seller/components/LeadDetail';
 import { readJson } from '@/lib/safe-json';
+import { buttonClasses } from '@/components/ui';
 
 /** Voucher terminal: the customer shows a code, the workshop looks it up and accepts it. */
 export default function SellerRedeemVoucherPage() {
@@ -84,7 +85,7 @@ export default function SellerRedeemVoucherPage() {
   );
 
   if (isLoading) return shell(<div className="flex justify-center py-24"><Loader2 className="h-7 w-7 animate-spin text-gold-500" /></div>);
-  if (!user) return shell(<div className="mt-10 text-center"><Link href={`/${locale}/login`} className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link></div>);
+  if (!user) return shell(<div className={buttonClasses({ size: 'sm', className: 'mt-10' })}><Link href={`/${locale}/login`} className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link></div>);
   if (!unlocked) return shell(<StudioLock feature="redeem" />);
 
   const pending = recent.filter((o) => o.status === 'verified');
@@ -93,10 +94,10 @@ export default function SellerRedeemVoucherPage() {
   return shell(
     <>
       <div className="mb-5 flex items-center gap-3">
-        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
+        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
           <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Link>
-        <h1 className="text-lg font-bold text-white">{t('redeemTitle')}</h1>
+        <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('redeemTitle')}</h1>
       </div>
 
       <form onSubmit={lookup} className="rounded-3xl bg-white/[0.04] p-5">
@@ -111,7 +112,7 @@ export default function SellerRedeemVoucherPage() {
             autoCapitalize="characters"
             className="min-w-0 flex-1 rounded-2xl bg-white/[0.07] px-4 py-3.5 font-mono text-lg tracking-wider text-white outline-none placeholder:text-sm placeholder:tracking-normal placeholder:text-white/30 focus:bg-white/[0.1]"
           />
-          <button type="submit" disabled={searching} className="flex shrink-0 items-center gap-2 rounded-2xl bg-gold-500 px-5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-60">
+          <button type="submit" disabled={searching} className={buttonClasses({ size: 'sm', className: 'shrink-0' })}>
             {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             <span className="hidden sm:inline">{t('check')}</span>
           </button>

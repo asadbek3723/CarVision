@@ -9,14 +9,16 @@
      --<name>    ready-to-use colour for plain CSS / SVG (var(--gold))
    =================================================================== */
 :root {
-  /* ---------------------------------------------------------- typography */
-  --font-outfit: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-jakarta: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-cinzel: 'Cinzel', Georgia, serif;
-  --font-cormorant: 'Cormorant Garamond', Georgia, serif;
-  --font-manrope: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-noto-arabic: 'Noto Sans Arabic', system-ui, sans-serif;
+  /* ---------------------------------------------------------- typography
+     next/font (src/app/[locale]/layout.tsx) self-hosts the fonts under hashed family names and
+     exposes them as --nf-*; the plain names are only a fallback for locally installed fonts. */
+  --font-outfit: var(--nf-outfit, 'Outfit'), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-jakarta: var(--nf-jakarta, 'Plus Jakarta Sans'), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--nf-mono, 'JetBrains Mono'), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-cinzel: var(--nf-cinzel, 'Cinzel'), Georgia, serif;
+  --font-cormorant: var(--nf-cormorant, 'Cormorant Garamond'), Georgia, serif;
+  --font-manrope: var(--nf-manrope, 'Manrope'), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-noto-arabic: var(--nf-noto-arabic, 'Noto Sans Arabic'), system-ui, sans-serif;
 
   /* ---------------------------------------------------------- gold (brand accent, 500 = #D4AE62) */
   --c-gold-50: 251 247 238;   /* #FBF7EE */

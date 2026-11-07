@@ -10,6 +10,7 @@ import { VeloceShell } from '@/components/veloce/VeloceShell';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { StudioLock } from '@/features/seller/components/StudioLock';
 import { LeadDetail, type SellerLeadOrder } from '@/features/seller/components/LeadDetail';
+import { buttonClasses } from '@/components/ui';
 
 export default function SellerOrderDetailPage() {
   const t = useTranslations('sellerOrders');
@@ -63,16 +64,16 @@ export default function SellerOrderDetailPage() {
   );
 
   if (isLoading || loading) return shell(<div className="flex justify-center py-24"><Loader2 className="h-7 w-7 animate-spin text-gold-500" /></div>);
-  if (!user) return shell(<div className="mt-10 text-center"><Link href={`/${locale}/login`} className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link></div>);
+  if (!user) return shell(<div className={buttonClasses({ size: 'sm', className: 'mt-10' })}><Link href={`/${locale}/login`} className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link></div>);
   if (!unlocked) return shell(<StudioLock feature="orders" />);
 
   return shell(
     <>
       <div className="mb-5 flex items-center gap-3">
-        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
+        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
           <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Link>
-        <h1 className="text-lg font-bold text-white">{t('orderTitle')}</h1>
+        <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('orderTitle')}</h1>
       </div>
       {order ? <LeadDetail order={order} onRedeem={redeem} /> : <p role="alert" className="rounded-3xl bg-white/[0.04] px-5 py-10 text-center text-sm text-white/60">{error ?? t('orderNotFound')}</p>}
     </>

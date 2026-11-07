@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { BadgeCheck, Coins, MapPin, Phone } from 'lucide-react';
 import { EmptyState, ErrorState, Field, PLAN_LABEL, PageHeader, Pill, SearchField, Segmented, Sheet, Spinner, Surface, dateTime, fieldClass, useAdminApi, useAdminData, useAdminFormat, useToast } from './ui';
+import { buttonClasses } from '@/components/ui';
 
 interface Shop {
   id: string;
@@ -140,7 +141,7 @@ export function AdminShopsView() {
                 {s.ownerName ? `${s.ownerName} · ` : ''}{s.ownerPhone || s.phone}
               </a>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setPlanFor(s)} className="inline-flex items-center gap-1.5 rounded-full bg-gold-500 px-4 py-2.5 text-xs font-bold text-black hover:brightness-110">
+                <button type="button" onClick={() => setPlanFor(s)} className={buttonClasses({ size: 'sm' })}>
                   <Coins className="h-3.5 w-3.5" />
                   {t('assign')}
                 </button>
@@ -255,7 +256,7 @@ function AssignPlanSheet({ shop, onClose, onDone, onError }: { shop: Shop | null
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} placeholder={t('notesPlaceholder')} className={`${fieldClass} resize-none`} />
         </Field>
         <p className="text-xs text-white/45">{t('info')}</p>
-        <button type="submit" disabled={saving} className="w-full rounded-full bg-gold-500 py-3.5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-60">
+        <button type="submit" disabled={saving} className={buttonClasses({ size: 'md', fullWidth: true })}>
           {saving ? tc('saving') : t('submit')}
         </button>
       </form>

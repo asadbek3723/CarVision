@@ -11,6 +11,7 @@ import { MyCarPicker } from '@/features/shop/MyCarPicker';
 import { useMyCar } from '@/features/shop/useMyCar';
 import { useCurrency } from '@/context/CurrencyContext';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
+import { buttonClasses } from '@/components/ui';
 
 interface Facets {
   brands: string[];
@@ -98,7 +99,7 @@ export function VeloceShop() {
               </p>
               <Link
                 href={`/${locale}/shop/${featured.id}`}
-                className="shimmer mt-6 inline-flex items-center gap-2 rounded-full bg-gold-gradient px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-black shadow-gold transition hover:brightness-110 active:scale-95"
+                className={buttonClasses({ size: 'md', className: 'mt-6' })}
               >
                 {t('view')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>

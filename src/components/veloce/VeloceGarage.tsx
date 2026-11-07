@@ -10,6 +10,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import type { CatalogItemDTO } from '@/domain/catalog';
 import { StudioLock } from '@/features/seller/components/StudioLock';
+import { buttonClasses } from '@/components/ui';
 
 /** Workshop garage: the studio's own published parts, ready to try on a customer's car. */
 /** Internal sentinel for the "all categories" chip; never shown to the user. */
@@ -72,7 +73,7 @@ export function VeloceGarage() {
     return (
       <div className="mx-auto mt-16 max-w-md px-5 text-center">
         <p className="text-sm text-white/70">{t('loginRequired')}</p>
-        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">
+        <Link href={`/${locale}/login`} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
           {t('login')}
         </Link>
       </div>
@@ -84,14 +85,14 @@ export function VeloceGarage() {
       <div className="flex flex-col gap-6 pb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-widest text-gold-500">{t('eyebrow')}</p>
-          <h1 className="mt-1 font-display text-2xl font-light text-white sm:text-4xl">{user?.shop?.shop_name ?? t('defaultName')}</h1>
+          <h1 className="mt-1 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{user?.shop?.shop_name ?? t('defaultName')}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={openCamera} className="flex cursor-pointer items-center gap-2 rounded-2xl bg-white/[0.06] px-5 py-3.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]">
             <Camera className="h-4 w-4 text-gold-500" />
             <span>{t('tryOnCustomer')}</span>
           </button>
-          <Link href={`/${locale}/seller/new-part`} className="shimmer flex items-center gap-2 rounded-2xl bg-gold-gradient px-6 py-3.5 text-xs font-bold uppercase text-black shadow-[0_10px_28px_rgba(212,174,98,0.25)] transition hover:brightness-110">
+          <Link href={`/${locale}/seller/new-part`} className={buttonClasses({ size: 'md' })}>
             <Plus className="h-4 w-4" />
             <span>{t('addPart')}</span>
           </Link>

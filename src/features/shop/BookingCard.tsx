@@ -7,6 +7,7 @@ import { Check, Clock, Loader2, MapPin, Phone, Upload, XCircle } from 'lucide-re
 import { useCurrency } from '@/context/CurrencyContext';
 import { compressForUpload, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { readJson } from '@/lib/safe-json';
+import { buttonClasses } from '@/components/ui';
 
 export interface BookingView {
   id: string;
@@ -149,7 +150,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
             type="button"
             disabled={uploading || !payment.configured}
             onClick={() => fileRef.current?.click()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
+            className={buttonClasses({ size: 'md', fullWidth: true })}
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {uploading ? t('sending') : t('send')}

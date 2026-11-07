@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { Calendar, Check, Loader2, Phone, ShieldCheck } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
+import { buttonClasses } from '@/components/ui';
 
 export interface SellerLeadOrder {
   id: string;
@@ -79,7 +80,7 @@ export function LeadDetail({ order, onRedeem }: Props) {
             {formatDate(order.appointmentDate)}
           </p>
         </div>
-        <a href={`tel:${order.customerPhone}`} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-sm font-bold text-black hover:brightness-110">
+        <a href={`tel:${order.customerPhone}`} className={buttonClasses({ size: 'md' })}>
           <Phone className="h-4 w-4" />
           {order.customerPhone}
         </a>

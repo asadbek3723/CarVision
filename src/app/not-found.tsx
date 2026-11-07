@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { buttonClasses } from '@/components/ui';
 
 export default function RootNotFound() {
   return (
@@ -9,7 +10,7 @@ export default function RootNotFound() {
           <p className="text-sm text-neutral-400">Sahifa topilmadi</p>
           <Link
             href="/uz"
-            className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-xs font-bold text-black"
+            className={buttonClasses({ size: 'sm' })}
           >
             Bosh sahifaga qaytish
           </Link>

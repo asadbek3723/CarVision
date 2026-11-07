@@ -11,6 +11,7 @@ import { useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import type { CatalogItemDTO } from '@/domain/catalog';
 import { StudioLock } from './StudioLock';
+import { buttonClasses } from '@/components/ui';
 
 interface SellerLead {
   id: string;
@@ -136,7 +137,7 @@ export function SellerDashboardView() {
     return (
       <div className="mx-auto mt-10 max-w-md rounded-3xl bg-[#0B0D13] p-6 text-center">
         <p className="text-sm text-white/80">{t('studioOnly')}</p>
-        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">
+        <Link href={`/${locale}/login`} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
           {t('login')}
         </Link>
       </div>
@@ -149,7 +150,7 @@ export function SellerDashboardView() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs text-white/50">{t('studio')}</p>
-          <h1 className="text-xl font-bold text-white md:text-2xl">{user.shop?.shop_name ?? t('defaultName')}</h1>
+          <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{user.shop?.shop_name ?? t('defaultName')}</h1>
         </div>
         <div className="flex w-full items-center gap-2.5 sm:w-auto">
           <div className="flex h-12 items-center gap-2.5 rounded-full bg-gradient-to-b from-gold-500/[0.14] to-gold-500/[0.04] ps-2 pe-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
@@ -226,7 +227,7 @@ export function SellerDashboardView() {
           {items.length === 0 && (
             <div className="rounded-3xl border border-dashed p-10 text-center">
               <p className="text-sm text-white/70">{t('emptyParts')}</p>
-              <Link href={`/${locale}/seller/new-part`} className="mt-4 inline-flex items-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-xs font-bold text-black">
+              <Link href={`/${locale}/seller/new-part`} className={buttonClasses({ size: 'md', className: 'mt-4' })}>
                 <Plus className="h-4 w-4" />
                 {t('addProduct')}
               </Link>
@@ -263,22 +264,22 @@ export function SellerDashboardView() {
 
               <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
                 <div className="flex items-center gap-2">
-                  <button type="button" aria-label={t('decrease')} onClick={() => void setStock(item, item.stock - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                  <button type="button" aria-label={t('decrease')} onClick={() => void setStock(item, item.stock - 1)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <Minus className="h-3.5 w-3.5" />
                   </button>
                   <span className={`w-10 text-center text-sm font-bold ${item.stock === 0 ? 'text-red-300' : 'text-white'}`}>{item.stock}</span>
-                  <button type="button" aria-label={t('increase')} onClick={() => void setStock(item, item.stock + 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                  <button type="button" aria-label={t('increase')} onClick={() => void setStock(item, item.stock + 1)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <Plus className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Link href={`/${locale}/seller/new-part?id=${item.id}`} aria-label={t('edit')} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                  <Link href={`/${locale}/seller/new-part?id=${item.id}`} aria-label={t('edit')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <Pencil className="h-3.5 w-3.5" />
                   </Link>
-                  <button type="button" disabled={busyId === item.id} aria-label={item.status === 'PUBLISHED' ? t('hide') : t('publish')} onClick={() => void toggleStatus(item)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50">
+                  <button type="button" disabled={busyId === item.id} aria-label={item.status === 'PUBLISHED' ? t('hide') : t('publish')} onClick={() => void toggleStatus(item)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50">
                     {item.status === 'PUBLISHED' ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
-                  <button type="button" disabled={busyId === item.id} aria-label={t('delete')} onClick={() => void remove(item)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-red-600 disabled:opacity-50">
+                  <button type="button" disabled={busyId === item.id} aria-label={t('delete')} onClick={() => void remove(item)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-red-600 disabled:opacity-50">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>

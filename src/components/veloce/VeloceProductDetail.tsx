@@ -16,6 +16,7 @@ import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { ProductCard } from '@/components/veloce/ProductCard';
+import { buttonClasses } from '@/components/ui';
 
 interface VeloceProductDetailProps {
   id: string;
@@ -162,7 +163,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
             <p className="text-xs font-medium tracking-[0.25em] uppercase text-gold-500">
               {product.brand}
             </p>
-            <h1 className="mt-2 font-display text-2xl font-light text-white sm:text-4xl">
+            <h1 className="mt-2 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
               {product.name}
             </h1>
           </div>
@@ -236,7 +237,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
               type="button"
               onClick={handleUnlockAddress}
               disabled={outOfStock}
-              className="shimmer flex flex-1 items-center justify-center gap-2.5 rounded-2xl disabled:cursor-not-allowed disabled:opacity-40 bg-gold-gradient px-6 py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110 cursor-pointer"
+              className={buttonClasses({ size: 'lg', className: 'flex-1' })}
             >
               <MapPin className="h-4 w-4" />
               <span>{t('unlockCta', { amount: formatPrice(deposit3PercentUSD) })}</span>

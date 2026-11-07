@@ -361,7 +361,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
             href={`/${locale}/profile`}
             aria-label={t('profile')}
             data-status={isProfile ? 'active' : 'inactive'}
-            className="grid h-10 w-10 place-items-center rounded-full text-gold-500 transition hover:bg-white/[0.06] data-[status=active]:text-gold-500 data-[status=active]:bg-gold-500/10  md:text-foreground/90 cursor-pointer"
+            className="grid h-11 w-11 place-items-center rounded-full text-gold-500 transition hover:bg-white/[0.06] data-[status=active]:text-gold-500 data-[status=active]:bg-gold-500/10  md:text-foreground/90 cursor-pointer"
           >
             <User className="h-[18px] w-[18px] md:h-4 md:w-4" />
           </Link>

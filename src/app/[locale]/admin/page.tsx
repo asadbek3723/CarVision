@@ -7,6 +7,7 @@ import { Link } from '@/i18n/routing';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { AdminPinGate } from '@/components/admin/AdminPinGate';
 import { AdminApp } from '@/components/admin/AdminApp';
+import { buttonClasses } from '@/components/ui';
 
 function Centered({ children }: { children: React.ReactNode }) {
   return <div className="flex min-h-screen flex-col items-center justify-center bg-[#07080B] p-6 text-center">{children}</div>;
@@ -55,7 +56,7 @@ export default function SuperAdminPage() {
     return (
       <Centered>
         <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-red-500/10 text-red-300"><ShieldAlert className="h-8 w-8" /></span>
-        <h1 className="mt-5 text-xl font-bold text-white">{t('noAccess')}</h1>
+        <h1 className="mt-5 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('noAccess')}</h1>
         <p className="mt-2 max-w-xs text-sm text-white/50">{user ? t('adminOnly') : t('signInAdmin')}</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link href="/seller" className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/15">
@@ -63,7 +64,7 @@ export default function SuperAdminPage() {
             {t('back')}
           </Link>
           {!user && (
-            <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-full bg-gold-500 px-6 py-3 text-sm font-bold text-black">
+            <Link href="/login" className={buttonClasses({ size: 'md' })}>
               <Lock className="h-4 w-4" />
               {t('login')}
             </Link>

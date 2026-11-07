@@ -8,6 +8,7 @@ import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { Check } from 'lucide-react';
 import { LiveCamera } from '@/features/seller/components/LiveCamera';
 import { fileToPhotoDataUrl } from '@/features/seller/lib/photo-input';
+import { buttonClasses } from '@/components/ui';
 
 /** Phone side of the QR bridge: take a photo, it appears on the computer. */
 export default function PhoneCapturePage() {
@@ -55,9 +56,9 @@ export default function PhoneCapturePage() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
           <Check className="h-8 w-8" />
         </div>
-        <h1 className="text-xl font-bold text-white">{t('sent')}</h1>
+        <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('sent')}</h1>
         <img src={lastShot} alt="" className="max-h-64 rounded-2xl" />
-        <button type="button" onClick={() => setLastShot(null)} className="rounded-full bg-gold-500 px-8 py-3 text-sm font-bold text-black">
+        <button type="button" onClick={() => setLastShot(null)} className={buttonClasses({ size: 'md' })}>
           {t('again', { count: sent })}
         </button>
       </div>

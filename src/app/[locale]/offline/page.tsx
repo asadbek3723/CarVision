@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { WifiOff } from 'lucide-react';
+import { buttonClasses } from '@/components/ui';
 
 const COPY: Record<string, { title: string; body: string; retry: string }> = {
   uz: { title: 'Internet yo‘q', body: 'Aloqa tiklangach davom etasiz. Olingan rasmlar yo‘qolmaydi.', retry: 'Qayta urinish' },
@@ -21,9 +22,9 @@ export default function OfflinePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#07080B] p-6 text-center">
       <span className="flex h-20 w-20 items-center justify-center rounded-full bg-gold-500/15 text-gold-500"><WifiOff className="h-9 w-9" /></span>
-      <h1 className="text-2xl font-bold text-white">{c.title}</h1>
+      <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{c.title}</h1>
       <p className="max-w-xs text-sm text-white/55">{c.body}</p>
-      <button type="button" onClick={() => window.location.reload()} className="rounded-full bg-gold-500 px-8 py-3.5 text-sm font-bold text-black">{c.retry}</button>
+      <button type="button" onClick={() => window.location.reload()} className={buttonClasses({ size: 'md' })}>{c.retry}</button>
     </main>
   );
 }

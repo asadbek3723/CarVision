@@ -480,7 +480,7 @@ export function SmartCameraLandscapeView({
                 type="button"
                 onClick={onClose}
                 aria-label={t('back')}
-                className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-[#15161B] text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_24px_rgba(0,0,0,0.8)] hover:bg-[#1E2028] hover:text-white active:scale-95 transition cursor-pointer"
+                className="flex h-11 w-11 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-[#15161B] text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_24px_rgba(0,0,0,0.8)] hover:bg-[#1E2028] hover:text-white active:scale-95 transition cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>

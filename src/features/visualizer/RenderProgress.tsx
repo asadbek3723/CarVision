@@ -8,6 +8,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { AlertTriangle, ArrowRight, Check, RefreshCw, X } from 'lucide-react';
 import type { AngleState } from './render-plan';
 import type { RenderFatal } from './useRenderBuild';
+import { buttonClasses } from '@/components/ui';
 
 interface Props {
   states: AngleState[];
@@ -54,7 +55,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           Car<span className="text-gold-500">Vision</span>
         </span>
         {!running && (
-          <button type="button" onClick={onClose} aria-label={t('close')} className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition hover:text-white">
+          <button type="button" onClick={onClose} aria-label={t('close')} className="flex h-11 w-11 items-center justify-center rounded-full text-white/70 transition hover:text-white">
             <X className="h-4 w-4" />
           </button>
         )}
@@ -135,13 +136,13 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
             <div role="alert" className="mt-5 rounded-2xl bg-red-500/[0.07] p-4">
               <p className="text-sm text-red-200">{apiError({ code: fatal.code, error: fatal.message }, t('errorFallback'))}</p>
               {(fatal.code === 'INSUFFICIENT_CREDITS' || fatal.code === 'PLAN_EXPIRED') && (
-                <Link href={`/${locale}/plans`} className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-gold-500 px-6 text-sm font-bold text-black">
+                <Link href={`/${locale}/plans`} className={buttonClasses({ size: 'sm', className: 'mt-3' })}>
                   {t('viewPlans')}
                   <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                 </Link>
               )}
               {fatal.code === 'UNAUTHENTICATED' && (
-                <Link href={`/${locale}/login`} className="mt-3 inline-flex h-11 items-center rounded-full bg-gold-500 px-6 text-sm font-bold text-black">{t('login')}</Link>
+                <Link href={`/${locale}/login`} className={buttonClasses({ size: 'sm', className: 'mt-3' })}>{t('login')}</Link>
               )}
             </div>
           )}

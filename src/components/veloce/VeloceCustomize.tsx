@@ -57,6 +57,7 @@ const CATEGORIES = [
 ] as const;
 
 import { composeCarAnglePhotorealistic } from '@/lib/automotive-compositor';
+import { buttonClasses } from '@/components/ui';
 
 /** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
@@ -343,7 +344,7 @@ export function VeloceCustomize() {
       type="button"
       onClick={handleApplyChanges}
       disabled={isApplying}
-      className="shimmer inline-flex h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-gold-gradient px-6 text-[13px] font-bold uppercase tracking-[0.2em] text-black shadow-[0_14px_36px_rgba(212,174,98,0.35)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+      className={buttonClasses({ size: 'lg', fullWidth: true })}
     >
       <Layers className="h-[18px] w-[18px]" />
       <span>{t('viewResult')}</span>
@@ -469,7 +470,7 @@ export function VeloceCustomize() {
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => void saveAfter()}
                 aria-label={tr('download')}
-                className="absolute end-3 top-12 z-[3] grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-black/65 text-gold-500 backdrop-blur-md transition hover:bg-black/85"
+                className="absolute end-3 top-12 z-[3] grid h-11 w-11 cursor-pointer place-items-center rounded-full bg-black/65 text-gold-500 backdrop-blur-md transition hover:bg-black/85"
               >
                 <Download className="h-[18px] w-[18px]" />
               </button>
@@ -487,7 +488,7 @@ export function VeloceCustomize() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => stepAngle(-1)}
             aria-label={tr('prevAngle')}
-            className="absolute start-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:start-6 lg:h-12 lg:w-12 lg:bg-black/40"
+            className="absolute start-2 top-1/2 z-[3] grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:start-6 lg:h-12 lg:w-12 lg:bg-black/40"
           >
             <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
           </button>
@@ -496,17 +497,17 @@ export function VeloceCustomize() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => stepAngle(1)}
             aria-label={tr('nextAngle')}
-            className="absolute end-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:end-6 lg:h-12 lg:w-12 lg:bg-black/40"
+            className="absolute end-2 top-1/2 z-[3] grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:end-6 lg:h-12 lg:w-12 lg:bg-black/40"
           >
             <ChevronRight className="h-5 w-5 rtl:rotate-180" />
           </button>
 
           {!hasAfter && (
             <div onPointerDown={(e) => e.stopPropagation()} className="absolute end-5 top-4 z-[3] hidden items-center gap-1 lg:flex">
-              <button type="button" onClick={toggleFullscreen} aria-label={tr('fullscreen')} className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white">
+              <button type="button" onClick={toggleFullscreen} aria-label={tr('fullscreen')} className="grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white">
                 <Maximize2 className="h-[18px] w-[18px]" />
               </button>
-              <button type="button" onClick={openCamera} aria-label={t('refreshPhoto')} className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white">
+              <button type="button" onClick={openCamera} aria-label={t('refreshPhoto')} className="grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white">
                 <Camera className="h-[18px] w-[18px]" />
               </button>
             </div>
@@ -556,7 +557,7 @@ export function VeloceCustomize() {
             disabled={selectedProducts.length === 0}
             aria-label={t('clearBuild')}
             title={t('clearBuild')}
-            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-white/55 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+            className="grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/55 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
           >
             <MoreHorizontal className="h-5 w-5" />
           </button>
@@ -576,7 +577,7 @@ export function VeloceCustomize() {
                 type="button"
                 onClick={() => togglePart(p.id)}
                 aria-label={`${t('removePart')}: ${p.name}`}
-                className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full text-white/45 transition hover:bg-white/[0.08] hover:text-white"
+                className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-white/45 transition hover:bg-white/[0.08] hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -659,7 +660,7 @@ export function VeloceCustomize() {
             </p>
             <Link
               href={isSeller ? (user?.plan?.isPaid ? `/${locale}/seller/new-part` : `/${locale}/plans`) : `/${locale}/shop`}
-              className="mt-5 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-xs font-bold text-black transition hover:brightness-110"
+              className={buttonClasses({ size: 'sm', className: 'mt-5' })}
             >
               {isSeller ? (user?.plan?.isPaid ? t('ctaAddPart') : t('ctaPlans')) : t('ctaShop')}
             </Link>

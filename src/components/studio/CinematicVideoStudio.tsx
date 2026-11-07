@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { createReelAudio } from '@/features/video/engine/reel-audio';
 import { createReelRenderer, type ReelAngle } from '@/features/video/engine/reel-renderer';
 import { REEL_DURATION, REEL_FPS, REEL_HEIGHT, REEL_WIDTH } from '@/features/video/engine/reel-timeline';
+import { buttonClasses } from '@/components/ui';
 
 /** One finished (tuned) side of the car. The stock photo is never part of the reel. */
 export interface CinematicAngleFrame {
@@ -377,7 +378,7 @@ export function CinematicVideoStudio({
           type="button"
           onClick={onClose}
           aria-label={t('close')}
-          className="absolute end-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
+          className="absolute end-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
         >
           <X className="h-4 w-4" />
         </button>
@@ -453,7 +454,7 @@ export function CinematicVideoStudio({
               <button
                 type="button"
                 onClick={() => setAttempt((n) => n + 1)}
-                className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-5 py-2.5 text-sm font-bold text-black transition hover:brightness-110"
+                className={buttonClasses({ size: 'sm' })}
               >
                 <RefreshCw className="h-4 w-4" />
                 {t('retry')}
@@ -478,7 +479,7 @@ export function CinematicVideoStudio({
             <a
               href={videoUrl}
               download={fileName}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-sm font-bold text-black transition hover:brightness-110"
+              className={buttonClasses({ size: 'md', className: 'flex-1' })}
             >
               <Download className="h-4 w-4" />
               {t('download')}

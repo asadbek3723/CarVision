@@ -350,7 +350,7 @@ export function AuthShell({
           whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
           aria-label={tc('back')}
-          className="glass-card absolute start-4 top-4 sm:start-8 sm:top-6 z-20 grid h-10 w-10 sm:h-11 sm:w-11 place-items-center rounded-xl text-foreground/90 transition hover:text-gold cursor-pointer"
+          className="glass-card absolute start-4 top-4 sm:start-8 sm:top-6 z-20 grid h-11 w-11 sm:h-11 sm:w-11 place-items-center rounded-xl text-foreground/90 transition hover:text-gold cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         </motion.button>

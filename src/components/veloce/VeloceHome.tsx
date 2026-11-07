@@ -8,6 +8,7 @@ import { ChevronRight, ArrowUpRight, Cog, Camera, Wrench } from 'lucide-react';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
+import { buttonClasses } from '@/components/ui';
 
 const FEATURES = [
   { icon: Camera, key: 'f1', items: ['f1a', 'f1b'] },
@@ -129,7 +130,7 @@ export function VeloceHome() {
             >
               <button
                 onClick={openCamera}
-                className="shimmer group inline-flex items-center gap-7 rounded-full bg-gold-gradient py-3.5 ps-7 pe-5 font-display text-[11px] font-semibold tracking-[0.22em] text-black uppercase shadow-gold transition hover:brightness-110 active:scale-95 cursor-pointer lg:rounded-xl lg:py-4 lg:tracking-[0.25em]"
+                className={buttonClasses({ size: 'lg' })}
               >
                 {t('ctaCustomize')}
                 <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />

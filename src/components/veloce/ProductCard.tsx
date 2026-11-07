@@ -98,7 +98,7 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
             onClick={() => add(p.id)}
             disabled={p.stock === 0}
             aria-label={t('addToCart', { name: p.name })}
-            className="grid h-10 w-10 place-items-center rounded-full bg-gold-gradient text-primary-foreground transition active:scale-90 hover:shadow-gold cursor-pointer"
+            className="grid h-11 w-11 place-items-center rounded-full bg-gold-gradient text-primary-foreground transition active:scale-90 hover:shadow-gold cursor-pointer"
           >
             <Plus className="h-4 w-4" />
           </button>

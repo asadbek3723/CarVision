@@ -236,14 +236,14 @@ export function VeloceProfile() {
           ) : (
             <>
               <div className="mt-1 flex items-center gap-2">
-                <h1 className="min-w-0 truncate font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                <h1 className="min-w-0 truncate text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
                   {name}
                 </h1>
                 <button
                   type="button"
                   onClick={startEditing}
                   aria-label={t('edit')}
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/55 transition hover:bg-white/[0.08] hover:text-white ${focusRing}`}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/55 transition hover:bg-white/[0.08] hover:text-white ${focusRing}`}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>

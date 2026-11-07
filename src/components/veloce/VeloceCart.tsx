@@ -8,6 +8,7 @@ import { ShoppingBag, Plus, Minus, ArrowRight, Lock, Car, Trash2 } from 'lucide-
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
+import { buttonClasses } from '@/components/ui';
 
 export function VeloceCart() {
   const params = useParams();
@@ -86,7 +87,7 @@ export function VeloceCart() {
         <p className="text-[11px] font-medium tracking-[0.25em] uppercase text-gold-500">
           {t('eyebrow')}
         </p>
-        <h1 className="mt-1 font-display text-2xl font-light text-white sm:text-4xl">
+        <h1 className="mt-1 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
           {t('title')}
         </h1>
         <p className="mt-2 text-xs text-white/55 sm:text-sm">
@@ -115,7 +116,7 @@ export function VeloceCart() {
           </h2>
           <Link
             href={`/${locale}/shop`}
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-gold-gradient px-7 py-3.5 text-xs font-bold tracking-wider uppercase text-black"
+            className={buttonClasses({ size: 'md', className: 'mt-6' })}
           >
             <span>{t('browse')}</span>
             <ArrowRight className="h-4 w-4" />
@@ -161,7 +162,7 @@ export function VeloceCart() {
                         type="button"
                         aria-label={t('decrease')}
                         onClick={() => remove(p.id)}
-                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08]"
+                        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08]"
                       >
                         {q <= 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
                       </button>
@@ -173,7 +174,7 @@ export function VeloceCart() {
                         aria-label={t('increase')}
                         disabled={atMax}
                         onClick={() => add(p.id)}
-                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08] disabled:opacity-30"
+                        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-white/70 hover:bg-white/[0.08] disabled:opacity-30"
                       >
                         <Plus className="h-3.5 w-3.5" />
                       </button>
@@ -206,7 +207,7 @@ export function VeloceCart() {
               <Link
                 aria-disabled={items.some(({ product }) => product.stock <= 0)}
                 href={`/${locale}/cart/checkout`}
-                className="shimmer inline-flex items-center justify-center gap-3 rounded-2xl bg-gold-gradient px-8 py-4 text-xs font-bold tracking-wider uppercase text-black shadow-[0_12px_30px_rgba(212,174,98,0.25)] transition hover:brightness-110"
+                className={buttonClasses({ size: 'lg' })}
               >
                 <span>{t('payCta')}</span>
                 <ArrowRight className="h-4 w-4" />

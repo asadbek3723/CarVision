@@ -16,6 +16,7 @@ import { analyzeQuality, compressForUpload, composeStudioImage, loadImage, loadI
 import { dataUrlToBlob } from '@/features/seller/lib/photo-input';
 import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { CATALOG_CATEGORIES, ITEM_LOCALES, MAX_ITEM_IMAGES, PRICE_CURRENCIES, type CatalogCategory, type CatalogItemDTO, type ItemLocale, type ItemTranslations } from '@/domain/catalog';
+import { buttonClasses } from '@/components/ui';
 
 interface PhotoEntry {
   id: string;
@@ -318,7 +319,7 @@ export default function SellerNewPartPage() {
   if (!user) {
     return shell(
       <div className="mt-10 text-center">
-        <Link href={`/${locale}/login`} className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link>
+        <Link href={`/${locale}/login`} className={buttonClasses({ size: 'sm' })}>{t('login')}</Link>
       </div>
     );
   }
@@ -330,10 +331,10 @@ export default function SellerNewPartPage() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
           <Check className="h-8 w-8" />
         </div>
-        <h1 className="mt-5 text-xl font-bold text-white">{editId ? t('savedEdit') : t('savedNew')}</h1>
+        <h1 className="mt-5 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{editId ? t('savedEdit') : t('savedNew')}</h1>
         <div className="mt-7 flex flex-col gap-3">
           {!editId && (
-            <button type="button" onClick={reset} className="rounded-full bg-gold-500 px-6 py-3.5 text-sm font-bold text-black">
+            <button type="button" onClick={reset} className={buttonClasses({ size: 'md' })}>
               {t('addAnother')}
             </button>
           )}
@@ -357,10 +358,10 @@ export default function SellerNewPartPage() {
       />
 
       <div className="mb-4 flex items-center justify-between">
-        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
+        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
           <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Link>
-        <h1 className="text-base font-bold text-white">{editId ? t('titleEdit') : t('titleNew')}</h1>
+        <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{editId ? t('titleEdit') : t('titleNew')}</h1>
         <span className="w-10" />
       </div>
 
@@ -429,7 +430,7 @@ export default function SellerNewPartPage() {
                   setPhotos((prev) => [studio, ...prev].slice(0, MAX_ITEM_IMAGES));
                   setStudioCandidate(null);
                 }}
-                className="flex-1 rounded-full bg-gold-500 py-2.5 text-xs font-bold text-black"
+                className={buttonClasses({ size: 'sm', className: 'flex-1' })}
               >
                 {t('useStudio')}
               </button>
@@ -456,7 +457,7 @@ export default function SellerNewPartPage() {
           <div className="relative">
             <input id="p-name" value={name} maxLength={150} onChange={(e) => setName(e.target.value)} placeholder={t('namePlaceholder')} className={`${fieldCls} pe-12`} />
             {name.trim().length > 1 && (
-              <button type="button" aria-label={t('improveText')} onClick={() => void improveText()} disabled={improvingText} className="absolute end-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white/35 transition hover:text-gold-500">
+              <button type="button" aria-label={t('improveText')} onClick={() => void improveText()} disabled={improvingText} className="absolute end-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/35 transition hover:text-gold-500">
                 {improvingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               </button>
             )}
@@ -476,7 +477,7 @@ export default function SellerNewPartPage() {
                   if (suggestion.description) setDescription(suggestion.description);
                   setSuggestion(null);
                 }}
-                className="rounded-full bg-gold-500 px-4 py-2 text-xs font-bold text-black"
+                className={buttonClasses({ size: 'sm' })}
               >
                 {t('accept')}
               </button>
@@ -606,7 +607,7 @@ export default function SellerNewPartPage() {
           type="button"
           onClick={() => void save()}
           disabled={saving || uploading > 0}
-          className="mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-full bg-gold-500 py-4 text-base font-bold text-black shadow-[0_12px_40px_rgba(0,0,0,0.6)] transition hover:brightness-110 disabled:opacity-60"
+          className={buttonClasses({ size: 'lg', fullWidth: true, className: 'mx-auto max-w-xl' })}
         >
           {saving && <Loader2 className="h-5 w-5 animate-spin" />}
           {editId ? t('save') : t('publish')}

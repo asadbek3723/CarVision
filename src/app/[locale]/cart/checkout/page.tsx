@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { BookingCard, type BookingView, type PaymentInfo } from '@/features/shop/BookingCard';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { readJson } from '@/lib/safe-json';
+import { buttonClasses } from '@/components/ui';
 
 const fieldCls =
   'w-full rounded-xl  bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition ';
@@ -148,7 +149,7 @@ export default function CheckoutPage() {
     return shell(
       <div className="mt-10 rounded-3xl bg-[#0B0D13] p-6 text-center">
         <p className="text-sm text-white/80">{t('loginRequired')}</p>
-        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">
+        <Link href={`/${locale}/login`} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
           {t('login')}
         </Link>
       </div>
@@ -159,7 +160,7 @@ export default function CheckoutPage() {
   if (bookings.length > 0) {
     return shell(
       <>
-        <h1 className="mb-1 text-xl font-bold text-white">{t('created')}</h1>
+        <h1 className="mb-1 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('created')}</h1>
         <p className="mb-5 text-sm text-white/55">{t('createdSub')}</p>
         <div className="space-y-4">
           {bookings.map((b) => (
@@ -179,7 +180,7 @@ export default function CheckoutPage() {
     return shell(
       <div className="mt-10 rounded-3xl border border-dashed p-10 text-center">
         <p className="text-sm text-white/70">{t('cartEmpty')}</p>
-        <Link href={`/${locale}/shop`} className="mt-4 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">
+        <Link href={`/${locale}/shop`} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
           {t('goToShop')}
         </Link>
       </div>
@@ -192,7 +193,7 @@ export default function CheckoutPage() {
         <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         {t('backToCart')}
       </Link>
-      <h1 className="mb-5 text-xl font-bold text-white">{t('title')}</h1>
+      <h1 className="mb-5 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('title')}</h1>
 
       <section className="rounded-3xl bg-[#0B0D13] p-5">
         <ul className="space-y-3">
@@ -245,7 +246,7 @@ export default function CheckoutPage() {
         <button
           type="submit"
           disabled={submitting || hasUnavailable || missing > 0}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold-500 px-6 py-3.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
+          className={buttonClasses({ size: 'md', fullWidth: true })}
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           {t('submit')}

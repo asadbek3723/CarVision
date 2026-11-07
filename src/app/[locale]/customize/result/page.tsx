@@ -28,6 +28,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { vibrate } from '@/features/camera/lib/fx';
 import { heroAngleId } from '@/features/visualizer/render-plan';
+import { buttonClasses } from '@/components/ui';
 
 /** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
@@ -239,7 +240,7 @@ export default function CustomizeResultPage() {
               type="button"
               onClick={() => setIsVideoStudioOpen(true)}
               disabled={!hasResults}
-              className="ms-1 inline-flex items-center gap-2.5 rounded-full bg-gold-500 px-6 py-3 text-xs font-extrabold text-black shadow-[0_12px_32px_-8px_rgba(212,174,98,0.5)] transition hover:brightness-110 active:scale-95 disabled:opacity-40 cursor-pointer md:text-sm"
+              className={buttonClasses({ size: 'md', className: 'ms-1' })}
             >
               <Film className="h-4 w-4" />
               <span>{t('watchVideo')}</span>
@@ -251,7 +252,7 @@ export default function CustomizeResultPage() {
           <div className="flex min-h-[50dvh] flex-col items-center justify-center text-center">
             <p className="text-lg font-semibold text-white">{t('emptyTitle')}</p>
             <p className="mt-2 max-w-md text-sm text-[#A69F92]">{t('emptyBody')}</p>
-            <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="mt-6 rounded-full bg-gold-500 px-8 py-3.5 text-sm font-bold text-black cursor-pointer">
+            <button type="button" onClick={() => router.push(`/${locale}/customize`)} className={buttonClasses({ size: 'md', className: 'mt-6' })}>
               {t('customize')}
             </button>
           </div>
@@ -405,7 +406,7 @@ export default function CustomizeResultPage() {
                   <h3 className="text-xl font-bold text-white">{t('confirmedTitle')}</h3>
                   <p className="mt-1 text-sm text-white/75">{t('confirmedBody', { count: selectedParts.length })}</p>
                   <div className="mt-5 flex justify-center gap-2">
-                    <button type="button" onClick={() => setIsVideoStudioOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-3 text-xs font-extrabold text-black cursor-pointer">
+                    <button type="button" onClick={() => setIsVideoStudioOpen(true)} className={buttonClasses({ size: 'md' })}>
                       <Film className="h-4 w-4" />
                       <span>{t('viewVideo')}</span>
                     </button>
@@ -427,7 +428,7 @@ export default function CustomizeResultPage() {
                   <button
                     type="button"
                     onClick={handlePrimaryBuy}
-                    className="mt-5 flex w-full items-center justify-center gap-3 rounded-full bg-gold-500 px-8 py-4 text-sm font-extrabold text-black shadow-[0_16px_40px_-10px_rgba(212,174,98,0.55)] transition hover:brightness-110 active:scale-[0.98] cursor-pointer md:text-base"
+                    className={buttonClasses({ size: 'lg', fullWidth: true, className: 'mt-5' })}
                   >
                     {isSeller ? (
                       <>
