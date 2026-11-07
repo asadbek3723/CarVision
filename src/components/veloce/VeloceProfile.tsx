@@ -42,7 +42,7 @@ interface PreferenceOption {
   hint?: string;
 }
 
-/** Native select (best picker on phones, fully accessible) wearing the gold-on-black skin. */
+/** Native select (best picker on phones, fully accessible) — no box, just the value and a chevron. */
 function PreferenceSelect({
   id,
   icon: Icon,
@@ -59,17 +59,17 @@ function PreferenceSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <div>
-      <label htmlFor={id} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+    <div className="group">
+      <label htmlFor={id} className="flex items-center gap-2 text-sm text-white/45">
+        <Icon className="h-4 w-4 text-gold-500" />
         {label}
       </label>
-      <div className="relative">
-        <Icon className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-500" />
+      <div className="relative mt-1">
         <select
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`h-14 w-full cursor-pointer appearance-none rounded-2xl bg-white/[0.04] ps-11 pe-12 text-base text-white transition hover:bg-white/[0.07] ${focusRing}`}
+          className={`h-12 w-full cursor-pointer appearance-none rounded-lg bg-transparent pe-8 font-heading text-lg font-medium text-white transition group-hover:text-gold-300 sm:text-xl ${focusRing}`}
         >
           {options.map((o) => (
             <option key={o.value} value={o.value} className="bg-surface-1 text-white">
@@ -77,19 +77,41 @@ function PreferenceSelect({
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+        <ChevronDown className="pointer-events-none absolute end-0 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40 transition group-hover:text-gold-300" />
       </div>
     </div>
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+/** One section: title on the start side, content filling the rest (stacked on phones). */
+function Section({
+  id,
+  title,
+  sub,
+  aside,
+  children,
+}: {
+  id: string;
+  title: string;
+  sub?: string;
+  aside?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
-      {children}
-    </h2>
+    <section aria-labelledby={id} className="grid gap-5 py-10 md:py-14 lg:grid-cols-[minmax(220px,300px)_1fr] lg:gap-16">
+      <div>
+        <h2 id={id} className="font-heading text-lg font-semibold tracking-[-0.01em] text-white md:text-xl">
+          {title}
+        </h2>
+        {sub && <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-white/45">{sub}</p>}
+        {aside && <div className="mt-4">{aside}</div>}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
   );
 }
+
+const textLink = `inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-semibold text-gold-500 transition hover:text-gold-300 ${focusRing}`;
 
 export function VeloceProfile() {
   const t = useTranslations('profilePage');
@@ -198,177 +220,163 @@ export function VeloceProfile() {
   const contact = user.phone || user.email;
   const name = user.full_name || t('guest');
 
+
+  const stats = [
+    { label: t('credits'), value: user.credits_balance >= 1_000_000 ? '∞' : user.credits_balance.toLocaleString() },
+    { label: t('statRenders'), value: rendersUsed === null ? '–' : rendersUsed.toLocaleString() },
+    { label: t('statBookings'), value: bookingsLoading ? '–' : bookings.length.toLocaleString() },
+  ];
+
   return (
-    <div className="mx-auto max-w-3xl px-5 pb-28 pt-8 md:px-8 md:pt-14">
-      {/* Identity: one row */}
-      <header className="flex items-center gap-4">
-        <div
-          aria-hidden="true"
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gold-gradient text-lg font-semibold uppercase text-black sm:h-16 sm:w-16"
-        >
-          {initialsOf(user.full_name)}
-        </div>
-        <div className="min-w-0 flex-1">
-          {editing ? (
-            <form onSubmit={handleSave} className="flex items-center gap-2">
-              <label htmlFor="profile-name" className="sr-only">
-                {t('namePlaceholder')}
-              </label>
-              <input
-                id="profile-name"
-                type="text"
-                autoComplete="name"
-                autoFocus
-                maxLength={100}
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                placeholder={t('namePlaceholder')}
-                aria-invalid={saveError}
-                className={`min-w-0 flex-1 rounded-full bg-white/[0.06] px-4 py-2.5 text-base text-white placeholder:text-white/35 ${focusRing}`}
-              />
-              <button type="submit" disabled={saving} className={buttonClasses({ size: 'sm', className: 'shrink-0 px-4' })}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t('save')}
-              </button>
-              <button type="button" onClick={() => setEditing(false)} aria-label={t('cancel')} className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'shrink-0 px-3' })}>
-                <X className="h-4 w-4" />
-              </button>
-            </form>
-          ) : (
-            <>
-              <h1 className="truncate font-heading text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-2xl">{name}</h1>
-              <p className="mt-0.5 flex min-w-0 items-center gap-2 text-sm text-white/55">
-                {contact && <span dir="ltr" className="truncate">{contact}</span>}
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${isPaid ? 'bg-gold-500/15 text-gold-300' : 'bg-white/[0.06] text-white/60'}`}>
-                  {isPaid ? t('planActive') : t('planFree')}
-                </span>
-              </p>
-            </>
-          )}
-          {saveError && (
-            <p role="alert" className="mt-1.5 text-sm text-red-300">
-              {t('saveError')}
+    <div className="mx-auto w-full max-w-[1500px] px-5 pb-28 pt-8 md:px-10 md:pt-16 lg:px-16">
+      {/* Identity */}
+      <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-10">
+        <div className="flex min-w-0 items-center gap-4 md:gap-6">
+          <div
+            aria-hidden="true"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gold-gradient text-lg font-semibold uppercase text-black sm:h-16 sm:w-16 md:h-24 md:w-24 md:text-3xl"
+          >
+            {initialsOf(user.full_name)}
+          </div>
+          <div className="min-w-0 flex-1">
+            {editing ? (
+              <form onSubmit={handleSave} className="flex items-center gap-2">
+                <label htmlFor="profile-name" className="sr-only">
+                  {t('namePlaceholder')}
+                </label>
+                <input
+                  id="profile-name"
+                  type="text"
+                  autoComplete="name"
+                  autoFocus
+                  maxLength={100}
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder={t('namePlaceholder')}
+                  aria-invalid={saveError}
+                  className={`min-w-0 flex-1 rounded-lg bg-transparent py-2 font-heading text-xl font-semibold text-white placeholder:text-white/30 md:text-4xl ${focusRing}`}
+                />
+                <button type="submit" disabled={saving} className={buttonClasses({ size: 'sm', className: 'shrink-0 px-4' })}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t('save')}
+                </button>
+                <button type="button" onClick={() => setEditing(false)} aria-label={t('cancel')} className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'shrink-0 px-3' })}>
+                  <X className="h-4 w-4" />
+                </button>
+              </form>
+            ) : (
+              <h1 className="truncate font-heading text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-2xl md:text-5xl">
+                {name}
+              </h1>
+            )}
+            <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-white/50 md:mt-3 md:text-base">
+              {contact && <span dir="ltr" className="truncate">{contact}</span>}
+              {contact && <span aria-hidden="true" className="text-white/20">·</span>}
+              <span className={`shrink-0 font-medium ${isPaid ? 'text-gold-300' : 'text-white/60'}`}>
+                {isPaid ? t('planActive') : t('planFree')}
+              </span>
             </p>
-          )}
+            {saveError && (
+              <p role="alert" className="mt-1.5 text-sm text-red-300">
+                {t('saveError')}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid shrink-0 grid-cols-2 gap-3 md:flex md:items-center">
+          <button type="button" onClick={startEditing} className={buttonClasses({ variant: 'ghost', size: 'md', fullWidth: true, className: 'md:w-auto' })}>
+            <Pencil className="h-4 w-4" />
+            <span className="truncate">{t('editProfile')}</span>
+          </button>
+          <Link href={isPaid ? `/${locale}/seller?tab=dashboard` : `/${locale}/plans`} className={buttonClasses({ size: 'md', fullWidth: true, className: 'md:w-auto md:px-6' })}>
+            <LayoutDashboard className="h-4 w-4" />
+            <span className="truncate">{t('dashboard')}</span>
+          </Link>
         </div>
       </header>
 
-      {/* Dashboard + edit profile, side by side */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <Link href={isPaid ? `/${locale}/seller?tab=dashboard` : `/${locale}/plans`} className={buttonClasses({ size: 'md', fullWidth: true })}>
-          <LayoutDashboard className="h-4 w-4" />
-          <span className="truncate">{t('dashboard')}</span>
-        </Link>
-        <button type="button" onClick={startEditing} className={buttonClasses({ variant: 'quiet', size: 'md', fullWidth: true })}>
-          <Pencil className="h-4 w-4" />
-          <span className="truncate">{t('editProfile')}</span>
-        </button>
-      </div>
-
-      {/* Short statistics + the full page */}
-      <section aria-labelledby="stats-title" className="mt-8">
-        <h2 id="stats-title" className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">{t('statsTitle')}</h2>
-        <div className="mt-3 grid grid-cols-3 gap-3">
-          {[
-            { label: t('credits'), value: user.credits_balance >= 1_000_000 ? '∞' : user.credits_balance.toLocaleString() },
-            { label: t('statRenders'), value: rendersUsed === null ? '–' : rendersUsed.toLocaleString() },
-            { label: t('statBookings'), value: bookingsLoading ? '–' : bookings.length.toLocaleString() },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl bg-white/[0.04] px-3 py-4 text-center">
-              <p className="font-display text-2xl font-semibold tabular-nums text-white">{s.value}</p>
-              <p className="mt-1 truncate text-[11px] text-white/50">{s.label}</p>
+      {/* Stats: big numbers, no tiles */}
+      <section aria-labelledby="stats-title" className="mt-12 md:mt-20">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 id="stats-title" className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
+            {t('statsTitle')}
+          </h2>
+          <Link href={`/${locale}/profile/stats`} className={textLink}>
+            <BarChart3 className="h-4 w-4" />
+            <span className="truncate">{t('viewStats')}</span>
+            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+          </Link>
+        </div>
+        <dl className="mt-4 grid grid-cols-3 gap-4 md:mt-6 md:gap-10">
+          {stats.map((s) => (
+            <div key={s.label} className="min-w-0">
+              <dd className="font-display text-3xl font-semibold tabular-nums tracking-[-0.02em] text-white md:text-6xl">{s.value}</dd>
+              <dt className="mt-1 truncate text-xs text-white/45 md:mt-2 md:text-sm">{s.label}</dt>
             </div>
           ))}
-        </div>
-        <Link href={`/${locale}/profile/stats`} className={buttonClasses({ variant: 'quiet', size: 'md', fullWidth: true, className: 'mt-3' })}>
-          <BarChart3 className="h-4 w-4" />
-          <span className="truncate">{t('viewStats')}</span>
-          <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-        </Link>
+        </dl>
       </section>
 
-      {/* Preferences */}
-      <section className="mt-12" aria-labelledby="prefs-title">
-        <h2 id="prefs-title" className="sr-only">
-          {t('langCurrency')}
-        </h2>
+      <div className="mt-6 md:mt-10">
+        {/* Bookings */}
+        <Section id="bookings-title" title={t('bookingsTitle')} sub={t('bookingsSub')}>
+          {bookingsLoading ? (
+            <div className="flex items-center gap-2 py-2 text-sm text-white/50" role="status">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t('loading')}
+            </div>
+          ) : bookings.length === 0 ? (
+            <div className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-6">
+              <p className="text-base text-white/55">{t('noBookings')}</p>
+              <Link href={`/${locale}/shop`} className={textLink}>
+                {t('browse')}
+                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-x-16 gap-y-10 xl:grid-cols-2">
+              {bookings.map((b) => (
+                <BookingCard key={b.id} flat booking={b} payment={payment} onChanged={() => void loadBookings()} />
+              ))}
+            </div>
+          )}
+        </Section>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <PreferenceSelect
-            id="pref-language"
-            icon={Globe}
-            label={t('language')}
-            value={locale}
-            onChange={(code) => router.push(localizedPath(code))}
-            options={LANGUAGES.map((l) => ({ value: l.code, label: l.name, hint: l.code.toUpperCase() }))}
-          />
-          <PreferenceSelect
-            id="pref-currency"
-            icon={Coins}
-            label={t('currency')}
-            value={currency}
-            onChange={(code) => setCurrency(code as SupportedCurrency)}
-            options={CURRENCIES.map((code) => ({ value: code, label: code }))}
-          />
-        </div>
-      </section>
-
-      {/* Bookings */}
-      <section className="mt-12" aria-labelledby="bookings-title">
-        <h2
-          id="bookings-title"
-          className="font-display text-xl font-semibold tracking-tight text-white"
-        >
-          {t('bookingsTitle')}
-        </h2>
-        <p className="mb-5 mt-1 text-sm text-white/50">{t('bookingsSub')}</p>
-
-        {bookingsLoading ? (
-          <div className="flex items-center gap-2 py-4 text-sm text-white/50" role="status">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {t('loading')}
+        {/* Preferences */}
+        <Section id="prefs-title" title={t('langCurrency')}>
+          <div className="grid gap-6 sm:grid-cols-2 sm:gap-12">
+            <PreferenceSelect
+              id="pref-language"
+              icon={Globe}
+              label={t('language')}
+              value={locale}
+              onChange={(code) => router.push(localizedPath(code))}
+              options={LANGUAGES.map((l) => ({ value: l.code, label: l.name, hint: l.code.toUpperCase() }))}
+            />
+            <PreferenceSelect
+              id="pref-currency"
+              icon={Coins}
+              label={t('currency')}
+              value={currency}
+              onChange={(code) => setCurrency(code as SupportedCurrency)}
+              options={CURRENCIES.map((code) => ({ value: code, label: code }))}
+            />
           </div>
-        ) : bookings.length === 0 ? (
-          <div className="rounded-3xl bg-white/[0.04] p-6 text-center">
-            <p className="text-sm text-white/55">{t('noBookings')}</p>
-            <Link
-              href={`/${locale}/shop`}
-              className={`mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-white/[0.07] px-5 text-sm font-semibold text-gold-500 transition hover:bg-white/[0.12] ${focusRing}`}
-            >
-              {t('browse')}
-              <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {bookings.map((b) => (
-              <BookingCard
-                key={b.id}
-                booking={b}
-                payment={payment}
-                onChanged={() => void loadBookings()}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+        </Section>
 
-      {/* Account */}
-      <section className="mt-12" aria-labelledby="account-title">
-        <h2 id="account-title" className="sr-only">
-          {t('account')}
-        </h2>
-        <SectionTitle>{t('account')}</SectionTitle>
-        <ProfileExtras />
-
-        <button
-          type="button"
-          onClick={signOut}
-          className={`mt-3 flex min-h-14 w-full items-center gap-4 rounded-3xl bg-white/[0.04] px-5 text-start text-sm font-medium text-white/70 transition hover:bg-red-500/10 hover:text-red-300 ${focusRing}`}
-        >
-          <LogOut className="h-5 w-5 shrink-0" />
-          {t('signOut')}
-        </button>
-      </section>
+        {/* Account */}
+        <Section id="account-title" title={t('account')}>
+          <ProfileExtras />
+          <button
+            type="button"
+            onClick={signOut}
+            className={`mt-2 flex min-h-14 w-full items-center gap-4 rounded-lg text-start text-sm font-medium text-white/55 transition hover:text-red-300 ${focusRing}`}
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            {t('signOut')}
+          </button>
+        </Section>
+      </div>
     </div>
   );
 }

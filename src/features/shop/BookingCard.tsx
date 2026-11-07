@@ -43,10 +43,12 @@ interface Props {
   booking: BookingView;
   payment: PaymentInfo;
   onChanged: () => void;
+  /** No card surface or inner boxes: for pages that separate items by whitespace. */
+  flat?: boolean;
 }
 
 /** One booking: payment instructions, receipt upload, approval status and (after approval) the workshop. */
-export function BookingCard({ booking, payment, onChanged }: Props) {
+export function BookingCard({ booking, payment, onChanged, flat = false }: Props) {
   const t = useTranslations('checkout.booking');
   const apiError = useApiError();
   const locale = useLocale();
@@ -94,7 +96,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
   };
 
   return (
-    <article className="rounded-3xl bg-surface-1 p-5">
+    <article className={flat ? 'py-2' : 'rounded-3xl bg-surface-1 p-5'}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-mono text-sm font-bold text-white">#{booking.bookingNumber}</p>
         <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${status.cls}`}>{t(status.key)}</span>
@@ -126,7 +128,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
       </div>
 
       {needsPayment && (
-        <div className="mt-5 space-y-4 rounded-2xl bg-white/[0.03] p-4">
+        <div className={`mt-5 space-y-4 ${flat ? '' : 'rounded-2xl bg-white/[0.03] p-4'}`}>
           {booking.status === 'REJECTED' && (
             <p className="flex items-start gap-2 text-xs text-red-300">
               <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -135,13 +137,13 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
           )}
           <p className="text-sm font-semibold text-white">{t('step1')}</p>
           {payment.configured ? (
-            <div className="rounded-xl bg-black/40 p-4">
+            <div className={flat ? '' : 'rounded-xl bg-black/40 p-4'}>
               <p className="select-all font-mono text-lg tracking-wider text-white">{payment.cardNumber}</p>
               <p className="mt-1 text-xs text-white/60">{payment.holder}{payment.bank ? ` · ${payment.bank}` : ''}</p>
               <p className="mt-3 text-xs text-amber-300">{t.rich('commentHint', { number: booking.bookingNumber, b: (c) => <span className="font-mono font-bold">{c}</span> })}</p>
             </div>
           ) : (
-            <p className="rounded-xl bg-amber-500/10 p-4 text-xs text-amber-200">{t('notConfigured')}</p>
+            <p className={`text-xs text-amber-200 ${flat ? '' : 'rounded-xl bg-amber-500/10 p-4'}`}>{t('notConfigured')}</p>
           )}
 
           <p className="text-sm font-semibold text-white">{t('step2')}</p>
@@ -165,14 +167,14 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
       )}
 
       {booking.status === 'PENDING_ADMIN_APPROVAL' && (
-        <p className="mt-5 flex items-start gap-2 rounded-2xl bg-sky-500/10 p-4 text-xs text-sky-200">
+        <p className={`mt-5 flex items-start gap-2 text-xs text-sky-200 ${flat ? '' : 'rounded-2xl bg-sky-500/10 p-4'}`}>
           <Clock className="mt-0.5 h-4 w-4 shrink-0" />
           {t('pendingNote')}
         </p>
       )}
 
       {booking.workshop.unlocked && (
-        <div className="mt-5 space-y-3 rounded-2xl bg-emerald-500/[0.06] p-4">
+        <div className={`mt-5 space-y-3 ${flat ? '' : 'rounded-2xl bg-emerald-500/[0.06] p-4'}`}>
           <p className="flex items-center gap-2 text-sm font-bold text-emerald-300">
             <Check className="h-4 w-4" />
             {t('unlockedTitle')}
@@ -196,7 +198,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
             </a>
           )}
           {booking.redemptionCode && (
-            <div className="rounded-xl bg-black/40 p-3 text-center">
+            <div className={flat ? 'pt-1' : 'rounded-xl bg-black/40 p-3 text-center'}>
               <p className="text-[11px] text-white/50">{t('voucherCode')}</p>
               <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">{booking.redemptionCode}</p>
             </div>

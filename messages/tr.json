@@ -508,7 +508,7 @@
       "inStock": "Stokta: {count}",
       "lockedTitle": "Atölye, %3 ödemeden sonra açılır",
       "lockedBody": "Parçayı biz satmıyoruz. Beğenirseniz %3 ({amount}) ödersiniz; size hemen o tuning atölyesinin tam adresini veririz ve numaranızı atölyeye iletiriz.",
-      "unlockCta": "%3 öde ve adresi al ({amount})",
+      "unlockCta": "%3 öde ve adresi al",
       "tryOnCar": "Aracımda dene",
       "related": "Benzer parçalar"
     },
