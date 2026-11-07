@@ -608,7 +608,8 @@
     "edit": "Düzenle",
     "tryOn": "Dene →",
     "loginRequired": "Garajı görmek için giriş yapın.",
-    "login": "Giriş yap"
+    "login": "Giriş yap",
+    "count": "{count} parça"
   },
   "home": {
     "heroAlt": "Siyah performans coupe",

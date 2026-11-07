@@ -608,7 +608,8 @@
     "edit": "Tahrirlash",
     "tryOn": "Sinab koʻrish →",
     "loginRequired": "Garajni koʻrish uchun tizimga kiring.",
-    "login": "Kirish"
+    "login": "Kirish",
+    "count": "{count} ta detal"
   },
   "home": {
     "heroAlt": "Qora sport kupe",

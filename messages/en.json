@@ -608,7 +608,8 @@
     "edit": "Edit",
     "tryOn": "Try on →",
     "loginRequired": "Sign in to view the garage.",
-    "login": "Sign in"
+    "login": "Sign in",
+    "count": "{count, plural, one {# part} other {# parts}}"
   },
   "home": {
     "heroAlt": "Black performance coupe",

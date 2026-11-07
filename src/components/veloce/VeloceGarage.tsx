@@ -87,22 +87,32 @@ export function VeloceGarage() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 pb-28 pt-6 md:px-10 md:pt-10">
-      <div className="flex flex-col gap-6 pb-8 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-gold-500">{t('eyebrow')}</p>
-          <h1 className="mt-1 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{user?.shop?.shop_name ?? t('defaultName')}</h1>
+      <header className="pb-6 sm:flex sm:items-end sm:justify-between sm:gap-6 sm:pb-8">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold-500 sm:text-xs">{t('eyebrow')}</p>
+          <h1 className="mt-1.5 truncate font-heading text-[26px] font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+            {user?.shop?.shop_name ?? t('defaultName')}
+          </h1>
+          {items.length > 0 && <p className="mt-1 text-sm text-white/45">{t('count', { count: items.length })}</p>}
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center">
-          <button type="button" onClick={openCamera} className="flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-white/[0.06] px-4 py-3.5 text-xs font-semibold text-white transition hover:bg-white/[0.12] sm:px-5">
+        <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-0 sm:flex sm:shrink-0 sm:items-center sm:gap-3">
+          <button
+            type="button"
+            onClick={openCamera}
+            className="flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-white/[0.06] px-4 text-[13px] font-semibold text-white transition hover:bg-white/[0.1] active:scale-[0.98] sm:h-auto sm:rounded-2xl sm:px-5 sm:py-3.5 sm:text-xs"
+          >
             <Camera className="h-4 w-4 shrink-0 text-gold-500" />
             <span className="truncate">{t('tryOnCustomer')}</span>
           </button>
-          <Link href={`/${locale}/seller/new-part`} className={buttonClasses({ size: 'md', className: 'min-w-0' })}>
+          <Link
+            href={`/${locale}/seller/new-part`}
+            className={buttonClasses({ size: 'md', className: 'h-12 min-w-0 !rounded-full px-4 text-[13px] active:scale-[0.98] sm:h-auto sm:text-sm' })}
+          >
             <Plus className="h-4 w-4 shrink-0" />
             <span className="truncate">{t('addPart')}</span>
           </Link>
         </div>
-      </div>
+      </header>
 
       {error && <p role="alert" className="mb-6 text-sm text-red-300">{t('loadError')}</p>}
 
@@ -112,13 +122,14 @@ export function VeloceGarage() {
         </div>
       ) : (
         <>
-          <div className="-mx-5 mb-6 flex items-center gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:mb-8 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-5 mb-6 flex snap-x items-center gap-1.5 overflow-x-auto scroll-px-5 px-5 pb-1 [mask-image:linear-gradient(to_right,transparent,black_20px,black_calc(100%-28px),transparent)] [scrollbar-width:none] sm:mx-0 sm:mb-8 sm:flex-wrap sm:gap-2 sm:overflow-visible sm:px-0 sm:[mask-image:none] [&::-webkit-scrollbar]:hidden">
             {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 cursor-pointer whitespace-nowrap rounded-2xl px-4 py-2.5 text-xs font-medium transition ${activeCategory === cat ? 'bg-gold-500 font-semibold text-black' : 'bg-white/[0.04] text-white/65 hover:text-white'}`}
+                aria-pressed={activeCategory === cat}
+                className={`h-9 shrink-0 cursor-pointer snap-start whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition sm:h-auto sm:rounded-2xl sm:py-2.5 sm:text-xs ${activeCategory === cat ? 'bg-gold-500 font-semibold text-black' : 'bg-white/[0.04] text-white/60 hover:text-white'}`}
               >
                 {cat === ALL ? t('all') : tCat(cat)}
               </button>
