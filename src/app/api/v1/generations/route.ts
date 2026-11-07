@@ -275,6 +275,11 @@ export async function POST(request: NextRequest) {
     if (!ai.afterImageUrl) {
       await refund(db, session, generationId, ai.outcome === 'invalid_image' ? 'Invalid input image' : 'AI provider failed');
       reserved = null;
+      if (ai.outcome === 'busy') {
+        return errorResponse(503, 'AI_BUSY', "Hozir so'rovlar ko'p, barcha AI modellar band. Kredit qaytarildi, 1-2 daqiqadan keyin qayta urinib ko'ring", {
+          creditsRemaining: currentBalance,
+        });
+      }
       return errorResponse(502, 'AI_FAILED', "Rasm yaratib bo'lmadi. Kredit qaytarildi, qayta urinib ko'ring", {
         creditsRemaining: currentBalance,
       });
@@ -289,7 +294,7 @@ export async function POST(request: NextRequest) {
         status: 'COMPLETED',
         output_4k_url: finalUrl,
         preview_url: finalUrl,
-        provider: ai.providerUsed,
+        provider: ai.modelUsed ? `${ai.providerUsed}:${ai.modelUsed}`.slice(0, 120) : ai.providerUsed,
         prompt: ai.promptUsed,
         duration_ms: ai.durationMs,
         completed_at: new Date().toISOString(),

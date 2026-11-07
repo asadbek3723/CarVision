@@ -1,5 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { hasAnyImageKey, runImageChain } from './image-chain';
+import type { ProviderId } from './key-pool';
 
 export interface FitmentPartInput {
   id: string;
@@ -24,13 +26,27 @@ export interface DirectFitmentRequest {
 }
 
 export interface DirectFitmentResponse {
-  providerUsed: 'fal-ai' | 'gemini-ai' | 'openai' | 'replicate' | 'local-neural-compositor';
+  providerUsed:
+    | 'fal-ai'
+    | 'gemini-ai'
+    | 'openai'
+    | 'openrouter'
+    | 'local-neural-compositor';
+  /** Exact model that produced the image (e.g. "google/gemini-2.5-flash-image"). */
+  modelUsed?: string | undefined;
   liveApiActive: boolean;
   afterImageUrl: string | null;
   promptUsed: string;
   durationMs: number;
-  outcome?: 'no_provider' | 'failed' | 'invalid_image' | undefined;
+  outcome?: 'no_provider' | 'failed' | 'busy' | 'invalid_image' | undefined;
 }
+
+const PROVIDER_LABEL: Record<ProviderId, Exclude<DirectFitmentResponse['providerUsed'], 'local-neural-compositor'>> = {
+  gemini: 'gemini-ai',
+  openrouter: 'openrouter',
+  fal: 'fal-ai',
+  openai: 'openai',
+};
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -190,194 +206,15 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     .join(' ');
 }
 
-/**
- * 1. FAL.AI Engine (`FAL_KEY` or `FAL_API_KEY`)
- * Reference-aware editors first (car + exact part photos), then single-image Kontext.
- * `FAL_MODEL` may force a specific endpoint id (e.g. "fal-ai/nano-banana/edit").
- */
-async function runFalAiFitment(
-  apiKey: string,
-  carDataUri: string,
-  partDataUris: string[],
-  prompt: string,
-  mode: 'fitment' | 'enhance_for_video',
-  referenceDataUri: string | null
-): Promise<string | null> {
-  const forced = (process.env.FAL_MODEL || '').trim();
-  // Order matters (the prompt refers to it): 1 = car photo, then exact parts, last = same-build reference
-  const refs = [carDataUri, ...partDataUris.slice(0, 3), ...(referenceDataUri ? [referenceDataUri] : [])];
-  const endpoints: Array<{ id: string; body: Record<string, unknown> }> = [];
-
-  if ((partDataUris.length > 0 || referenceDataUri) && mode === 'fitment') {
-    endpoints.push({
-      id: 'fal-ai/nano-banana/edit',
-      body: { prompt, image_urls: refs, num_images: 1, output_format: 'jpeg' },
-    });
-    endpoints.push({
-      id: 'fal-ai/flux-pro/kontext/multi',
-      body: { prompt, image_urls: refs, guidance_scale: 3.5, num_images: 1, output_format: 'jpeg' },
-    });
-  }
-  endpoints.push({
-    id: 'fal-ai/flux-pro/kontext',
-    body: { prompt, image_url: carDataUri, guidance_scale: 3.5, num_images: 1, output_format: 'jpeg' },
-  });
-
-  const ordered = forced
-    ? [...endpoints.filter((e) => e.id === forced), ...endpoints.filter((e) => e.id !== forced)]
-    : endpoints;
-
-  for (const endpoint of ordered) {
-    try {
-      const res = await fetch(`https://fal.run/${endpoint.id}`, {
-        method: 'POST',
-        headers: { Authorization: `Key ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(endpoint.body),
-        signal: AbortSignal.timeout(55_000),
-      });
-      if (!res.ok) continue;
-      const data = (await res.json()) as { images?: Array<{ url?: string }>; image?: { url?: string } };
-      const outputUrl = data.images?.[0]?.url || data.image?.url;
-      if (outputUrl) return outputUrl;
-    } catch {
-      // Try next endpoint
-    }
-  }
-  return null;
-}
-
-/**
- * 2. GOOGLE GEMINI MULTIMODAL ENGINE (`GEMINI_API_KEY` or `GOOGLE_API_KEY`)
- * Sends both the base car image AND the selected part reference images so Gemini
- * replicates the exact part details onto the vehicle.
- */
-async function runGeminiMultimodalFitment(
-  apiKey: string,
-  carDataUri: string,
-  partDataUris: string[],
-  prompt: string,
-  referenceDataUri: string | null
-): Promise<string | null> {
-  const parseBase64 = (uri: string) => {
-    const match = uri.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
-    if (!match) return null;
-    return { mimeType: match[1] || 'image/jpeg', data: match[2] || '' };
-  };
-
-  const carInline = parseBase64(carDataUri);
-  if (!carInline) return null;
-
-  const contentParts: Array<Record<string, unknown>> = [
-    {
-      text: `${prompt}\nThe first image is the customer's car. Any following images are the exact tuning parts that must be installed onto the car with 100% identical visual details.`,
-    },
-    { inlineData: carInline },
-  ];
-
-  for (const pUri of partDataUris.slice(0, 3)) {
-    const parsed = parseBase64(pUri);
-    if (parsed) {
-      contentParts.push({ inlineData: parsed });
-    }
-  }
-  if (referenceDataUri) {
-    const ref = parseBase64(referenceDataUri);
-    if (ref) contentParts.push({ inlineData: ref });
-  }
-
-  const models = ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview'];
-
-  for (const model of models) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: contentParts }],
-          generationConfig: {
-            responseModalities: ['TEXT', 'IMAGE'],
-          },
-        }),
-        signal: AbortSignal.timeout(55_000),
-      });
-
-      if (!res.ok) continue;
-      const data = (await res.json()) as {
-        candidates?: Array<{
-          content?: {
-            parts?: Array<{
-              inlineData?: { mimeType?: string; data?: string };
-            }>;
-          };
-        }>;
-      };
-
-      const parts = data.candidates?.[0]?.content?.parts || [];
-      for (const part of parts) {
-        if (part.inlineData?.data) {
-          const mime = part.inlineData.mimeType || 'image/jpeg';
-          return `data:${mime};base64,${part.inlineData.data}`;
-        }
-      }
-    } catch {
-      // Try next Gemini model
-    }
-  }
-
-  return null;
-}
-
-/**
- * 3. OPENAI IMAGE ENGINE (`OPENAI_API_KEY`)
- */
-async function runOpenAiFitment(
-  apiKey: string,
-  prompt: string
-): Promise<string | null> {
-  try {
-    const res = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt,
-        size: '1536x1024',
-        quality: 'high',
-      }),
-      signal: AbortSignal.timeout(35000),
-    });
-
-    if (!res.ok) return null;
-    const data = (await res.json()) as {
-      data?: Array<{ b64_json?: string; url?: string }>;
-    };
-    const first = data.data?.[0];
-    if (first?.b64_json) {
-      return `data:image/png;base64,${first.b64_json}`;
-    }
-    if (first?.url) {
-      return first.url;
-    }
-  } catch {
-    // Ignore
-  }
-  return null;
-}
-
 /** True when at least one AI provider key is present in the environment. */
 export function hasAiProvider(): boolean {
-  const k = (v: string | undefined) => (v ?? '').trim().length > 8;
-  return k(process.env.FAL_KEY) || k(process.env.FAL_API_KEY) || k(process.env.GEMINI_API_KEY) || k(process.env.GOOGLE_API_KEY) || k(process.env.OPENAI_API_KEY);
+  return hasAnyImageKey();
 }
 
 /**
- * Master Drop-in AI Execution Router:
- * Automatically checks `.env` / `.env.local` for `FAL_KEY`, `GEMINI_API_KEY`, or `OPENAI_API_KEY`
- * and executes live neural fitment.
+ * Master AI execution router. Models from every configured provider (Gemini, OpenRouter, Fal,
+ * OpenAI) are ranked by quality; the strongest is tried first, every key of a
+ * provider is rotated on rate limits, then the next model takes over (see `image-chain.ts`).
  */
 export async function executeDirectAiFitment(
   req: DirectFitmentRequest
@@ -385,74 +222,46 @@ export async function executeDirectAiFitment(
   const startMs = Date.now();
   const promptUsed = buildPrecisionAutomotivePrompt(req);
 
-  const falKey = (process.env.FAL_KEY || process.env.FAL_API_KEY || '').trim();
-  const geminiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
-  const openAiKey = (process.env.OPENAI_API_KEY || '').trim();
-
   const carDataUri = await resolveImageToDataUri(req.carPhoto);
-  const partDataUris = carDataUri
-    ? (await Promise.all(req.parts.map((p) => resolveImageToDataUri(p.angleImage || p.image)))).filter(
-        (u): u is string => Boolean(u)
-      )
-    : [];
-  const referenceDataUri = req.referenceAfter ? await resolveImageToDataUri(req.referenceAfter) : null;
-  const providerConfigured = falKey.length > 8 || geminiKey.length > 8 || openAiKey.length > 8;
+  const providerConfigured = hasAnyImageKey();
 
-  if (carDataUri) {
-    // Priority 1: Fal.ai FLUX Kontext / Dev
-    if (falKey.length > 8) {
-      const falUrl = await runFalAiFitment(
-        falKey,
-        carDataUri,
-        partDataUris,
+  if (carDataUri && providerConfigured) {
+    const partDataUris = (
+      await Promise.all(req.parts.map((p) => resolveImageToDataUri(p.angleImage || p.image)))
+    ).filter((u): u is string => Boolean(u));
+    const referenceDataUri = req.referenceAfter ? await resolveImageToDataUri(req.referenceAfter) : null;
+
+    const chain = await runImageChain({
+      carDataUri,
+      partDataUris,
+      referenceDataUri,
+      prompt: promptUsed,
+      mode: req.mode || 'fitment',
+    });
+
+    if (chain.ok) {
+      return {
+        providerUsed: PROVIDER_LABEL[chain.provider],
+        modelUsed: chain.model,
+        liveApiActive: true,
+        afterImageUrl: chain.image,
         promptUsed,
-        req.mode || 'fitment',
-        referenceDataUri
-      );
-      if (falUrl) {
-        return {
-          providerUsed: 'fal-ai',
-          liveApiActive: true,
-          afterImageUrl: falUrl,
-          promptUsed,
-          durationMs: Date.now() - startMs,
-        };
-      }
+        durationMs: Date.now() - startMs,
+      };
     }
-
-    // Priority 2: Google Gemini Multimodal Image Editing (Car + Exact Part Reference Images)
-    if (geminiKey.length > 8) {
-      const geminiUrl = await runGeminiMultimodalFitment(
-        geminiKey,
-        carDataUri,
-        partDataUris,
-        promptUsed,
-        referenceDataUri
-      );
-      if (geminiUrl) {
-        return {
-          providerUsed: 'gemini-ai',
-          liveApiActive: true,
-          afterImageUrl: geminiUrl,
-          promptUsed,
-          durationMs: Date.now() - startMs,
-        };
-      }
-    }
-
-    // Priority 3: OpenAI Image Generation
-    if (openAiKey.length > 8) {
-      const openAiUrl = await runOpenAiFitment(openAiKey, promptUsed);
-      if (openAiUrl) {
-        return {
-          providerUsed: 'openai',
-          liveApiActive: true,
-          afterImageUrl: openAiUrl,
-          promptUsed,
-          durationMs: Date.now() - startMs,
-        };
-      }
-    }
+    console.warn(
+      'AI image chain failed:',
+      chain.reason,
+      chain.attempts.map((a) => `${a.provider}:${a.model}=${a.kind}`).join(', ')
+    );
+    return {
+      providerUsed: 'local-neural-compositor',
+      liveApiActive: false,
+      afterImageUrl: null,
+      promptUsed,
+      durationMs: Date.now() - startMs,
+      outcome: chain.reason === 'busy' ? 'busy' : 'failed',
+    };
   }
 
   return {
@@ -461,8 +270,7 @@ export async function executeDirectAiFitment(
     afterImageUrl: null,
     promptUsed,
     durationMs: Date.now() - startMs,
-    // 'no_provider' = no API key configured (demo mode); 'failed' = providers were tried and all failed;
-    // 'invalid_image' = the car photo was rejected by validation.
-    outcome: !carDataUri ? 'invalid_image' : providerConfigured ? 'failed' : 'no_provider',
+    // 'no_provider' = no API key configured (demo mode); 'invalid_image' = car photo rejected by validation.
+    outcome: !carDataUri ? 'invalid_image' : 'no_provider',
   };
 }
