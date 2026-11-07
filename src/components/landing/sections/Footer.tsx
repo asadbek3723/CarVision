@@ -35,7 +35,7 @@ export function Footer() {
   const tNav = useTranslations('landing.nav');
   return (
     <footer className="mx-auto max-w-7xl px-6 pb-10 select-none">
-      <div className="grid grid-cols-2 gap-10 border-t border-border pt-14 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+      <div className="grid grid-cols-2 gap-10 pt-14 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
         <div className="col-span-2 md:col-span-1">
           <LogoWithText />
           <p className="mt-6 max-w-xs text-sm text-muted-foreground">
@@ -79,14 +79,14 @@ export function Footer() {
         ))}
       </div>
 
-      <div className="mt-14 flex flex-col items-center justify-between gap-6 border-t border-border pt-8 sm:flex-row">
+      <div className="mt-14 flex flex-col items-center justify-between gap-6 pt-8 sm:flex-row">
         <div className="flex gap-3">
           {SOCIAL_LINKS.map(({ icon: Icon, label }) => (
             <a
               key={label}
               href="#"
               aria-label={label}
-              className="glass grid h-11 w-11 place-items-center rounded-full border border-border text-muted-foreground transition-all duration-500 hover:-translate-y-1 hover:border-primary/60 hover:text-primary hover:shadow-gold"
+              className="glass grid h-11 w-11 place-items-center rounded-full text-muted-foreground transition-all duration-500 hover:-translate-y-1  hover:text-primary hover:shadow-gold"
             >
               <Icon className="h-4 w-4" />
             </a>

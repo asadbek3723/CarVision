@@ -83,8 +83,8 @@ export default function SellerRedeemVoucherPage() {
     </VeloceShell>
   );
 
-  if (isLoading) return shell(<div className="flex justify-center py-24"><Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" /></div>);
-  if (!user) return shell(<div className="mt-10 text-center"><Link href={`/${locale}/login`} className="inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link></div>);
+  if (isLoading) return shell(<div className="flex justify-center py-24"><Loader2 className="h-7 w-7 animate-spin text-gold-500" /></div>);
+  if (!user) return shell(<div className="mt-10 text-center"><Link href={`/${locale}/login`} className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link></div>);
   if (!unlocked) return shell(<StudioLock feature="redeem" />);
 
   const pending = recent.filter((o) => o.status === 'verified');
@@ -111,7 +111,7 @@ export default function SellerRedeemVoucherPage() {
             autoCapitalize="characters"
             className="min-w-0 flex-1 rounded-2xl bg-white/[0.07] px-4 py-3.5 font-mono text-lg tracking-wider text-white outline-none placeholder:text-sm placeholder:tracking-normal placeholder:text-white/30 focus:bg-white/[0.1]"
           />
-          <button type="submit" disabled={searching} className="flex shrink-0 items-center gap-2 rounded-2xl bg-[#D4AE62] px-5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-60">
+          <button type="submit" disabled={searching} className="flex shrink-0 items-center gap-2 rounded-2xl bg-gold-500 px-5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-60">
             {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             <span className="hidden sm:inline">{t('check')}</span>
           </button>
@@ -123,9 +123,9 @@ export default function SellerRedeemVoucherPage() {
 
       {!match && (
         <section className="mt-8">
-          <h2 className="mb-3 text-sm font-bold text-white">{t('waiting')} {pending.length > 0 && <span className="text-[#D4AE62]">({pending.length})</span>}</h2>
+          <h2 className="mb-3 text-sm font-bold text-white">{t('waiting')} {pending.length > 0 && <span className="text-gold-500">({pending.length})</span>}</h2>
           {loadingRecent ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#D4AE62]" /></div>
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-gold-500" /></div>
           ) : pending.length === 0 ? (
             <p className="rounded-3xl bg-white/[0.03] px-5 py-8 text-center text-sm text-white/50">{t('noWaiting')}</p>
           ) : (
@@ -137,7 +137,7 @@ export default function SellerRedeemVoucherPage() {
                       <span className="block truncate text-sm font-semibold text-white">{o.customerName}</span>
                       <span className="block text-xs text-white/45">#{o.orderNumber} · {formatDate(o.appointmentDate)}</span>
                     </span>
-                    <span className="shrink-0 font-mono text-sm font-bold text-[#D4AE62]">{o.voucherCode}</span>
+                    <span className="shrink-0 font-mono text-sm font-bold text-gold-500">{o.voucherCode}</span>
                   </button>
                 </li>
               ))}

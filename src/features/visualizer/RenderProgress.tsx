@@ -51,10 +51,10 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
 
       <header className="relative z-10 flex items-center justify-between px-5 py-4 md:px-10 md:py-6">
         <span className="text-[11px] font-semibold uppercase tracking-[0.42em] text-white/70">
-          Car<span className="text-[#D4AE62]">Vision</span>
+          Car<span className="text-gold-500">Vision</span>
         </span>
         {!running && (
-          <button type="button" onClick={onClose} aria-label={t('close')} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/70 transition hover:border-white/25 hover:text-white">
+          <button type="button" onClick={onClose} aria-label={t('close')} className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition hover:text-white">
             <X className="h-4 w-4" />
           </button>
         )}
@@ -62,7 +62,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
 
       <main className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 content-center gap-8 px-5 pb-10 md:px-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-center lg:gap-14">
         {/* Photo under a slow scan line */}
-        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0B0D13] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]">
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-[#0B0D13] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]">
           {backdrop && <img src={backdrop} alt="" className={`h-full w-full object-cover transition duration-700 ${running ? 'opacity-60 saturate-[0.8]' : 'opacity-90'}`} />}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#07080B]/70 via-transparent to-[#07080B]/20" aria-hidden />
           {running && !reduce && (
@@ -76,7 +76,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           )}
           {/* Corner marks */}
           {['start-4 top-4 border-s border-t rounded-tl-md', 'end-4 top-4 border-e border-t rounded-tr-md', 'start-4 bottom-4 border-s border-b rounded-bl-md', 'end-4 bottom-4 border-e border-b rounded-br-md'].map((c) => (
-            <span key={c} aria-hidden className={`pointer-events-none absolute h-5 w-5 border-white/40 ${c}`} />
+            <span key={c} aria-hidden className={`pointer-events-none absolute h-5 w-5 ${c}`} />
           ))}
         </div>
 
@@ -85,13 +85,13 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           <div className="flex items-end justify-between gap-4">
             <p className="text-6xl font-extralight leading-none tabular-nums text-white md:text-7xl">
               {percent}
-              <span className="ms-1 text-2xl text-[#D4AE62]">%</span>
+              <span className="ms-1 text-2xl text-gold-500">%</span>
             </p>
-            {demo && <span className="mb-1 rounded-full border border-amber-400/30 px-3 py-1 text-[11px] text-amber-200">{t('demoNotice')}</span>}
+            {demo && <span className="mb-1 rounded-full bg-amber-400/10 px-3 py-1 text-[11px] text-amber-200">{t('demoNotice')}</span>}
           </div>
 
           <div className="mt-5 h-px w-full overflow-hidden bg-white/10" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
-            <motion.div className="h-full bg-gradient-to-r from-[#D4AE62] to-[#F1D790]" animate={{ width: `${percent}%` }} transition={{ duration: 0.6, ease: EASE }} />
+            <motion.div className="h-full bg-gradient-to-r from-gold-500 to-[#F1D790]" animate={{ width: `${percent}%` }} transition={{ duration: 0.6, ease: EASE }} />
           </div>
 
           <div className="mt-5 min-h-[3.25rem]" aria-live="polite">
@@ -111,18 +111,18 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           </div>
 
           {/* One quiet row per car side */}
-          <ul className="mt-4 divide-y divide-white/[0.06] border-y border-white/[0.06]" aria-label={t('angles')}>
+          <ul className="mt-4 divide-y divide-white/[0.06] " aria-label={t('angles')}>
             {states.map((s) => (
               <li key={s.id} className="flex items-center gap-3.5 py-3">
                 <span
                   className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                    s.status === 'done' ? 'border-[#D4AE62] bg-[#D4AE62] text-black' : s.status === 'failed' ? 'border-red-400/60 text-red-300' : s.status === 'rendering' ? 'border-[#D4AE62]/30' : 'border-white/15'
-                  }`}
+ s.status === 'done' ? 'border-gold-500 bg-gold-500 text-black' : s.status === 'failed' ? 'border-red-400/60 text-red-300' : s.status === 'rendering' ? '' : ''
+ }`}
                 >
                   {s.status === 'done' && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
                   {s.status === 'failed' && <AlertTriangle className="h-3 w-3" />}
                   {s.status === 'rendering' && (
-                    <span aria-hidden className={`absolute -inset-px rounded-full border border-transparent border-t-[#D4AE62] ${reduce ? '' : 'animate-spin'}`} style={{ animationDuration: '1.2s' }} />
+                    <span aria-hidden className={`absolute -inset-px rounded-full border border-transparent border-t-gold-500 ${reduce ? '' : 'animate-spin'}`} style={{ animationDuration: '1.2s' }} />
                   )}
                 </span>
                 <span className={`min-w-0 flex-1 truncate text-sm transition-colors ${s.status === 'queued' || s.status === 'skipped' ? 'text-white/40' : 'text-white'}`}>{s.label}</span>
@@ -132,16 +132,16 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
 
           {/* Problems and actions */}
           {fatal && (
-            <div role="alert" className="mt-5 rounded-2xl border border-red-400/25 bg-red-500/[0.07] p-4">
+            <div role="alert" className="mt-5 rounded-2xl bg-red-500/[0.07] p-4">
               <p className="text-sm text-red-200">{apiError({ code: fatal.code, error: fatal.message }, t('errorFallback'))}</p>
               {(fatal.code === 'INSUFFICIENT_CREDITS' || fatal.code === 'PLAN_EXPIRED') && (
-                <Link href={`/${locale}/plans`} className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-[#D4AE62] px-6 text-sm font-bold text-black">
+                <Link href={`/${locale}/plans`} className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-gold-500 px-6 text-sm font-bold text-black">
                   {t('viewPlans')}
                   <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                 </Link>
               )}
               {fatal.code === 'UNAUTHENTICATED' && (
-                <Link href={`/${locale}/login`} className="mt-3 inline-flex h-11 items-center rounded-full bg-[#D4AE62] px-6 text-sm font-bold text-black">{t('login')}</Link>
+                <Link href={`/${locale}/login`} className="mt-3 inline-flex h-11 items-center rounded-full bg-gold-500 px-6 text-sm font-bold text-black">{t('login')}</Link>
               )}
             </div>
           )}
@@ -149,9 +149,9 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           {!running && failed.length > 0 && !fatal && (
             <div className="mt-5 space-y-2">
               {failed.map((f) => (
-                <div key={f.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.07] px-4 py-3">
+                <div key={f.id} className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3">
                   <span className="min-w-0 text-sm text-white/80">{f.label}: <span className="text-red-300">{apiError({ code: f.errorCode, error: f.error }, t('errorFallback'))}</span></span>
-                  <button type="button" onClick={() => onRetry(f.id)} className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10">
+                  <button type="button" onClick={() => onRetry(f.id)} className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10">
                     <RefreshCw className="h-3.5 w-3.5" />
                     {t('retry')}
                   </button>

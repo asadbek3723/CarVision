@@ -125,7 +125,7 @@ export function SellerDashboardView() {
   if (authLoading || (loading && isSeller)) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" />
+        <Loader2 className="h-7 w-7 animate-spin text-gold-500" />
       </div>
     );
   }
@@ -134,9 +134,9 @@ export function SellerDashboardView() {
 
   if (!user) {
     return (
-      <div className="mx-auto mt-10 max-w-md rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-6 text-center">
+      <div className="mx-auto mt-10 max-w-md rounded-3xl bg-[#0B0D13] p-6 text-center">
         <p className="text-sm text-white/80">{t('studioOnly')}</p>
-        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
+        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">
           {t('login')}
         </Link>
       </div>
@@ -152,19 +152,19 @@ export function SellerDashboardView() {
           <h1 className="text-xl font-bold text-white md:text-2xl">{user.shop?.shop_name ?? t('defaultName')}</h1>
         </div>
         <div className="flex w-full items-center gap-2.5 sm:w-auto">
-          <div className="flex h-12 items-center gap-2.5 rounded-full border border-[#D4AE62]/30 bg-gradient-to-b from-[#D4AE62]/[0.14] to-[#D4AE62]/[0.04] ps-2 pe-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#D4AE62]/20 text-[#D4AE62]">
+          <div className="flex h-12 items-center gap-2.5 rounded-full bg-gradient-to-b from-gold-500/[0.14] to-gold-500/[0.04] ps-2 pe-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-500/20 text-gold-500">
               <Coins className="h-4 w-4" />
             </span>
             <span className="flex flex-col leading-none">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#D4AE62]/90">{t('credits')}</span>
+              <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-gold-500/90">{t('credits')}</span>
               <span className="mt-1 text-base font-bold tabular-nums text-white">{user.role === 'super_admin' ? '∞' : user.credits_balance}</span>
             </span>
           </div>
           <button
             type="button"
             onClick={openCamera}
-            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-5 text-sm font-semibold text-white transition hover:border-white/20 hover:bg-white/[0.09] active:scale-[0.98] sm:flex-none"
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-white/[0.05] px-5 text-sm font-semibold text-white transition hover:bg-white/[0.09] active:scale-[0.98] sm:flex-none"
           >
             <Camera className="h-4 w-4" />
             <span className="hidden sm:inline">{t('takePhoto')}</span>
@@ -187,8 +187,8 @@ export function SellerDashboardView() {
           { label: t('statOut'), value: lowStock, icon: Sparkles },
           { label: t('statOrders'), value: leads.length, icon: Users },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-white/[0.07] bg-[#0B0D13] p-4">
-            <s.icon className="h-4 w-4 text-[#D4AE62]" />
+          <div key={s.label} className="rounded-2xl bg-[#0B0D13] p-4">
+            <s.icon className="h-4 w-4 text-gold-500" />
             <p className="mt-2 text-2xl font-bold text-white">{s.value}</p>
             <p className="text-xs text-white/50">{s.label}</p>
           </div>
@@ -196,7 +196,7 @@ export function SellerDashboardView() {
       </div>
 
       {error && (
-        <p role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">
           <span>{error}</span>
           <button type="button" onClick={() => void load()} className="shrink-0 text-xs font-semibold underline">{t('reload')}</button>
         </p>
@@ -224,16 +224,16 @@ export function SellerDashboardView() {
       {tab === 'parts' && (
         <div className="mt-4 space-y-3">
           {items.length === 0 && (
-            <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center">
+            <div className="rounded-3xl border border-dashed p-10 text-center">
               <p className="text-sm text-white/70">{t('emptyParts')}</p>
-              <Link href={`/${locale}/seller/new-part`} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-xs font-bold text-black">
+              <Link href={`/${locale}/seller/new-part`} className="mt-4 inline-flex items-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-xs font-bold text-black">
                 <Plus className="h-4 w-4" />
                 {t('addProduct')}
               </Link>
             </div>
           )}
           {items.map((item) => (
-            <article key={item.id} className="flex flex-col gap-4 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-4 sm:flex-row sm:items-center">
+            <article key={item.id} className="flex flex-col gap-4 rounded-3xl bg-[#0B0D13] p-4 sm:flex-row sm:items-center">
               <div className="h-24 w-full shrink-0 overflow-hidden rounded-2xl bg-black sm:w-32">
                 {item.coverImageUrl && (
                   <img src={item.coverImageUrl} alt={item.name} className="h-full w-full object-cover" />
@@ -254,7 +254,7 @@ export function SellerDashboardView() {
                   {item.isUniversal ? t('allCars') : item.fitment.map((f) => f.label).slice(0, 3).join(', ')}
                   {!item.isUniversal && item.fitment.length > 3 ? ` +${item.fitment.length - 3}` : ''}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#D4AE62]">
+                <p className="mt-1 text-sm font-semibold text-gold-500">
                   {item.inputPrice !== null
                     ? `${new Intl.NumberFormat(intlLocale).format(item.inputPrice)} ${item.inputCurrency}`
                     : formatPrice(item.priceUSD, 'USD')}
@@ -290,24 +290,24 @@ export function SellerDashboardView() {
 
       {tab === 'leads' && (
         <div className="mt-4 space-y-3">
-          <Link href={`/${locale}/seller/redeem`} className="flex items-center justify-between rounded-3xl bg-[#D4AE62]/15 px-5 py-4 text-sm font-bold text-[#D4AE62] hover:bg-[#D4AE62]/25">
+          <Link href={`/${locale}/seller/redeem`} className="flex items-center justify-between rounded-3xl bg-gold-500/15 px-5 py-4 text-sm font-bold text-gold-500 hover:bg-gold-500/25">
             {t('redeem')}
             <span aria-hidden>→</span>
           </Link>
           {leads.length === 0 && (
-            <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-sm text-white/60">
+            <div className="rounded-3xl border border-dashed p-10 text-center text-sm text-white/60">
               {t('emptyLeads')}
             </div>
           )}
           {leads.map((lead) => (
-            <article key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-4">
+            <article key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-[#0B0D13] p-4">
               <Link href={`/${locale}/seller/orders/${lead.id}`} className="block min-w-0 hover:opacity-80">
                 <p className="text-sm font-bold text-white">{lead.customerName}</p>
                 <p className="text-xs text-white/50">{lead.partName}</p>
                 <p className="mt-1 text-xs text-white/40">{t('code', { code: lead.voucherCode })}</p>
               </Link>
               <div className="text-end">
-                <p className="text-sm font-semibold text-[#D4AE62]">{formatPrice(lead.totalPriceUSD, 'USD')}</p>
+                <p className="text-sm font-semibold text-gold-500">{formatPrice(lead.totalPriceUSD, 'USD')}</p>
                 <p className="text-[11px] text-white/45">{t('deposit', { amount: formatPrice(lead.depositUSD, 'USD') })}</p>
               </div>
               <a href={`tel:${lead.customerPhone}`} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">

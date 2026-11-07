@@ -131,7 +131,7 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-6 backdrop-blur-xl">
-      <div className="relative w-full max-w-4xl rounded-[28px] border border-white/10 bg-[#0B0D13] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
+      <div className="relative w-full max-w-4xl rounded-[28px] bg-[#0B0D13] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
         <button type="button" onClick={onClose} aria-label={t('close')} className="absolute end-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20">
           <X className="h-4 w-4" />
         </button>
@@ -153,7 +153,7 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
               )}
             </div>
             <p className="mt-4 flex items-center gap-2 text-xs text-white/60">
-              <span className={`h-2.5 w-2.5 rounded-full ${status === 'captured' ? 'bg-emerald-400' : status === 'connected' ? 'bg-[#D4AE62]' : 'animate-pulse bg-amber-400'}`} />
+              <span className={`h-2.5 w-2.5 rounded-full ${status === 'captured' ? 'bg-emerald-400' : status === 'connected' ? 'bg-gold-500' : 'animate-pulse bg-amber-400'}`} />
               {status === 'captured' ? t('statusCaptured') : status === 'connected' ? t('statusConnected') : t('statusWaiting')}
             </p>
             {url && (
@@ -183,9 +183,9 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
               onDrop={(e) => { e.preventDefault(); setDragging(false); void handleFile(e.dataTransfer.files?.[0]); }}
-              className={`mt-5 flex h-[272px] w-full flex-col items-center justify-center gap-3 rounded-3xl border border-dashed transition ${dragging ? 'border-[#D4AE62] bg-[#D4AE62]/10' : 'border-white/20 bg-white/[0.02] hover:bg-white/[0.05]'}`}
+              className={`mt-5 flex h-[272px] w-full flex-col items-center justify-center gap-3 rounded-3xl border border-dashed transition ${dragging ? 'border-gold-500 bg-gold-500/10' : ' bg-white/[0.02] hover:bg-white/[0.05]'}`}
             >
-              {busy ? <Loader2 className="h-10 w-10 animate-spin text-[#D4AE62]" /> : <ImagePlus className="h-10 w-10 text-[#D4AE62]" />}
+              {busy ? <Loader2 className="h-10 w-10 animate-spin text-gold-500" /> : <ImagePlus className="h-10 w-10 text-gold-500" />}
               <span className="text-sm font-semibold text-white">{t('dropHint')}</span>
               <span className="text-xs text-white/40">{t('formats')}</span>
             </button>

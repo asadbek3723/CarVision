@@ -93,7 +93,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
   };
 
   return (
-    <article className="rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5">
+    <article className="rounded-3xl bg-[#0B0D13] p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-mono text-sm font-bold text-white">#{booking.bookingNumber}</p>
         <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${status.cls}`}>{t(status.key)}</span>
@@ -112,14 +112,14 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
         ))}
       </ul>
 
-      <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
+      <div className="mt-4 flex items-end justify-between pt-4">
         <div>
           <p className="text-[11px] text-white/45">{t('totalAtWorkshop')}</p>
           <p className="text-lg font-bold text-white">{formatPrice(booking.totalUSD)}</p>
         </div>
         <div className="text-end">
           <p className="text-[11px] text-white/45">{t('deposit')}</p>
-          <p className="text-lg font-bold text-[#D4AE62]">{new Intl.NumberFormat(locale, { style: 'currency', currency: 'UZS', maximumFractionDigits: 0 }).format(booking.depositUZS)}</p>
+          <p className="text-lg font-bold text-gold-500">{new Intl.NumberFormat(locale, { style: 'currency', currency: 'UZS', maximumFractionDigits: 0 }).format(booking.depositUZS)}</p>
           <p className="text-[11px] text-white/40">≈ {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(booking.depositUSD)}</p>
         </div>
       </div>
@@ -149,7 +149,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
             type="button"
             disabled={uploading || !payment.configured}
             onClick={() => fileRef.current?.click()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {uploading ? t('sending') : t('send')}
@@ -171,7 +171,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
       )}
 
       {booking.workshop.unlocked && (
-        <div className="mt-5 space-y-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4">
+        <div className="mt-5 space-y-3 rounded-2xl bg-emerald-500/[0.06] p-4">
           <p className="flex items-center gap-2 text-sm font-bold text-emerald-300">
             <Check className="h-4 w-4" />
             {t('unlockedTitle')}
@@ -179,18 +179,18 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
           <p className="text-base font-bold text-white">{booking.workshop.name}</p>
           {booking.workshop.address && (
             <p className="flex items-start gap-2 text-sm text-white/75">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AE62]" />
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
               {booking.workshop.address}
             </p>
           )}
           {booking.workshop.phone && (
             <a href={`tel:${booking.workshop.phone}`} className="flex items-center gap-2 text-sm text-white/85 hover:text-white">
-              <Phone className="h-4 w-4 text-[#D4AE62]" />
+              <Phone className="h-4 w-4 text-gold-500" />
               {booking.workshop.phone}
             </a>
           )}
           {booking.workshop.lat !== undefined && booking.workshop.lat !== 0 && (
-            <a href={`https://www.google.com/maps?q=${booking.workshop.lat},${booking.workshop.lng}`} target="_blank" rel="noreferrer" className="inline-block text-xs font-semibold text-[#D4AE62] underline">
+            <a href={`https://www.google.com/maps?q=${booking.workshop.lat},${booking.workshop.lng}`} target="_blank" rel="noreferrer" className="inline-block text-xs font-semibold text-gold-500 underline">
               {t('openMap')}
             </a>
           )}

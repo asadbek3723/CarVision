@@ -218,8 +218,8 @@ function CountryPicker({
               transition={{ delay: idx * 0.025 }}
               onClick={() => onPick(item)}
               className={`flex w-full cursor-pointer items-center gap-3.5 rounded-2xl px-4 py-3 text-start transition ${
-                isSelected ? 'bg-[#D4AE62]/15' : 'bg-white/[0.05] hover:bg-white/[0.09]'
-              }`}
+ isSelected ? 'bg-gold-500/15' : 'bg-white/[0.05] hover:bg-white/[0.09]'
+ }`}
             >
               <span className="text-xl">{item.flag}</span>
               <span className="flex-1 text-[14px] text-foreground">
@@ -227,7 +227,7 @@ function CountryPicker({
               </span>
               <span className="text-xs text-foreground/55">{item.code}</span>
               {isSelected ? (
-                <Check className="h-4 w-4 text-[#D4AE62]" />
+                <Check className="h-4 w-4 text-gold-500" />
               ) : (
                 <ChevronRight className="h-3.5 w-3.5 text-foreground/40 rtl:rotate-180" />
               )}
@@ -281,13 +281,13 @@ function RolePicker({
             whileHover={{ y: -2 }}
             onClick={() => onPick(item.id)}
             className={`group flex w-full cursor-pointer items-center gap-4 rounded-3xl p-5 text-start transition ${
-              isSelected ? 'bg-[#D4AE62]/15' : 'bg-white/[0.05] hover:bg-white/[0.09]'
-            }`}
+ isSelected ? 'bg-gold-500/15' : 'bg-white/[0.05] hover:bg-white/[0.09]'
+ }`}
           >
             <span
               className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl transition ${
-                isSelected ? 'bg-[#D4AE62] text-black' : 'bg-[#D4AE62]/15 text-[#D4AE62]'
-              }`}
+ isSelected ? 'bg-gold-500 text-black' : 'bg-gold-500/15 text-gold-500'
+ }`}
             >
               <IconComponent className="h-6 w-6" strokeWidth={1.8} />
             </span>
@@ -299,7 +299,7 @@ function RolePicker({
                 {item.desc}
               </span>
             </span>
-            <ChevronRight className="h-4 w-4 text-white/40 transition group-hover:translate-x-1 group-hover:text-[#D4AE62] rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+            <ChevronRight className="h-4 w-4 text-white/40 transition group-hover:translate-x-1 group-hover:text-gold-500 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
           </motion.button>
         );
       })}

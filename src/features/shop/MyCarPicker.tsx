@@ -48,7 +48,7 @@ export function MyCarPicker() {
   if (car && !open) {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AE62]/40 bg-[#D4AE62]/10 px-4 py-2 text-xs font-semibold text-[#D4AE62]">
+        <span className="inline-flex items-center gap-2 rounded-full bg-gold-500/10 px-4 py-2 text-xs font-semibold text-gold-500">
           <Car className="h-4 w-4" />
           {car.label}
           {car.year ? ` · ${car.year}` : ''}
@@ -65,15 +65,15 @@ export function MyCarPicker() {
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-4 py-2 text-xs font-semibold text-white/85 transition hover:border-primary">
-        <Car className="h-4 w-4 text-[#D4AE62]" />
+      <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-white/85 transition hover:bg-white/[0.06]">
+        <Car className="h-4 w-4 text-gold-500" />
         {t('chip')}
       </button>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0B0D13] p-4">
+    <div className="rounded-2xl bg-[#0B0D13] p-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-white">{t('pickTitle')}</p>
         <button type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
@@ -87,7 +87,7 @@ export function MyCarPicker() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('searchPlaceholder')}
-          className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2.5 ps-9 pe-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#D4AE62]/60"
+          className="w-full rounded-xl bg-white/[0.04] py-2.5 ps-9 pe-3 text-sm text-white outline-none placeholder:text-white/35 "
         />
       </div>
       <input
@@ -98,10 +98,10 @@ export function MyCarPicker() {
         value={year}
         onChange={(e) => setYear(e.target.value)}
         placeholder={t('yearPlaceholder')}
-        className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#D4AE62]/60"
+        className="mt-2 w-full rounded-xl bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/35 "
       />
       {query.trim().length >= 2 && (
-        <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-white/10">
+        <div className="mt-2 max-h-56 overflow-y-auto rounded-xl ">
           {loading && <p className="px-3 py-3 text-xs text-white/50">{t('searching')}</p>}
           {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">{t('notFound')}</p>}
           {results.map((r) => (

@@ -35,10 +35,10 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between bg-[#0B0C10] p-4 md:flex">
         <div>
           <div className="flex items-center gap-3 px-2 py-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#D4AE62]/15 text-[#D4AE62]"><Shield className="h-5 w-5" /></span>
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-500"><Shield className="h-5 w-5" /></span>
             <div>
               <p className="text-sm font-bold tracking-wider">CARVISION</p>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#D4AE62]">Admin</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gold-500">Admin</p>
             </div>
           </div>
           <nav className="mt-6 space-y-1" aria-label={t('sections')}>
@@ -48,7 +48,7 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
                 type="button"
                 onClick={() => onTabChange(n.id)}
                 aria-current={activeTab === n.id ? 'page' : undefined}
-                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-start text-sm font-semibold transition ${activeTab === n.id ? 'bg-[#D4AE62]/15 text-[#D4AE62]' : 'text-white/60 hover:bg-white/[0.05] hover:text-white'}`}
+                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-start text-sm font-semibold transition ${activeTab === n.id ? 'bg-gold-500/15 text-gold-500' : 'text-white/60 hover:bg-white/[0.05] hover:text-white'}`}
               >
                 <n.icon className="h-[18px] w-[18px]" />
                 <span className="flex-1">{t(n.label)}</span>
@@ -73,7 +73,7 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
         {/* Mobile top bar */}
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 bg-[#07080B]/90 px-4 py-3 backdrop-blur-xl md:hidden">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#D4AE62]/15 text-[#D4AE62]"><active.icon className="h-[18px] w-[18px]" /></span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold-500/15 text-gold-500"><active.icon className="h-[18px] w-[18px]" /></span>
             <span className="truncate text-sm font-bold">{t(active.label)}</span>
           </div>
           <button type="button" onClick={onLock} aria-label={t('lock')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80">
@@ -92,7 +92,7 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
             type="button"
             onClick={() => onTabChange(n.id)}
             aria-current={activeTab === n.id ? 'page' : undefined}
-            className={`relative flex flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold transition ${activeTab === n.id ? 'text-[#D4AE62]' : 'text-white/50'}`}
+            className={`relative flex flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold transition ${activeTab === n.id ? 'text-gold-500' : 'text-white/50'}`}
           >
             <span className="relative">
               <n.icon className="h-5 w-5" />

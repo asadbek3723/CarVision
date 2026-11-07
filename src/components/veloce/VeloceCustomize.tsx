@@ -399,7 +399,7 @@ export function VeloceCustomize() {
         <Link
           href={isSeller ? `/${locale}/seller?tab=dashboard` : `/${locale}/shop`}
           aria-label={t('back')}
-          className="grid h-11 w-11 place-items-center rounded-full text-white/80 transition hover:bg-white/[0.07] hover:text-white lg:border lg:border-white/15 lg:bg-white/[0.02]"
+          className="grid h-11 w-11 place-items-center rounded-full text-white/80 transition hover:bg-white/[0.07] hover:text-white lg:bg-white/[0.02]"
         >
           <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
         </Link>
@@ -415,7 +415,7 @@ export function VeloceCustomize() {
           type="button"
           onClick={openCamera}
           aria-label={t('refreshPhoto')}
-          className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-[#D4AE62] transition hover:bg-[#D4AE62]/10 lg:hidden"
+          className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-gold-500 transition hover:bg-gold-500/10 lg:hidden"
         >
           <Camera className="h-[18px] w-[18px]" />
           <span className="tabular-nums">{capturedAnglesCount}/5</span>
@@ -424,7 +424,7 @@ export function VeloceCustomize() {
 
       <div className="mt-2 min-h-[130px] flex-1 lg:mt-3 lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
       {/* Car viewport */}
-      <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] border border-white/[0.08] lg:mt-0 bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
+      <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] lg:mt-0 bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(212,174,98,0.10),transparent_70%)] lg:hidden" />
         <div
           ref={sliderRef}
@@ -457,19 +457,19 @@ export function VeloceCustomize() {
               />
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-y-0 z-[2] w-0.5 bg-[#D4AE62] shadow-[0_0_20px_rgba(212,174,98,0.9)]"
+                className="pointer-events-none absolute inset-y-0 z-[2] w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(212,174,98,0.9)]"
                 style={{ insetInlineStart: `${sliderPos}%`, transform: 'translateX(-50%)' }}
               >
-                <div className="absolute start-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#D4AE62] text-sm font-black text-black shadow-[0_0_24px_rgba(212,174,98,0.9)]">‹ ›</div>
+                <div className="absolute start-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_24px_rgba(212,174,98,0.9)]">‹ ›</div>
               </div>
               <span className="pointer-events-none absolute start-3 top-3 z-[3] rounded-full bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/85 backdrop-blur-md">{t('before')}</span>
-              <span className="pointer-events-none absolute end-3 top-3 z-[3] rounded-full bg-[#D4AE62] px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-black">{t('after')}</span>
+              <span className="pointer-events-none absolute end-3 top-3 z-[3] rounded-full bg-gold-500 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-black">{t('after')}</span>
               <button
                 type="button"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => void saveAfter()}
                 aria-label={tr('download')}
-                className="absolute end-3 top-12 z-[3] grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-black/65 text-[#D4AE62] backdrop-blur-md transition hover:bg-black/85"
+                className="absolute end-3 top-12 z-[3] grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-black/65 text-gold-500 backdrop-blur-md transition hover:bg-black/85"
               >
                 <Download className="h-[18px] w-[18px]" />
               </button>
@@ -487,7 +487,7 @@ export function VeloceCustomize() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => stepAngle(-1)}
             aria-label={tr('prevAngle')}
-            className="absolute start-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:start-6 lg:h-12 lg:w-12 lg:border lg:border-white/15 lg:bg-black/40"
+            className="absolute start-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:start-6 lg:h-12 lg:w-12 lg:bg-black/40"
           >
             <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
           </button>
@@ -496,7 +496,7 @@ export function VeloceCustomize() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => stepAngle(1)}
             aria-label={tr('nextAngle')}
-            className="absolute end-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:end-6 lg:h-12 lg:w-12 lg:border lg:border-white/15 lg:bg-black/40"
+            className="absolute end-2 top-1/2 z-[3] grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:end-6 lg:h-12 lg:w-12 lg:bg-black/40"
           >
             <ChevronRight className="h-5 w-5 rtl:rotate-180" />
           </button>
@@ -513,9 +513,9 @@ export function VeloceCustomize() {
           )}
 
           {selectedProducts.length > 0 && !hasAfter && (
-            <div className="absolute start-3 top-3 z-[2] flex items-center gap-1.5 rounded-full bg-[#090A0F]/80 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md lg:start-5 lg:top-5 lg:gap-2.5 lg:border lg:border-white/12 lg:bg-black/30 lg:px-4 lg:py-2.5 lg:text-[13px] lg:font-medium">
-              <SlidersHorizontal className="h-3.5 w-3.5 text-[#D4AE62] lg:hidden" />
-              <span aria-hidden className="hidden h-2.5 w-2.5 rounded-full bg-[#D4AE62] lg:block" />
+            <div className="absolute start-3 top-3 z-[2] flex items-center gap-1.5 rounded-full bg-[#090A0F]/80 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md lg:start-5 lg:top-5 lg:gap-2.5 lg:bg-black/30 lg:px-4 lg:py-2.5 lg:text-[13px] lg:font-medium">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-gold-500 lg:hidden" />
+              <span aria-hidden className="hidden h-2.5 w-2.5 rounded-full bg-gold-500 lg:block" />
               {t('selectedCount', { count: selectedProducts.length })}
             </div>
           )}
@@ -532,13 +532,13 @@ export function VeloceCustomize() {
                   onClick={() => setActiveAngleId(ang.id)}
                   aria-pressed={isActive}
                   className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition lg:gap-2 lg:border lg:px-4 lg:py-2.5 lg:text-[13px] lg:font-medium ${
-                    isActive ? 'bg-[#D4AE62] text-black lg:border-[#D4AE62]' : 'text-white/70 hover:text-white lg:border-white/12 lg:bg-black/35'
+ isActive ? 'bg-gold-500 text-black lg:border-gold-500' : 'text-white/70 hover:text-white lg:bg-black/35'
                   }`}
                 >
                   <span aria-hidden className={`hidden h-2 w-2 rounded-full lg:block ${isActive ? 'bg-black/70' : hasCaptured ? 'bg-emerald-400' : 'bg-white/25'}`} />
                   <span>{t(`anglesShort.${ang.key}`)}</span>
                   {hasCaptured && <span className={`h-1.5 w-1.5 rounded-full lg:hidden ${isActive ? 'bg-black' : 'bg-emerald-400'}`} />}
-                  <span aria-hidden className={`hidden h-1.5 w-1.5 rounded-full lg:block ${isActive ? 'bg-black/60' : 'bg-[#D4AE62]'}`} />
+                  <span aria-hidden className={`hidden h-1.5 w-1.5 rounded-full lg:block ${isActive ? 'bg-black/60' : 'bg-gold-500'}`} />
                 </button>
               );
             })}
@@ -547,9 +547,9 @@ export function VeloceCustomize() {
       </div>
 
       {/* Desktop build panel: what is on the car right now, one part per slot */}
-      <aside className="mt-0 hidden min-h-0 flex-col rounded-[28px] border border-white/[0.08] bg-gradient-to-b from-[#14171F] to-[#0E1016] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.5)] lg:flex">
+      <aside className="mt-0 hidden min-h-0 flex-col rounded-[28px] bg-gradient-to-b from-[#14171F] to-[#0E1016] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.5)] lg:flex">
         <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-3 font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white"><span aria-hidden className="h-5 w-[3px] rounded-full bg-[#D4AE62]" />{t('yourBuild')}</h2>
+          <h2 className="flex items-center gap-3 font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white"><span aria-hidden className="h-5 w-[3px] rounded-full bg-gold-500" />{t('yourBuild')}</h2>
           <button
             type="button"
             onClick={() => setSelectedPartIds([])}
@@ -564,13 +564,13 @@ export function VeloceCustomize() {
         <ul className="mt-5 flex-1 space-y-3 overflow-y-auto pe-1">
           {selectedProducts.length === 0 && <li className="py-6 text-center text-sm text-white/45">{t('pickParts')}</li>}
           {selectedProducts.map((p) => (
-            <li key={p.id} className="flex items-center gap-4 rounded-[20px] border border-white/[0.06] bg-white/[0.03] p-2.5">
+            <li key={p.id} className="flex items-center gap-4 rounded-[20px] bg-white/[0.03] p-2.5">
               <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-[#0E1016]">
                 {p.swatch ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[15px] font-medium text-white">{p.name}</span>
-                <span className="mt-0.5 block text-sm tabular-nums text-[#D4AE62]">{formatPrice(getUSDPrice(p.price))}</span>
+                <span className="mt-0.5 block text-sm tabular-nums text-gold-500">{formatPrice(getUSDPrice(p.price))}</span>
               </span>
               <button
                 type="button"
@@ -583,7 +583,7 @@ export function VeloceCustomize() {
             </li>
           ))}
         </ul>
-        <div className="mt-5 border-t border-white/[0.07] pt-5">
+        <div className="mt-5 pt-5">
           <div className="mb-4 flex items-center justify-between px-1 text-sm">
             <span className="text-white/45">{selectedProducts.length > 0 ? t('selectedCount', { count: selectedProducts.length }) : t('tapHint')}</span>
             {selectedProducts.length > 0 && (
@@ -603,7 +603,7 @@ export function VeloceCustomize() {
             type="button"
             onClick={saveConfig}
             disabled={selectedProducts.length === 0}
-            className="mt-4 inline-flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-[#D4AE62]/35 bg-black/20 text-[15px] font-medium uppercase tracking-[0.1em] text-[#F1E6CC] transition hover:border-[#D4AE62]/65 hover:bg-[#D4AE62]/[0.05] active:scale-[0.99] disabled:cursor-default disabled:opacity-40"
+            className="mt-4 inline-flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-black/20 text-[15px] font-medium uppercase tracking-[0.1em] text-[#F1E6CC] transition  hover:bg-gold-500/[0.05] active:scale-[0.99] disabled:cursor-default disabled:opacity-40"
           >
             {configSaved ? <Check className="h-5 w-5 text-emerald-400" /> : <Bookmark className="h-5 w-5" strokeWidth={1.6} />}
             <span>{configSaved ? t('configSaved') : t('saveConfig')}</span>
@@ -613,7 +613,7 @@ export function VeloceCustomize() {
       </div>
 
       {applyError && (
-        <div role="alert" className="mt-4 flex items-start justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div role="alert" className="mt-4 flex items-start justify-between gap-3 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">
           <span>{applyError}</span>
           <button type="button" onClick={() => setApplyError(null)} className="shrink-0 text-xs font-semibold text-red-100/80 hover:text-white">
             {t('close')}
@@ -622,7 +622,7 @@ export function VeloceCustomize() {
       )}
 
       {/* Category tabs */}
-      <div role="tablist" aria-label={t('subtitle')} className="mt-2 flex shrink-0 gap-6 overflow-x-auto border-b border-white/[0.07] px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
+      <div role="tablist" aria-label={t('subtitle')} className="mt-2 flex shrink-0 gap-6 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
         {CATEGORIES.map((cat) => {
           const active = activeCategory === cat.id;
           return (
@@ -633,8 +633,8 @@ export function VeloceCustomize() {
               aria-selected={active}
               onClick={() => setActiveCategory(cat.id)}
               className={`relative shrink-0 cursor-pointer py-2.5 text-[11px] font-medium uppercase tracking-[0.2em] transition-colors ${
-                active ? 'text-white' : 'text-white/40 hover:text-white/70'
-              }`}
+ active ? 'text-white' : 'text-white/40 hover:text-white/70'
+ }`}
             >
               {t(`categories.${cat.key}`)}
               <span className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-gold-gradient transition-transform duration-300 ${active ? 'scale-x-100' : 'scale-x-0'}`} />
@@ -659,7 +659,7 @@ export function VeloceCustomize() {
             </p>
             <Link
               href={isSeller ? (user?.plan?.isPaid ? `/${locale}/seller/new-part` : `/${locale}/plans`) : `/${locale}/shop`}
-              className="mt-5 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-xs font-bold text-black transition hover:brightness-110"
+              className="mt-5 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-xs font-bold text-black transition hover:brightness-110"
             >
               {isSeller ? (user?.plan?.isPaid ? t('ctaAddPart') : t('ctaPlans')) : t('ctaShop')}
             </Link>

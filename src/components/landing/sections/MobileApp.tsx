@@ -13,7 +13,7 @@ export function MobileApp() {
   const t = useTranslations('landing.app');
   return (
     <section id="app" className="relative mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-32 overflow-hidden">
-      <div className="reveal relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-primary/20 bg-card-lux shadow-lux w-full">
+      <div className="reveal relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] bg-card-lux shadow-lux w-full">
         <div className="absolute -start-40 top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
 
         <div className="relative grid w-full min-w-0 items-center gap-8 sm:gap-10 p-5 sm:p-16 lg:grid-cols-2">

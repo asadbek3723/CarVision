@@ -185,7 +185,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
               initial={reduce ? false : { opacity: 0, scale: 1.4 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, ease: EASE, delay: 0.2 }}
-              className={`absolute h-7 w-7 border-[#D4AE62] ${c}`}
+              className={`absolute h-7 w-7 border-gold-500 ${c}`}
             />
           ))}
 
@@ -193,14 +193,14 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
             <>
               <motion.div
                 aria-hidden
-                className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-[#D4AE62]/25 to-transparent"
+                className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-gold-500/25 to-transparent"
                 initial={{ top: '-30%' }}
                 animate={{ top: '100%' }}
                 transition={{ duration: 1.7, ease: 'easeInOut', repeat: Infinity }}
               />
               <motion.div
                 aria-hidden
-                className="absolute inset-x-0 h-px bg-[#D4AE62] shadow-[0_0_18px_3px_rgba(212,174,98,0.8)]"
+                className="absolute inset-x-0 h-px bg-gold-500 shadow-[0_0_18px_3px_rgba(212,174,98,0.8)]"
                 initial={{ top: '-5%' }}
                 animate={{ top: '100%' }}
                 transition={{ duration: 1.7, ease: 'easeInOut', repeat: Infinity }}
@@ -227,7 +227,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
           <AnimatePresence mode="wait">
             {phase === 'scan' && (
               <motion.div key="scan" {...fade} className="text-center">
-                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#D4AE62]">
+                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">
                   <Sparkles className="h-3.5 w-3.5" /> AI
                 </p>
                 <h2 className="mt-3 font-display text-2xl font-light text-white">{t('scanTitle')}</h2>
@@ -255,7 +255,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                         key={c.id}
                         type="button"
                         onClick={() => setPicked(c)}
-                        className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs transition ${c.id === picked.id ? 'bg-[#D4AE62] font-semibold text-black' : 'bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'}`}
+                        className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs transition ${c.id === picked.id ? 'bg-gold-500 font-semibold text-black' : 'bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'}`}
                       >
                         {c.label}
                       </button>
@@ -293,7 +293,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={t('searchPlaceholder')}
                     aria-label={t('searchLabel')}
-                    className="h-14 w-full rounded-2xl bg-white/[0.06] ps-11 pe-4 text-base text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/30 focus:ring-[#D4AE62]/60"
+                    className="h-14 w-full rounded-2xl bg-white/[0.06] ps-11 pe-4 text-base text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/30 focus:ring-gold-500/60"
                   />
                 </div>
                 <div className="mt-3 max-h-60 overflow-y-auto rounded-2xl">
@@ -317,7 +317,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                       className="flex w-full cursor-pointer items-center justify-between rounded-xl px-4 py-3.5 text-start text-sm text-white/90 transition hover:bg-white/[0.07]"
                     >
                       {r.label}
-                      <ChevronRight className="h-4 w-4 text-[#D4AE62]" />
+                      <ChevronRight className="h-4 w-4 text-gold-500" />
                     </motion.button>
                   ))}
                 </div>
@@ -350,7 +350,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
                   aria-label={t('yearLabel')}
-                  className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-[#D4AE62]"
+                  className="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-gold-500"
                 />
                 <div className="mt-1 flex justify-between text-[11px] tabular-nums text-white/35">
                   <span>{MIN_YEAR}</span>
@@ -362,7 +362,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                       key={y}
                       type="button"
                       onClick={() => setYear(y)}
-                      className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs tabular-nums transition ${year === y ? 'bg-[#D4AE62] font-semibold text-black' : 'bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'}`}
+                      className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs tabular-nums transition ${year === y ? 'bg-gold-500 font-semibold text-black' : 'bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'}`}
                     >
                       {y}
                     </button>
@@ -377,7 +377,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
             {phase === 'done' && picked && (
               <motion.div key="done" {...fade} className="text-center">
                 <h2 className="font-display text-2xl font-light text-white">
-                  {picked.label} <span className="text-[#D4AE62]">· {year}</span>
+                  {picked.label} <span className="text-gold-500">· {year}</span>
                 </h2>
                 <p className="mt-2 text-sm text-white/55">{t('preparing')}</p>
               </motion.div>

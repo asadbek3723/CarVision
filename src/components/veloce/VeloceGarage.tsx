@@ -61,7 +61,7 @@ export function VeloceGarage() {
   if (authLoading || loading) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" />
+        <Loader2 className="h-7 w-7 animate-spin text-gold-500" />
       </div>
     );
   }
@@ -72,7 +72,7 @@ export function VeloceGarage() {
     return (
       <div className="mx-auto mt-16 max-w-md px-5 text-center">
         <p className="text-sm text-white/70">{t('loginRequired')}</p>
-        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
+        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">
           {t('login')}
         </Link>
       </div>
@@ -83,12 +83,12 @@ export function VeloceGarage() {
     <div className="mx-auto max-w-6xl px-5 pb-28 pt-6 md:px-10 md:pt-10">
       <div className="flex flex-col gap-6 pb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-[#D4AE62]">{t('eyebrow')}</p>
+          <p className="text-xs font-medium uppercase tracking-widest text-gold-500">{t('eyebrow')}</p>
           <h1 className="mt-1 font-display text-2xl font-light text-white sm:text-4xl">{user?.shop?.shop_name ?? t('defaultName')}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={openCamera} className="flex cursor-pointer items-center gap-2 rounded-2xl bg-white/[0.06] px-5 py-3.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]">
-            <Camera className="h-4 w-4 text-[#D4AE62]" />
+            <Camera className="h-4 w-4 text-gold-500" />
             <span>{t('tryOnCustomer')}</span>
           </button>
           <Link href={`/${locale}/seller/new-part`} className="shimmer flex items-center gap-2 rounded-2xl bg-gold-gradient px-6 py-3.5 text-xs font-bold uppercase text-black shadow-[0_10px_28px_rgba(212,174,98,0.25)] transition hover:brightness-110">
@@ -101,7 +101,7 @@ export function VeloceGarage() {
       {error && <p role="alert" className="mb-6 text-sm text-red-300">{t('loadError')}</p>}
 
       {items.length === 0 && !error ? (
-        <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-sm text-white/60">
+        <div className="rounded-3xl border border-dashed p-10 text-center text-sm text-white/60">
           {t('empty')}
         </div>
       ) : (
@@ -112,7 +112,7 @@ export function VeloceGarage() {
                 key={cat}
                 type="button"
                 onClick={() => setActiveCategory(cat)}
-                className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs font-medium transition ${activeCategory === cat ? 'bg-[#D4AE62] font-semibold text-black' : 'bg-white/[0.04] text-white/65 hover:text-white'}`}
+                className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs font-medium transition ${activeCategory === cat ? 'bg-gold-500 font-semibold text-black' : 'bg-white/[0.04] text-white/65 hover:text-white'}`}
               >
                 {cat === ALL ? t('all') : tCat(cat)}
               </button>
@@ -127,7 +127,7 @@ export function VeloceGarage() {
                     {item.coverImageUrl && <img src={item.coverImageUrl} alt={item.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
                   </div>
                   <div className="mt-3">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D4AE62]">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gold-500">
                       <Car className="h-3.5 w-3.5" />
                       <span>{item.isUniversal ? t('allCars') : item.fitment[0]?.label ?? '—'}</span>
                     </span>
@@ -140,7 +140,7 @@ export function VeloceGarage() {
                   <Link href={`/${locale}/seller/new-part?id=${item.id}`} className="text-xs text-white/55 hover:text-white">
                     {t('edit')}
                   </Link>
-                  <Link href={`/${locale}/customize?partId=${encodeURIComponent(item.id)}`} className="text-xs font-semibold text-[#D4AE62] hover:underline">
+                  <Link href={`/${locale}/customize?partId=${encodeURIComponent(item.id)}`} className="text-xs font-semibold text-gold-500 hover:underline">
                     {t('tryOn')}
                   </Link>
                 </div>

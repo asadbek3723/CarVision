@@ -147,8 +147,8 @@ export default function LoginPage() {
           >
             <span
               className={`grid h-4 w-4 place-items-center rounded border transition-colors duration-300 ${
-                rememberMe
-                  ? 'border-gold bg-gold text-ink'
+ rememberMe
+ ? 'border-gold bg-gold text-ink'
                   : 'border-foreground/30 bg-transparent'
               }`}
             >

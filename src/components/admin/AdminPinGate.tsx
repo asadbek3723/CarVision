@@ -63,7 +63,7 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#07080B] p-5">
       <form onSubmit={submit} className="w-full max-w-sm rounded-[32px] bg-white/[0.04] p-7 text-center">
-        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#D4AE62]/15 text-[#D4AE62]"><Shield className="h-8 w-8" /></span>
+        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-gold-500/15 text-gold-500"><Shield className="h-8 w-8" /></span>
         <h1 className="mt-5 text-xl font-bold text-white">{t('title')}</h1>
         <p className="mt-1 text-sm text-white/50">{adminName}</p>
 
@@ -89,7 +89,7 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
           <p role="alert" className="mt-4 flex items-start justify-center gap-2 text-sm text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</p>
         ) : null}
 
-        <button type="submit" disabled={pin.length < 6 || submitting || lockedFor > 0} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-4 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-40">
+        <button type="submit" disabled={pin.length < 6 || submitting || lockedFor > 0} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-gold-500 py-4 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-40">
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           {t('submit')}
         </button>

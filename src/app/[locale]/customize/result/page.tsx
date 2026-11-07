@@ -220,18 +220,18 @@ export default function CustomizeResultPage() {
         {/* Action bar: edit on the left, downloads + video on the right */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 lg:mb-6">
           <button type="button" onClick={() => router.push(`/${locale}/customize`)} className={`${ghostBtn} -ms-3`}>
-            <ArrowLeft className="h-4 w-4 text-[#D4AE62] rtl:rotate-180" />
+            <ArrowLeft className="h-4 w-4 text-gold-500 rtl:rotate-180" />
             <span>{t('editParts')}</span>
           </button>
 
           <div className="flex items-center gap-1.5">
             <button type="button" onClick={handleDownloadImage} disabled={!hasResults} className={ghostBtn}>
-              <Download className="h-4 w-4 text-[#D4AE62]" />
+              <Download className="h-4 w-4 text-gold-500" />
               <span className="hidden sm:inline">{t('download')}</span>
             </button>
             {renderedAngles.length > 1 && (
               <button type="button" onClick={() => void handleDownloadAll()} className={ghostBtn}>
-                <Download className="h-4 w-4 text-[#D4AE62]" />
+                <Download className="h-4 w-4 text-gold-500" />
                 <span>{t('downloadAll', { count: renderedAngles.length })}</span>
               </button>
             )}
@@ -239,7 +239,7 @@ export default function CustomizeResultPage() {
               type="button"
               onClick={() => setIsVideoStudioOpen(true)}
               disabled={!hasResults}
-              className="ms-1 inline-flex items-center gap-2.5 rounded-full bg-[#D4AE62] px-6 py-3 text-xs font-extrabold text-black shadow-[0_12px_32px_-8px_rgba(212,174,98,0.5)] transition hover:brightness-110 active:scale-95 disabled:opacity-40 cursor-pointer md:text-sm"
+              className="ms-1 inline-flex items-center gap-2.5 rounded-full bg-gold-500 px-6 py-3 text-xs font-extrabold text-black shadow-[0_12px_32px_-8px_rgba(212,174,98,0.5)] transition hover:brightness-110 active:scale-95 disabled:opacity-40 cursor-pointer md:text-sm"
             >
               <Film className="h-4 w-4" />
               <span>{t('watchVideo')}</span>
@@ -251,7 +251,7 @@ export default function CustomizeResultPage() {
           <div className="flex min-h-[50dvh] flex-col items-center justify-center text-center">
             <p className="text-lg font-semibold text-white">{t('emptyTitle')}</p>
             <p className="mt-2 max-w-md text-sm text-[#A69F92]">{t('emptyBody')}</p>
-            <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="mt-6 rounded-full bg-[#D4AE62] px-8 py-3.5 text-sm font-bold text-black cursor-pointer">
+            <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="mt-6 rounded-full bg-gold-500 px-8 py-3.5 text-sm font-bold text-black cursor-pointer">
               {t('customize')}
             </button>
           </div>
@@ -317,16 +317,16 @@ export default function CustomizeResultPage() {
                 <div className="pointer-events-none absolute start-4 top-4 rounded-full bg-black/55 px-3.5 py-1.5 text-[11px] font-bold tracking-[0.14em] text-white/85 backdrop-blur-md">
                   {tf('rsBeforeBadge')}
                 </div>
-                <div className="pointer-events-none absolute end-4 top-4 rounded-full bg-[#D4AE62] px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.14em] text-black">
+                <div className="pointer-events-none absolute end-4 top-4 rounded-full bg-gold-500 px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.14em] text-black">
                   {tf('rsAfterBadge')}
                 </div>
 
                 {/* Slider handle */}
                 <div
-                  className="pointer-events-none absolute inset-y-0 w-0.5 bg-[#D4AE62] shadow-[0_0_20px_rgba(212,174,98,0.9)]"
+                  className="pointer-events-none absolute inset-y-0 w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(212,174,98,0.9)]"
                   style={{ insetInlineStart: `${sliderPos}%`, transform: 'translateX(-50%)' }}
                 >
-                  <div className="absolute start-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#D4AE62] text-sm font-black text-black shadow-[0_0_28px_rgba(212,174,98,0.9)]">
+                  <div className="absolute start-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_28px_rgba(212,174,98,0.9)]">
                     ‹ ›
                   </div>
                 </div>
@@ -346,7 +346,7 @@ export default function CustomizeResultPage() {
                           onClick={() => setActiveAngleId(ang.id)}
                           aria-label={tc(`angles.${ang.key}`)}
                           aria-current={active ? 'true' : undefined}
-                          className={`relative h-14 w-20 shrink-0 overflow-hidden rounded-xl transition cursor-pointer sm:h-16 sm:w-24 ${active ? 'ring-2 ring-[#D4AE62]' : 'opacity-65 hover:opacity-100'}`}
+                          className={`relative h-14 w-20 shrink-0 overflow-hidden rounded-xl transition cursor-pointer sm:h-16 sm:w-24 ${active ? 'ring-2 ring-gold-500' : 'opacity-65 hover:opacity-100'}`}
                         >
                           <img src={generatedAngles[ang.id]} alt="" className="h-full w-full object-cover" />
                           <span className="absolute inset-x-0 bottom-0 bg-black/65 py-0.5 text-center text-[10px] font-semibold text-white">{tc(`anglesShort.${ang.key}`)}</span>
@@ -366,7 +366,7 @@ export default function CustomizeResultPage() {
                   <h2 className="text-2xl font-extrabold tracking-tight text-white md:text-[28px]">{t('selectedTitle')}</h2>
                   <p className="mt-1.5 text-sm text-[#A69F92]">{t('selectedSub')}</p>
                 </div>
-                <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="-me-2 inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold text-[#D4AE62] transition hover:bg-white/[0.07] cursor-pointer">
+                <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="-me-2 inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold text-gold-500 transition hover:bg-white/[0.07] cursor-pointer">
                   <SlidersHorizontal className="h-4 w-4" />
                   <span>{t('changeParts')}</span>
                 </button>
@@ -387,12 +387,12 @@ export default function CustomizeResultPage() {
                         <div className="min-w-0">
                           <h3 className="truncate text-[15px] font-bold text-white">{part.name}</h3>
                           <div className="mt-1 flex items-center gap-2 text-xs text-[#A69F92]">
-                            <Car className="h-3.5 w-3.5 shrink-0 text-[#D4AE62]" />
+                            <Car className="h-3.5 w-3.5 shrink-0 text-gold-500" />
                             <span className="truncate">{carFit}</span>
                           </div>
                         </div>
                       </div>
-                      <p className="shrink-0 text-base font-extrabold tabular-nums text-[#D4AE62]">{formatPrice(priceUSD)}</p>
+                      <p className="shrink-0 text-base font-extrabold tabular-nums text-gold-500">{formatPrice(priceUSD)}</p>
                     </div>
                   );
                 })}
@@ -405,7 +405,7 @@ export default function CustomizeResultPage() {
                   <h3 className="text-xl font-bold text-white">{t('confirmedTitle')}</h3>
                   <p className="mt-1 text-sm text-white/75">{t('confirmedBody', { count: selectedParts.length })}</p>
                   <div className="mt-5 flex justify-center gap-2">
-                    <button type="button" onClick={() => setIsVideoStudioOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-6 py-3 text-xs font-extrabold text-black cursor-pointer">
+                    <button type="button" onClick={() => setIsVideoStudioOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-3 text-xs font-extrabold text-black cursor-pointer">
                       <Film className="h-4 w-4" />
                       <span>{t('viewVideo')}</span>
                     </button>
@@ -422,12 +422,12 @@ export default function CustomizeResultPage() {
                       <p className="mt-1.5 text-4xl font-extrabold tabular-nums tracking-tight text-white md:text-5xl">{formatPrice(totalPriceUSD)}</p>
                     </div>
                   </div>
-                  {!isSeller && <p className="mt-2 text-xs font-semibold text-[#D4AE62]">{t('unlockHint', { amount: formatPrice(deposit3PercentUSD) })}</p>}
+                  {!isSeller && <p className="mt-2 text-xs font-semibold text-gold-500">{t('unlockHint', { amount: formatPrice(deposit3PercentUSD) })}</p>}
 
                   <button
                     type="button"
                     onClick={handlePrimaryBuy}
-                    className="mt-5 flex w-full items-center justify-center gap-3 rounded-full bg-[#D4AE62] px-8 py-4 text-sm font-extrabold text-black shadow-[0_16px_40px_-10px_rgba(212,174,98,0.55)] transition hover:brightness-110 active:scale-[0.98] cursor-pointer md:text-base"
+                    className="mt-5 flex w-full items-center justify-center gap-3 rounded-full bg-gold-500 px-8 py-4 text-sm font-extrabold text-black shadow-[0_16px_40px_-10px_rgba(212,174,98,0.55)] transition hover:brightness-110 active:scale-[0.98] cursor-pointer md:text-base"
                   >
                     {isSeller ? (
                       <>

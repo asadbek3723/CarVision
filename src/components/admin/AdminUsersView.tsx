@@ -121,7 +121,7 @@ export function AdminUsersView() {
 
               {u.role !== 'super_admin' ? (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setCreditFor(u)} className="inline-flex items-center gap-1.5 rounded-full bg-[#D4AE62] px-4 py-2.5 text-xs font-bold text-black hover:brightness-110">
+                  <button type="button" onClick={() => setCreditFor(u)} className="inline-flex items-center gap-1.5 rounded-full bg-gold-500 px-4 py-2.5 text-xs font-bold text-black hover:brightness-110">
                     <Coins className="h-3.5 w-3.5" />
                     {t('credit')}
                   </button>
@@ -199,7 +199,7 @@ function CreditSheet({ user, onClose, onDone, onError }: { user: User | null; on
         <Field label={t('fReason')}>
           <input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} placeholder={t('reasonPh')} className={fieldClass} />
         </Field>
-        <button type="submit" disabled={saving} className="w-full rounded-full bg-[#D4AE62] py-3.5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-60">
+        <button type="submit" disabled={saving} className="w-full rounded-full bg-gold-500 py-3.5 text-sm font-bold text-black hover:brightness-110 disabled:opacity-60">
           {saving ? tc('saving') : t('save')}
         </button>
       </form>

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
+import { useCategoryLabel } from '@/lib/category-label';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Car, Plus } from 'lucide-react';
@@ -17,6 +18,7 @@ interface ProductCardProps {
 
 export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
   const t = useTranslations('shop.card');
+  const categoryLabel = useCategoryLabel();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { add } = useVeloceStore();
@@ -61,7 +63,7 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent" />
           <span className="absolute bottom-3 start-3 rounded-full bg-background/80 px-3 py-1 text-[10px] font-semibold tracking-widest text-primary uppercase backdrop-blur">
-            {p.category}
+            {categoryLabel(p.category)}
           </span>
         </div>
 
@@ -71,7 +73,7 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
               {p.brand}
             </span>
             {carLabel && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-[#D4AE62]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-gold-500">
                 <Car className="h-3 w-3" />
                 <span className="max-w-[110px] truncate">{carLabel}</span>
               </span>

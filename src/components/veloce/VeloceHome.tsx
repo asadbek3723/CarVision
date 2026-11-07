@@ -148,11 +148,11 @@ export function VeloceHome() {
 
         {/* 4 Stats strip (desktop only) */}
         <div className="relative mx-auto hidden max-w-[1500px] px-14 pb-10 lg:block">
-          <div className="grid grid-cols-4 border-y border-primary/15">
+          <div className="grid grid-cols-4 ">
             {statItems.map((s, idx) => (
               <div
                 key={s.l}
-                className="rise border-e border-primary/15 py-6 ps-8 last:border-e-0"
+                className="rise py-6 ps-8 last:border-e-0"
                 style={{ animationDelay: `${500 + idx * 80}ms` }}
               >
                 <div className="font-display text-3xl font-extralight text-gold-gradient">
@@ -176,7 +176,7 @@ export function VeloceHome() {
             return (
               <div
                 key={feat.key}
-                className="rise group relative flex min-w-0 flex-col items-center overflow-hidden rounded-[18px] border border-white/[0.06] bg-card-gradient px-2 py-5 text-center shadow-card transition duration-500 hover:-translate-y-1 hover:border-primary/50 md:p-10 lg:items-start lg:text-start"
+                className="rise group relative flex min-w-0 flex-col items-center overflow-hidden rounded-[18px] bg-card-gradient px-2 py-5 text-center shadow-card transition duration-500 hover:-translate-y-1 md:p-10 lg:items-start lg:text-start"
                 style={{ animationDelay: `${300 + idx * 100}ms` }}
               >
                 <div className="pointer-events-none absolute -end-10 -top-10 h-32 w-32 rounded-full bg-primary/0 blur-2xl transition duration-700 group-hover:bg-primary/20" />

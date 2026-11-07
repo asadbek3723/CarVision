@@ -25,7 +25,7 @@ const LANGUAGES = [
 const CURRENCIES: SupportedCurrency[] = ['UZS', 'USD', 'AED', 'TRY', 'KZT', 'KGS', 'TJS', 'RUB'];
 
 const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AE62]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0B0F]';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0B0F]';
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -63,12 +63,12 @@ function PreferenceSelect({
         {label}
       </label>
       <div className="relative">
-        <Icon className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AE62]" />
+        <Icon className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-500" />
         <select
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`h-14 w-full cursor-pointer appearance-none rounded-2xl border border-white/[0.08] bg-white/[0.04] ps-11 pe-12 text-base text-white transition hover:bg-white/[0.07] ${focusRing}`}
+          className={`h-14 w-full cursor-pointer appearance-none rounded-2xl bg-white/[0.04] ps-11 pe-12 text-base text-white transition hover:bg-white/[0.07] ${focusRing}`}
         >
           {options.map((o) => (
             <option key={o.value} value={o.value} className="bg-[#12141A] text-white">
@@ -189,7 +189,7 @@ export function VeloceProfile() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D4AE62]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
             {t('eyebrow')}
           </p>
 
@@ -219,7 +219,7 @@ export function VeloceProfile() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-6 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-60 ${focusRing}`}
+                  className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-gold-500 px-6 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-60 ${focusRing}`}
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   {t('save')}
@@ -329,7 +329,7 @@ export function VeloceProfile() {
             <p className="text-sm text-white/55">{t('noBookings')}</p>
             <Link
               href={`/${locale}/shop`}
-              className={`mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-white/[0.07] px-5 text-sm font-semibold text-[#D4AE62] transition hover:bg-white/[0.12] ${focusRing}`}
+              className={`mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-white/[0.07] px-5 text-sm font-semibold text-gold-500 transition hover:bg-white/[0.12] ${focusRing}`}
             >
               {t('browse')}
               <ArrowRight className="h-4 w-4 rtl:rotate-180" />

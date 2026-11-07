@@ -54,15 +54,15 @@ export function Pricing({ locale }: { locale: string }) {
           gold={t('gold')}
         />
 
-        <div className="reveal flex shrink-0 rounded-full border border-border p-1 text-xs select-none">
+        <div className="reveal flex shrink-0 rounded-full p-1 text-xs select-none">
           {[false, true].map((val) => (
             <button
               key={String(val)}
               type="button"
               onClick={() => setIsAnnual(val)}
               className={`rounded-full px-5 py-2 transition-all duration-500 cursor-pointer ${
-                isAnnual === val ? 'btn-gold font-bold' : 'text-muted-foreground'
-              }`}
+ isAnnual === val ? 'btn-gold font-bold' : 'text-muted-foreground'
+ }`}
             >
               {val ? t('annual') : t('monthly')}
             </button>
@@ -75,9 +75,9 @@ export function Pricing({ locale }: { locale: string }) {
           <div
             key={tier.name}
             className={`relative flex flex-col rounded-3xl border p-9 transition-all duration-700 hover:-translate-y-2 ${
-              tier.hot
-                ? 'border-primary/50 bg-card-lux shadow-gold lg:-translate-y-4'
-                : 'border-border bg-card/40'
+ tier.hot
+ ? ' bg-card-lux shadow-gold lg:-translate-y-4'
+                : ' bg-card/40'
             }`}
             style={{ transitionDelay: `${idx * 120}ms` }}
           >
@@ -118,8 +118,8 @@ export function Pricing({ locale }: { locale: string }) {
             <Link
               href={`/${locale}/login`}
               className={`${
-                tier.hot ? 'btn-gold' : 'btn-ghost-gold'
-              } mt-10 rounded-full py-4 text-center text-xs font-bold tracking-[0.25em]`}
+ tier.hot ? 'btn-gold' : 'btn-ghost-gold'
+ } mt-10 rounded-full py-4 text-center text-xs font-bold tracking-[0.25em]`}
             >
               {t(`${tier.key}.cta`)}
             </Link>

@@ -57,7 +57,7 @@ export default function PhoneCapturePage() {
         </div>
         <h1 className="text-xl font-bold text-white">{t('sent')}</h1>
         <img src={lastShot} alt="" className="max-h-64 rounded-2xl" />
-        <button type="button" onClick={() => setLastShot(null)} className="rounded-full bg-[#D4AE62] px-8 py-3 text-sm font-bold text-black">
+        <button type="button" onClick={() => setLastShot(null)} className="rounded-full bg-gold-500 px-8 py-3 text-sm font-bold text-black">
           {t('again', { count: sent })}
         </button>
       </div>

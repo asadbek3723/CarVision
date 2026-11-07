@@ -29,7 +29,7 @@ export function Reviews() {
         {REVIEWS.map((review, idx) => (
           <figure
             key={review.n}
-            className="reveal glass group relative flex flex-col overflow-hidden rounded-3xl border border-primary/15 p-7 transition-all duration-700 hover:-translate-y-2 hover:border-primary/40 hover:shadow-gold"
+            className="reveal glass group relative flex flex-col overflow-hidden rounded-3xl p-7 transition-all duration-700 hover:-translate-y-2  hover:shadow-gold"
             style={{ transitionDelay: `${idx * 100}ms` }}
           >
             <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />

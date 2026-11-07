@@ -24,7 +24,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/35 outline-none focus:border-[#D4AE62]/60';
+  'w-full rounded-xl  bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/35 outline-none ';
 
 /** Searchable picker over the full vehicle database, with per-vehicle year range. */
 export function VehiclePicker({ value, onChange }: Props) {
@@ -76,7 +76,7 @@ export function VehiclePicker({ value, onChange }: Props) {
       value={current ?? ''}
       placeholder={placeholder}
       onChange={(e) => patch(key, { [field]: e.target.value ? Number(e.target.value) : undefined })}
-      className="w-20 rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1.5 text-center text-xs text-white outline-none focus:border-[#D4AE62]/60"
+      className="w-20 rounded-lg bg-white/[0.04] px-2 py-1.5 text-center text-xs text-white outline-none "
     />
   );
 
@@ -93,7 +93,7 @@ export function VehiclePicker({ value, onChange }: Props) {
       </div>
 
       {query.trim().length >= 2 && (
-        <div className="max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-[#0B0D13]">
+        <div className="max-h-56 overflow-y-auto rounded-xl bg-[#0B0D13]">
           {loading && <p className="px-3 py-3 text-xs text-white/50">{t('searching')}</p>}
           {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">{t('notFound')}</p>}
           {results.map((r) => (
@@ -107,7 +107,7 @@ export function VehiclePicker({ value, onChange }: Props) {
               className="flex w-full items-center justify-between px-3 py-2.5 text-start text-sm text-white/90 transition hover:bg-white/[0.06]"
             >
               <span>{r.label}</span>
-              <Plus className="h-4 w-4 text-[#D4AE62]" />
+              <Plus className="h-4 w-4 text-gold-500" />
             </button>
           ))}
         </div>
@@ -137,7 +137,7 @@ export function VehiclePicker({ value, onChange }: Props) {
       {value.length > 0 && (
         <ul className="space-y-2">
           {value.map((v) => (
-            <li key={v.key} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#D4AE62]/25 bg-[#D4AE62]/[0.07] px-3 py-2">
+            <li key={v.key} className="flex flex-wrap items-center gap-2 rounded-xl bg-gold-500/[0.07] px-3 py-2">
               <span className="me-auto text-sm font-semibold text-white">{v.label}</span>
               <span className="text-[11px] text-white/45">{t('year')}</span>
               {yearInput(v.key, 'yearFrom', v.yearFrom, t('from'))}

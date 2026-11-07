@@ -10,7 +10,7 @@ export default function NotFound() {
         <p className="text-sm text-neutral-400">{t('title')}</p>
         <Link
           href="/"
-          className="inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-xs font-bold text-black transition-transform hover:scale-105 active:scale-95"
+          className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-xs font-bold text-black transition-transform hover:scale-105 active:scale-95"
         >
           {t('home')}
         </Link>

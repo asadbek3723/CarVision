@@ -22,7 +22,7 @@ type PanelId = 'credits' | 'password';
 const TYPES = new Set(['TRIAL_BONUS', 'MONTHLY_FREE', 'PLAN_ASSIGNED', 'RESERVED', 'COMMITTED', 'REFUNDED', 'REFERRAL_REWARD', 'ADMIN_ADJUSTMENT']);
 
 const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AE62]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0B0F]';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0B0F]';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const when = (iso: string) => {
@@ -62,7 +62,7 @@ function Panel({ id, open, onToggle, icon, title, hint, children }: { id: PanelI
         aria-controls={`panel-${id}`}
         className={`flex min-h-14 w-full items-center gap-4 rounded-3xl px-5 py-4 text-start ${focusRing}`}
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#D4AE62]/15 text-[#D4AE62]">{icon}</span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-500">{icon}</span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-white">{title}</span>
           <span className="block truncate text-xs text-white/45">{hint}</span>
@@ -99,7 +99,7 @@ function CreditHistory() {
   }, []);
 
   if (error) return <p role="alert" className="text-sm text-red-300">{t('errHistory')}</p>;
-  if (!entries) return <div className="flex justify-center py-6" role="status"><Loader2 className="h-5 w-5 animate-spin text-[#D4AE62]" /></div>;
+  if (!entries) return <div className="flex justify-center py-6" role="status"><Loader2 className="h-5 w-5 animate-spin text-gold-500" /></div>;
   if (entries.length === 0) return <p className="text-sm text-white/50">{t('noActivity')}</p>;
 
   return (
@@ -176,7 +176,7 @@ function PasswordForm() {
       <input type="password" aria-label={t('phNew')} autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t('phNew')} maxLength={72} className={fieldCls} />
       <input type="password" aria-label={t('phAgain')} autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder={t('phAgain')} maxLength={72} className={fieldCls} />
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`text-sm ${msg.ok ? 'text-emerald-300' : 'text-red-300'}`}>{msg.text}</p>}
-      <button type="submit" disabled={busy || !current || !next || !again} className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-50 ${focusRing}`}>
+      <button type="submit" disabled={busy || !current || !next || !again} className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-gold-500 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-50 ${focusRing}`}>
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}
         {t('changePassword')}
       </button>

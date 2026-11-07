@@ -83,7 +83,7 @@ export function VeloceCart() {
   return (
     <div className="mx-auto max-w-4xl px-5 pt-8 pb-24 md:px-10 md:pt-12">
       <div className="mb-8">
-        <p className="text-[11px] font-medium tracking-[0.25em] uppercase text-[#D4AE62]">
+        <p className="text-[11px] font-medium tracking-[0.25em] uppercase text-gold-500">
           {t('eyebrow')}
         </p>
         <h1 className="mt-1 font-display text-2xl font-light text-white sm:text-4xl">
@@ -142,7 +142,7 @@ export function VeloceCart() {
                     )}
                     <div>
                       {carName && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D4AE62]">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gold-500">
                           <Car className="h-3.5 w-3.5" />
                           <span>{t('forCar', { car: carName })}</span>
                         </span>
@@ -189,7 +189,7 @@ export function VeloceCart() {
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-xs text-white/50">
-                  <Lock className="h-3.5 w-3.5 text-[#D4AE62]" />
+                  <Lock className="h-3.5 w-3.5 text-gold-500" />
                   <span>{t('unlockNote')}</span>
                 </div>
                 <div className="mt-2 flex items-baseline gap-3">

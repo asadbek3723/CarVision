@@ -137,13 +137,13 @@ export function FloatingInput({
     <div>
       <label
         className={`auth-input relative flex h-14 items-center gap-2.5 rounded-xl px-4 ${
-          error ? 'auth-input-error' : ''
-        }`}
+ error ? 'auth-input-error' : ''
+ }`}
       >
         <span
           className={`transition-colors duration-300 ${
-            isFocused ? 'text-gold' : 'text-foreground/80'
-          }`}
+ isFocused ? 'text-gold' : 'text-foreground/80'
+ }`}
         >
           {icon}
         </span>
@@ -163,8 +163,8 @@ export function FloatingInput({
             props.onBlur?.(e);
           }}
           className={`h-full flex-1 bg-transparent outline-none placeholder:text-foreground/50 ${
-            isFloating ? 'pt-4' : ''
-          } text-base text-foreground`}
+ isFloating ? 'pt-4' : ''
+ } text-base text-foreground`}
         />
         {isPassword && (
           <button
@@ -183,8 +183,8 @@ export function FloatingInput({
         {label && (
           <span
             className={`pointer-events-none absolute start-[44px] transition-all duration-300 ${
-              isFloating
-                ? 'top-1.5 text-[9px] uppercase tracking-[0.16em] text-gold font-medium'
+ isFloating
+ ? 'top-1.5 text-[9px] uppercase tracking-[0.16em] text-gold font-medium'
                 : 'top-1/2 -translate-y-1/2 text-[13.5px] text-foreground/55'
             }`}
           >
@@ -227,8 +227,8 @@ export function PhoneInput({ label, value, onChange, error }: PhoneInputProps) {
     <div>
       <label
         className={`auth-input relative flex h-12 items-center gap-2.5 rounded-xl px-4 ${
-          error ? 'auth-input-error' : ''
-        }`}
+ error ? 'auth-input-error' : ''
+ }`}
       >
         <span className="w-6 text-center text-lg leading-none" aria-hidden={true}>
           {country ? country.flag : '🌐'}
@@ -248,8 +248,8 @@ export function PhoneInput({ label, value, onChange, error }: PhoneInputProps) {
         />
         <span
           className={`pointer-events-none absolute start-[52px] top-1 text-[9px] font-medium uppercase tracking-[0.16em] transition-colors duration-300 ${
-            isFocused ? 'text-gold' : 'text-gold/80'
-          }`}
+ isFocused ? 'text-gold' : 'text-gold/80'
+ }`}
         >
           {label}
         </span>

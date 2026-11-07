@@ -269,11 +269,11 @@ export default function MobileScanSessionPage() {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#07080B] p-6 text-center text-white">
         <div className="relative mb-6">
-          <div className="grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-[#242735] to-[#12141A] ring-2 ring-[#D4AE62] shadow-[0_0_36px_rgba(212,174,98,0.5)]">
-            <CheckCircle2 className="h-12 w-12 text-[#D4AE62]" />
+          <div className="grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-[#242735] to-[#12141A] ring-2 ring-gold-500 shadow-[0_0_36px_rgba(212,174,98,0.5)]">
+            <CheckCircle2 className="h-12 w-12 text-gold-500" />
           </div>
           <span className="absolute -top-1 -end-1">
-            <Sparkles className="h-6 w-6 text-[#D4AE62] animate-bounce" />
+            <Sparkles className="h-6 w-6 text-gold-500 animate-bounce" />
           </span>
         </div>
 
@@ -281,11 +281,11 @@ export default function MobileScanSessionPage() {
           {t('doneTitle', { total: REQUIRED_ANGLES_TOTAL })}
         </h1>
 
-        <p className="mt-3 max-w-xs font-display text-xs sm:text-sm font-light tracking-wider text-[#D4AE62] leading-relaxed">
+        <p className="mt-3 max-w-xs font-display text-xs sm:text-sm font-light tracking-wider text-gold-500 leading-relaxed">
           {t('doneBody')}
         </p>
 
-        <div className="mt-8 flex items-center gap-3 rounded-2xl bg-[#12141A] ring-1 ring-[#D4AE62]/20 px-6 py-4 shadow-card">
+        <div className="mt-8 flex items-center gap-3 rounded-2xl bg-[#12141A] ring-1 ring-gold-500/20 px-6 py-4 shadow-card">
           <Monitor className="h-5 w-5 text-primary" />
           <span className="text-xs font-medium tracking-wide text-white">
             {t('doneNext')}
@@ -301,8 +301,8 @@ export default function MobileScanSessionPage() {
       <div className="absolute top-3 end-4 z-40 pointer-events-none">
         <div
           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] backdrop-blur-md ring-1 ${
-            isOnline
-              ? 'bg-black/50 text-emerald-400 ring-emerald-500/25'
+ isOnline
+ ? 'bg-black/50 text-emerald-400 ring-emerald-500/25'
               : 'bg-black/70 text-amber-400 ring-amber-500/35'
           }`}
         >
@@ -328,8 +328,8 @@ export default function MobileScanSessionPage() {
       {/* Uploading Spinner */}
       {isUploading && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-xl">
-          <div className="h-16 w-16 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin" />
-          <p className="mt-4 text-xs font-mono tracking-wider text-[#D4AE62]">
+          <div className="h-16 w-16 rounded-full border-2 border-t-gold-500 animate-spin" />
+          <p className="mt-4 text-xs font-mono tracking-wider text-gold-500">
             {t('sending', { total: REQUIRED_ANGLES_TOTAL })}
           </p>
         </div>
@@ -338,13 +338,13 @@ export default function MobileScanSessionPage() {
       {/* PWA Offline Handoff & Ustaxona Wi-Fi Fallback Drawer/Banner */}
       {offlinePending && (
         <div className="absolute inset-x-0 bottom-0 z-50 bg-gradient-to-t from-black via-[#0D0E12] to-transparent p-5 pb-8 flex flex-col items-center text-center">
-          <div className="w-full max-w-md rounded-3xl bg-[#12141A]/95 ring-1 ring-[#D4AE62]/30 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.9)] backdrop-blur-2xl">
+          <div className="w-full max-w-md rounded-3xl bg-[#12141A]/95 ring-1 ring-gold-500/30 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.9)] backdrop-blur-2xl">
             <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-2 text-xs font-medium text-amber-400">
                 <WifiOff className="h-4 w-4" />
                 <span>{t('slow')}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-[#D4AE62]">
+              <div className="flex items-center gap-1.5 text-[11px] text-gold-500">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 <span>{t('saved', { count: pendingCount > 0 ? pendingCount : 1 })}</span>
               </div>
@@ -359,7 +359,7 @@ export default function MobileScanSessionPage() {
                 type="button"
                 onClick={handleManualRetry}
                 disabled={isManualRetrying}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D4AE62] to-[#B38C3F] text-black font-semibold text-xs py-3 px-4 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-[0_4px_20px_rgba(212,174,98,0.3)]"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-gold-500 to-[#B38C3F] text-black font-semibold text-xs py-3 px-4 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-[0_4px_20px_rgba(212,174,98,0.3)]"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isManualRetrying ? 'animate-spin' : ''}`} />
                 <span>{t('retry')}</span>

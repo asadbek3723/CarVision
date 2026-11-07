@@ -326,7 +326,7 @@ export function VeloceSmartCameraModal({
       {!isMobileDevice && (
         <div className="relative min-h-screen w-full flex flex-col bg-[#07080B] px-8 sm:px-14 md:px-20 py-5 sm:py-6 overflow-y-auto">
           {/* Subtle Ambient Radial Glow */}
-          <div className="pointer-events-none absolute start-1/2 top-0 h-[450px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#D4AE62]/8 via-[#D4AE62]/3 to-transparent blur-[140px]" />
+          <div className="pointer-events-none absolute start-1/2 top-0 h-[450px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-b from-gold-500/8 via-gold-500/3 to-transparent blur-[140px]" />
 
           {/* Top Bar (Borderless) */}
           <div className="relative z-10 flex items-center justify-between pb-3">
@@ -409,10 +409,10 @@ export function VeloceSmartCameraModal({
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span
                           className={`h-2.5 w-2.5 rounded-full ${
-                            sessionStatus === 'captured'
-                              ? 'bg-emerald-400'
+ sessionStatus === 'captured'
+ ? 'bg-emerald-400'
                               : sessionStatus === 'connected'
-                              ? 'bg-[#D4AE62]'
+                              ? 'bg-gold-500'
                               : !isOnline
                               ? 'bg-amber-500'
                               : 'bg-amber-400 animate-pulse'
@@ -450,9 +450,9 @@ export function VeloceSmartCameraModal({
 
                     {/* PWA Offline & Wi-Fi Bridge Pill Indicator */}
                     <div className="flex items-center gap-2 text-[11px] text-muted-foreground/80 pt-0.5">
-                      <div className="flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1 text-[#D4AE62]/90">
+                      <div className="flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1 text-gold-500/90">
                         {isOnline ? (
-                          <Wifi className="h-3 w-3 text-[#D4AE62]" />
+                          <Wifi className="h-3 w-3 text-gold-500" />
                         ) : (
                           <WifiOff className="h-3 w-3 text-amber-400" />
                         )}
@@ -481,7 +481,7 @@ export function VeloceSmartCameraModal({
                     {/* Realistic Top-Down Car Silhouette & Centered Action */}
                     <div className="w-full flex flex-col items-center justify-center">
                       <div className="relative w-full max-w-[340px] h-[300px] flex items-center justify-center">
-                        <div className="absolute inset-0 bg-[#D4AE62]/5 blur-3xl rounded-full pointer-events-none" />
+                        <div className="absolute inset-0 bg-gold-500/5 blur-3xl rounded-full pointer-events-none" />
                         <img
                           src="/images/camera/topdown_coupe.png"
                           alt={t('silhouetteAlt')}
@@ -537,8 +537,8 @@ export function VeloceSmartCameraModal({
                           if (canNavigate) setCurrentStepIndex(idx);
                         }}
                         className={`relative flex items-center justify-center sm:justify-start gap-3 py-2.5 px-3 rounded-xl transition text-start ${
-                          isActive
-                            ? 'text-[#D4AE62] bg-white/[0.04]'
+ isActive
+ ? 'text-gold-500 bg-white/[0.04]'
                             : isUploaded
                             ? 'text-emerald-400 hover:bg-white/[0.03] cursor-pointer'
                             : 'text-white/30 cursor-not-allowed'
@@ -546,10 +546,10 @@ export function VeloceSmartCameraModal({
                       >
                         <div
                           className={`flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition ${
-                            isUploaded
-                              ? 'bg-emerald-500/20 text-emerald-400'
+ isUploaded
+ ? 'bg-emerald-500/20 text-emerald-400'
                               : isActive
-                              ? 'bg-[#D4AE62] text-black font-extrabold shadow-[0_0_16px_rgba(212,174,98,0.5)]'
+                              ? 'bg-gold-500 text-black font-extrabold shadow-[0_0_16px_rgba(212,174,98,0.5)]'
                               : 'bg-white/5 text-white/30'
                           }`}
                         >
@@ -576,7 +576,7 @@ export function VeloceSmartCameraModal({
                         {isActive && (
                           <motion.div
                             layoutId="activeAngleTabUnderline"
-                            className="absolute -bottom-1 inset-x-3 h-0.5 bg-[#D4AE62] shadow-[0_0_8px_#D4AE62]"
+                            className="absolute -bottom-1 inset-x-3 h-0.5 bg-gold-500 shadow-[0_0_8px_#D4AE62]"
                           />
                         )}
                       </button>
@@ -681,14 +681,14 @@ export function VeloceSmartCameraModal({
                           {/* Ambient glow on hover/drag */}
                           <div
                             className={`absolute inset-0 rounded-3xl transition-opacity pointer-events-none ${
-                              isDragging
-                                ? 'bg-[#D4AE62]/10 opacity-100 blur-2xl'
-                                : 'opacity-0 group-hover:opacity-100 bg-[#D4AE62]/5 blur-3xl'
+ isDragging
+ ? 'bg-gold-500/10 opacity-100 blur-2xl'
+                                : 'opacity-0 group-hover:opacity-100 bg-gold-500/5 blur-3xl'
                             }`}
                           />
 
                           <div className="relative z-10 flex flex-col items-center space-y-3">
-                            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/5 text-[#D4AE62] group-hover:scale-105 group-hover:bg-[#D4AE62]/15 transition duration-300 shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
+                            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/5 text-gold-500 group-hover:scale-105 group-hover:bg-gold-500/15 transition duration-300 shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
                               <Upload className="h-7 w-7 stroke-[1.6]" />
                             </div>
 
@@ -723,14 +723,14 @@ export function VeloceSmartCameraModal({
                             </>
                           ) : (
                             <>
-                              <Lock className="h-3.5 w-3.5 text-[#D4AE62]" />
+                              <Lock className="h-3.5 w-3.5 text-gold-500" />
                               <span>
                                 {t('locked', { total: REQUIRED_ANGLE_COUNT })}
                               </span>
                             </>
                           )}
                         </span>
-                        <span className="font-semibold text-[#D4AE62]">
+                        <span className="font-semibold text-gold-500">
                           {uploadedCount} / {REQUIRED_ANGLE_COUNT}
                         </span>
                       </div>
@@ -774,8 +774,8 @@ export function VeloceSmartCameraModal({
                               handleProceedToStudio();
                             }}
                             className={`inline-flex items-center gap-2 rounded-2xl px-6 py-2.5 text-xs font-semibold tracking-wide transition ${
-                              allAnglesUploaded
-                                ? 'bg-gold-gradient text-black shadow-gold hover:brightness-110 active:scale-95 cursor-pointer'
+ allAnglesUploaded
+ ? 'bg-gold-gradient text-black shadow-gold hover:brightness-110 active:scale-95 cursor-pointer'
                                 : 'bg-white/5 text-white/30 cursor-not-allowed'
                             }`}
                           >
@@ -797,7 +797,7 @@ export function VeloceSmartCameraModal({
           {/* Minimalist Loading Overlay */}
           {isProcessing && (
             <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#07080B]/95 backdrop-blur-xl">
-              <div className="h-14 w-14 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin mb-4" />
+              <div className="h-14 w-14 rounded-full border-2 border-t-gold-500 animate-spin mb-4" />
               <p className="text-xs font-medium text-muted-foreground">
                 {t('processing')}
               </p>

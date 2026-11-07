@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useCategoryLabel } from '@/lib/category-label';
 import { ArrowRight, Search, Sparkles } from 'lucide-react';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { MyCarPicker } from '@/features/shop/MyCarPicker';
@@ -18,6 +19,7 @@ interface Facets {
 
 export function VeloceShop() {
   const t = useTranslations('shop.list');
+  const categoryLabel = useCategoryLabel();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { formatPrice } = useCurrency();
@@ -66,11 +68,12 @@ export function VeloceShop() {
     });
   }, [products, category, brand, query]);
 
-  const featured = products[0];
+  // The banner needs a real photo: colour swatches and parts without images never lead it.
+  const featured = products.find((p) => Boolean(p.image) && !p.swatch) ?? products[0];
 
   return (
     <div className="mx-auto max-w-7xl px-5 pt-6 md:px-10">
-      <label className="rise flex items-center gap-3 rounded-full border border-primary/20 bg-card px-5 py-3.5 transition focus-within:border-primary focus-within:shadow-gold cursor-text">
+      <label className="rise flex items-center gap-3 rounded-full bg-card px-5 py-3.5 transition focus-within:ring-2 focus-within:ring-gold-500/30 focus-within:shadow-gold cursor-text">
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
         <input
           value={query}
@@ -85,7 +88,7 @@ export function VeloceShop() {
       </div>
 
       {featured && !car && (
-        <section className="rise relative mt-6 overflow-hidden rounded-3xl border border-primary/40 bg-card-gradient shadow-gold" style={{ animationDelay: '100ms' }}>
+        <section className="rise relative mt-6 overflow-hidden rounded-3xl bg-card-gradient shadow-gold" style={{ animationDelay: '100ms' }}>
           <div className="grid items-center md:grid-cols-2">
             <div className="relative z-10 p-7 md:p-12">
               <span className="text-[10px] font-semibold uppercase tracking-luxe text-primary">{t('badgeNew')}</span>
@@ -100,7 +103,7 @@ export function VeloceShop() {
                 {t('view')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </div>
-            {featured.image && <img src={featured.image} alt={featured.name} className="h-56 w-full object-cover md:h-full" />}
+            {featured.image && <img src={featured.image} alt={featured.name} className="h-56 w-full object-cover md:h-[360px]" />}
           </div>
         </section>
       )}
@@ -110,11 +113,11 @@ export function VeloceShop() {
           <button
             key={cat}
             onClick={() => setCategory(cat)}
-            className={`shrink-0 cursor-pointer rounded-full border px-5 py-2 text-xs uppercase tracking-widest transition ${
-              category === cat ? 'border-transparent bg-gold-gradient font-semibold text-black shadow-gold' : 'border-primary/20 text-muted-foreground hover:border-primary hover:text-foreground'
+            className={`min-h-11 shrink-0 cursor-pointer rounded-full px-5 text-xs font-medium tracking-wide transition ${
+              category === cat ? 'bg-gold-500 font-semibold text-ink' : 'bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08] hover:text-foreground'
             }`}
           >
-            {cat === 'All' ? t('all') : cat}
+            {cat === 'All' ? t('all') : categoryLabel(cat)}
           </button>
         ))}
       </div>
@@ -141,7 +144,7 @@ export function VeloceShop() {
       {loading ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="aspect-[3/4] animate-pulse rounded-2xl border border-primary/10 bg-white/[0.02]" />
+            <div key={i} className="aspect-[3/4] animate-pulse rounded-2xl bg-white/[0.02]" />
           ))}
         </div>
       ) : error ? (

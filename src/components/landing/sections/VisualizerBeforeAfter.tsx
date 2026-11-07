@@ -56,7 +56,7 @@ export function VisualizerBeforeAfter() {
       <div className="reveal relative w-full">
         <div
           ref={containerRef}
-          className="relative aspect-[16/9] cursor-ew-resize select-none overflow-hidden rounded-3xl border border-border shadow-lux"
+          className="relative aspect-[16/9] cursor-ew-resize select-none overflow-hidden rounded-3xl shadow-lux"
           style={{ touchAction: 'pan-y' }}
         onPointerDown={(e) => {
           isDragging.current = true;

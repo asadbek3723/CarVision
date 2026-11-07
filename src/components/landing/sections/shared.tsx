@@ -27,8 +27,8 @@ export function LogoWithText({ small = false }: { small?: boolean }) {
       <BrandMark className={small ? 'h-5 w-6' : 'h-7 w-8'} />
       <span
         className={`font-display tracking-[0.3em] text-foreground ${
-          small ? 'text-base' : 'text-lg'
-        }`}
+ small ? 'text-base' : 'text-lg'
+ }`}
       >
         CARVISION
       </span>
@@ -86,8 +86,8 @@ export function SectionHeading({
       {sub && (
         <p
           className={`mt-6 text-lg text-muted-foreground ${
-            center ? 'mx-auto' : ''
-          } max-w-2xl`}
+ center ? 'mx-auto' : ''
+ } max-w-2xl`}
         >
           {sub}
         </p>

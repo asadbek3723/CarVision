@@ -45,7 +45,7 @@ export default function SuperAdminPage() {
   if (isLoading || (isAdmin && verified === null)) {
     return (
       <Centered>
-        <Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" />
+        <Loader2 className="h-7 w-7 animate-spin text-gold-500" />
         <p className="mt-3 text-sm text-white/50">{t('checking')}</p>
       </Centered>
     );
@@ -63,7 +63,7 @@ export default function SuperAdminPage() {
             {t('back')}
           </Link>
           {!user && (
-            <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-6 py-3 text-sm font-bold text-black">
+            <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-full bg-gold-500 px-6 py-3 text-sm font-bold text-black">
               <Lock className="h-4 w-4" />
               {t('login')}
             </Link>

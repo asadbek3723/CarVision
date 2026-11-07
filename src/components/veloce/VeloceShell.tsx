@@ -61,18 +61,18 @@ function DockLink({ href, icon: Icon, label, active, locked = false }: DockLinkP
       href={href}
       aria-current={active ? 'page' : undefined}
       className={`relative flex min-w-0 flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] transition-colors ${
-        active ? 'text-[#D4AE62]' : 'text-white/45 hover:text-[#E8CF94]'
-      }`}
+ active ? 'text-gold-500' : 'text-white/45 hover:text-[#E8CF94]'
+ }`}
     >
       <span
         aria-hidden
-        className={`absolute -top-2 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-[#D4AE62] transition-all duration-300 ${
-          active ? 'w-6 opacity-100' : 'w-0 opacity-0'
-        }`}
+        className={`absolute -top-2 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-gold-500 transition-all duration-300 ${
+ active ? 'w-6 opacity-100' : 'w-0 opacity-0'
+ }`}
       />
       <span className="relative">
         <Icon className="h-6 w-6" strokeWidth={active ? 1.9 : 1.5} />
-        {locked && <Lock className="absolute -end-1.5 -top-1 h-3 w-3 text-[#D4AE62]" />}
+        {locked && <Lock className="absolute -end-1.5 -top-1 h-3 w-3 text-gold-500" />}
       </span>
       <span className="max-w-full truncate">{label}</span>
     </Link>
@@ -104,12 +104,14 @@ export function VeloceShell({ children }: VeloceShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [localeMenuOpen, setLocaleMenuOpen] = React.useState(false);
 
-  // Require authentication to access the Veloce App; redirect guests to Landing / Sign In
+  // The catalog, a part's page, plans and the cart are public (search engines and first-time
+  // visitors can browse); everything else needs an account. Checkout asks for sign-in itself.
+  const isPublicPage = /^\/[a-z]{2}\/(shop|plans|cart)(\/|$)/.test(pathname) && !pathname.includes('/cart/checkout');
   React.useEffect(() => {
-    if (!isLoading && !user) {
-      router.push(`/${locale}`);
+    if (!isLoading && !user && !isPublicPage) {
+      router.replace(`/${locale}/login`);
     }
-  }, [isLoading, user, locale, router]);
+  }, [isLoading, user, locale, router, isPublicPage]);
 
   const buildLocalizedHref = (targetLocale: string) => {
     const base = pathname.replace(/^\/(uz|ru|en|ar|tr|kk|ky|tg)(?=\/|$)/, `/${targetLocale}`);
@@ -131,7 +133,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
   return (
     <div className="min-h-screen md:ps-24 lg:ps-28 bg-[#0D0E12] text-foreground">
       {/* Desktop Sidebar */}
-      <aside className="fixed inset-y-0 start-0 z-40 hidden w-24 lg:w-28 flex-col items-center justify-between border-e border-[#D4AE62]/15 bg-[#0D0E12]/80 py-8 backdrop-blur-xl md:flex">
+      <aside className="fixed inset-y-0 start-0 z-40 hidden w-24 lg:w-28 flex-col items-center justify-between bg-[#0D0E12]/80 py-8 backdrop-blur-xl md:flex">
         <div className="flex flex-col items-center gap-10">
           <Link
             href={`/${locale}/seller`}
@@ -150,8 +152,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
               <span>{t('home')}</span>
               <span
                 className={`absolute -start-[30px] top-1/2 h-8 w-0.5 -translate-y-1/2 bg-gold-gradient transition-transform duration-300 ${
-                  isHome ? 'scale-y-100' : 'scale-y-0'
-                }`}
+ isHome ? 'scale-y-100' : 'scale-y-0'
+ }`}
               />
             </Link>
 
@@ -164,11 +166,11 @@ export function VeloceShell({ children }: VeloceShellProps) {
               >
                 <Car className="h-5 w-5 transition-transform group-hover:-translate-y-0.5" />
                 <span>{t('garage')}</span>
-                {!studioUnlocked && <Lock className="absolute -end-2 -top-1 h-3 w-3 text-[#D4AE62]" />}
+                {!studioUnlocked && <Lock className="absolute -end-2 -top-1 h-3 w-3 text-gold-500" />}
                 <span
                   className={`absolute -start-[30px] top-1/2 h-8 w-0.5 -translate-y-1/2 bg-gold-gradient transition-transform duration-300 ${
-                    isGarage ? 'scale-y-100' : 'scale-y-0'
-                  }`}
+ isGarage ? 'scale-y-100' : 'scale-y-0'
+ }`}
                 />
               </Link>
             )}
@@ -192,8 +194,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
               <span>{t('shop')}</span>
               <span
                 className={`absolute -start-[30px] top-1/2 h-8 w-0.5 -translate-y-1/2 bg-gold-gradient transition-transform duration-300 ${
-                  isShop ? 'scale-y-100' : 'scale-y-0'
-                }`}
+ isShop ? 'scale-y-100' : 'scale-y-0'
+ }`}
               />
             </Link>
           </nav>
@@ -209,11 +211,11 @@ export function VeloceShell({ children }: VeloceShellProps) {
             >
               <LayoutDashboard className="h-5 w-5 transition-transform group-hover:-translate-y-0.5" />
               <span>{t('dashboard')}</span>
-              {!studioUnlocked && <Lock className="absolute -end-2 -top-1 h-3 w-3 text-[#D4AE62]" />}
+              {!studioUnlocked && <Lock className="absolute -end-2 -top-1 h-3 w-3 text-gold-500" />}
               <span
                 className={`absolute -start-[30px] top-1/2 h-8 w-0.5 -translate-y-1/2 bg-gold-gradient transition-transform duration-300 ${
-                  isDashboard ? 'scale-y-100' : 'scale-y-0'
-                }`}
+ isDashboard ? 'scale-y-100' : 'scale-y-0'
+ }`}
               />
             </Link>
           )}
@@ -228,8 +230,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
             <span>{t('profile')}</span>
             <span
               className={`absolute -start-[30px] top-1/2 h-8 w-0.5 -translate-y-1/2 bg-gold-gradient transition-transform duration-300 ${
-                isProfile ? 'scale-y-100' : 'scale-y-0'
-              }`}
+ isProfile ? 'scale-y-100' : 'scale-y-0'
+ }`}
             />
           </Link>
         </div>
@@ -238,8 +240,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
       {/* Sticky Header */}
       <header
         className={`sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center bg-[#0D0E12]/70 px-5 py-4 backdrop-blur-xl md:px-10 ${
-          isImmersive ? 'max-md:hidden' : 'md:border-b md:border-[#D4AE62]/15'
-        }`}
+ isImmersive ? 'max-md:hidden' : ''
+ }`}
       >
         <button
           onClick={() => setMobileMenuOpen(true)}
@@ -267,10 +269,10 @@ export function VeloceShell({ children }: VeloceShellProps) {
               aria-label={t('languageAndCurrency')}
               className="flex h-10 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-[10px] font-medium tracking-[0.18em] uppercase text-foreground/90 transition hover:bg-white/[0.08] cursor-pointer"
             >
-              <Globe className="h-3.5 w-3.5 text-[#D4AE62]" />
+              <Globe className="h-3.5 w-3.5 text-gold-500" />
               <span>{locale.toUpperCase()}</span>
               <span className="text-white/25">/</span>
-              <span className="text-[#D4AE62]">{currency}</span>
+              <span className="text-gold-500">{currency}</span>
             </button>
 
             {localeMenuOpen && (
@@ -293,14 +295,14 @@ export function VeloceShell({ children }: VeloceShellProps) {
                             href={buildLocalizedHref(opt.code)}
                             onClick={() => setLocaleMenuOpen(false)}
                             className={`flex items-center justify-between rounded-xl px-2.5 py-2 text-xs transition ${
-                              active
-                                ? 'bg-[#D4AE62]/15 text-[#D4AE62] font-medium'
+ active
+ ? 'bg-gold-500/15 text-gold-500 font-medium'
                                 : 'bg-white/[0.02] text-white/70 hover:bg-white/[0.06] hover:text-white'
                             }`}
                           >
                             <span>{opt.name}</span>
                             {active ? (
-                              <Check className="h-3.5 w-3.5 text-[#D4AE62]" />
+                              <Check className="h-3.5 w-3.5 text-gold-500" />
                             ) : (
                               <span className="text-[9px] tracking-widest text-white/30">{opt.label}</span>
                             )}
@@ -326,8 +328,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
                               setLocaleMenuOpen(false);
                             }}
                             className={`rounded-xl py-1.5 text-[10px] font-semibold tracking-wider uppercase transition cursor-pointer ${
-                              active
-                                ? 'bg-[#D4AE62] text-black shadow-[0_4px_14px_rgba(212,174,98,0.3)]'
+ active
+ ? 'bg-gold-500 text-black shadow-[0_4px_14px_rgba(212,174,98,0.3)]'
                                 : 'bg-white/[0.03] text-white/65 hover:bg-white/[0.08] hover:text-white'
                             }`}
                           >
@@ -345,7 +347,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
           <Link
             href={`/${locale}/cart`}
             aria-label={t('cart')}
-            className="relative hidden h-10 w-10 place-items-center rounded-full border border-[#D4AE62]/20 transition hover:border-primary md:grid"
+            className="relative hidden h-10 w-10 place-items-center rounded-full transition hover:bg-white/[0.06] md:grid"
           >
             <ShoppingCart className="h-4 w-4 text-foreground/90" />
             {count > 0 && (
@@ -359,7 +361,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
             href={`/${locale}/profile`}
             aria-label={t('profile')}
             data-status={isProfile ? 'active' : 'inactive'}
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AE62]/40 text-[#D4AE62] transition hover:border-primary data-[status=active]:border-primary data-[status=active]:bg-[#D4AE62]/10 md:border-[#D4AE62]/20 md:text-foreground/90 cursor-pointer"
+            className="grid h-10 w-10 place-items-center rounded-full text-gold-500 transition hover:bg-white/[0.06] data-[status=active]:text-gold-500 data-[status=active]:bg-gold-500/10  md:text-foreground/90 cursor-pointer"
           >
             <User className="h-[18px] w-[18px] md:h-4 md:w-4" />
           </Link>
@@ -373,11 +375,11 @@ export function VeloceShell({ children }: VeloceShellProps) {
       {!isImmersive && (
         <nav
           aria-label={t('menu')}
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.07] bg-[#0B0C10]/65 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-2xl backdrop-saturate-150 md:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 bg-[#0B0C10]/65 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-2xl backdrop-saturate-150 md:hidden"
         >
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#D4AE62]/40 to-transparent"
+            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent"
           />
           <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2 pt-2 pb-[max(env(safe-area-inset-bottom),10px)]">
             <DockLink href={`/${locale}/seller`} icon={House} label={t('home')} active={isHome} />
@@ -387,9 +389,9 @@ export function VeloceShell({ children }: VeloceShellProps) {
               type="button"
               onClick={openCamera}
               aria-label={isSeller ? t('showroom') : t('create')}
-              className="group relative flex cursor-pointer flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] text-[#D4AE62] outline-none"
+              className="group relative flex cursor-pointer flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] text-gold-500 outline-none"
             >
-              <span className="grid h-8 w-11 place-items-center rounded-xl border border-[#D4AE62]/30 bg-gradient-to-b from-[#D4AE62]/20 to-[#D4AE62]/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-all duration-200 group-hover:border-[#D4AE62]/50 group-hover:from-[#D4AE62]/28 group-active:scale-95 group-focus-visible:ring-2 group-focus-visible:ring-[#D4AE62]/60 motion-reduce:transition-none">
+              <span className="grid h-8 w-11 place-items-center rounded-xl bg-gradient-to-b from-gold-500/20 to-gold-500/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-all duration-200  group-hover:from-gold-500/28 group-active:scale-95 group-focus-visible:ring-2 group-focus-visible:ring-gold-500/60 motion-reduce:transition-none">
                 <Plus className="h-[18px] w-[18px]" strokeWidth={2} />
               </span>
               <span>{isSeller ? t('showroom') : t('create')}</span>
@@ -408,7 +410,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
             className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="fixed inset-y-0 start-0 w-72 bg-[#0D0E12] border-e border-[#D4AE62]/20 p-6 flex flex-col justify-between">
+          <div className="fixed inset-y-0 start-0 w-72 bg-[#0D0E12] p-6 flex flex-col justify-between">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <span className="font-display text-xl font-light tracking-[0.4em] text-gold-gradient">
@@ -427,8 +429,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
                   href={`/${locale}/seller`}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
-                    isHome ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'
-                  }`}
+ isHome ? 'bg-gold-500/10 text-primary' : 'text-neutral-400 hover:text-white'
+ }`}
                 >
                   <House className="h-4 w-4" />
                   <span>{t('home')}</span>
@@ -438,20 +440,20 @@ export function VeloceShell({ children }: VeloceShellProps) {
                     href={garageHref}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
-                      isGarage ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'
-                    }`}
+ isGarage ? 'bg-gold-500/10 text-primary' : 'text-neutral-400 hover:text-white'
+ }`}
                   >
                     <Car className="h-4 w-4" />
                     <span>{t('garage')}</span>
-                    {!studioUnlocked && <Lock className="h-3 w-3 text-[#D4AE62]" />}
+                    {!studioUnlocked && <Lock className="h-3 w-3 text-gold-500" />}
                   </Link>
                 )}
                 <Link
                   href={`/${locale}/shop`}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
-                    isShop ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'
-                  }`}
+ isShop ? 'bg-gold-500/10 text-primary' : 'text-neutral-400 hover:text-white'
+ }`}
                 >
                   <ShoppingCart className="h-4 w-4" />
                   <span>{t('shop')}</span>
@@ -460,8 +462,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
                   href={`/${locale}/cart`}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
-                    isCart ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'
-                  }`}
+ isCart ? 'bg-gold-500/10 text-primary' : 'text-neutral-400 hover:text-white'
+ }`}
                 >
                   <ShoppingCart className="h-4 w-4" />
                   <span>{t('cartWithCount', { count })}</span>
@@ -471,20 +473,20 @@ export function VeloceShell({ children }: VeloceShellProps) {
                     href={dashboardHref}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
-                      isDashboard ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'
-                    }`}
+ isDashboard ? 'bg-gold-500/10 text-primary' : 'text-neutral-400 hover:text-white'
+ }`}
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     <span>{t('dashboard')}</span>
-                    {!studioUnlocked && <Lock className="h-3 w-3 text-[#D4AE62]" />}
+                    {!studioUnlocked && <Lock className="h-3 w-3 text-gold-500" />}
                   </Link>
                 )}
                 <Link
                   href={`/${locale}/profile`}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-widest uppercase transition ${
-                    isProfile ? 'bg-[#D4AE62]/10 text-primary' : 'text-neutral-400 hover:text-white'
-                  }`}
+ isProfile ? 'bg-gold-500/10 text-primary' : 'text-neutral-400 hover:text-white'
+ }`}
                 >
                   <User className="h-4 w-4" />
                   <span>{t('profile')}</span>
@@ -507,7 +509,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
                 setMobileMenuOpen(false);
                 signOut();
               }}
-              className="flex items-center gap-2 text-xs tracking-widest uppercase text-neutral-500 hover:text-red-400 pt-4 border-t border-[#D4AE62]/15"
+              className="flex items-center gap-2 text-xs tracking-widest uppercase text-neutral-500 hover:text-red-400 pt-4 "
             >
               <LogOut className="h-4 w-4" />
               <span>{t('signOut')}</span>

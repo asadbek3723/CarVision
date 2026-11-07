@@ -84,7 +84,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
         <p className="text-sm text-white/50">{t('notFound')}</p>
         <Link
           href={`/${locale}/shop`}
-          className="mt-4 inline-block text-xs tracking-widest text-[#D4AE62] uppercase hover:underline"
+          className="mt-4 inline-block text-xs tracking-widest text-gold-500 uppercase hover:underline"
         >
           {t('backToShop')}
         </Link>
@@ -135,7 +135,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
             <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-widest text-white/30">{t('noImage')}</div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-          <span className="absolute bottom-4 start-4 rounded-full bg-black/75 px-3.5 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-[#D4AE62] backdrop-blur-md">
+          <span className="absolute bottom-4 start-4 rounded-full bg-black/75 px-3.5 py-1.5 text-[10px] font-semibold tracking-widest uppercase text-gold-500 backdrop-blur-md">
             {product.category}
           </span>
         </div>
@@ -148,7 +148,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
                 type="button"
                 onClick={() => setActiveImg(idx)}
                 aria-label={t('imageN', { n: idx + 1 })}
-                className={`h-16 w-16 overflow-hidden rounded-xl border-2 ${idx === activeImg ? 'border-[#D4AE62]' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                className={`h-16 w-16 overflow-hidden rounded-xl border-2 ${idx === activeImg ? 'border-gold-500' : 'border-transparent opacity-70 hover:opacity-100'}`}
               >
                 <img src={src} alt="" className="h-full w-full object-cover" />
               </button>
@@ -159,7 +159,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
         {/* Clean Boxless Info */}
         <div className="space-y-6 lg:col-span-6">
           <div>
-            <p className="text-xs font-medium tracking-[0.25em] uppercase text-[#D4AE62]">
+            <p className="text-xs font-medium tracking-[0.25em] uppercase text-gold-500">
               {product.brand}
             </p>
             <h1 className="mt-2 font-display text-2xl font-light text-white sm:text-4xl">
@@ -170,15 +170,15 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
           {/* Compatibility, exactly as entered by the workshop */}
           <div className="space-y-2">
             <p className="flex items-center gap-2 text-xs text-white/50">
-              <Car className="h-4 w-4 text-[#D4AE62]" />
+              <Car className="h-4 w-4 text-gold-500" />
               {t('compatibleCars')}
             </p>
             <div className="flex flex-wrap gap-2">
               {product.isUniversal ? (
-                <span className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-[#D4AE62]">{tCard('allCars')}</span>
+                <span className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-gold-500">{tCard('allCars')}</span>
               ) : (
                 (product.compatibility ?? []).map((c) => (
-                  <span key={`${c.id}-${c.name}`} className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-[#D4AE62]">
+                  <span key={`${c.id}-${c.name}`} className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-xs font-semibold text-gold-500">
                     {c.name}
                     {yearText(c.yearFrom, c.yearTo) ? ` · ${yearText(c.yearFrom, c.yearTo)}` : ''}
                   </span>
@@ -188,7 +188,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
             {specChips.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {specChips.map((c) => (
-                  <span key={c} className="rounded-full border border-white/10 px-3 py-1 text-[11px] text-white/70">{c}</span>
+                  <span key={c} className="rounded-full px-3 py-1 text-[11px] text-white/70">{c}</span>
                 ))}
               </div>
             )}
@@ -216,7 +216,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
           {/* Locked Workshop Explanation (Boxless soft surface) */}
           <div className="rounded-2xl bg-white/[0.03] p-5">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#D4AE62]/15 text-[#D4AE62]">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-500">
                 <Lock className="h-4 w-4" />
               </div>
               <div>
@@ -247,7 +247,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
               href={`/${locale}/customize?partId=${encodeURIComponent(product.id)}`}
               className="flex items-center justify-center gap-2 rounded-2xl bg-white/[0.05] px-6 py-4 text-xs font-semibold tracking-wider uppercase text-white transition hover:bg-white/[0.1]"
             >
-              <Sparkles className="h-4 w-4 text-[#D4AE62]" />
+              <Sparkles className="h-4 w-4 text-gold-500" />
               <span>{t('tryOnCar')}</span>
             </Link>
           </div>

@@ -20,10 +20,10 @@ export default function OfflinePage() {
   const c = COPY[(params?.['locale'] as string) ?? 'uz'] ?? COPY['uz']!;
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#07080B] p-6 text-center">
-      <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#D4AE62]/15 text-[#D4AE62]"><WifiOff className="h-9 w-9" /></span>
+      <span className="flex h-20 w-20 items-center justify-center rounded-full bg-gold-500/15 text-gold-500"><WifiOff className="h-9 w-9" /></span>
       <h1 className="text-2xl font-bold text-white">{c.title}</h1>
       <p className="max-w-xs text-sm text-white/55">{c.body}</p>
-      <button type="button" onClick={() => window.location.reload()} className="rounded-full bg-[#D4AE62] px-8 py-3.5 text-sm font-bold text-black">{c.retry}</button>
+      <button type="button" onClick={() => window.location.reload()} className="rounded-full bg-gold-500 px-8 py-3.5 text-sm font-bold text-black">{c.retry}</button>
     </main>
   );
 }

@@ -76,7 +76,7 @@ export function LiveCamera({ onShot, onFile, busy }: Props) {
         <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
         {!ready && !error && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-[#D4AE62]" />
+            <Loader2 className="h-8 w-8 animate-spin text-gold-500" />
           </div>
         )}
         {error && (
@@ -85,9 +85,9 @@ export function LiveCamera({ onShot, onFile, busy }: Props) {
           </div>
         )}
         {ready && (
-          <div className="pointer-events-none absolute inset-6 rounded-3xl border border-white/25">
-            <span className="absolute -top-px start-8 h-px w-16 bg-[#D4AE62]" />
-            <span className="absolute -bottom-px end-8 h-px w-16 bg-[#D4AE62]" />
+          <div className="pointer-events-none absolute inset-6 rounded-3xl ">
+            <span className="absolute -top-px start-8 h-px w-16 bg-gold-500" />
+            <span className="absolute -bottom-px end-8 h-px w-16 bg-gold-500" />
           </div>
         )}
       </div>
@@ -113,7 +113,7 @@ export function LiveCamera({ onShot, onFile, busy }: Props) {
           onClick={shoot}
           disabled={!ready || busy}
           aria-label={t('shoot')}
-          className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-white/80 bg-white/15 transition active:scale-90 disabled:opacity-40"
+          className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white/15 transition active:scale-90 disabled:opacity-40"
         >
           {busy ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : <Camera className="h-7 w-7 text-white" />}
         </button>

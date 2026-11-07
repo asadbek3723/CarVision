@@ -61,23 +61,23 @@ export function AdminOverviewView({ onNavigate }: { onNavigate: (tab: AdminTab) 
 
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
         <Surface className="p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-white"><Users className="h-4 w-4 text-[#D4AE62]" />{t('chartSignups')}</h2>
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-white"><Users className="h-4 w-4 text-gold-500" />{t('chartSignups')}</h2>
           <BarChart points={data.charts.signups} label={t('chartSignups')} />
         </Surface>
         <Surface className="p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-white"><Cpu className="h-4 w-4 text-[#D4AE62]" />{t('chartRenders')}</h2>
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-white"><Cpu className="h-4 w-4 text-gold-500" />{t('chartRenders')}</h2>
           <BarChart points={data.charts.renders} color="#7dd3fc" label={t('chartRenders')} />
         </Surface>
         <Surface className="p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-white"><Banknote className="h-4 w-4 text-[#D4AE62]" />{t('chartBookings')}</h2>
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-white"><Banknote className="h-4 w-4 text-gold-500" />{t('chartBookings')}</h2>
           <BarChart points={data.charts.bookings} color="#6ee7b7" label={t('chartBookings')} />
         </Surface>
       </div>
 
       <Surface className="mt-5 p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck className="h-4 w-4 text-[#D4AE62]" />{t('recent')}</h2>
-          <button type="button" onClick={() => onNavigate('security')} className="text-xs font-semibold text-[#D4AE62] hover:underline">{tc('all')}</button>
+          <h2 className="flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck className="h-4 w-4 text-gold-500" />{t('recent')}</h2>
+          <button type="button" onClick={() => onNavigate('security')} className="text-xs font-semibold text-gold-500 hover:underline">{tc('all')}</button>
         </div>
         {data.recentAdminActions.length === 0 ? (
           <p className="py-6 text-center text-sm text-white/45">{t('noActions')}</p>
@@ -104,7 +104,7 @@ export function AdminOverviewView({ onNavigate }: { onNavigate: (tab: AdminTab) 
           { tab: 'renders' as const, icon: Package, label: 'renders' },
         ].map((q) => (
           <button key={q.tab} type="button" onClick={() => onNavigate(q.tab)} className="flex items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-4 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
-            <q.icon className="h-5 w-5 text-[#D4AE62]" />
+            <q.icon className="h-5 w-5 text-gold-500" />
             {tn(q.label)}
           </button>
         ))}

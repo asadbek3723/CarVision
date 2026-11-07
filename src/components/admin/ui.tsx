@@ -122,7 +122,7 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
 }
 
 export function StatTile({ label, value, hint, accent }: { label: string; value: React.ReactNode; hint?: string | undefined; accent?: 'gold' | 'green' | 'amber' | 'red' | undefined }) {
-  const color = accent === 'gold' ? 'text-[#D4AE62]' : accent === 'green' ? 'text-emerald-400' : accent === 'amber' ? 'text-amber-300' : accent === 'red' ? 'text-red-400' : 'text-white';
+  const color = accent === 'gold' ? 'text-gold-500' : accent === 'green' ? 'text-emerald-400' : accent === 'amber' ? 'text-amber-300' : accent === 'red' ? 'text-red-400' : 'text-white';
   return (
     <div className="rounded-3xl bg-white/[0.04] p-4 sm:p-5">
       <p className="text-xs text-white/50">{label}</p>
@@ -135,7 +135,7 @@ export function StatTile({ label, value, hint, accent }: { label: string; value:
 export function Pill({ tone = 'neutral', children }: { tone?: 'neutral' | 'gold' | 'green' | 'amber' | 'red' | 'blue'; children: React.ReactNode }) {
   const tones: Record<string, string> = {
     neutral: 'bg-white/10 text-white/70',
-    gold: 'bg-[#D4AE62]/15 text-[#D4AE62]',
+    gold: 'bg-gold-500/15 text-gold-500',
     green: 'bg-emerald-500/15 text-emerald-300',
     amber: 'bg-amber-500/15 text-amber-300',
     red: 'bg-red-500/15 text-red-300',
@@ -148,7 +148,7 @@ export function Spinner({ label }: { label?: string }) {
   const t = useTranslations('adm.common');
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-20 text-sm text-white/50" role="status">
-      <Loader2 className="h-6 w-6 animate-spin text-[#D4AE62]" />
+      <Loader2 className="h-6 w-6 animate-spin text-gold-500" />
       {label ?? t('loading')}
     </div>
   );
@@ -197,7 +197,7 @@ export function Segmented<T extends string>({ value, onChange, options }: { valu
           key={o.id}
           type="button"
           onClick={() => onChange(o.id)}
-          className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${value === o.id ? 'bg-[#D4AE62] text-black' : 'bg-white/[0.06] text-white/70 hover:bg-white/10'}`}
+          className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${value === o.id ? 'bg-gold-500 text-black' : 'bg-white/[0.06] text-white/70 hover:bg-white/10'}`}
         >
           {o.label}
           {typeof o.count === 'number' && <span className="ms-1.5 opacity-70">{o.count}</span>}

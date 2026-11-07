@@ -372,7 +372,7 @@ export function CinematicVideoStudio({
       aria-label={t('dialog')}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-xl"
     >
-      <div className="relative flex max-h-[96vh] w-full max-w-[440px] flex-col items-center gap-4 rounded-[28px] border border-white/10 bg-[#0B0D13] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
+      <div className="relative flex max-h-[96vh] w-full max-w-[440px] flex-col items-center gap-4 rounded-[28px] bg-[#0B0D13] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
         <button
           type="button"
           onClick={onClose}
@@ -383,7 +383,7 @@ export function CinematicVideoStudio({
         </button>
 
         <div className="flex items-center gap-2 self-start ps-1 text-sm font-bold tracking-wide text-white">
-          <Film className="h-4 w-4 text-[#D4AE62]" />
+          <Film className="h-4 w-4 text-gold-500" />
           <span>{t('title')}</span>
         </div>
 
@@ -411,10 +411,10 @@ export function CinematicVideoStudio({
                       className={`h-full w-full object-cover transition duration-700 ${f.state === 'done' ? 'opacity-100 saturate-100' : 'opacity-45 saturate-50'}`}
                     />
                     {f.state === 'working' && (
-                      <div aria-hidden className="absolute inset-x-0 h-10 animate-[scan_1.6s_ease-in-out_infinite] bg-gradient-to-b from-transparent via-[#D4AE62]/40 to-transparent" />
+                      <div aria-hidden className="absolute inset-x-0 h-10 animate-[scan_1.6s_ease-in-out_infinite] bg-gradient-to-b from-transparent via-gold-500/40 to-transparent" />
                     )}
                     {f.state === 'done' && (
-                      <span className="absolute end-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-[#D4AE62] text-black shadow-lg">
+                      <span className="absolute end-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-gold-500 text-black shadow-lg">
                         <Check className="h-3.5 w-3.5" strokeWidth={3} />
                       </span>
                     )}
@@ -422,7 +422,7 @@ export function CinematicVideoStudio({
                 ))}
               </div>
               <div className="relative shrink-0 px-5 pb-6 text-center" aria-live="polite">
-                <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D4AE62]">
+                <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-gold-500">
                   <Sparkles className="h-3.5 w-3.5" /> AI
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">
@@ -441,7 +441,7 @@ export function CinematicVideoStudio({
 
           {phase === 'loading' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#D4AE62]" />
+              <Loader2 className="h-8 w-8 animate-spin text-gold-500" />
               <p className="text-sm text-white/80">{t('preparing')}</p>
             </div>
           )}
@@ -453,7 +453,7 @@ export function CinematicVideoStudio({
               <button
                 type="button"
                 onClick={() => setAttempt((n) => n + 1)}
-                className="inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-5 py-2.5 text-sm font-bold text-black transition hover:brightness-110"
+                className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-5 py-2.5 text-sm font-bold text-black transition hover:brightness-110"
               >
                 <RefreshCw className="h-4 w-4" />
                 {t('retry')}
@@ -465,7 +465,7 @@ export function CinematicVideoStudio({
         {phase === 'recording' && (
           <div className="w-full">
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-              <div className="h-full bg-[#D4AE62] transition-[width] duration-150" style={{ width: `${Math.round(progress * 100)}%` }} />
+              <div className="h-full bg-gold-500 transition-[width] duration-150" style={{ width: `${Math.round(progress * 100)}%` }} />
             </div>
             <p className="mt-2 text-center text-xs text-[#A69F92]">
               {t('recording', { seconds: Math.ceil((1 - progress) * REEL_DURATION) })}
@@ -478,7 +478,7 @@ export function CinematicVideoStudio({
             <a
               href={videoUrl}
               download={fileName}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-sm font-bold text-black transition hover:brightness-110"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-sm font-bold text-black transition hover:brightness-110"
             >
               <Download className="h-4 w-4" />
               {t('download')}

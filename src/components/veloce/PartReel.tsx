@@ -389,7 +389,7 @@ export function PartReel({
           onPointerCancel={endDrag}
           onKeyDown={onKeyDown}
           style={{ height: metrics.height, touchAction: 'pan-y' }}
-          className="relative cursor-grab overflow-hidden outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#D4AE62]/50"
+          className="relative cursor-grab overflow-hidden outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-gold-500/50"
         >
           {/* Gear rim: teeth slide past as the wheel turns */}
           <div
@@ -432,7 +432,7 @@ export function PartReel({
               >
                 <div
                   data-active="0"
-                  className="relative h-full w-full overflow-hidden rounded-[22px] border border-white/10 bg-[#0E1016] transition-[box-shadow,border-color] duration-300 data-[active=1]:border-[#D4AE62] data-[active=1]:shadow-[0_0_0_4px_rgba(212,174,98,0.08),0_18px_44px_-10px_rgba(212,174,98,0.4)] lg:rounded-[28px]"
+                  className="relative h-full w-full overflow-hidden rounded-[22px] bg-[#0E1016] transition-[box-shadow,border-color] duration-300 data-[active=1]:border-gold-500 data-[active=1]:shadow-[0_0_0_4px_rgba(212,174,98,0.08),0_18px_44px_-10px_rgba(212,174,98,0.4)] lg:rounded-[28px]"
                 >
                   {part.swatch ? (
                     <div className="h-full w-full" style={{ background: part.swatch }} />
@@ -441,7 +441,7 @@ export function PartReel({
                   )}
                   <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                   {picked && (
-                    <span className="absolute end-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-[#D4AE62] text-black shadow-lg lg:h-7 lg:w-7">
+                    <span className="absolute end-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-gold-500 text-black shadow-lg lg:h-7 lg:w-7">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
                   )}
@@ -480,14 +480,14 @@ export function PartReel({
           <h3 className="truncate font-display text-lg font-medium uppercase tracking-[0.14em] text-white lg:whitespace-normal lg:text-2xl lg:leading-snug lg:tracking-[0.1em] lg:[display:-webkit-box] lg:[-webkit-box-orient:vertical] lg:[-webkit-line-clamp:3]">{current.name}</h3>
           <p className="mt-1 truncate text-xs text-white/50 lg:mt-3 lg:whitespace-normal lg:text-[15px] lg:leading-relaxed lg:text-white/60 lg:[display:-webkit-box] lg:[-webkit-box-orient:vertical] lg:[-webkit-line-clamp:5]">{[current.spec, currentFit].filter(Boolean).join(' · ')}</p>
           <div className="mt-2 flex items-center justify-center gap-3 lg:mt-5 lg:justify-start lg:gap-5">
-            <span className="text-base font-semibold tabular-nums text-[#D4AE62] lg:text-3xl">{formatPrice(Number(current.price) || 0)}</span>
+            <span className="text-base font-semibold tabular-nums text-gold-500 lg:text-3xl">{formatPrice(Number(current.price) || 0)}</span>
             <button
               type="button"
               onClick={() => onToggle(current.id)}
               aria-pressed={isSelected}
               className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full px-4 text-xs font-semibold transition active:scale-95 lg:min-h-10 lg:px-6 lg:text-sm ${
-                isSelected ? 'bg-emerald-400/15 text-emerald-300' : 'bg-white/[0.08] text-white/85 hover:bg-white/[0.14]'
-              }`}
+ isSelected ? 'bg-emerald-400/15 text-emerald-300' : 'bg-white/[0.08] text-white/85 hover:bg-white/[0.14]'
+ }`}
             >
               {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
               {isSelected ? selectedLabel : selectLabel}

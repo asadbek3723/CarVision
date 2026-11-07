@@ -18,7 +18,7 @@ export function Brands() {
   return (
     <section
       aria-label={t('label')}
-      className="border-y border-border py-10 sm:py-14 select-none"
+      className=" py-10 sm:py-14 select-none"
     >
       <p className="mb-8 text-center text-[10px] tracking-lux text-muted-foreground">
         DUNYO BRENDLARI BILAN ISHLAYDI

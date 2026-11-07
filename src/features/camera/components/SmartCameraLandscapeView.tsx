@@ -137,8 +137,8 @@ export function LuxuryCarCompass({
             key={angle.id}
             data-angle={angle.slug}
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center transition-all duration-500 pointer-events-none ${
-              isActive
-                ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_0_22px_rgba(229,193,117,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-110'
+ isActive
+ ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_0_22px_rgba(229,193,117,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-110'
                 : isDone
                 ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
                 : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
@@ -364,12 +364,12 @@ export function SmartCameraLandscapeView({
             className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-[#050507] px-7 py-10 text-center select-none overflow-hidden"
           >
             {/* Ambient Luxury Gold Radial Glow */}
-            <div className="pointer-events-none absolute top-1/2 start-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-[#D4AE62]/12 blur-[110px]" />
+            <div className="pointer-events-none absolute top-1/2 start-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-gold-500/12 blur-[110px]" />
 
             {/* Animated 3D-Style Phone Rotation Stage */}
             <div className="relative mb-10 flex h-56 w-56 items-center justify-center">
-              <div className="absolute inset-0 rounded-full border border-[#D4AE62]/15 animate-pulse" />
-              <div className="absolute inset-5 rounded-full border border-dashed border-[#D4AE62]/25" />
+              <div className="absolute inset-0 rounded-full animate-pulse" />
+              <div className="absolute inset-5 rounded-full border border-dashed " />
 
               <svg
                 viewBox="0 0 220 220"
@@ -440,7 +440,7 @@ export function SmartCameraLandscapeView({
             </div>
 
             {/* Passive Status Indicator (Non-clickable) */}
-            <div className="relative z-10 mt-8 inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium text-[#E5C175] ring-1 ring-[#D4AE62]/25 pointer-events-none">
+            <div className="relative z-10 mt-8 inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium text-[#E5C175] ring-1 ring-gold-500/25 pointer-events-none">
               <span className="h-2 w-2 rounded-full bg-[#E5C175] animate-ping" />
               <span>{t('waitingRotate')}</span>
             </div>
@@ -449,7 +449,7 @@ export function SmartCameraLandscapeView({
             <button
               type="button"
               onClick={() => setForceLandscape(true)}
-              className="relative z-10 mt-5 cursor-pointer rounded-full bg-[#D4AE62] px-6 py-3 text-xs font-bold tracking-wide text-black transition active:scale-95"
+              className="relative z-10 mt-5 cursor-pointer rounded-full bg-gold-500 px-6 py-3 text-xs font-bold tracking-wide text-black transition active:scale-95"
             >
               Aylanmayapti? Shu holatda davom etish
             </button>
@@ -498,7 +498,7 @@ export function SmartCameraLandscapeView({
 
         {/* CENTER COLUMN: Framed Camera Viewport with Golden Corner Brackets & Perspective Floor Grid */}
         <div className="relative flex-1 h-[90%] sm:h-[92%] min-w-0 flex items-center justify-center">
-          <div className="relative w-full h-full rounded-[22px] sm:rounded-[28px] md:rounded-[32px] overflow-hidden bg-[#0A0B0F] ring-[1.5px] ring-[#D4AE62]/65 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_24px_rgba(212,174,98,0.14)]">
+          <div className="relative w-full h-full rounded-[22px] sm:rounded-[28px] md:rounded-[32px] overflow-hidden bg-[#0A0B0F] ring-[1.5px] ring-gold-500/65 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_24px_rgba(212,174,98,0.14)]">
             {/* Live Camera Stream Contained Strictly Inside Center Frame */}
             <video
               ref={videoRef}
@@ -511,7 +511,7 @@ export function SmartCameraLandscapeView({
             {/* Camera Initializing Overlay */}
             {!isReady && !permissionDenied && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#08090C]/90 p-6 text-center">
-                <div className="h-12 w-12 rounded-full border-2 border-[#D4AE62]/20 border-t-[#D4AE62] animate-spin mb-3" />
+                <div className="h-12 w-12 rounded-full border-2 border-t-gold-500 animate-spin mb-3" />
                 <p className="font-display text-xs sm:text-sm tracking-widest text-[#EDE8DF] uppercase">
                   {t('starting')}
                 </p>
@@ -564,8 +564,8 @@ export function SmartCameraLandscapeView({
                   transition={{ duration: 0.4 }}
                   aria-live="polite"
                   className={`font-display text-[11px] sm:text-xs font-light uppercase tracking-[0.32em] [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] transition-colors duration-500 ${
-                    aligned ? 'text-emerald-200' : 'text-[#F4EBD6]'
-                  }`}
+ aligned ? 'text-emerald-200' : 'text-[#F4EBD6]'
+ }`}
                 >
                   {tAngle(`${activeAngle.key}.title`)}
                 </motion.span>

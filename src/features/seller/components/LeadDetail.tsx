@@ -79,7 +79,7 @@ export function LeadDetail({ order, onRedeem }: Props) {
             {formatDate(order.appointmentDate)}
           </p>
         </div>
-        <a href={`tel:${order.customerPhone}`} className="inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-sm font-bold text-black hover:brightness-110">
+        <a href={`tel:${order.customerPhone}`} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-sm font-bold text-black hover:brightness-110">
           <Phone className="h-4 w-4" />
           {order.customerPhone}
         </a>
@@ -103,7 +103,7 @@ export function LeadDetail({ order, onRedeem }: Props) {
       <dl className="mt-5 space-y-2 rounded-2xl bg-black/30 p-4 text-sm">
         <div className="flex justify-between"><dt className="text-white/50">{t('total')}</dt><dd className="font-semibold text-white">{formatPrice(order.totalPriceUSD)}</dd></div>
         <div className="flex justify-between"><dt className="text-white/50">{t('depositLine')}</dt><dd className="font-semibold text-emerald-300">− {formatPrice(order.depositUSD)}</dd></div>
-        <div className="flex justify-between border-t border-white/10 pt-2"><dt className="font-semibold text-white">{t('customerPays')}</dt><dd className="text-lg font-bold text-[#D4AE62]">{formatPrice(order.remainingUSD)}</dd></div>
+        <div className="flex justify-between pt-2"><dt className="font-semibold text-white">{t('customerPays')}</dt><dd className="text-lg font-bold text-gold-500">{formatPrice(order.remainingUSD)}</dd></div>
       </dl>
 
       {error && <p role="alert" className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}

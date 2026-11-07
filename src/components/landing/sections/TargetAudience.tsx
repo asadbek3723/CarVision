@@ -29,11 +29,11 @@ export function TargetAudience({ locale }: { locale: string }) {
         {AUDIENCE_CARDS.map((card, idx) => (
           <div
             key={card.key}
-            className="reveal relative overflow-hidden rounded-3xl border border-border bg-card-lux p-7 sm:p-10 shadow-lux"
+            className="reveal relative overflow-hidden rounded-3xl bg-card-lux p-7 sm:p-10 shadow-lux"
             style={{ transitionDelay: `${idx * 150}ms` }}
           >
             <div className="absolute -end-24 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-3 py-1 text-[10px] tracking-[0.25em] text-primary">
+            <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] tracking-[0.25em] text-primary">
               <card.icon className="h-3.5 w-3.5" />
               {t(`${card.key}.tag`)}
             </span>
@@ -52,8 +52,8 @@ export function TargetAudience({ locale }: { locale: string }) {
             <Link
               href={`/${locale}/${card.link}`}
               className={`${
-                idx === 0 ? 'btn-gold' : 'btn-ghost-gold'
-              } mt-10 flex items-center justify-center gap-2 rounded-full py-4 text-xs font-bold tracking-[0.25em]`}
+ idx === 0 ? 'btn-gold' : 'btn-ghost-gold'
+ } mt-10 flex items-center justify-center gap-2 rounded-full py-4 text-xs font-bold tracking-[0.25em]`}
             >
               <span>{t(`${card.key}.cta`)}</span>
               <ArrowRight className="h-4 w-4 rtl:rotate-180" />

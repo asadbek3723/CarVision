@@ -31,9 +31,9 @@ export function Faq() {
             <div
               key={q}
               className={`overflow-hidden rounded-2xl border transition-colors duration-500 ${
-                isOpen
-                  ? 'border-primary/40 bg-card-lux shadow-lux'
-                  : 'border-border bg-card/30 hover:border-primary/20'
+ isOpen
+ ? ' bg-card-lux shadow-lux'
+                  : ' bg-card/30 '
               }`}
             >
               <button
@@ -44,15 +44,15 @@ export function Faq() {
                 <span className="font-medium text-foreground">{q}</span>
                 <ChevronDown
                   className={`h-5 w-5 shrink-0 text-primary transition-transform duration-500 ${
-                    isOpen ? 'rotate-180' : ''
-                  }`}
+ isOpen ? 'rotate-180' : ''
+ }`}
                 />
               </button>
 
               <div
                 className={`grid transition-all duration-500 [transition-timing-function:cubic-bezier(0.2,0.8,0.2,1)] ${
-                  isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                }`}
+ isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+ }`}
               >
                 <div className="overflow-hidden min-h-0 px-7 text-muted-foreground">
                   <p className="pb-6 leading-relaxed text-sm sm:text-base">{a}</p>

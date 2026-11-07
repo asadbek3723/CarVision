@@ -36,11 +36,11 @@ const LANGUAGE_NAMES: Record<ItemLocale, string> = {
 };
 
 const fieldCls =
-  'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-base text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
+  'w-full rounded-2xl  bg-white/[0.04] px-4 py-3.5 text-base text-white placeholder:text-white/35 outline-none transition ';
 const labelCls = 'mb-2 block text-xs font-semibold uppercase tracking-wider text-white/50';
-const cardCls = 'rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5 md:p-6';
+const cardCls = 'rounded-3xl  bg-[#0B0D13] p-5 md:p-6';
 const selectCls =
-  'w-full appearance-none rounded-2xl border border-white/10 bg-white/[0.04] ps-4 pe-11 py-3.5 text-base text-white outline-none transition hover:border-white/20 focus:border-[#D4AE62]/60 [&>option]:bg-[#11141b]';
+  'w-full appearance-none rounded-2xl  bg-white/[0.04] ps-4 pe-11 py-3.5 text-base text-white outline-none transition   [&>option]:bg-[#11141b]';
 
 /** Styled native select (keeps the mobile picker) with a chevron. */
 function SelectBox({ children, className = '', ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
@@ -49,7 +49,7 @@ function SelectBox({ children, className = '', ...props }: React.SelectHTMLAttri
       <select {...props} className={selectCls}>
         {children}
       </select>
-      <ChevronDown className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AE62]" />
+      <ChevronDown className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-500" />
     </div>
   );
 }
@@ -311,14 +311,14 @@ export default function SellerNewPartPage() {
   if (isLoading || loadingItem) {
     return shell(
       <div className="flex justify-center py-24">
-        <Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" />
+        <Loader2 className="h-7 w-7 animate-spin text-gold-500" />
       </div>
     );
   }
   if (!user) {
     return shell(
       <div className="mt-10 text-center">
-        <Link href={`/${locale}/login`} className="inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link>
+        <Link href={`/${locale}/login`} className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link>
       </div>
     );
   }
@@ -333,7 +333,7 @@ export default function SellerNewPartPage() {
         <h1 className="mt-5 text-xl font-bold text-white">{editId ? t('savedEdit') : t('savedNew')}</h1>
         <div className="mt-7 flex flex-col gap-3">
           {!editId && (
-            <button type="button" onClick={reset} className="rounded-full bg-[#D4AE62] px-6 py-3.5 text-sm font-bold text-black">
+            <button type="button" onClick={reset} className="rounded-full bg-gold-500 px-6 py-3.5 text-sm font-bold text-black">
               {t('addAnother')}
             </button>
           )}
@@ -375,10 +375,10 @@ export default function SellerNewPartPage() {
                 <Camera className="h-4 w-4" />
                 {t('retake')}
               </button>
-              {main.kind === 'STUDIO' && <span className="absolute start-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[11px] font-semibold text-[#D4AE62]">{t('studioBadge')}</span>}
+              {main.kind === 'STUDIO' && <span className="absolute start-3 top-3 rounded-full bg-black/70 px-3 py-1 text-[11px] font-semibold text-gold-500">{t('studioBadge')}</span>}
             </>
           ) : (
-            <button type="button" onClick={() => setPhotoModal(true)} className="flex h-full w-full flex-col items-center justify-center gap-3 text-[#D4AE62]">
+            <button type="button" onClick={() => setPhotoModal(true)} className="flex h-full w-full flex-col items-center justify-center gap-3 text-gold-500">
               {uploading > 0 ? <Loader2 className="h-9 w-9 animate-spin" /> : <Camera className="h-9 w-9" />}
               <span className="text-sm font-semibold">{uploading > 0 ? t('uploading') : t('takePhoto')}</span>
             </button>
@@ -395,9 +395,9 @@ export default function SellerNewPartPage() {
                 </button>
               </div>
             ))}
-            {uploading > 0 && <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/[0.05]"><Loader2 className="h-4 w-4 animate-spin text-[#D4AE62]" /></div>}
+            {uploading > 0 && <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/[0.05]"><Loader2 className="h-4 w-4 animate-spin text-gold-500" /></div>}
             {photos.length < MAX_ITEM_IMAGES && (
-              <button type="button" onClick={() => setPhotoModal(true)} aria-label={t('addPhoto')} className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-white/25 text-white/60 hover:text-white">
+              <button type="button" onClick={() => setPhotoModal(true)} aria-label={t('addPhoto')} className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed text-white/60 hover:text-white">
                 <Plus className="h-5 w-5" />
               </button>
             )}
@@ -412,13 +412,13 @@ export default function SellerNewPartPage() {
         )}
 
         {main && main.kind !== 'STUDIO' && !studioCandidate && (
-          <button type="button" onClick={() => void improveImage()} disabled={improvingImage} className="mt-3 inline-flex items-center gap-1.5 text-xs text-white/45 transition hover:text-[#D4AE62] disabled:opacity-50">
+          <button type="button" onClick={() => void improveImage()} disabled={improvingImage} className="mt-3 inline-flex items-center gap-1.5 text-xs text-white/45 transition hover:text-gold-500 disabled:opacity-50">
             {improvingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             {t('studioImprove')}
           </button>
         )}
         {studioCandidate && (
-          <div className="mt-3 rounded-2xl border border-[#D4AE62]/30 bg-[#D4AE62]/[0.06] p-3">
+          <div className="mt-3 rounded-2xl bg-gold-500/[0.06] p-3">
             <img src={studioCandidate.preview} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
             <div className="mt-3 flex gap-2">
               <button type="button" onClick={() => setStudioCandidate(null)} className="flex-1 rounded-full bg-white/10 py-2.5 text-xs font-semibold text-white">{t('useOriginal')}</button>
@@ -429,7 +429,7 @@ export default function SellerNewPartPage() {
                   setPhotos((prev) => [studio, ...prev].slice(0, MAX_ITEM_IMAGES));
                   setStudioCandidate(null);
                 }}
-                className="flex-1 rounded-full bg-[#D4AE62] py-2.5 text-xs font-bold text-black"
+                className="flex-1 rounded-full bg-gold-500 py-2.5 text-xs font-bold text-black"
               >
                 {t('useStudio')}
               </button>
@@ -456,7 +456,7 @@ export default function SellerNewPartPage() {
           <div className="relative">
             <input id="p-name" value={name} maxLength={150} onChange={(e) => setName(e.target.value)} placeholder={t('namePlaceholder')} className={`${fieldCls} pe-12`} />
             {name.trim().length > 1 && (
-              <button type="button" aria-label={t('improveText')} onClick={() => void improveText()} disabled={improvingText} className="absolute end-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white/35 transition hover:text-[#D4AE62]">
+              <button type="button" aria-label={t('improveText')} onClick={() => void improveText()} disabled={improvingText} className="absolute end-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white/35 transition hover:text-gold-500">
                 {improvingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               </button>
             )}
@@ -464,7 +464,7 @@ export default function SellerNewPartPage() {
         </div>
 
         {suggestion && (
-          <div className="rounded-2xl border border-[#D4AE62]/30 bg-[#D4AE62]/[0.06] p-4">
+          <div className="rounded-2xl bg-gold-500/[0.06] p-4">
             <p className="text-sm font-semibold text-white">{suggestion.name}</p>
             {suggestion.description && <p className="mt-1 whitespace-pre-line text-sm text-white/70">{suggestion.description}</p>}
             <div className="mt-3 flex gap-2">
@@ -476,7 +476,7 @@ export default function SellerNewPartPage() {
                   if (suggestion.description) setDescription(suggestion.description);
                   setSuggestion(null);
                 }}
-                className="rounded-full bg-[#D4AE62] px-4 py-2 text-xs font-bold text-black"
+                className="rounded-full bg-gold-500 px-4 py-2 text-xs font-bold text-black"
               >
                 {t('accept')}
               </button>
@@ -502,12 +502,12 @@ export default function SellerNewPartPage() {
         <label className={labelCls}>{t('whichCar')}</label>
         {!pickCars && !universal && vehicles.length === 0 ? (
           <>
-            <button type="button" onClick={() => setPickCars(true)} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-start text-base text-white/50">
+            <button type="button" onClick={() => setPickCars(true)} className="flex w-full items-center justify-between rounded-2xl bg-white/[0.04] px-4 py-3.5 text-start text-base text-white/50">
               {t('chooseCar')}
               <ChevronDown className="h-4 w-4" />
             </button>
             <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm text-white/75">
-              <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-[#D4AE62]" />
+              <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-gold-500" />
               {t('fitsAll')}
             </label>
           </>
@@ -515,7 +515,7 @@ export default function SellerNewPartPage() {
           <div className="space-y-3">
             {!universal && <VehiclePicker value={vehicles} onChange={setVehicles} />}
             <label className="flex cursor-pointer items-center gap-3 text-sm text-white/75">
-              <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-[#D4AE62]" />
+              <input type="checkbox" checked={universal} onChange={(e) => setUniversal(e.target.checked)} className="h-4 w-4 accent-gold-500" />
               {t('fitsAll')}
             </label>
           </div>
@@ -526,7 +526,7 @@ export default function SellerNewPartPage() {
       <section className={cardCls}>
         <button type="button" onClick={() => setMore((m) => !m)} className="flex w-full items-center justify-between text-sm font-semibold text-white/75 hover:text-white">
           {t('more')}
-          <ChevronDown className={`h-4 w-4 text-[#D4AE62] transition ${more ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 text-gold-500 transition ${more ? 'rotate-180' : ''}`} />
         </button>
         {more && (
           <div className="mt-5 space-y-4">
@@ -554,7 +554,7 @@ export default function SellerNewPartPage() {
             {category === 'wrap_paint' && (
               <div className="flex items-center gap-3">
                 <label className="text-xs font-semibold text-white/55" htmlFor="sw">{t('color')}</label>
-                <input id="sw" type="color" value={swatch} onChange={(e) => setSwatch(e.target.value)} className="h-10 w-16 cursor-pointer rounded-lg border border-white/10 bg-transparent" />
+                <input id="sw" type="color" value={swatch} onChange={(e) => setSwatch(e.target.value)} className="h-10 w-16 cursor-pointer rounded-lg bg-transparent" />
               </div>
             )}
             <div>
@@ -599,14 +599,14 @@ export default function SellerNewPartPage() {
       </div>
       </div>
 
-      {error && <p role="alert" className="mt-5 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
+      {error && <p role="alert" className="mt-5 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 
       <div className="fixed inset-x-0 bottom-[84px] z-30 px-4 md:bottom-6 md:ps-28">
         <button
           type="button"
           onClick={() => void save()}
           disabled={saving || uploading > 0}
-          className="mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-full bg-[#D4AE62] py-4 text-base font-bold text-black shadow-[0_12px_40px_rgba(0,0,0,0.6)] transition hover:brightness-110 disabled:opacity-60"
+          className="mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-full bg-gold-500 py-4 text-base font-bold text-black shadow-[0_12px_40px_rgba(0,0,0,0.6)] transition hover:brightness-110 disabled:opacity-60"
         >
           {saving && <Loader2 className="h-5 w-5 animate-spin" />}
           {editId ? t('save') : t('publish')}

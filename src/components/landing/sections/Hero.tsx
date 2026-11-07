@@ -9,11 +9,12 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="grain relative flex h-screen min-h-[640px] items-center justify-center overflow-hidden"
+      className="grain relative flex h-[100dvh] min-h-[560px] items-center justify-center overflow-hidden"
     >
       <Image
         src="/images/golden/hero-car.jpg"
         priority
+        quality={70}
         sizes="100vw"
         alt={t('alt')}
         width={1920}
@@ -31,19 +32,19 @@ export function Hero() {
       <div className="relative z-10 px-6 text-center select-none">
         <div
           className="animate-rise mb-6 flex justify-center"
-          style={{ animationDelay: '.1s' }}
+          style={{ animationDelay: '0s' }}
         >
           <BrandMark className="h-12 w-14" />
         </div>
         <p
           className="animate-rise text-[11px] tracking-lux text-primary"
-          style={{ animationDelay: '.3s' }}
+          style={{ animationDelay: '.05s' }}
         >
           DRIVE YOUR VISION
         </p>
         <h1
           className="animate-rise mt-6 font-display text-5xl font-light leading-[0.95] text-foreground sm:text-8xl lg:text-9xl"
-          style={{ animationDelay: '.5s' }}
+          style={{ animationDelay: '.1s' }}
         >
           {t('title1')} <br />
           <em className="shimmer-text not-italic font-medium italic">
@@ -52,14 +53,14 @@ export function Hero() {
         </h1>
         <p
           className="animate-rise mx-auto mt-8 max-w-lg text-base text-muted-foreground"
-          style={{ animationDelay: '.8s' }}
+          style={{ animationDelay: '.2s' }}
         >
           {t('text')}
         </p>
 
         <div
           className="animate-rise mx-auto mt-10 flex max-w-xs flex-col justify-center gap-3 sm:max-w-none sm:flex-row sm:gap-4"
-          style={{ animationDelay: '1.1s' }}
+          style={{ animationDelay: '.3s' }}
         >
           <a
             href="#visualizer"

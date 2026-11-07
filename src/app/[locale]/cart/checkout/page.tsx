@@ -15,7 +15,7 @@ import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { readJson } from '@/lib/safe-json';
 
 const fieldCls =
-  'w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-[#D4AE62]/60';
+  'w-full rounded-xl  bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition ';
 
 export default function CheckoutPage() {
   const t = useTranslations('checkout');
@@ -139,16 +139,16 @@ export default function CheckoutPage() {
   if (authLoading || loadingProducts) {
     return shell(
       <div className="flex justify-center py-24">
-        <Loader2 className="h-7 w-7 animate-spin text-[#D4AE62]" />
+        <Loader2 className="h-7 w-7 animate-spin text-gold-500" />
       </div>
     );
   }
 
   if (!user) {
     return shell(
-      <div className="mt-10 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-6 text-center">
+      <div className="mt-10 rounded-3xl bg-[#0B0D13] p-6 text-center">
         <p className="text-sm text-white/80">{t('loginRequired')}</p>
-        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
+        <Link href={`/${locale}/login`} className="mt-4 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">
           {t('login')}
         </Link>
       </div>
@@ -166,7 +166,7 @@ export default function CheckoutPage() {
             <BookingCard key={b.id} booking={b} payment={payment} onChanged={() => void reloadBookings()} />
           ))}
         </div>
-        <Link href={`/${locale}/profile`} className="mt-6 inline-block text-sm text-[#D4AE62] underline">
+        <Link href={`/${locale}/profile`} className="mt-6 inline-block text-sm text-gold-500 underline">
           {t('myBookings')}
         </Link>
       </>
@@ -177,9 +177,9 @@ export default function CheckoutPage() {
 
   if (lines.length === 0) {
     return shell(
-      <div className="mt-10 rounded-3xl border border-dashed border-white/15 p-10 text-center">
+      <div className="mt-10 rounded-3xl border border-dashed p-10 text-center">
         <p className="text-sm text-white/70">{t('cartEmpty')}</p>
-        <Link href={`/${locale}/shop`} className="mt-4 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-sm font-bold text-black">
+        <Link href={`/${locale}/shop`} className="mt-4 inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">
           {t('goToShop')}
         </Link>
       </div>
@@ -194,7 +194,7 @@ export default function CheckoutPage() {
       </Link>
       <h1 className="mb-5 text-xl font-bold text-white">{t('title')}</h1>
 
-      <section className="rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5">
+      <section className="rounded-3xl bg-[#0B0D13] p-5">
         <ul className="space-y-3">
           {lines.map(({ p, qty }) => (
             <li key={p.id} className="flex items-center gap-3">
@@ -208,19 +208,19 @@ export default function CheckoutPage() {
           ))}
         </ul>
         {missing > 0 && <p className="mt-3 text-xs text-amber-300">{t('missing', { count: missing })}</p>}
-        <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
+        <div className="mt-4 flex items-end justify-between pt-4">
           <div>
             <p className="text-[11px] text-white/45">{t('totalAtWorkshop')}</p>
             <p className="text-lg font-bold text-white">{formatPrice(total)}</p>
           </div>
           <div className="text-end">
             <p className="text-[11px] text-white/45">{t('depositNow')}</p>
-            <p className="text-lg font-bold text-[#D4AE62]">{formatPrice(deposit)}</p>
+            <p className="text-lg font-bold text-gold-500">{formatPrice(deposit)}</p>
           </div>
         </div>
       </section>
 
-      <form onSubmit={submit} className="mt-4 space-y-4 rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5">
+      <form onSubmit={submit} className="mt-4 space-y-4 rounded-3xl bg-[#0B0D13] p-5">
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-name">{t('name')}</label>
           <input id="c-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className={fieldCls} />
@@ -236,16 +236,16 @@ export default function CheckoutPage() {
         </div>
 
         <p className="flex items-start gap-2 text-xs text-white/55">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#D4AE62]" />
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
           {t('lockedInfo')}
         </p>
 
-        {error && <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
+        {error && <p role="alert" className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 
         <button
           type="submit"
           disabled={submitting || hasUnavailable || missing > 0}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-6 py-3.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold-500 px-6 py-3.5 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           {t('submit')}

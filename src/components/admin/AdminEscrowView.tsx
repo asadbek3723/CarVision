@@ -98,7 +98,7 @@ export function AdminEscrowView({ onChanged }: { onChanged?: () => void }) {
               <p className="mt-1 truncate text-xs text-white/45">{o.itemDescription}</p>
               <div className="mt-3 flex items-end justify-between">
                 <p className="text-xs text-white/40">{dateTime(o.submittedAt)}</p>
-                <p className="text-lg font-bold text-[#D4AE62]">{usd(o.depositCents / 100)}</p>
+                <p className="text-lg font-bold text-gold-500">{usd(o.depositCents / 100)}</p>
               </div>
             </button>
             {o.status === 'pending' && (
