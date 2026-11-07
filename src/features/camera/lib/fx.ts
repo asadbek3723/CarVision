@@ -98,6 +98,37 @@ export function playShutter(): void {
   vibrate([18, 40, 18]);
 }
 
+let lastTick = 0;
+
+/**
+ * Ratchet "tick" for the parts wheel: a very short, quiet, high-passed click (like a gear tooth),
+ * plus a light haptic. Rate-limited so a fast spin does not turn into noise.
+ */
+export function playTick(): void {
+  const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  if (now - lastTick < 28) return;
+  lastTick = now;
+  vibrate(8);
+  if (!audio || isMuted()) return;
+  try {
+    const len = Math.floor(audio.sampleRate * 0.012);
+    const buffer = audio.createBuffer(1, len, audio.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    const src = audio.createBufferSource();
+    const hp = audio.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 2400;
+    const g = audio.createGain();
+    g.gain.value = 0.05;
+    src.buffer = buffer;
+    src.connect(hp).connect(g).connect(audio.destination);
+    src.start();
+  } catch {
+    /* noop */
+  }
+}
+
 export function playError(): void {
   tone(220, 120, 0.06, 'square');
   vibrate([40]);

@@ -69,6 +69,10 @@
     color: var(--text-primary);
     font-family: var(--font-outfit), var(--font-jakarta), system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
+    /* App-like: nothing wider than the screen can be dragged sideways, and the page does not
+       rubber-band left/right (or bounce) past its edges. Inner strips still scroll horizontally. */
+    overflow-x: clip;
+    overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     touch-action: manipulation;

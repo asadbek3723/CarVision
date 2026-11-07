@@ -22,7 +22,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useMyCar } from '@/features/shop/useMyCar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
-import { playShutter, playLock, vibrate } from '@/features/camera/lib/fx';
+import { playShutter, playLock, playTick, unlockAudio, vibrate } from '@/features/camera/lib/fx';
 import { CarIdentifyGate } from './CarIdentifyGate';
 import { PartReel } from './PartReel';
 import { onePerSlot, partSlot, toggleInSlot } from '@/lib/part-slot';
@@ -672,7 +672,8 @@ export function VeloceCustomize() {
             items={filteredProducts}
             selectedIds={selectedPartIds}
             onToggle={togglePart}
-            onTick={() => vibrate(10)}
+            onTick={playTick}
+            onPointerStart={unlockAudio}
             prevLabel={t('scrollBack')}
             nextLabel={t('scrollForward')}
             selectLabel={t('select')}

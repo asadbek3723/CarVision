@@ -15,6 +15,8 @@ interface PartReelProps {
    * keys). Used for the light haptic "tick"; it must stay cheap and silent.
    */
   onTick?: () => void;
+  /** First touch on the strip (e.g. to unlock audio for the tick sound). */
+  onPointerStart?: () => void;
   /** Label for the previous / next arrows (desktop). */
   prevLabel: string;
   nextLabel: string;
@@ -60,12 +62,19 @@ const DAMPING = 17;
 // Flick physics (units: cards, seconds). The wheel coasts with friction that grows as it slows,
 // while a detent force pulls it into the nearest tooth, so it visibly ticks from tooth to tooth
 // and finally clicks into one.
-const MAX_SPEED = 11; // cards / s: a bit faster than a normal swipe, never a blur
-const MIN_LAUNCH = 6; // cards / s: enough to roll over the next tooth
-const MIN_FLICK = 1.3; // slower releases just snap to the nearest tooth
+// A heavy flywheel: a gentle push barely turns it, a hard flick spins it fast and it coasts down,
+// clicking over each tooth, until a detent catches it.
+const MAX_SPEED = 26; // cards / s: a hard flick really spins
+const MIN_LAUNCH = 4.5; // cards / s: a real flick always rolls over at least one tooth
+const MIN_FLICK = 1.6; // slower releases just settle into the nearest tooth
+const FLICK_GAIN = 1.35; // a flick carries a bit more energy than the finger's own speed
 const DETENT = 18; // tooth pull; crossing a tooth needs ~3.4 cards/s
-const FRICTION_BASE = 1.05;
-const FRICTION_LOW_SPEED = 7;
+const FRICTION_BASE = 0.55; // low drag while fast: long, smooth coast
+const FRICTION_LOW_SPEED = 6.5; // drag rises as it slows, so it settles instead of crawling
+// Drag resistance: slow finger movement moves the wheel less than the finger (heavy feel);
+// fast movement follows the finger 1:1.
+const DRAG_GAIN_SLOW = 0.32;
+const DRAG_FULL_SPEED = 0.9; // px / ms at which the wheel follows the finger fully
 const SUBSTEP = 1 / 240;
 
 /**
@@ -82,6 +91,7 @@ export function PartReel({
   onToggle,
   onFocusChange,
   onTick,
+  onPointerStart,
   prevLabel,
   nextLabel,
   selectLabel,
@@ -294,6 +304,7 @@ export function PartReel({
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = 0;
     modeRef.current = 'spring';
+    onPointerStart?.();
     d.down = true;
     d.moved = false;
     d.startX = d.lastX = e.clientX;
@@ -307,16 +318,22 @@ export function PartReel({
     const dx = e.clientX - d.startX;
     if (!d.moved && Math.abs(dx) > 5) {
       d.moved = true;
+      d.lastX = e.clientX;
+      d.lastT = performance.now();
       e.currentTarget.setPointerCapture(e.pointerId);
+      return;
     }
     if (!d.moved) return;
     const now = performance.now();
     const dtMs = Math.max(now - d.lastT, 1);
-    const inst = (e.clientX - d.lastX) / dtMs; // px per ms
+    const step = e.clientX - d.lastX; // px since the last move event
+    const inst = step / dtMs; // px per ms
     d.v = d.v * 0.7 + inst * 0.3;
     d.lastX = e.clientX;
     d.lastT = now;
-    posRef.current = d.startPos - (dirRef.current * dx) / metricsRef.current.slot;
+    // Heavy wheel: the slower the finger, the less of its movement turns the wheel.
+    const gain = clamp(DRAG_GAIN_SLOW + (1 - DRAG_GAIN_SLOW) * (Math.abs(inst) / DRAG_FULL_SPEED), DRAG_GAIN_SLOW, 1);
+    posRef.current -= (dirRef.current * step * gain) / metricsRef.current.slot;
     velRef.current = 0;
     paint();
   };
@@ -326,7 +343,9 @@ export function PartReel({
     d.down = false;
     if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
     if (d.moved) {
-      const flick = (-dirRef.current * d.v * 1000) / metricsRef.current.slot; // cards per second
+      // A finger that stopped before lifting carries no momentum.
+      const idle = performance.now() - d.lastT > 90;
+      const flick = idle ? 0 : (-dirRef.current * d.v * 1000 * FLICK_GAIN) / metricsRef.current.slot; // cards per second
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (!reduced && Math.abs(flick) >= MIN_FLICK) {
         modeRef.current = 'inertia';
