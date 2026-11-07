@@ -1,13 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   SmartCameraLandscapeView,
   SCAN_5_ANGLES,
 } from '@/features/camera/components/SmartCameraLandscapeView';
-import type { CompressResult } from '@/features/camera/lib/image-compressor';
+import { shrinkImageBlob, type CompressResult } from '@/features/camera/lib/image-compressor';
 import {
   CheckCircle2,
   Monitor,
@@ -30,6 +30,7 @@ const REQUIRED_ANGLES_TOTAL = SCAN_5_ANGLES.length;
 
 export default function MobileScanSessionPage() {
   const t = useTranslations('scanLive');
+  const tAcc = useTranslations('account');
   const params = useParams();
   const sessionId = params?.['sessionId'] as string;
 
@@ -41,6 +42,7 @@ export default function MobileScanSessionPage() {
   const [lastCapturedDataUrl, setLastCapturedDataUrl] = React.useState<string | null>(null);
   const [isManualRetrying, setIsManualRetrying] = React.useState(false);
   const [syncedAngleIds, setSyncedAngleIds] = React.useState<number[]>([]);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
 
   // Check pending offline photos on load
   const checkAndSyncPending = React.useCallback(async () => {
@@ -90,7 +92,9 @@ export default function MobileScanSessionPage() {
               }
             }
           };
-          reader.readAsDataURL(item.blob);
+          void shrinkImageBlob(item.blob)
+            .catch(() => item.blob)
+            .then((small) => reader.readAsDataURL(small));
         }
       }
     } catch {
@@ -190,6 +194,7 @@ export default function MobileScanSessionPage() {
           setSyncedAngleIds((prev) =>
             prev.includes(angleId) ? prev : [...prev, angleId]
           );
+          setUploadError(null);
           if (isFinalAngle) {
             setIsUploading(false);
             setOfflinePending(false);
@@ -198,6 +203,18 @@ export default function MobileScanSessionPage() {
           return;
         }
 
+        // A 4xx means the server understood and refused (too big / session expired): queueing the
+        // very same photo again would fail forever, so say what happened instead.
+        if (response.status >= 400 && response.status < 500) {
+          await deleteOfflinePhoto(photoId).catch(() => undefined);
+          setIsUploading(false);
+          setUploadError(
+            response.status === 404
+              ? tAcc('scanErrExpired')
+              : tAcc('scanErrUpload')
+          );
+          return;
+        }
         throw new Error('Server upload rejected');
       } catch (err) {
         console.warn('Network upload failed, keeping in offline fallback queue:', err);
@@ -212,7 +229,7 @@ export default function MobileScanSessionPage() {
         setLastCapturedDataUrl(dataUrl);
       }
     },
-    [sessionId]
+    [sessionId, tAcc]
   );
 
   const handlePhotoCaptured = (
@@ -221,14 +238,17 @@ export default function MobileScanSessionPage() {
     allCaptured?: Record<number, CompressResult>
   ) => {
     const count = allCaptured ? Object.keys(allCaptured).length : syncedAngleIds.length + 1;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
-      if (dataUrl) {
-        void uploadPhotoData(dataUrl, result.blob, angleId, count);
-      }
-    };
-    reader.readAsDataURL(result.blob);
+    // iOS may hand back an oversized PNG: always bring it under the upload limit first.
+    void shrinkImageBlob(result.blob)
+      .catch(() => result.blob)
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+          if (dataUrl) void uploadPhotoData(dataUrl, blob, angleId, count);
+        };
+        reader.readAsDataURL(blob);
+      });
   };
 
   const handleManualRetry = async () => {
@@ -295,6 +315,15 @@ export default function MobileScanSessionPage() {
         onPhotoCaptured={handlePhotoCaptured}
         className="w-full h-full"
       />
+
+      {uploadError && (
+        <div role="alert" className="absolute inset-x-4 top-12 z-[60] flex items-start gap-3 rounded-2xl bg-red-500/95 px-4 py-3 text-sm text-white shadow-xl">
+          <span className="flex-1">{uploadError}</span>
+          <button type="button" onClick={() => setUploadError(null)} className="shrink-0 cursor-pointer font-bold underline">
+            OK
+          </button>
+        </div>
+      )}
 
       {/* Uploading Spinner */}
       {isUploading && (

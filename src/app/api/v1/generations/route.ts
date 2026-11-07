@@ -14,7 +14,12 @@ import { persistGenerationImage } from '@/server/storage';
 export const maxDuration = 60;
 
 const GENERATION_COST = 1;
-const MAX_PHOTO_CHARS = 6_000_000;
+// Vercel rejects request bodies over ~4.5MB before our code runs, so a bigger limit here would be a lie.
+const MAX_PHOTO_CHARS = 4_200_000;
+/** The function is killed at maxDuration (60s); give up on the provider a little earlier so we can refund. */
+const AI_TIMEOUT_MS = 52_000;
+/** A PROCESSING row older than this belongs to a request that died: its credit must go back. */
+const STALE_AFTER_MS = 90_000;
 const MAX_PER_MINUTE = 6;
 const MAX_IN_FLIGHT = 3;
 
@@ -100,6 +105,9 @@ export async function POST(request: NextRequest) {
   const db = createAdminClient();
 
   try {
+    // Give back credits of this user's earlier renders that were killed mid-flight (timeout / crash).
+    await refundStale(db, session).catch((e) => console.error('stale refund failed:', e));
+
     const parsed = requestSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
       return errorResponse(400, 'VALIDATION_FAILED', "Ma'lumotlar noto'g'ri kiritildi", {
@@ -264,13 +272,28 @@ export async function POST(request: NextRequest) {
     const balanceAfter = reserveResult.balanceAfter ?? currentBalance - GENERATION_COST;
 
     // ---- Render ----------------------------------------------------------------------------
-    const ai = await executeDirectAiFitment({
+    const aiRun = executeDirectAiFitment({
       carPhoto: input.photo,
       angleId: angleKey,
       parts: fitmentParts,
       mode: 'fitment',
       referenceAfter: input.referenceAfterUrl,
     });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<'timeout'>((resolve) => {
+      timer = setTimeout(() => resolve('timeout'), AI_TIMEOUT_MS);
+    });
+    const raced = await Promise.race([aiRun, timedOut]);
+    clearTimeout(timer);
+    if (raced === 'timeout') {
+      aiRun.catch(() => undefined); // late result is discarded; the credit goes back now
+      await refund(db, session, generationId, 'AI provider timed out');
+      reserved = null;
+      return errorResponse(504, 'AI_TIMEOUT', "Rasm yaratish juda uzoq davom etdi. Kredit qaytarildi, qayta urinib ko'ring", {
+        creditsRemaining: currentBalance,
+      });
+    }
+    const ai = raced;
 
     if (!ai.afterImageUrl) {
       await refund(db, session, generationId, ai.outcome === 'invalid_image' ? 'Invalid input image' : 'AI provider failed');
@@ -359,6 +382,20 @@ async function refund(db: ReturnType<typeof createAdminClient>, session: Session
     p_amount: GENERATION_COST,
     p_generation_id: generationId,
   });
+}
+
+/** Refunds this user's PROCESSING renders that outlived the function's time limit. Idempotent. */
+async function refundStale(db: ReturnType<typeof createAdminClient>, session: Session) {
+  const { data } = await db
+    .from('generations')
+    .select('id')
+    .eq('user_id', session.userId)
+    .eq('status', 'PROCESSING')
+    .lt('created_at', new Date(Date.now() - STALE_AFTER_MS).toISOString())
+    .limit(20);
+  for (const row of data ?? []) {
+    await refund(db, session, row.id as string, 'Request interrupted (timeout)').catch(() => undefined);
+  }
 }
 
 /** The signed-in user's own recent renders (never other users' data). */

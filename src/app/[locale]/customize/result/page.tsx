@@ -38,6 +38,7 @@ const getUSDPrice = (raw?: number) => {
 export default function CustomizeResultPage() {
   const tc = useTranslations('customize');
   const t = useTranslations('result');
+  const tf = useTranslations('flow');
   const router = useRouter();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -328,10 +329,10 @@ export default function CustomizeResultPage() {
 
             {/* Top Labels */}
             <div className="pointer-events-none absolute start-4 top-4 rounded-full bg-black/75 px-4 py-1.5 text-xs font-bold tracking-wider text-white/85 backdrop-blur-md">
-              OLDIN (ZAVOD)
+              {tf('rsBeforeBadge')}
             </div>
             <div className="pointer-events-none absolute end-4 top-4 rounded-full bg-[#D4AE62] px-4 py-1.5 text-xs font-extrabold tracking-wider text-black shadow-lg">
-              KEYIN (TUNING)
+              {tf('rsAfterBadge')}
             </div>
 
             {/* Slider Handle Line */}

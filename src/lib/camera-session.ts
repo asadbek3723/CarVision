@@ -19,7 +19,7 @@ export interface CameraSessionData {
 }
 
 const SESSION_TTL_MS = 30 * 60 * 1000;
-export const MAX_SESSION_UPLOADS = 12;
+export const MAX_SESSION_UPLOADS = 10;
 const ID_PATTERN = /^cv_[a-z0-9]{20,40}$/;
 
 export function isValidSessionId(id: string): boolean {
@@ -70,6 +70,28 @@ export async function getCameraSession(id: string): Promise<CameraSessionData | 
   return toData(row);
 }
 
+/** Status-only view for polling: never loads the (multi-MB) photo columns. */
+export interface CameraSessionLight {
+  id: string;
+  kind: CameraSessionKind;
+  status: 'waiting' | 'connected' | 'captured';
+  uploads: number;
+  lastHeartbeat: number;
+}
+
+export async function getCameraSessionLight(id: string): Promise<CameraSessionLight | null> {
+  if (!isValidSessionId(id)) return null;
+  const { data } = await createAdminClient()
+    .from('camera_sessions')
+    .select('id, kind, status, uploads, created_at, last_heartbeat')
+    .eq('id', id)
+    .maybeSingle();
+  if (!data) return null;
+  const row = data as Pick<Row, 'id' | 'kind' | 'status' | 'uploads' | 'created_at' | 'last_heartbeat'>;
+  if (Date.now() - new Date(row.created_at).getTime() > SESSION_TTL_MS) return null;
+  return { id: row.id, kind: row.kind, status: row.status, uploads: row.uploads, lastHeartbeat: new Date(row.last_heartbeat).getTime() };
+}
+
 export async function getSessionRow(id: string): Promise<(CameraSessionData & { uploads: number; userId: string | null }) | null> {
   if (!isValidSessionId(id)) return null;
   const { data } = await createAdminClient().from('camera_sessions').select('*, user_id').eq('id', id).maybeSingle();
@@ -87,6 +109,10 @@ export async function updateCameraSession(
   if (!existing) return null;
 
   const angles: Record<number, string> = { ...(existing.angles ?? {}) };
+  // Opportunistic housekeeping (these rows carry multi-MB photos): drop expired sessions on writes too.
+  if (updates.imageUrl && Math.random() < 0.1) {
+    void createAdminClient().from('camera_sessions').delete().lt('created_at', new Date(Date.now() - SESSION_TTL_MS).toISOString());
+  }
   const patch: Record<string, unknown> = { last_heartbeat: new Date().toISOString() };
   if (updates.status) patch['status'] = updates.status;
   if (updates.imageUrl) {

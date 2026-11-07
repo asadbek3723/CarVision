@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 export interface ApiErrorBody {
   code?: string | undefined;
   error?: string | undefined;
-  [key: string]: unknown;
 }
 
 /**

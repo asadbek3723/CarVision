@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MAX_SESSION_UPLOADS, getCameraSession, getSessionRow, isValidSessionId, updateCameraSession } from '@/lib/camera-session';
+import { MAX_SESSION_UPLOADS, getCameraSession, getCameraSessionLight, getSessionRow, isValidSessionId, updateCameraSession } from '@/lib/camera-session';
 
 export const dynamic = 'force-dynamic';
 
-const MAX_DATA_URL_CHARS = 4_600_000; // ~3.4MB of image data
+// The client compresses every photo to <= ~1.2MB (~1.65M chars); anything bigger is not ours.
+const MAX_DATA_URL_CHARS = 2_400_000;
 const IMAGE_DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
+/**
+ * Polling endpoint. By default it returns ONLY the status and the upload counter (a few bytes);
+ * the photos (several MB of base64) are sent only when the caller asks with `?full=1`.
+ */
+export async function GET(request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
     const { sessionId } = await params;
+    if (new URL(request.url).searchParams.get('full') !== '1') {
+      const light = await getCameraSessionLight(sessionId);
+      if (!light) return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
+      return NextResponse.json({ success: true, session: light });
+    }
     const session = await getCameraSession(sessionId);
     if (!session) return NextResponse.json({ success: false, code: 'NOT_FOUND', error: 'Session not found' }, { status: 404 });
     return NextResponse.json({ success: true, session });

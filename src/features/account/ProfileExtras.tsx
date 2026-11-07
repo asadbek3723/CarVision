@@ -1,10 +1,12 @@
 'use client';
 
 import * as React from 'react';
+import { useParams } from 'next/navigation';
 import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import { ChevronDown, KeyRound, Loader2, Receipt } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { readJson } from '@/lib/safe-json';
 
 interface Entry {
   id: string;
@@ -121,6 +123,9 @@ function CreditHistory() {
 function PasswordForm() {
   const t = useTranslations('profileExtras');
   const apiError = useApiError();
+  const { refreshProfile, signOut } = useAuth();
+  const params = useParams();
+  const locale = (params?.['locale'] as string) || 'uz';
   const [current, setCurrent] = React.useState('');
   const [next, setNext] = React.useState('');
   const [again, setAgain] = React.useState('');
@@ -129,29 +134,47 @@ function PasswordForm() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     setMsg(null);
+    if (next.length < 8 || !/[A-Za-z]/.test(next) || !/\d/.test(next)) {
+      return setMsg({ ok: false, text: apiError({ code: 'WEAK_PASSWORD' }, t('errChange')) });
+    }
     if (next !== again) return setMsg({ ok: false, text: t('errMismatch') });
+    if (next === current) return setMsg({ ok: false, text: apiError({ code: 'SAME_PASSWORD' }, t('errChange')) });
     setBusy(true);
     try {
       const res = await fetch('/api/v1/auth/password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: current, newPassword: next }) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(apiError(data, t('errChange')));
-      setMsg({ ok: true, text: t('changed') });
-      setCurrent('');
-      setNext('');
-      setAgain('');
-    } catch (err) {
-      setMsg({ ok: false, text: err instanceof Error ? err.message : t('errChange') });
+      const data = (await readJson(res)).data;
+      if (res.ok && data.success) {
+        setMsg({ ok: true, text: t('changed') });
+        setCurrent('');
+        setNext('');
+        setAgain('');
+        void refreshProfile();
+        return;
+      }
+      if (res.status === 401 && data.code === 'UNAUTHENTICATED') {
+        // The cached profile outlived the server session: sign out cleanly and ask to log in again.
+        setMsg({ ok: false, text: apiError(data, t('errChange')) });
+        await signOut();
+        setTimeout(() => {
+          window.location.href = `/${locale}/login`;
+        }, 1200);
+        return;
+      }
+      setMsg({ ok: false, text: apiError(data, t('errChange')) });
+    } catch {
+      setMsg({ ok: false, text: apiError({ code: 'NETWORK' }, t('errChange')) });
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <form onSubmit={submit} className="space-y-3">
-      <input type="password" aria-label={t('phCurrent')} autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder={t('phCurrent')} className={fieldCls} />
-      <input type="password" aria-label={t('phNew')} autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t('phNew')} className={fieldCls} />
-      <input type="password" aria-label={t('phAgain')} autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder={t('phAgain')} className={fieldCls} />
+    <form onSubmit={submit} noValidate className="space-y-3">
+      <input type="password" aria-label={t('phCurrent')} autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder={t('phCurrent')} maxLength={72} className={fieldCls} />
+      <input type="password" aria-label={t('phNew')} autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t('phNew')} maxLength={72} className={fieldCls} />
+      <input type="password" aria-label={t('phAgain')} autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} placeholder={t('phAgain')} maxLength={72} className={fieldCls} />
       {msg && <p role={msg.ok ? 'status' : 'alert'} className={`text-sm ${msg.ok ? 'text-emerald-300' : 'text-red-300'}`}>{msg.text}</p>}
       <button type="submit" disabled={busy || !current || !next || !again} className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-50 ${focusRing}`}>
         {busy && <Loader2 className="h-4 w-4 animate-spin" />}

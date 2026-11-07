@@ -23,6 +23,19 @@ export function isAdminConfigured(): boolean {
   return Boolean(process.env.ADMIN_MASTER_PIN && process.env.ADMIN_MASTER_PIN.length >= MIN_PIN_LENGTH && sessionSecret());
 }
 
+export const ADMIN_MIN_PIN_LENGTH = MIN_PIN_LENGTH;
+
+/** Why the admin area is closed (null when configured). Never exposes values, only what to fix. */
+export function adminConfigProblem(): 'PIN_MISSING' | 'PIN_TOO_SHORT' | 'SECRET_MISSING' | 'SECRET_TOO_SHORT' | null {
+  const pin = process.env.ADMIN_MASTER_PIN;
+  if (!pin) return 'PIN_MISSING';
+  if (pin.length < MIN_PIN_LENGTH) return 'PIN_TOO_SHORT';
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) return 'SECRET_MISSING';
+  if (secret.length < MIN_SECRET_LENGTH) return 'SECRET_TOO_SHORT';
+  return null;
+}
+
 function sha256(value: string): Buffer {
   return crypto.createHash('sha256').update(value).digest();
 }

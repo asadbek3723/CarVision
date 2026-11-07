@@ -3,6 +3,20 @@
 import * as React from 'react';
 import type { UserProfile, SignUpPayload } from '../types';
 
+/** `code` is the server error code, or NETWORK / SERVER when no usable answer arrived. */
+export interface AuthResult {
+  success: boolean;
+  error?: string;
+  code?: string;
+}
+
+async function readAuthResponse(res: Response): Promise<{ ok: boolean; data: Record<string, unknown>; code: string }> {
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const ok = res.ok && data['success'] === true;
+  const code = typeof data['code'] === 'string' ? (data['code'] as string) : res.status >= 500 ? 'SERVER' : 'UNKNOWN';
+  return { ok, data, code };
+}
+
 export interface AuthContextValue {
   user: UserProfile | null;
   isLoading: boolean;
@@ -10,8 +24,8 @@ export interface AuthContextValue {
   authModalMode: 'signin' | 'signup';
   openAuthModal: (mode?: 'signin' | 'signup') => void;
   closeAuthModal: () => void;
-  signIn: (identifier: string, password?: string) => Promise<{ success: boolean; error?: string; code?: string }>;
-  signUp: (payload: SignUpPayload) => Promise<{ success: boolean; error?: string; code?: string }>;
+  signIn: (identifier: string, password?: string) => Promise<AuthResult>;
+  signUp: (payload: SignUpPayload) => Promise<AuthResult>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => void;
   /** Re-reads the profile (credits, plan) from the server. */
@@ -81,49 +95,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthModalOpen(false);
   }, []);
 
-  const signIn = React.useCallback(async (identifier: string, password?: string) => {
+  // NOTE: no global isLoading toggle here — it re-rendered the whole tree and made failed
+  // sign-ins look like a page refresh. The forms keep their own loading state.
+  const signIn = React.useCallback(async (identifier: string, password?: string): Promise<AuthResult> => {
     try {
       const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, error: data.error || '', code: typeof data.code === 'string' ? data.code : undefined };
+      const { ok, data, code } = await readAuthResponse(res);
+      if (!ok) {
+        return { success: false, code, ...(typeof data['error'] === 'string' ? { error: data['error'] as string } : {}) };
       }
-
-      setUser(data.user);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
-      setIsAuthModalOpen(false);
+      const user = data['user'] as UserProfile;
+      setUser(user);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      } catch {
+        // private mode / storage full: the server cookie is the source of truth
+      }
       return { success: true };
     } catch {
-      return { success: false, error: '' };
+      return { success: false, code: 'NETWORK' };
     }
   }, []);
 
-  const signUp = React.useCallback(async (payload: SignUpPayload) => {
+  const signUp = React.useCallback(async (payload: SignUpPayload): Promise<AuthResult> => {
     try {
       const res = await fetch('/api/v1/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, error: data.error || '', code: typeof data.code === 'string' ? data.code : undefined };
+      const { ok, data, code } = await readAuthResponse(res);
+      if (!ok) {
+        return { success: false, code, ...(typeof data['error'] === 'string' ? { error: data['error'] as string } : {}) };
       }
-
-      if (typeof document !== 'undefined' && data.user.preferred_language) {
-        document.cookie = `NEXT_LOCALE=${data.user.preferred_language}; path=/; max-age=31536000; SameSite=Lax`;
+      const user = data['user'] as UserProfile | undefined;
+      if (user) {
+        if (typeof document !== 'undefined' && user.preferred_language) {
+          document.cookie = `NEXT_LOCALE=${user.preferred_language}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+        setUser(user);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+        } catch {
+          // ignore
+        }
       }
-
-      setUser(data.user);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
-      setIsAuthModalOpen(false);
       return { success: true };
     } catch {
-      return { success: false, error: '' };
+      return { success: false, code: 'NETWORK' };
     }
   }, []);
 

@@ -57,7 +57,7 @@ export function LiveCamera({ onShot, onFile, busy }: Props) {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, []);
+  }, [t]);
 
   const shoot = () => {
     const v = videoRef.current;

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useApiError } from '@/lib/api-error';
+import { readJson } from '@/lib/safe-json';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -118,7 +119,7 @@ export default function SellerNewPartPage() {
     (async () => {
       try {
         const res = await fetch(`/api/v1/seller/inventory?id=${encodeURIComponent(editId)}`, { cache: 'no-store' });
-        const data = await res.json();
+        const data = (await readJson(res)).data;
         const item: CatalogItemDTO | undefined = data.items?.[0];
         if (cancelled) return;
         if (!item) return setError(t('errNotFound'));

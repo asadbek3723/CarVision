@@ -26,20 +26,28 @@ export async function POST(request: NextRequest) {
     return fail(429, 'RATE_LIMITED', 'Juda ko‘p xato urinish. 15 daqiqadan keyin urinib ko‘ring');
   }
 
+  // Sign in with the account's real auth email (not a rebuilt one), so accounts whose phone was
+  // stored in another format can still change their password.
+  const admin = createAdminClient();
+  const { data: authUser } = await admin.auth.admin.getUserById(userId);
   const phone = normalizePhone(profile.phone);
-  if (!phone) return fail(500, 'INTERNAL', 'Akkaunt ma’lumotlari noto‘g‘ri');
+  const email = authUser?.user?.email || (phone ? phoneToEmail(phone) : null);
+  if (!email) return fail(500, 'INTERNAL', 'Akkaunt ma’lumotlari noto‘g‘ri');
 
   // Verify the current password with a throwaway client so the browser session is untouched
   const verifier = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)!, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { error: verifyErr } = await verifier.auth.signInWithPassword({ email: phoneToEmail(phone), password: parsed.data.currentPassword });
+  const { error: verifyErr } = await verifier.auth.signInWithPassword({ email, password: parsed.data.currentPassword });
   if (verifyErr) {
     await recordAttempt('password', key, clientIp(request), false);
     return fail(401, 'WRONG_PASSWORD', 'Joriy parol noto‘g‘ri');
   }
 
-  const { error } = await createAdminClient().auth.admin.updateUserById(userId, { password: parsed.data.newPassword });
-  if (error) return fail(500, 'UPDATE_FAILED', 'Parolni almashtirib bo‘lmadi');
+  const { error } = await admin.auth.admin.updateUserById(userId, { password: parsed.data.newPassword });
+  if (error) {
+    console.error('Password update failed:', error.message);
+    return fail(500, 'UPDATE_FAILED', 'Parolni almashtirib bo‘lmadi');
+  }
   return NextResponse.json({ success: true });
 }

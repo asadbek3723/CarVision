@@ -114,7 +114,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
       cancelled = true;
       clearInterval(hintTimer);
     };
-  }, [photo]);
+  }, [photo, t]);
 
   // Manual search (debounced)
   React.useEffect(() => {

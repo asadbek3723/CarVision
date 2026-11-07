@@ -79,6 +79,13 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} className={`dark ${FONT_VARS}`} suppressHydrationWarning>
       <head>
+        {/* Catch the one-time install event before React hydrates (it is easy to miss otherwise). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__cvDeferredPrompt=e;window.dispatchEvent(new Event('cv:installable'));});",
+          }}
+        />
       </head>
       <body className="bg-[#0A0B0F] text-white min-h-screen antialiased select-none" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>

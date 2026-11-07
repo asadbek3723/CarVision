@@ -5,6 +5,7 @@ import {
   verifyAdminSessionToken,
   getAdminIdFromToken,
   isAdminConfigured,
+  adminConfigProblem,
 } from './admin-auth';
 
 const SECRET = 'x'.repeat(40);
@@ -39,6 +40,18 @@ describe('Admin security (fails closed, no default secrets)', () => {
     expect(verifyPinConstantTime('3723')).toBe(false);
     expect(() => createAdminSessionToken(ADMIN_ID)).toThrow();
     expect(verifyAdminSessionToken('a.1.b')).toBe(false);
+  });
+
+  it('explains why the admin area is closed (a 4-char PIN was the real-world cause)', () => {
+    expect(adminConfigProblem()).toBeNull();
+    process.env.ADMIN_MASTER_PIN = '1234';
+    expect(isAdminConfigured()).toBe(false);
+    expect(adminConfigProblem()).toBe('PIN_TOO_SHORT');
+    delete process.env.ADMIN_MASTER_PIN;
+    expect(adminConfigProblem()).toBe('PIN_MISSING');
+    process.env.ADMIN_MASTER_PIN = '482913';
+    process.env.ADMIN_SESSION_SECRET = 'short';
+    expect(adminConfigProblem()).toBe('SECRET_TOO_SHORT');
   });
 
   it('rejects a too-short session secret', () => {

@@ -23,31 +23,10 @@ import {
   GlassCard,
   FloatingInput,
   GoldButton,
+  AuthAlert,
 } from '@/features/auth/components/AuthShell';
 import { playLock, vibrate } from '@/features/camera/lib/fx';
-
-interface Country {
-  id: string;
-  /** Stable value sent to the server — never shown to the user. */
-  name: string;
-  flag: string;
-  code: string;
-}
-
-const COUNTRIES: Country[] = [
-  { id: 'uzbekistan', name: "O'zbekiston", flag: '🇺🇿', code: '+998' },
-  { id: 'kazakhstan', name: "Qozog'iston", flag: '🇰🇿', code: '+7' },
-  { id: 'kyrgyzstan', name: "Qirg'iziston", flag: '🇰🇬', code: '+996' },
-  { id: 'tajikistan', name: 'Tojikiston', flag: '🇹🇯', code: '+992' },
-  { id: 'turkmenistan', name: 'Turkmaniston', flag: '🇹🇲', code: '+993' },
-  { id: 'russia', name: 'Rossiya', flag: '🇷🇺', code: '+7' },
-  { id: 'turkey', name: 'Turkiya', flag: '🇹🇷', code: '+90' },
-  { id: 'uae', name: 'BAA', flag: '🇦🇪', code: '+971' },
-  { id: 'germany', name: 'Germaniya', flag: '🇩🇪', code: '+49' },
-  { id: 'usa', name: 'AQSH', flag: '🇺🇸', code: '+1' },
-  { id: 'uk', name: 'Buyuk Britaniya', flag: '🇬🇧', code: '+44' },
-  { id: 'southKorea', name: 'Janubiy Koreya', flag: '🇰🇷', code: '+82' },
-];
+import { COUNTRIES, buildE164, isPlausibleNational, type Country } from '@/features/auth/phone-input';
 
 const STEP_KEYS = [
   ['step1Title', 'step1Sub'],
@@ -351,10 +330,12 @@ function DetailsForm({
   });
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [loading, setLoading] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
 
   const updateField =
     (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+      setErrors((prev) => (prev[field] ? { ...prev, [field]: '' } : prev));
     };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -369,7 +350,7 @@ function DetailsForm({
     if (isBusiness && formData.address.trim().length < 4) {
       errs['address'] = t('errAddress');
     }
-    if (formData.phone.replace(/\D/g, '').length < 7) {
+    if (!isPlausibleNational(formData.phone, country)) {
       errs['phone'] = t('errPhone');
     }
     if (formData.pwd.length < 8) {
@@ -377,16 +358,17 @@ function DetailsForm({
     }
 
     setErrors(errs);
+    setFormError(null);
     if (Object.keys(errs).length > 0) {
       onError();
       return;
     }
 
+    if (loading) return;
     setLoading(true);
     try {
-      const cleanPhone = `${country.code} ${formData.phone.trim()}`;
       const res = await signUp({
-        identifier: cleanPhone,
+        identifier: buildE164(country, formData.phone),
         password: formData.pwd,
         role: isBusiness ? 'b2b_seller' : 'b2c_user',
         fullName: formData.name.trim(),
@@ -401,9 +383,14 @@ function DetailsForm({
         vibrate(30);
         setTimeout(onDone, 500);
       } else {
-        setErrors({
-          phone: apiError(res, t('errFailed')),
-        });
+        setErrors({});
+        setFormError(
+          res.code === 'NETWORK'
+            ? t('errNetwork')
+            : res.code === 'SERVER' || res.code === 'INTERNAL'
+              ? t('errServer')
+              : apiError(res, t('errFailed'))
+        );
         onError();
       }
     } finally {
@@ -447,7 +434,8 @@ function DetailsForm({
       value={formData.phone}
       onChange={updateField('phone')}
       error={errors['phone']}
-      maxLength={16}
+      maxLength={20}
+      autoComplete="tel-national"
     />,
     <FloatingInput
       key="w"
@@ -457,12 +445,14 @@ function DetailsForm({
       value={formData.pwd}
       onChange={updateField('pwd')}
       error={errors['pwd']}
-      maxLength={64}
+      autoComplete="new-password"
+      maxLength={72}
     />,
   ].filter(Boolean);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} noValidate className="space-y-3">
+      <AuthAlert message={formError} />
       {fields.map((field, i) => (
         <motion.div
           key={i}

@@ -36,10 +36,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    if (status === 'OK' || status === 'COMPLETED' || (!status && image)) {
+    // A success without a real image URL is a failure: never store a made-up CDN address.
+    const succeeded = (status === 'OK' || status === 'COMPLETED' || (!status && image)) && typeof image?.url === 'string' && image.url.startsWith('https://');
+    if (succeeded) {
       // 1. Success workflow
-      const output4kUrl = image?.url ?? `https://cdn.carvision.app/outputs/${gen.id}/4k.webp`;
-      const previewUrl = preview_image?.url ?? `https://cdn.carvision.app/outputs/${gen.id}/preview.webp`;
+      const output4kUrl = image.url as string;
+      const previewUrl = typeof preview_image?.url === 'string' && preview_image.url.startsWith('https://') ? preview_image.url : output4kUrl;
 
       await adminSupabase
         .from('generations')
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
         .from('generations')
         .update({
           status: 'FAILED',
-          error_message: error || 'AI render failed',
+          error_message: error || (status === 'OK' || status === 'COMPLETED' ? 'Provider returned no image' : 'AI render failed'),
         })
         .eq('id', gen.id);
 

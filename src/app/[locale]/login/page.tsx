@@ -14,9 +14,12 @@ import {
   FloatingInput,
   PhoneInput,
   GoldButton,
+  AuthAlert,
 } from '@/features/auth/components/AuthShell';
-import { DEFAULT_DIGITS, nationalLength } from '@/features/auth/lib/phone-countries';
 import { playLock, vibrate } from '@/features/camera/lib/fx';
+import { DEFAULT_DIGITS, detectCountry, nationalLength } from '@/features/auth/lib/phone-countries';
+
+type FieldErrors = { phone?: string | undefined; pwd?: string | undefined };
 
 export default function LoginPage() {
   const t = useTranslations('login');
@@ -29,7 +32,8 @@ export default function LoginPage() {
   const [phone, setPhone] = React.useState(DEFAULT_DIGITS);
   const [password, setPassword] = React.useState('');
   const [rememberMe, setRememberMe] = React.useState(true);
-  const [errors, setErrors] = React.useState<{ phone?: string; pwd?: string }>({});
+  const [errors, setErrors] = React.useState<FieldErrors>({});
+  const [formError, setFormError] = React.useState<string | null>(null);
   const [shake, setShake] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
 
@@ -50,36 +54,45 @@ export default function LoginPage() {
     }
   }, [user, locale, router]);
 
+  const fail = (next: FieldErrors = {}, banner: string | null = null) => {
+    setErrors(next);
+    setFormError(banner);
+    setShake((prev) => prev + 1);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs: { phone?: string; pwd?: string } = {};
+    if (loading) return;
+    const errs: FieldErrors = {};
 
-    if (nationalLength(phone) < 7) {
-      errs.phone = t('errPhone');
-    }
-    if (password.length < 8) {
-      errs.pwd = t('errPassword');
-    }
+    if (nationalLength(phone) < (detectCountry(phone)?.iso === 'UZ' ? 9 : 7)) errs.phone = t('errPhone');
+    if (password.length < 8) errs.pwd = t('errPassword');
 
-    setErrors(errs);
     if (Object.keys(errs).length > 0) {
-      setShake((prev) => prev + 1);
+      fail(errs);
       return;
     }
 
+    setErrors({});
+    setFormError(null);
     setLoading(true);
     try {
-      const fullPhone = `+${phone}`;
-      const res = await signIn(fullPhone, password);
+      const res = await signIn(`+${phone}`, password);
       if (res.success) {
         playLock();
         vibrate(25);
-      } else {
-        setErrors({
-          phone: apiError(res, t('errFailed')),
-        });
-        setShake((prev) => prev + 1);
+        return;
       }
+      // Real reason, shown prominently: wrong credentials, blocked, rate-limited, offline, server.
+      const message =
+        res.code === 'NETWORK'
+          ? t('errNetwork')
+          : res.code === 'SERVER' || res.code === 'INTERNAL'
+            ? t('errServer')
+            : res.code === 'INVALID_CREDENTIALS'
+              ? t('errInvalid')
+              : apiError(res, t('errFailed'));
+      fail({}, message);
     } finally {
       setLoading(false);
     }
@@ -100,11 +113,16 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-3.5">
+        <AuthAlert message={formError} />
+
+        <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-3.5">
           <PhoneInput
             label={t('phone')}
             value={phone}
-            onChange={setPhone}
+            onChange={(d) => {
+              setPhone(d);
+              if (errors.phone) setErrors((p) => ({ ...p, phone: undefined }));
+            }}
             error={errors.phone}
           />
 
@@ -113,9 +131,13 @@ export default function LoginPage() {
             type="password"
             label={t('password')}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (errors.pwd) setErrors((p) => ({ ...p, pwd: undefined }));
+            }}
+            autoComplete="current-password"
             error={errors.pwd}
-            maxLength={64}
+            maxLength={72}
           />
 
           <motion.button
@@ -156,7 +178,7 @@ export default function LoginPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.8 }}
           className="mt-5 space-y-2.5 text-center text-xs"
         >
           <div>

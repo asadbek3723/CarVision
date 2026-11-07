@@ -8,8 +8,9 @@ import {
   detectCountry,
   formatInternational,
 } from '../lib/phone-countries';
-import { motion, AnimatePresence, type HTMLMotionProps } from 'framer-motion';
+import { motion, AnimatePresence, useAnimationControls, type HTMLMotionProps } from 'framer-motion';
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Eye,
@@ -56,20 +57,56 @@ export function GlassCard({
   children: React.ReactNode;
   shake?: number | undefined;
 }) {
+  const controls = useAnimationControls();
+  const mounted = React.useRef(false);
+
+  // Intro animation once; every later "shake" only wiggles the card. The card is never re-mounted,
+  // so typed text, focus and the on-screen keyboard survive an error.
+  React.useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      void controls.start({
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        x: 0,
+        transition: { duration: 0.4, delay: 0, ease: [0.22, 1, 0.36, 1] },
+      });
+      return;
+    }
+    if (shake) void controls.start({ x: [0, -10, 10, -6, 6, 0], transition: { duration: 0.45 } });
+  }, [shake, controls]);
+
   return (
     <motion.div
-      key={shake}
-      initial={shake ? { x: 0 } : { opacity: 0, y: 20, scale: 0.97 }}
-      animate={shake ? { x: [0, -10, 10, -6, 6, 0] } : { opacity: 1, y: 0, scale: 1 }}
-      transition={
-        shake
-          ? { duration: 0.45 }
-          : { duration: 0.4, delay: 0, ease: [0.22, 1, 0.36, 1] }
-      }
-      className="glass-card w-full max-w-[390px] sm:max-w-[410px] overflow-hidden rounded-[24px] px-6 py-6 sm:px-8 sm:py-7"
+      initial={{ opacity: 0, y: 20, scale: 0.97 }}
+      animate={controls}
+      className="glass-card w-full max-w-[390px] sm:max-w-[410px] rounded-[24px] px-6 py-6 sm:px-8 sm:py-7"
     >
       {children}
     </motion.div>
+  );
+}
+
+/** Visible, screen-reader announced error/notice shown at the top of an auth form. */
+export function AuthAlert({ message }: { message?: string | null | undefined }) {
+  return (
+    <AnimatePresence initial={false}>
+      {message && (
+        <motion.div
+          key={message}
+          role="alert"
+          aria-live="assertive"
+          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+          animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+          className="flex items-start gap-2.5 overflow-hidden rounded-xl bg-red-500/15 px-3.5 py-3 text-start text-[13px] leading-snug text-red-200 ring-1 ring-red-400/40"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" aria-hidden />
+          <span>{message}</span>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -99,7 +136,7 @@ export function FloatingInput({
   return (
     <div>
       <label
-        className={`auth-input relative flex h-12 items-center gap-2.5 rounded-xl px-4 ${
+        className={`auth-input relative flex h-14 items-center gap-2.5 rounded-xl px-4 ${
           error ? 'auth-input-error' : ''
         }`}
       >
@@ -126,8 +163,8 @@ export function FloatingInput({
             props.onBlur?.(e);
           }}
           className={`h-full flex-1 bg-transparent outline-none placeholder:text-foreground/50 ${
-            isFloating ? 'pt-3.5' : ''
-          } text-[14px] text-foreground`}
+            isFloating ? 'pt-4' : ''
+          } text-base text-foreground`}
         />
         {isPassword && (
           <button
@@ -147,7 +184,7 @@ export function FloatingInput({
           <span
             className={`pointer-events-none absolute start-[44px] transition-all duration-300 ${
               isFloating
-                ? 'top-1 text-[9px] uppercase tracking-[0.16em] text-gold font-medium'
+                ? 'top-1.5 text-[9px] uppercase tracking-[0.16em] text-gold font-medium'
                 : 'top-1/2 -translate-y-1/2 text-[13.5px] text-foreground/55'
             }`}
           >
@@ -275,7 +312,7 @@ export function AuthShell({
   const t = useTranslations('authShell');
   const tc = useTranslations('common');
   return (
-    <div className="dark relative h-screen max-h-screen w-full overflow-hidden bg-ink text-foreground flex flex-col items-center justify-center select-none">
+    <div className="dark relative min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-ink text-foreground flex flex-col items-center justify-center">
       {/* 1:1 Porsche 911 Master Artwork Background */}
       <motion.img
         src="/images/golden/hero-car.jpg"
@@ -285,7 +322,7 @@ export function AuthShell({
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.95 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute inset-0 h-full w-full object-cover select-none pointer-events-none"
+        className="fixed inset-0 h-full w-full object-cover select-none pointer-events-none"
       />
       {/* Cinematic Vignette Overlay so the sports car is crisp and visible */}
       <div
@@ -302,14 +339,13 @@ export function AuthShell({
 
       {/* Vertical Golden Laser Beams */}
       <div className="pointer-events-none absolute end-[12%] top-0 h-full w-[3px] bg-gold/80" />
-      
 
       {/* Back button */}
       {onBack && (
         <motion.button
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.5 }}
           onClick={onBack}
           whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
@@ -320,8 +356,8 @@ export function AuthShell({
         </motion.button>
       )}
 
-      {/* Center Layout Container - Strict 100vh lock */}
-      <div className="relative z-10 flex h-full max-h-screen w-full flex-col items-center justify-center px-4 py-3 sm:py-4 overflow-hidden">
+      {/* Center layout: scrolls when the on-screen keyboard shrinks the viewport */}
+      <div className="relative z-10 flex min-h-[100dvh] w-full flex-col items-center justify-center px-4 py-6 sm:py-8">
         <BrandHeader />
         {children}
         <motion.p

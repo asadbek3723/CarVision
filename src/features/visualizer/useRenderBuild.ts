@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { planRender, summarize, usableReference, type AngleState, type PlanAngle } from './render-plan';
+import { readJson } from '@/lib/safe-json';
 
 export interface BuildPart {
   id: string;
@@ -73,7 +74,7 @@ async function renderAngle(angle: PlanAngle, parts: BuildPart[], reference?: str
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(toRequestBody(angle, parts, reference)),
     });
-    const data = await res.json().catch(() => ({}));
+    const data = (await readJson(res)).data;
     if (res.ok && data.success && data.generation?.afterImageUrl) {
       return { url: data.generation.afterImageUrl as string, demo: Boolean(data.generation.demo) };
     }
