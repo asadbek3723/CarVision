@@ -12,11 +12,14 @@ export interface SlotInfo {
 const has = (text: string, words: string[]) => words.some((w) => text.includes(w));
 
 const WHEELS = ['wheel', 'disk', 'gildirak', 'rim', 'forged', 'alloy'];
-const BODY = ['bamper', 'bumper', 'lip', 'splitter', 'diffuzor', 'skirt', 'spoyler', 'spoiler', 'wing', 'widebody', 'grille', 'hood'];
+const BUMPER = ['bamper', 'bumper'];
+const SPOILER = ['spoyler', 'spoiler', 'wing', 'qanot'];
+const LIGHTS = ['fara', 'headlight', 'taillight', 'lamp', 'chiroq', 'led'];
+const BODY = ['lip', 'splitter', 'diffuzor', 'skirt', 'widebody', 'grille', 'hood', 'body kit', 'obves'];
 const INTERIOR = ['salon', 'rul', "o'rindiq", 'seat', 'ambient', 'torpeda', 'steering', 'interior'];
 const COLOR = ['wrap', 'plyonka', 'paint', 'rang'];
 
-/** The slot is the shop tab the part belongs to (Wheels, Body Kit, Performance, Interior, Color, ...). */
+/** The slot is the shop tab the part belongs to (Wheels, Bumper, Body Kit, Spoiler, Lights, Interior, Color, ...). */
 export function partSlot(part: SlotInfo): string {
   const category = (part.category ?? '').trim().toLowerCase();
   if (category) return category;
@@ -24,6 +27,9 @@ export function partSlot(part: SlotInfo): string {
   // No category at all: guess from the name.
   const text = `${part.name ?? ''} ${part.spec ?? ''}`.toLowerCase();
   if (has(text, WHEELS)) return 'wheels';
+  if (has(text, BUMPER)) return 'bumper';
+  if (has(text, SPOILER)) return 'spoiler';
+  if (has(text, LIGHTS)) return 'lights';
   if (has(text, BODY)) return 'body kit';
   if (has(text, INTERIOR)) return 'interior';
   if (has(text, COLOR)) return 'color';

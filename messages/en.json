@@ -688,12 +688,15 @@
     "categories": {
       "all": "All parts",
       "wheels": "Wheels",
-      "bodyKit": "Bumpers & body kits",
-      "performance": "Lights & lamps",
+      "bodyKit": "Body kits",
+      "performance": "Performance",
       "interior": "Interior & steering wheel",
       "color": "Body color",
       "ceramic": "Ceramic coating",
-      "polish": "Polishing"
+      "polish": "Polishing",
+      "bumper": "Bumpers",
+      "spoiler": "Spoilers & wings",
+      "lights": "Headlights & lamps"
     },
     "back": "Back",
     "titleSeller": "Tablet tuning studio",

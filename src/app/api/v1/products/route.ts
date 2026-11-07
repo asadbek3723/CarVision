@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       limit: categoryParam && !category && categoryParam !== 'All' ? 200 : limit,
     });
     if (categoryParam && categoryParam !== 'All' && !category) {
-      items = items.filter((i) => veloceCategory(i.category).toLowerCase() === categoryParam.toLowerCase()).slice(0, limit);
+      items = items.filter((i) => veloceCategory(i.category, i.attributes).toLowerCase() === categoryParam.toLowerCase()).slice(0, limit);
     }
 
     // "My car" filter: universal items plus items whose fitment names this model (and year, if given)
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       brand: i.brand || 'CarVision',
       price: i.priceUSD,
       spec: text.description,
-      category: veloceCategory(i.category),
+      category: veloceCategory(i.category, i.attributes),
       categoryLabel: i.categoryLabel,
       image: i.coverImageUrl ?? i.images[0]?.url ?? '',
       image_url: i.coverImageUrl ?? i.images[0]?.url ?? '',
@@ -91,9 +91,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Facets for the filter UI (independent of the current filters)
-    const { data: facetRows } = await db.from('catalog_items').select('brand, category').eq('status', 'PUBLISHED').limit(1000);
+    const { data: facetRows } = await db.from('catalog_items').select('brand, category, attributes').eq('status', 'PUBLISHED').limit(1000);
     const brands = [...new Set((facetRows ?? []).map((r) => (r.brand as string | null)?.trim()).filter((b): b is string => Boolean(b)))].sort((a, b) => a.localeCompare(b));
-    const categories = [...new Set((facetRows ?? []).map((r) => veloceCategory(r.category as string)))];
+    const categories = [...new Set((facetRows ?? []).map((r) => veloceCategory(r.category as string, r.attributes as Record<string, unknown> | null)))];
 
     return NextResponse.json({ success: true, products, facets: { brands, categories } });
   } catch (err) {

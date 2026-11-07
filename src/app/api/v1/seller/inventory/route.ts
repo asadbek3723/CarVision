@@ -19,7 +19,7 @@ function toVeloceProduct(i: CatalogItemDTO) {
     price: i.priceUSD,
     priceUSD: i.priceUSD,
     spec: i.description,
-    category: veloceCategory(i.category),
+    category: veloceCategory(i.category, i.attributes),
     image: i.coverImageUrl ?? i.images[0]?.url ?? '',
     angleImage: i.images.find((g) => g.kind === 'ANGLE')?.url,
     swatch: typeof i.attributes['swatch'] === 'string' ? (i.attributes['swatch'] as string) : undefined,

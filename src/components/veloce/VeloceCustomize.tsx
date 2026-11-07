@@ -45,7 +45,10 @@ export const FIVE_CAR_ANGLES = [
 const CATEGORIES = [
   { id: 'All', key: 'all' },
   { id: 'Wheels', key: 'wheels' },
+  { id: 'Bumper', key: 'bumper' },
   { id: 'Body Kit', key: 'bodyKit' },
+  { id: 'Spoiler', key: 'spoiler' },
+  { id: 'Lights', key: 'lights' },
   { id: 'Performance', key: 'performance' },
   { id: 'Interior', key: 'interior' },
   { id: 'Color', key: 'color' },

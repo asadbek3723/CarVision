@@ -688,12 +688,15 @@
     "categories": {
       "all": "Tüm parçalar",
       "wheels": "Jantlar",
-      "bodyKit": "Tampon ve body kit",
-      "performance": "Farlar ve aydınlatma",
+      "bodyKit": "Body kitler",
+      "performance": "Performans",
       "interior": "İç mekân ve direksiyon",
       "color": "Kaporta rengi",
       "ceramic": "Seramik kaplama",
-      "polish": "Cilalama"
+      "polish": "Cilalama",
+      "bumper": "Tamponlar",
+      "spoiler": "Spoyler ve kanatlar",
+      "lights": "Farlar ve lambalar"
     },
     "back": "Geri",
     "titleSeller": "Tablet tuning stüdyosu",

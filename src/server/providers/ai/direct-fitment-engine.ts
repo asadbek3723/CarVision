@@ -193,7 +193,16 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     if (cat.includes('wheel') || cat.includes('disk')) {
       return `Replace the wheels with "${p.name}"${specText}: exact spoke geometry from the reference photo, same wheel size position, brake calipers and tyre sidewalls kept, realistic contact shadow`;
     }
-    if (cat.includes('body') || cat.includes('bamper') || cat.includes('aero')) {
+    if (cat.includes('bumper') || cat.includes('bamper')) {
+      return `Replace the front or rear bumper visible from this viewpoint with "${p.name}"${specText}: exact shape, intakes, grille mesh and lip from the reference photo, aligned with the factory panel gaps, painted in the car's current colour unless the part is carbon or black by design`;
+    }
+    if (cat.includes('spoiler') || cat.includes('wing')) {
+      return `Mount "${p.name}"${specText} on the trunk lid / rear deck exactly like the reference photo (same blade shape, end plates, uprights and finish), correctly scaled to this car and in perspective; it is only visible from rear or side viewpoints`;
+    }
+    if (cat.includes('light') || cat.includes('fara')) {
+      return `Replace the headlights or tail lights with "${p.name}"${specText} inside the factory housings: same LED signature, projector layout and lens tint as the reference photo, with a natural daytime running light glow`;
+    }
+    if (cat.includes('body') || cat.includes('aero')) {
       return `Replace the matching body part with "${p.name}"${specText}, aligned with the factory panel gaps and painted in the car's current paint colour (or the shown carbon weave)`;
     }
     if (cat.includes('perf') || cat.includes('light') || cat.includes('fara')) {

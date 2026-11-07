@@ -32,6 +32,8 @@ const attributesSchema = z
     material: z.string().trim().max(60).optional(),
     color: z.string().trim().max(60).optional(),
     universal: z.boolean().optional(),
+    /** `bumper` marks a body_kit item as a bumper (its own slot in the studio). */
+    slot: z.enum(['bumper']).optional(),
   })
   .strict();
 

@@ -688,12 +688,15 @@
     "categories": {
       "all": "Barcha detallar",
       "wheels": "Disklar",
-      "bodyKit": "Bamper va obves",
-      "performance": "Fara va chiroqlar",
+      "bodyKit": "Body kit",
+      "performance": "Performance",
       "interior": "Salon va rul",
       "color": "Kuzov rangi",
       "ceramic": "Keramika",
-      "polish": "Polirovka"
+      "polish": "Polirovka",
+      "bumper": "Bamperlar",
+      "spoiler": "Spoyler va qanot",
+      "lights": "Fara va chiroqlar"
     },
     "back": "Orqaga",
     "titleSeller": "Planshet tyuning studiyasi",

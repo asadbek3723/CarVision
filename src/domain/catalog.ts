@@ -7,8 +7,8 @@ import { DEFAULT_RATES } from './currency';
 export const CATALOG_CATEGORIES = [
   { slug: 'wheels', label: 'Disklar', hint: 'Disk, gildirak', veloce: 'Wheels' },
   { slug: 'body_kit', label: 'Bamper va obves', hint: 'Bamper, lip, porog, diffuzor', veloce: 'Body Kit' },
-  { slug: 'lighting', label: 'Fara va optika', hint: 'Old va orqa chiroqlar', veloce: 'Performance' },
-  { slug: 'spoiler', label: 'Spoyler', hint: 'Spoyler, qanot', veloce: 'Body Kit' },
+  { slug: 'lighting', label: 'Fara va optika', hint: 'Old va orqa chiroqlar', veloce: 'Lights' },
+  { slug: 'spoiler', label: 'Spoyler', hint: 'Spoyler, qanot', veloce: 'Spoiler' },
   { slug: 'suspension', label: 'Podveska', hint: 'Prujina, amortizator, koilover', veloce: 'Suspension' },
   { slug: 'interior', label: 'Salon va rul', hint: "O'rindiq, rul, panel", veloce: 'Interior' },
   { slug: 'exhaust', label: 'Glushitel', hint: 'Chiqarish tizimi', veloce: 'Performance' },
@@ -25,7 +25,12 @@ export function categoryLabel(slug: string): string {
   return CATALOG_CATEGORIES.find((c) => c.slug === slug)?.label ?? 'Boshqa';
 }
 
-export function veloceCategory(slug: string): string {
+/**
+ * Shop / studio category of an item. Bumpers are stored as `body_kit` with `attributes.slot =
+ * 'bumper'`, so a car can wear a bumper and a full body kit (or a spoiler) at the same time.
+ */
+export function veloceCategory(slug: string, attributes?: Record<string, unknown> | null): string {
+  if (slug === 'body_kit' && attributes?.['slot'] === 'bumper') return 'Bumper';
   return CATALOG_CATEGORIES.find((c) => c.slug === slug)?.veloce ?? 'Performance';
 }
 
