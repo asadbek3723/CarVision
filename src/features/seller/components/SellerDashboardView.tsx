@@ -152,67 +152,71 @@ export function SellerDashboardView() {
     );
   }
 
+  const credits = user.role === 'super_admin' ? '∞' : user.credits_balance.toLocaleString(intlLocale);
+  const stats = [
+    { label: t('statPublished'), value: published.length, icon: Package },
+    { label: t('statDraft'), value: items.length - published.length, icon: EyeOff },
+    { label: t('statOut'), value: lowStock, icon: Sparkles },
+    { label: t('statOrders'), value: leads.length, icon: Users },
+  ];
+  const roundBtn =
+    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/80 transition hover:bg-white/[0.12] hover:text-white active:scale-95 disabled:opacity-40';
+
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-32 pt-4 md:px-8">
+    <div className="mx-auto w-full max-w-[1500px] px-5 pb-32 pt-4 md:px-10 md:pt-10 lg:px-16">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs text-white/50">{t('studio')}</p>
-          <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{user.shop?.shop_name ?? t('defaultName')}</h1>
+      <header className="md:flex md:items-end md:justify-between md:gap-8">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold-500 md:text-xs">{t('studio')}</p>
+          <h1 className="mt-1.5 truncate font-heading text-[28px] font-semibold leading-tight tracking-[-0.02em] text-foreground md:text-4xl">
+            {user.shop?.shop_name ?? t('defaultName')}
+          </h1>
+          <p className="mt-1.5 flex items-center gap-2 text-sm text-white/50">
+            <Coins className="h-4 w-4 text-gold-500" />
+            <span className="font-semibold tabular-nums text-white">{credits}</span>
+            <span>{t('credits').toLowerCase()}</span>
+          </p>
         </div>
-        <div className="flex w-full items-center gap-2.5 sm:w-auto">
-          <div className="flex h-12 items-center gap-2.5 rounded-full bg-gradient-to-b from-gold-500/[0.14] to-gold-500/[0.04] ps-2 pe-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-gold-500/20 text-gold-500">
-              <Coins className="h-4 w-4" />
-            </span>
-            <span className="flex flex-col leading-none">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-gold-500/90">{t('credits')}</span>
-              <span className="mt-1 text-base font-bold tabular-nums text-white">{user.role === 'super_admin' ? '∞' : user.credits_balance}</span>
-            </span>
-          </div>
+        <div className="mt-5 flex items-center gap-2.5 md:mt-0 md:shrink-0">
           <button
             type="button"
             onClick={openCamera}
-            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-white/[0.05] px-5 text-sm font-semibold text-white transition hover:bg-white/[0.09] active:scale-[0.98] sm:flex-none"
+            aria-label={t('takePhoto')}
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-full bg-white/[0.06] text-sm font-semibold text-white transition hover:bg-white/[0.1] active:scale-[0.98] md:w-auto md:px-5"
           >
-            <Camera className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('takePhoto')}</span>
+            <Camera className="h-[18px] w-[18px] text-gold-500" />
+            <span className="hidden md:inline">{t('takePhoto')}</span>
           </button>
           <Link
             href={`/${locale}/seller/new-part`}
-            className="inline-flex h-12 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-gradient-to-b from-[#E2BF78] to-[#C79F4E] px-6 text-sm font-bold text-black shadow-[0_6px_20px_-6px_rgba(212,174,98,0.55)] transition hover:brightness-105 active:scale-[0.98] sm:flex-none"
+            className={buttonClasses({ size: 'md', className: 'h-12 min-w-0 flex-1 !rounded-full px-6 md:flex-none' })}
           >
-            <Plus className="h-4 w-4" />
-            {t('addProduct')}
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="truncate">{t('addProduct')}</span>
           </Link>
         </div>
-      </div>
+      </header>
 
-      {/* Stats */}
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[
-          { label: t('statPublished'), value: published.length, icon: Package },
-          { label: t('statDraft'), value: items.length - published.length, icon: EyeOff },
-          { label: t('statOut'), value: lowStock, icon: Sparkles },
-          { label: t('statOrders'), value: leads.length, icon: Users },
-        ].map((s) => (
-          <div key={s.label} className="rounded-2xl bg-surface-1 p-4">
-            <s.icon className="h-4 w-4 text-gold-500" />
-            <p className="mt-2 text-2xl font-bold text-white">{s.value}</p>
-            <p className="text-xs text-white/50">{s.label}</p>
+      {/* Stats: one quiet row */}
+      <dl className="mt-8 grid grid-cols-4 md:mt-12">
+        {stats.map((s, i) => (
+          <div key={s.label} className={`min-w-0 ${i > 0 ? 'border-s border-white/10 ps-3 md:ps-8' : 'pe-3'}`}>
+            <s.icon aria-hidden="true" className="h-4 w-4 text-gold-500 md:h-5 md:w-5" />
+            <dd className="mt-2 font-display text-2xl font-semibold tabular-nums leading-none text-white md:text-4xl">{s.value}</dd>
+            <dt className="mt-1.5 truncate text-[11px] text-white/50 md:text-sm">{s.label}</dt>
           </div>
         ))}
-      </div>
+      </dl>
 
       {error && (
-        <p role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p role="alert" className="mt-6 flex items-center justify-between gap-3 text-sm text-red-300">
           <span>{error}</span>
           <button type="button" onClick={() => void load()} className="shrink-0 text-xs font-semibold underline">{t('reload')}</button>
         </p>
       )}
 
-      {/* Tabs */}
-      <div className="mt-6 flex gap-2">
+      {/* Tabs: text with a gold underline */}
+      <div role="tablist" className="mt-10 flex gap-7 md:mt-14">
         {(
           [
             ['parts', t('tabParts', { count: items.length })],
@@ -222,109 +226,116 @@ export function SellerDashboardView() {
           <button
             key={key}
             type="button"
+            role="tab"
+            aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`rounded-full px-4 py-2 text-xs font-semibold transition ${tab === key ? 'bg-white text-black' : 'bg-white/[0.06] text-white/70 hover:bg-white/10'}`}
+            className={`relative pb-2.5 text-sm font-semibold transition md:text-base ${tab === key ? 'text-white' : 'text-white/45 hover:text-white/75'}`}
           >
             {label}
+            <span aria-hidden="true" className={`absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-gold-500 transition-opacity ${tab === key ? 'opacity-100' : 'opacity-0'}`} />
           </button>
         ))}
       </div>
 
       {tab === 'parts' && (
-        <div className="mt-4 space-y-3">
-          {items.length === 0 && (
-            <div className="rounded-3xl border border-dashed p-10 text-center">
-              <p className="text-sm text-white/70">{t('emptyParts')}</p>
-              <Link href={`/${locale}/seller/new-part`} className={buttonClasses({ size: 'md', className: 'mt-4' })}>
+        <div className="mt-6 md:mt-8">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center py-14 text-center">
+              <Package className="h-12 w-12 text-white/25" strokeWidth={1.4} />
+              <p className="mt-4 max-w-sm text-sm text-white/60">{t('emptyParts')}</p>
+              <Link href={`/${locale}/seller/new-part`} className={buttonClasses({ size: 'md', className: 'mt-5 !rounded-full px-6' })}>
                 <Plus className="h-4 w-4" />
                 {t('addProduct')}
               </Link>
             </div>
-          )}
-          {items.map((item) => (
-            <article key={item.id} className="flex flex-col gap-4 rounded-3xl bg-surface-1 p-4 sm:flex-row sm:items-center">
-              <div className="relative h-24 w-full shrink-0 overflow-hidden rounded-2xl bg-black sm:w-32">
-                {item.coverImageUrl && (
-                  <ProductImage src={item.coverImageUrl} alt={item.name} sizes="(min-width: 640px) 128px, 100vw" className="object-cover" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate text-sm font-bold text-white">{item.name}</h3>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.status === 'PUBLISHED' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/10 text-white/60'}`}>
-                    {item.status === 'PUBLISHED' ? t('statusPublished') : t('statusDraft')}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs text-white/50">
-                  {tCat(item.category)}
-                  {item.brand ? ` · ${item.brand}` : ''}
-                </p>
-                <p className="mt-0.5 truncate text-xs text-white/40">
-                  {item.isUniversal ? t('allCars') : item.fitment.map((f) => f.label).slice(0, 3).join(', ')}
-                  {!item.isUniversal && item.fitment.length > 3 ? ` +${item.fitment.length - 3}` : ''}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-gold-500">
-                  {item.inputPrice !== null
-                    ? `${new Intl.NumberFormat(intlLocale).format(item.inputPrice)} ${item.inputCurrency}`
-                    : formatPrice(item.priceUSD, 'USD')}
-                </p>
-              </div>
+          ) : (
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-9 sm:gap-x-6 lg:grid-cols-3 xl:grid-cols-4">
+              {items.map((item) => {
+                const isPublished = item.status === 'PUBLISHED';
+                return (
+                  <li key={item.id} className="flex min-w-0 flex-col">
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-surface-1">
+                      {item.coverImageUrl && (
+                        <ProductImage src={item.coverImageUrl} alt={item.name} sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw" className="object-cover" />
+                      )}
+                      <span className={`absolute start-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-md ${isPublished ? 'bg-black/60 text-emerald-300' : 'bg-black/60 text-white/70'}`}>
+                        {isPublished ? t('statusPublished') : t('statusDraft')}
+                      </span>
+                    </div>
 
-              <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
-                <div className="flex items-center gap-2">
-                  <button type="button" aria-label={t('decrease')} onClick={() => void setStock(item, item.stock - 1)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <span className={`w-10 text-center text-sm font-bold ${item.stock === 0 ? 'text-red-300' : 'text-white'}`}>{item.stock}</span>
-                  <button type="button" aria-label={t('increase')} onClick={() => void setStock(item, item.stock + 1)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Link href={`/${locale}/seller/new-part?id=${item.id}`} aria-label={t('edit')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Link>
-                  <button type="button" disabled={busyId === item.id} aria-label={item.status === 'PUBLISHED' ? t('hide') : t('publish')} onClick={() => void toggleStatus(item)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-50">
-                    {item.status === 'PUBLISHED' ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  </button>
-                  <button type="button" disabled={busyId === item.id} aria-label={t('delete')} onClick={() => void remove(item)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-red-600 disabled:opacity-50">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+                    <h3 className="mt-3 truncate text-sm font-semibold text-white md:text-base">{item.name}</h3>
+                    <p className="mt-0.5 truncate text-[11px] text-white/45 md:text-xs">
+                      {tCat(item.category)}
+                      {item.brand ? ` · ${item.brand}` : ''}
+                    </p>
+                    <p className="mt-1 truncate text-sm font-semibold tabular-nums text-gold-500">
+                      {item.inputPrice !== null
+                        ? `${new Intl.NumberFormat(intlLocale).format(item.inputPrice)} ${item.inputCurrency}`
+                        : formatPrice(item.priceUSD, 'USD')}
+                    </p>
+
+                    {/* Stock */}
+                    <div className="mt-3 flex items-center justify-between">
+                      <button type="button" aria-label={t('decrease')} onClick={() => void setStock(item, item.stock - 1)} className={roundBtn}>
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className={`text-base font-semibold tabular-nums ${item.stock === 0 ? 'text-red-300' : 'text-white'}`}>{item.stock}</span>
+                      <button type="button" aria-label={t('increase')} onClick={() => void setStock(item, item.stock + 1)} className={roundBtn}>
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-2 flex items-center justify-between">
+                      <Link href={`/${locale}/seller/new-part?id=${item.id}`} aria-label={t('edit')} className={roundBtn}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Link>
+                      <button type="button" disabled={busyId === item.id} aria-label={isPublished ? t('hide') : t('publish')} onClick={() => void toggleStatus(item)} className={roundBtn}>
+                        {isPublished ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                      <button type="button" disabled={busyId === item.id} aria-label={t('delete')} onClick={() => void remove(item)} className={`${roundBtn} hover:!bg-red-500/20 hover:!text-red-300`}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       )}
 
       {tab === 'leads' && (
-        <div className="mt-4 space-y-3">
-          <Link href={`/${locale}/seller/redeem`} className="flex items-center justify-between rounded-3xl bg-gold-500/15 px-5 py-4 text-sm font-bold text-gold-500 hover:bg-gold-500/25">
+        <div className="mt-6 md:mt-8">
+          <Link href={`/${locale}/seller/redeem`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-gold-500 transition hover:text-gold-300">
             {t('redeem')}
-            <span aria-hidden>→</span>
+            <span aria-hidden className="rtl:rotate-180">→</span>
           </Link>
-          {leads.length === 0 && (
-            <div className="rounded-3xl border border-dashed p-10 text-center text-sm text-white/60">
-              {t('emptyLeads')}
+          {leads.length === 0 ? (
+            <div className="flex flex-col items-center py-14 text-center">
+              <Users className="h-12 w-12 text-white/25" strokeWidth={1.4} />
+              <p className="mt-4 max-w-sm text-sm text-white/60">{t('emptyLeads')}</p>
             </div>
+          ) : (
+            <ul className="mt-4 grid gap-x-12 lg:grid-cols-2">
+              {leads.map((lead) => (
+                <li key={lead.id} className="flex items-center gap-4 py-4">
+                  <Link href={`/${locale}/seller/orders/${lead.id}`} className="min-w-0 flex-1 hover:opacity-80">
+                    <p className="truncate text-sm font-semibold text-white">{lead.customerName}</p>
+                    <p className="truncate text-xs text-white/50">{lead.partName}</p>
+                    <p className="mt-0.5 font-mono text-[11px] text-white/35">{t('code', { code: lead.voucherCode })}</p>
+                  </Link>
+                  <div className="shrink-0 text-end">
+                    <p className="text-sm font-semibold tabular-nums text-gold-500">{formatPrice(lead.totalPriceUSD, 'USD')}</p>
+                    <p className="text-[11px] text-white/40">{t('deposit', { amount: formatPrice(lead.depositUSD, 'USD') })}</p>
+                  </div>
+                  <a href={`tel:${lead.customerPhone}`} aria-label={t('call')} className={roundBtn}>
+                    <Phone className="h-4 w-4" />
+                  </a>
+                </li>
+              ))}
+            </ul>
           )}
-          {leads.map((lead) => (
-            <article key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-surface-1 p-4">
-              <Link href={`/${locale}/seller/orders/${lead.id}`} className="block min-w-0 hover:opacity-80">
-                <p className="text-sm font-bold text-white">{lead.customerName}</p>
-                <p className="text-xs text-white/50">{lead.partName}</p>
-                <p className="mt-1 text-xs text-white/40">{t('code', { code: lead.voucherCode })}</p>
-              </Link>
-              <div className="text-end">
-                <p className="text-sm font-semibold text-gold-500">{formatPrice(lead.totalPriceUSD, 'USD')}</p>
-                <p className="text-[11px] text-white/45">{t('deposit', { amount: formatPrice(lead.depositUSD, 'USD') })}</p>
-              </div>
-              <a href={`tel:${lead.customerPhone}`} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-white/15">
-                <Phone className="h-3.5 w-3.5" />
-                {t('call')}
-              </a>
-            </article>
-          ))}
         </div>
       )}
     </div>
