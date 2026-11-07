@@ -360,12 +360,13 @@ export function VeloceCustomize() {
       type="button"
       onClick={handleApplyChanges}
       disabled={isApplying}
-      className={buttonClasses({ size: 'lg', fullWidth: true })}
+      className={buttonClasses({ size: 'lg', fullWidth: true, className: 'gap-2.5 px-5' })}
     >
-      <Layers className="h-[18px] w-[18px]" />
-      <span>{t('viewResult')}</span>
+      {/* Always one line: the label shrinks with an ellipsis before anything wraps. */}
+      <Layers className="h-[18px] w-[18px] shrink-0" />
+      <span className="min-w-0 truncate whitespace-nowrap">{t('viewResult')}</span>
       {renderPlan.creditsNeeded > 0 && (
-        <span className="rounded-full bg-black/15 px-2.5 py-1 text-[10px] tracking-wider">
+        <span className="shrink-0 whitespace-nowrap rounded-full bg-black/15 px-2.5 py-1 text-[11px] font-semibold tabular-nums">
           {t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}
         </span>
       )}
