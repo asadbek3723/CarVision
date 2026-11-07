@@ -7,7 +7,8 @@ export type ButtonVariant = 'gold' | 'ghost' | 'quiet' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const base =
-  'relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold ' +
+  // Pill shape: the brand's buttons have always been pills (hero, studio, checkout).
+  'relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold ' +
   'transition-[transform,background-color,box-shadow,opacity] duration-micro ease-brand active:scale-[0.98] ' +
   'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-500/40 ' +
   'disabled:pointer-events-none disabled:opacity-45 aria-disabled:pointer-events-none aria-disabled:opacity-45';

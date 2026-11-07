@@ -82,13 +82,13 @@ export function VeloceHome() {
 
         <div className="relative mx-auto max-w-[1500px] lg:grid lg:min-h-[calc(100vh-81px)] lg:grid-cols-12 lg:items-center lg:px-14">
           {/* Car visual right column on desktop */}
-          <div className="relative lg:order-2 lg:col-span-7 lg:-me-40 lg:-ms-16 xl:scale-110">
+          <div className="relative lg:order-2 lg:col-span-7 lg:-me-40 lg:-ms-16">
             <img
               src="/assets/car-CjioCIbt.jpg"
               alt={t('heroAlt')}
               width={1920}
               height={1088}
-              className="reveal relative w-full object-cover mix-blend-lighten [mask-image:linear-gradient(to_bottom,black_60%,transparent_95%)]"
+              className="relative w-full object-cover mix-blend-lighten xl:scale-110 [mask-image:radial-gradient(ellipse_70%_68%_at_58%_50%,black_55%,transparent_85%)]"
             />
             <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-surface-0 to-transparent lg:hidden" />
           </div>
@@ -130,7 +130,7 @@ export function VeloceHome() {
             >
               <button
                 onClick={openCamera}
-                className={buttonClasses({ size: 'lg' })}
+                className={buttonClasses({ size: 'lg', className: 'group rounded-full px-8 font-display text-[11px] uppercase tracking-[0.24em]' })}
               >
                 {t('ctaCustomize')}
                 <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />

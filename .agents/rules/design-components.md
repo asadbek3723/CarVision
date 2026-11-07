@@ -80,7 +80,7 @@ Tokens live only in `styles/tokens.css` and reach code through `tailwind.config.
 | Surfaces (page → popover) | `surface-0` `#0D0E12`, `surface-1` card, `surface-2` raised/field, `surface-3` popover/hover | `--c-surface-*`, `--surface-*` |
 | Semantic | `primary` (=gold), `primary-foreground`, `foreground`, `muted-foreground`, `card`, `muted`, `accent`, `background` (current page bg `#0A0B0F`), `ink` (text on gold), `border` (`--line`, 6% white), `ring`, `success`, `warning`, `danger`, `danger-soft`, `destructive`, `info` | `--c-fg`, `--c-fg-muted`, … |
 | Elevation | `shadow-e1` cards, `shadow-e2`, `shadow-e3` popovers, `shadow-e4` modals, `shadow-glow-gold` primary CTA only, `shadow-highlight` | `--e1`…`--e4`, `--glow-gold`, `--highlight` |
-| Radius | `rounded-sm` 8, `rounded-md` 12 (buttons, inputs), `rounded-lg` 16 (cards), `rounded-xl` 24 (panels, modals), `rounded-full` | `--r-sm` `--r-md` `--r-lg` `--r-xl` |
+| Radius | `rounded-sm` 8, `rounded-md` 12 (inputs), `rounded-full` (buttons), `rounded-lg` 16 (cards), `rounded-xl` 24 (panels, modals), `rounded-full` | `--r-sm` `--r-md` `--r-lg` `--r-xl` |
 | Motion | `duration-micro` 160ms, `duration-ui` 240ms, `duration-section` 500ms, `ease-brand` `cubic-bezier(.22,1,.36,1)`, `ease-brand-in-out` | `--dur-*`, `--ease-out`, `--ease-in-out` |
 
 **Radius change (Nov 2026).** The old scale was inverted (`2xl` 32px > `3xl` 24px). Now: `sm` 10→8, `md` 14→12, `lg` 18→16, `xl` 24 (same), `2xl` 32→28 (−4px, the least that restores order), `3xl` 24→32. Prefer `rounded-lg`/`rounded-xl` in new code; `2xl`/`3xl` remain only for existing pages.
