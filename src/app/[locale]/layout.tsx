@@ -87,7 +87,7 @@ export default async function LocaleLayout({
           }}
         />
       </head>
-      <body className="bg-[#0A0B0F] text-white min-h-screen antialiased select-none" suppressHydrationWarning>
+      <body className="bg-surface-0 text-white min-h-screen antialiased select-none" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <CurrencyProvider>
