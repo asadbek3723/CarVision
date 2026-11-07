@@ -93,7 +93,7 @@ export function VehiclePicker({ value, onChange }: Props) {
       </div>
 
       {query.trim().length >= 2 && (
-        <div className="max-h-56 overflow-y-auto rounded-xl bg-[#0B0D13]">
+        <div className="max-h-56 overflow-y-auto rounded-xl bg-surface-1">
           {loading && <p className="px-3 py-3 text-xs text-white/50">{t('searching')}</p>}
           {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">{t('notFound')}</p>}
           {results.map((r) => (

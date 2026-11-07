@@ -230,7 +230,7 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-[28px] bg-[#101218] p-5 pb-[max(env(safe-area-inset-bottom),20px)] sm:max-w-lg sm:rounded-[28px] sm:p-7"
+        className="max-h-[92vh] w-full overflow-y-auto rounded-t-[28px] bg-surface-1 p-5 pb-[max(env(safe-area-inset-bottom),20px)] sm:max-w-lg sm:rounded-[28px] sm:p-7"
       >
         <div className="mb-5 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold text-white">{title}</h2>

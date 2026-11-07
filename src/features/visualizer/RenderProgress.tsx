@@ -63,7 +63,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
 
       <main className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 content-center gap-8 px-5 pb-10 md:px-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-center lg:gap-14">
         {/* Photo under a slow scan line */}
-        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-[#0B0D13] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]">
+        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-surface-1 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]">
           {backdrop && <img src={backdrop} alt="" className={`h-full w-full object-cover transition duration-700 ${running ? 'opacity-60 saturate-[0.8]' : 'opacity-90'}`} />}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#07080B]/70 via-transparent to-[#07080B]/20" aria-hidden />
           {running && !reduce && (

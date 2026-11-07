@@ -137,9 +137,9 @@ export function VeloceCart() {
                 >
                   <div className="flex items-center gap-4">
                     {p.image && !broken[p.id] ? (
-                      <img src={p.image} alt={p.name} onError={() => setBroken((b) => ({ ...b, [p.id]: true }))} className="h-20 w-24 shrink-0 rounded-2xl bg-[#12141C] object-cover" />
+                      <img src={p.image} alt={p.name} onError={() => setBroken((b) => ({ ...b, [p.id]: true }))} className="h-20 w-24 shrink-0 rounded-2xl bg-surface-1 object-cover" />
                     ) : (
-                      <div className="flex h-20 w-24 shrink-0 items-center justify-center rounded-2xl bg-[#12141C] text-[10px] uppercase tracking-widest text-white/30">{tDetail('noImage')}</div>
+                      <div className="flex h-20 w-24 shrink-0 items-center justify-center rounded-2xl bg-surface-1 text-[10px] uppercase tracking-widest text-white/30">{tDetail('noImage')}</div>
                     )}
                     <div>
                       {carName && (

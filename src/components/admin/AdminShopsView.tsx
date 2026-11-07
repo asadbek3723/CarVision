@@ -224,9 +224,9 @@ function AssignPlanSheet({ shop, onClose, onDone, onError }: { shop: Shop | null
         <Field label={t('fPlan')}>
           <select value={planCode} onChange={(e) => pick(e.target.value)} className={fieldClass}>
             {plans.map((p) => (
-              <option key={p.code} value={p.code} className="bg-[#101218]">{p.name} · ${p.priceUSD}</option>
+              <option key={p.code} value={p.code} className="bg-surface-1">{p.name} · ${p.priceUSD}</option>
             ))}
-            <option value="CUSTOM" className="bg-[#101218]">Custom</option>
+            <option value="CUSTOM" className="bg-surface-1">Custom</option>
           </select>
         </Field>
         <div className="grid grid-cols-2 gap-3">
@@ -243,13 +243,13 @@ function AssignPlanSheet({ shop, onClose, onDone, onError }: { shop: Shop | null
           </Field>
           <Field label={t('fCurrency')}>
             <select value={currency} onChange={(e) => setCurrency(e.target.value as typeof currency)} className={fieldClass}>
-              {(['UZS', 'USD', 'AED', 'EUR'] as const).map((c) => <option key={c} value={c} className="bg-[#101218]">{c}</option>)}
+              {(['UZS', 'USD', 'AED', 'EUR'] as const).map((c) => <option key={c} value={c} className="bg-surface-1">{c}</option>)}
             </select>
           </Field>
         </div>
         <Field label={t('fMethod')}>
           <select value={method} onChange={(e) => setMethod(e.target.value as typeof method)} className={fieldClass}>
-            {METHODS.map((m) => <option key={m.id} value={m.id} className="bg-[#101218]">{t(m.label)}</option>)}
+            {METHODS.map((m) => <option key={m.id} value={m.id} className="bg-surface-1">{t(m.label)}</option>)}
           </select>
         </Field>
         <Field label={t('fNotes')}>

@@ -16,7 +16,7 @@ interface LevelGuideProps {
 export function LevelGuide({ level, aligned }: LevelGuideProps) {
   if (!level) return null;
   const rotate = Math.max(-35, Math.min(35, -level.roll));
-  const tone = aligned ? 'bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]' : 'bg-[#E5C175]/70';
+  const tone = aligned ? 'bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]' : 'bg-gold-300/70';
   return (
     <div className="pointer-events-none absolute inset-0 z-[11] flex items-center justify-center" aria-hidden="true">
       <motion.div

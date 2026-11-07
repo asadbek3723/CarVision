@@ -71,7 +71,7 @@ function PreferenceSelect({
           className={`h-14 w-full cursor-pointer appearance-none rounded-2xl bg-white/[0.04] ps-11 pe-12 text-base text-white transition hover:bg-white/[0.07] ${focusRing}`}
         >
           {options.map((o) => (
-            <option key={o.value} value={o.value} className="bg-[#12141A] text-white">
+            <option key={o.value} value={o.value} className="bg-surface-1 text-white">
               {o.hint ? `${o.label} · ${o.hint}` : o.label}
             </option>
           ))}

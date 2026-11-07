@@ -373,7 +373,7 @@ export function CinematicVideoStudio({
       aria-label={t('dialog')}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-xl"
     >
-      <div className="relative flex max-h-[96vh] w-full max-w-[440px] flex-col items-center gap-4 rounded-[28px] bg-[#0B0D13] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
+      <div className="relative flex max-h-[96vh] w-full max-w-[440px] flex-col items-center gap-4 rounded-[28px] bg-surface-1 p-4 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
         <button
           type="button"
           onClick={onClose}
@@ -468,7 +468,7 @@ export function CinematicVideoStudio({
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
               <div className="h-full bg-gold-500 transition-[width] duration-150" style={{ width: `${Math.round(progress * 100)}%` }} />
             </div>
-            <p className="mt-2 text-center text-xs text-[#A69F92]">
+            <p className="mt-2 text-center text-xs text-muted-foreground">
               {t('recording', { seconds: Math.ceil((1 - progress) * REEL_DURATION) })}
             </p>
           </div>

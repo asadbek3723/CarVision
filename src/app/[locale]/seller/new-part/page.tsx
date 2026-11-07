@@ -39,7 +39,7 @@ const LANGUAGE_NAMES: Record<ItemLocale, string> = {
 const fieldCls =
   'w-full rounded-2xl  bg-white/[0.04] px-4 py-3.5 text-base text-white placeholder:text-white/35 outline-none transition ';
 const labelCls = 'mb-2 block text-xs font-semibold uppercase tracking-wider text-white/50';
-const cardCls = 'rounded-3xl  bg-[#0B0D13] p-5 md:p-6';
+const cardCls = 'rounded-3xl  bg-surface-1 p-5 md:p-6';
 const selectCls =
   'w-full appearance-none rounded-2xl  bg-white/[0.04] ps-4 pe-11 py-3.5 text-base text-white outline-none transition   [&>option]:bg-[#11141b]';
 
@@ -368,7 +368,7 @@ export default function SellerNewPartPage() {
       <div className="lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-8">
       {/* Photo */}
       <section className={`${cardCls} !p-3 md:!p-4 lg:sticky lg:top-6`}>
-        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#0B0D13]">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-surface-1">
           {main ? (
             <>
               <img src={main.url} alt="" className="h-full w-full object-cover" />

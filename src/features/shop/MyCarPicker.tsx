@@ -73,7 +73,7 @@ export function MyCarPicker() {
   }
 
   return (
-    <div className="rounded-2xl bg-[#0B0D13] p-4">
+    <div className="rounded-2xl bg-surface-1 p-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-white">{t('pickTitle')}</p>
         <button type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">

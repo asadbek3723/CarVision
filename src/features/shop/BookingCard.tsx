@@ -94,7 +94,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
   };
 
   return (
-    <article className="rounded-3xl bg-[#0B0D13] p-5">
+    <article className="rounded-3xl bg-surface-1 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-mono text-sm font-bold text-white">#{booking.bookingNumber}</p>
         <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${status.cls}`}>{t(status.key)}</span>

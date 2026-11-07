@@ -251,7 +251,7 @@ export default function CustomizeResultPage() {
         {!hasResults && (
           <div className="flex min-h-[50dvh] flex-col items-center justify-center text-center">
             <p className="text-lg font-semibold text-white">{t('emptyTitle')}</p>
-            <p className="mt-2 max-w-md text-sm text-[#A69F92]">{t('emptyBody')}</p>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">{t('emptyBody')}</p>
             <button type="button" onClick={() => router.push(`/${locale}/customize`)} className={buttonClasses({ size: 'md', className: 'mt-6' })}>
               {t('customize')}
             </button>
@@ -261,7 +261,7 @@ export default function CustomizeResultPage() {
         {hasResults && (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_440px] xl:gap-14">
             {/* BEFORE / AFTER viewer: fills the free height, sides sit on the image itself */}
-            <div className="overflow-hidden rounded-[28px] bg-[#0B0D13] shadow-[0_32px_90px_-24px_rgba(0,0,0,0.85)]">
+            <div className="overflow-hidden rounded-[28px] bg-surface-1 shadow-[0_32px_90px_-24px_rgba(0,0,0,0.85)]">
               <div
                 ref={sliderContainerRef}
                 onPointerDown={handlePointerDown}
@@ -365,7 +365,7 @@ export default function CustomizeResultPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <h2 className="text-2xl font-extrabold tracking-tight text-white md:text-[28px]">{t('selectedTitle')}</h2>
-                  <p className="mt-1.5 text-sm text-[#A69F92]">{t('selectedSub')}</p>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{t('selectedSub')}</p>
                 </div>
                 <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="-me-2 inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold text-gold-500 transition hover:bg-white/[0.07] cursor-pointer">
                   <SlidersHorizontal className="h-4 w-4" />
@@ -387,7 +387,7 @@ export default function CustomizeResultPage() {
                         )}
                         <div className="min-w-0">
                           <h3 className="truncate text-[15px] font-bold text-white">{part.name}</h3>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-[#A69F92]">
+                          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                             <Car className="h-3.5 w-3.5 shrink-0 text-gold-500" />
                             <span className="truncate">{carFit}</span>
                           </div>
@@ -419,7 +419,7 @@ export default function CustomizeResultPage() {
                 <div className="mt-8">
                   <div className="flex items-end justify-between gap-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-[#A69F92]">{t('totalLabel', { count: selectedParts.length })}</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t('totalLabel', { count: selectedParts.length })}</p>
                       <p className="mt-1.5 text-4xl font-extrabold tabular-nums tracking-tight text-white md:text-5xl">{formatPrice(totalPriceUSD)}</p>
                     </div>
                   </div>

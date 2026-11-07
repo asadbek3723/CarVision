@@ -53,7 +53,7 @@ export function AngleGhostOverlay({ bearing, aligned }: AngleGhostOverlayProps) 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={view.src}
-          className={`h-[82%] w-[92%] transition-colors duration-500 ${aligned ? 'text-emerald-300' : 'text-[#E5C175]'}`}
+          className={`h-[82%] w-[92%] transition-colors duration-500 ${aligned ? 'text-emerald-300' : 'text-gold-300'}`}
           style={{
             backgroundColor: 'currentColor',
             WebkitMaskImage: mask,

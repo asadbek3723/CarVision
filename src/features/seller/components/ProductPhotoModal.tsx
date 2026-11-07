@@ -131,7 +131,7 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-6 backdrop-blur-xl">
-      <div className="relative w-full max-w-4xl rounded-[28px] bg-[#0B0D13] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
+      <div className="relative w-full max-w-4xl rounded-[28px] bg-surface-1 p-8 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
         <button type="button" onClick={onClose} aria-label={t('close')} className="absolute end-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/80 hover:bg-white/20">
           <X className="h-4 w-4" />
         </button>

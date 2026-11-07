@@ -277,7 +277,7 @@ export default function MobileScanSessionPage() {
           </span>
         </div>
 
-        <h1 className="font-display text-xl sm:text-2xl font-light tracking-[0.25em] text-[#EDE8DF] uppercase">
+        <h1 className="font-display text-xl sm:text-2xl font-light tracking-[0.25em] text-foreground uppercase">
           {t('doneTitle', { total: REQUIRED_ANGLES_TOTAL })}
         </h1>
 
@@ -285,7 +285,7 @@ export default function MobileScanSessionPage() {
           {t('doneBody')}
         </p>
 
-        <div className="mt-8 flex items-center gap-3 rounded-2xl bg-[#12141A] ring-1 ring-gold-500/20 px-6 py-4 shadow-card">
+        <div className="mt-8 flex items-center gap-3 rounded-2xl bg-surface-1 ring-1 ring-gold-500/20 px-6 py-4 shadow-card">
           <Monitor className="h-5 w-5 text-primary" />
           <span className="text-xs font-medium tracking-wide text-white">
             {t('doneNext')}
@@ -338,7 +338,7 @@ export default function MobileScanSessionPage() {
       {/* PWA Offline Handoff & Ustaxona Wi-Fi Fallback Drawer/Banner */}
       {offlinePending && (
         <div className="absolute inset-x-0 bottom-0 z-50 bg-gradient-to-t from-black via-[#0D0E12] to-transparent p-5 pb-8 flex flex-col items-center text-center">
-          <div className="w-full max-w-md rounded-3xl bg-[#12141A]/95 ring-1 ring-gold-500/30 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.9)] backdrop-blur-2xl">
+          <div className="w-full max-w-md rounded-3xl bg-surface-1/95 ring-1 ring-gold-500/30 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.9)] backdrop-blur-2xl">
             <div className="flex items-center justify-between pb-3">
               <div className="flex items-center gap-2 text-xs font-medium text-amber-400">
                 <WifiOff className="h-4 w-4" />

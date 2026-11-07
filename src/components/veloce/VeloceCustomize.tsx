@@ -425,7 +425,7 @@ export function VeloceCustomize() {
 
       <div className="mt-2 min-h-[130px] flex-1 lg:mt-3 lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
       {/* Car viewport */}
-      <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] lg:mt-0 bg-[#0B0D13] shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
+      <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] lg:mt-0 bg-surface-1 shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(212,174,98,0.10),transparent_70%)] lg:hidden" />
         <div
           ref={sliderRef}
@@ -566,7 +566,7 @@ export function VeloceCustomize() {
           {selectedProducts.length === 0 && <li className="py-6 text-center text-sm text-white/45">{t('pickParts')}</li>}
           {selectedProducts.map((p) => (
             <li key={p.id} className="flex items-center gap-4 rounded-[20px] bg-white/[0.03] p-2.5">
-              <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-[#0E1016]">
+              <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-surface-1">
                 {p.swatch ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
               </span>
               <span className="min-w-0 flex-1">

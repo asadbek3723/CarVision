@@ -7,7 +7,7 @@ export default function NotFound() {
   return (
     <div className="min-h-screen bg-[#07080B] text-white flex items-center justify-center p-6">
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-[#E6C687]">404</h1>
+        <h1 className="text-4xl font-bold text-gold-300">404</h1>
         <p className="text-sm text-neutral-400">{t('title')}</p>
         <Link
           href="/"

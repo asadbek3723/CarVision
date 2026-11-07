@@ -135,7 +135,7 @@ export function SellerDashboardView() {
 
   if (!user) {
     return (
-      <div className="mx-auto mt-10 max-w-md rounded-3xl bg-[#0B0D13] p-6 text-center">
+      <div className="mx-auto mt-10 max-w-md rounded-3xl bg-surface-1 p-6 text-center">
         <p className="text-sm text-white/80">{t('studioOnly')}</p>
         <Link href={`/${locale}/login`} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
           {t('login')}
@@ -188,7 +188,7 @@ export function SellerDashboardView() {
           { label: t('statOut'), value: lowStock, icon: Sparkles },
           { label: t('statOrders'), value: leads.length, icon: Users },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl bg-[#0B0D13] p-4">
+          <div key={s.label} className="rounded-2xl bg-surface-1 p-4">
             <s.icon className="h-4 w-4 text-gold-500" />
             <p className="mt-2 text-2xl font-bold text-white">{s.value}</p>
             <p className="text-xs text-white/50">{s.label}</p>
@@ -234,7 +234,7 @@ export function SellerDashboardView() {
             </div>
           )}
           {items.map((item) => (
-            <article key={item.id} className="flex flex-col gap-4 rounded-3xl bg-[#0B0D13] p-4 sm:flex-row sm:items-center">
+            <article key={item.id} className="flex flex-col gap-4 rounded-3xl bg-surface-1 p-4 sm:flex-row sm:items-center">
               <div className="h-24 w-full shrink-0 overflow-hidden rounded-2xl bg-black sm:w-32">
                 {item.coverImageUrl && (
                   <img src={item.coverImageUrl} alt={item.name} className="h-full w-full object-cover" />
@@ -301,7 +301,7 @@ export function SellerDashboardView() {
             </div>
           )}
           {leads.map((lead) => (
-            <article key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-[#0B0D13] p-4">
+            <article key={lead.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-surface-1 p-4">
               <Link href={`/${locale}/seller/orders/${lead.id}`} className="block min-w-0 hover:opacity-80">
                 <p className="text-sm font-bold text-white">{lead.customerName}</p>
                 <p className="text-xs text-white/50">{lead.partName}</p>

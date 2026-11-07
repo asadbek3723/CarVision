@@ -36,7 +36,7 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
 
   return (
     <div
-      className="rise group relative overflow-hidden rounded-2xl bg-[#12141A] shadow-[0_12px_32px_rgba(0,0,0,0.6)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(212,174,98,0.18)]"
+      className="rise group relative overflow-hidden rounded-2xl bg-surface-1 shadow-[0_12px_32px_rgba(0,0,0,0.6)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(212,174,98,0.18)]"
       style={{ animationDelay: `${i * 60}ms` }}
     >
       <Link href={`/${locale}/shop/${p.id}`} className="block">
@@ -50,7 +50,7 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
             />
           ) : (
             imgFailed || !p.image ? (
-              <div className="flex h-full w-full items-center justify-center bg-[#0E1016] text-[10px] uppercase tracking-widest text-white/30">Rasm yo‘q</div>
+              <div className="flex h-full w-full items-center justify-center bg-surface-1 text-[10px] uppercase tracking-widest text-white/30">Rasm yo‘q</div>
             ) : (
               <img
                 src={p.image}

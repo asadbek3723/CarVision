@@ -147,7 +147,7 @@ export default function CheckoutPage() {
 
   if (!user) {
     return shell(
-      <div className="mt-10 rounded-3xl bg-[#0B0D13] p-6 text-center">
+      <div className="mt-10 rounded-3xl bg-surface-1 p-6 text-center">
         <p className="text-sm text-white/80">{t('loginRequired')}</p>
         <Link href={`/${locale}/login`} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
           {t('login')}
@@ -195,7 +195,7 @@ export default function CheckoutPage() {
       </Link>
       <h1 className="mb-5 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('title')}</h1>
 
-      <section className="rounded-3xl bg-[#0B0D13] p-5">
+      <section className="rounded-3xl bg-surface-1 p-5">
         <ul className="space-y-3">
           {lines.map(({ p, qty }) => (
             <li key={p.id} className="flex items-center gap-3">
@@ -221,7 +221,7 @@ export default function CheckoutPage() {
         </div>
       </section>
 
-      <form onSubmit={submit} className="mt-4 space-y-4 rounded-3xl bg-[#0B0D13] p-5">
+      <form onSubmit={submit} className="mt-4 space-y-4 rounded-3xl bg-surface-1 p-5">
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-white/60" htmlFor="c-name">{t('name')}</label>
           <input id="c-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className={fieldCls} />

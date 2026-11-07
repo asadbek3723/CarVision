@@ -589,7 +589,7 @@ export function VeloceSmartCameraModal({
                   {/* LEFT: Program-Driven 3D Car Compass (Non-clickable arrows) */}
                   <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-start space-y-4">
                     <div className="space-y-1">
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#E5C175]">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300">
                         <span>{currentStepIndex + 1}-Qadam (Majburiy)</span>
                       </span>
                       <h2 className="text-xl sm:text-2xl font-light text-foreground tracking-tight">

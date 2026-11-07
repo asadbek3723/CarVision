@@ -173,7 +173,7 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
           initial={reduce ? false : { opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: EASE }}
-          className="relative mx-auto aspect-[16/10] w-full overflow-hidden rounded-[28px] bg-[#0B0D13] shadow-[0_30px_90px_rgba(0,0,0,0.8)]"
+          className="relative mx-auto aspect-[16/10] w-full overflow-hidden rounded-[28px] bg-surface-1 shadow-[0_30px_90px_rgba(0,0,0,0.8)]"
         >
           <img src={photo} alt={t('photoAlt')} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />

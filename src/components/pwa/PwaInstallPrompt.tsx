@@ -199,10 +199,10 @@ export const PwaInstallPrompt: React.FC = () => {
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 25, opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed bottom-5 start-4 end-4 sm:start-auto sm:end-6 sm:w-[420px] z-50 bg-[#0B0C10]/95 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85),0_0_35px_rgba(212,174,98,0.1)] text-white"
+        className="fixed bottom-5 start-4 end-4 sm:start-auto sm:end-6 sm:w-[420px] z-50 bg-surface-1/95 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85),0_0_35px_rgba(212,174,98,0.1)] text-white"
       >
         <div className="flex items-start justify-between gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-transparent flex items-center justify-center shrink-0 text-[#E5C378] shadow-[0_4px_16px_rgba(212,174,98,0.15)]">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-gold-500/20 via-gold-500/10 to-transparent flex items-center justify-center shrink-0 text-gold-300 shadow-[0_4px_16px_rgba(212,174,98,0.15)]">
             <Download className="w-5 h-5 stroke-[2]" />
           </div>
 
@@ -218,16 +218,16 @@ export const PwaInstallPrompt: React.FC = () => {
             </p>
 
             {isIos ? (
-              <div className="mt-4 bg-[#12141A]/90 rounded-2xl p-3 space-y-2 text-xs text-neutral-300">
+              <div className="mt-4 bg-surface-1/90 rounded-2xl p-3 space-y-2 text-xs text-neutral-300">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-4 h-4 rounded-full bg-gold-500/20 text-[#E5C378] flex items-center justify-center font-bold text-[10px] shrink-0">
+                  <span className="w-4 h-4 rounded-full bg-gold-500/20 text-gold-300 flex items-center justify-center font-bold text-[10px] shrink-0">
                     1
                   </span>
                   <span>{copy.iosStep1}</span>
-                  <Share2 className="w-3.5 h-3.5 text-[#E5C378] ms-auto shrink-0" />
+                  <Share2 className="w-3.5 h-3.5 text-gold-300 ms-auto shrink-0" />
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="w-4 h-4 rounded-full bg-gold-500/20 text-[#E5C378] flex items-center justify-center font-bold text-[10px] shrink-0">
+                  <span className="w-4 h-4 rounded-full bg-gold-500/20 text-gold-300 flex items-center justify-center font-bold text-[10px] shrink-0">
                     2
                   </span>
                   <span>{copy.iosStep2}</span>

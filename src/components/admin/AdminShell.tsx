@@ -32,7 +32,7 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
   return (
     <div className="min-h-screen bg-[#07080B] text-white md:flex">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between bg-[#0B0C10] p-4 md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between bg-surface-1 p-4 md:flex">
         <div>
           <div className="flex items-center gap-3 px-2 py-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-500"><Shield className="h-5 w-5" /></span>
@@ -85,7 +85,7 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
       </div>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 bg-[#0B0C10]/95 px-1 pt-2 pb-[max(env(safe-area-inset-bottom),10px)] backdrop-blur-xl md:hidden" aria-label={t('sections')}>
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 bg-surface-1/95 px-1 pt-2 pb-[max(env(safe-area-inset-bottom),10px)] backdrop-blur-xl md:hidden" aria-label={t('sections')}>
         {NAV.map((n) => (
           <button
             key={n.id}

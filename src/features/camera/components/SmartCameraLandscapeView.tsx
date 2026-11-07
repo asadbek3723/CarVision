@@ -115,7 +115,7 @@ export function LuxuryCarCompass({
 
       {/* Golden bloom behind the active badge, at its real bearing */}
       <div
-        className="absolute pointer-events-none transition-all duration-500 rounded-full blur-xl h-14 w-14 -translate-x-1/2 -translate-y-1/2 bg-[#E5C175]/45"
+        className="absolute pointer-events-none transition-all duration-500 rounded-full blur-xl h-14 w-14 -translate-x-1/2 -translate-y-1/2 bg-gold-300/45"
         style={compassPosition(activeAngle.coneAngle)}
       />
 
@@ -138,7 +138,7 @@ export function LuxuryCarCompass({
             data-angle={angle.slug}
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center transition-all duration-500 pointer-events-none ${
  isActive
- ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_0_22px_rgba(229,193,117,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-[#E5C175]/75 scale-110'
+ ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_0_22px_rgba(229,193,117,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-gold-300/75 scale-110'
                 : isDone
                 ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
                 : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
@@ -410,15 +410,15 @@ export function SmartCameraLandscapeView({
                   repeat: Infinity,
                   ease: 'easeInOut',
                 }}
-                className="relative z-10 flex h-36 w-20 flex-col items-center justify-between rounded-[22px] bg-gradient-to-b from-[#1C1E26] to-[#0B0C10] p-2 ring-2 ring-[#E5C175] shadow-[0_0_40px_rgba(212,174,98,0.45)]"
+                className="relative z-10 flex h-36 w-20 flex-col items-center justify-between rounded-[22px] bg-gradient-to-b from-[#1C1E26] to-[#0B0C10] p-2 ring-2 ring-gold-300 shadow-[0_0_40px_rgba(212,174,98,0.45)]"
               >
-                <div className="h-1 w-6 rounded-full bg-[#E5C175]/50" />
+                <div className="h-1 w-6 rounded-full bg-gold-300/50" />
                 <div className="relative flex h-full w-full items-center justify-center my-1.5 rounded-xl bg-[#07080B] overflow-hidden">
-                  <div className="absolute top-1.5 start-1.5 h-3 w-3 border-t-2 border-s-2 border-[#E5C175] rounded-ss-sm" />
-                  <div className="absolute top-1.5 end-1.5 h-3 w-3 border-t-2 border-e-2 border-[#E5C175] rounded-se-sm" />
-                  <div className="absolute bottom-1.5 start-1.5 h-3 w-3 border-b-2 border-s-2 border-[#E5C175] rounded-es-sm" />
-                  <div className="absolute bottom-1.5 end-1.5 h-3 w-3 border-b-2 border-e-2 border-[#E5C175] rounded-ee-sm" />
-                  <Camera className="h-5 w-5 text-[#E5C175]" />
+                  <div className="absolute top-1.5 start-1.5 h-3 w-3 border-t-2 border-s-2 border-gold-300 rounded-ss-sm" />
+                  <div className="absolute top-1.5 end-1.5 h-3 w-3 border-t-2 border-e-2 border-gold-300 rounded-se-sm" />
+                  <div className="absolute bottom-1.5 start-1.5 h-3 w-3 border-b-2 border-s-2 border-gold-300 rounded-es-sm" />
+                  <div className="absolute bottom-1.5 end-1.5 h-3 w-3 border-b-2 border-e-2 border-gold-300 rounded-ee-sm" />
+                  <Camera className="h-5 w-5 text-gold-300" />
                 </div>
                 <div className="h-1 w-8 rounded-full bg-white/30" />
               </motion.div>
@@ -426,7 +426,7 @@ export function SmartCameraLandscapeView({
 
             {/* Luxury Typography Prompt (Zero Buttons!) */}
             <div className="relative z-10 max-w-xs space-y-3">
-              <p className="font-display text-[10px] font-semibold tracking-[0.35em] text-[#E5C175] uppercase">
+              <p className="font-display text-[10px] font-semibold tracking-[0.35em] text-gold-300 uppercase">
                 {t('eyebrow')}
               </p>
 
@@ -440,8 +440,8 @@ export function SmartCameraLandscapeView({
             </div>
 
             {/* Passive Status Indicator (Non-clickable) */}
-            <div className="relative z-10 mt-8 inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium text-[#E5C175] ring-1 ring-gold-500/25 pointer-events-none">
-              <span className="h-2 w-2 rounded-full bg-[#E5C175] animate-ping" />
+            <div className="relative z-10 mt-8 inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium text-gold-300 ring-1 ring-gold-500/25 pointer-events-none">
+              <span className="h-2 w-2 rounded-full bg-gold-300 animate-ping" />
               <span>{t('waitingRotate')}</span>
             </div>
 
@@ -512,7 +512,7 @@ export function SmartCameraLandscapeView({
             {!isReady && !permissionDenied && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#08090C]/90 p-6 text-center">
                 <div className="h-12 w-12 rounded-full border-2 border-t-gold-500 animate-spin mb-3" />
-                <p className="font-display text-xs sm:text-sm tracking-widest text-[#EDE8DF] uppercase">
+                <p className="font-display text-xs sm:text-sm tracking-widest text-foreground uppercase">
                   {t('starting')}
                 </p>
               </div>
@@ -573,10 +573,10 @@ export function SmartCameraLandscapeView({
             </div>
 
             {/* 4 Inset Golden Rounded L-Shaped Corner Brackets (1:1 with Reference Image) */}
-            <div className="pointer-events-none absolute top-3.5 start-3.5 sm:top-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-s-[2.5px] border-[#E5C175] rounded-ss-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
-            <div className="pointer-events-none absolute top-3.5 end-3.5 sm:top-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-e-[2.5px] border-[#E5C175] rounded-se-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
-            <div className="pointer-events-none absolute bottom-3.5 start-3.5 sm:bottom-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-s-[2.5px] border-[#E5C175] rounded-es-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
-            <div className="pointer-events-none absolute bottom-3.5 end-3.5 sm:bottom-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-e-[2.5px] border-[#E5C175] rounded-ee-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+            <div className="pointer-events-none absolute top-3.5 start-3.5 sm:top-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-s-[2.5px] border-gold-300 rounded-ss-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+            <div className="pointer-events-none absolute top-3.5 end-3.5 sm:top-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-e-[2.5px] border-gold-300 rounded-se-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+            <div className="pointer-events-none absolute bottom-3.5 start-3.5 sm:bottom-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-s-[2.5px] border-gold-300 rounded-es-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+            <div className="pointer-events-none absolute bottom-3.5 end-3.5 sm:bottom-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-e-[2.5px] border-gold-300 rounded-ee-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
           </div>
         </div>
 
@@ -590,7 +590,7 @@ export function SmartCameraLandscapeView({
             className="group relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
           >
             {/* Outer Glowing Golden Ring */}
-            <span className="absolute inset-0 rounded-full ring-[2px] sm:ring-[2.5px] ring-[#E5C175] shadow-[0_0_28px_rgba(229,193,117,0.55),inset_0_0_12px_rgba(229,193,117,0.25)] transition-shadow duration-300 group-hover:shadow-[0_0_38px_rgba(229,193,117,0.9)]" />
+            <span className="absolute inset-0 rounded-full ring-[2px] sm:ring-[2.5px] ring-gold-300 shadow-[0_0_28px_rgba(229,193,117,0.55),inset_0_0_12px_rgba(229,193,117,0.25)] transition-shadow duration-300 group-hover:shadow-[0_0_38px_rgba(229,193,117,0.9)]" />
 
             {/* Solid Pure White Inner Disc */}
             <span className="relative z-10 h-12 w-12 sm:h-14 sm:w-14 md:h-[68px] md:w-[68px] rounded-full bg-white shadow-[0_4px_18px_rgba(255,255,255,0.4)] transition-transform duration-200 group-hover:scale-[0.98] group-active:scale-90" />

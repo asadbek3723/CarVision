@@ -219,7 +219,7 @@ export function VeloceHome() {
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
             {isLoadingTrending ? (
               [1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-64 rounded-2xl bg-[#12141C] animate-pulse" />
+                <div key={i} className="h-64 rounded-2xl bg-surface-1 animate-pulse" />
               ))
             ) : trendingProducts.length > 0 ? (
               trendingProducts.map((p, idx) => (
