@@ -65,8 +65,10 @@ export function VeloceSmartCameraModal({
   const [isOnline, setIsOnline] = React.useState(true);
 
   // Monitor network connectivity for PWA Offline & Wi-Fi Bridge
-  // While this window is open nothing behind it (or in it) may scroll or rubber-band.
+  // Only while this window is open: nothing behind it (or in it) may scroll or rubber-band.
+  // The component stays mounted when closed, so the lock must follow isOpen.
   React.useEffect(() => {
+    if (!isOpen) return;
     const html = document.documentElement;
     const body = document.body;
     const prev = [html.style.overflow, body.style.overflow, html.style.overscrollBehavior, body.style.overscrollBehavior];
@@ -77,7 +79,7 @@ export function VeloceSmartCameraModal({
     return () => {
       [html.style.overflow, body.style.overflow, html.style.overscrollBehavior, body.style.overscrollBehavior] = prev as [string, string, string, string];
     };
-  }, []);
+  }, [isOpen]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
