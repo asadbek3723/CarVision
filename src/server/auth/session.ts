@@ -42,20 +42,22 @@ const CURRENCY_BY_LOCALE: Record<string, CurrencyCode> = {
 export async function loadSession(userId: string): Promise<Session | null> {
   const db = createAdminClient();
 
-  const { data: p } = await db
-    .from('profiles')
-    .select('id, role, full_name, phone, preferred_locale, credits_balance, is_banned, created_at')
-    .eq('id', userId)
-    .maybeSingle();
+  // Independent lookups: run them together (one round trip instead of two).
+  const [{ data: p }, { data: s }] = await Promise.all([
+    db
+      .from('profiles')
+      .select('id, role, full_name, phone, preferred_locale, credits_balance, is_banned, created_at')
+      .eq('id', userId)
+      .maybeSingle(),
+    db
+      .from('shops')
+      .select('id, shop_name, city, district, exact_address, phone, credits_balance, current_plan_code, plan_expires_at, is_verified')
+      .eq('owner_id', userId)
+      .maybeSingle(),
+  ]);
   if (!p) return null;
 
-  let shop: ShopRow | null = null;
-  const { data: s } = await db
-    .from('shops')
-    .select('id, shop_name, city, district, exact_address, phone, credits_balance, current_plan_code, plan_expires_at, is_verified')
-    .eq('owner_id', userId)
-    .maybeSingle();
-  if (s) shop = s as ShopRow;
+  const shop: ShopRow | null = s ? (s as ShopRow) : null;
 
   const role = p.role as UserRole;
   const locale = (p.preferred_locale as SupportedLocale) || 'uz';

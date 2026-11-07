@@ -5,43 +5,29 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smartphone, Lock, Check } from 'lucide-react';
+import { Lock, Check } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import {
   AuthShell,
   GlassCard,
   FloatingInput,
+  PhoneInput,
   GoldButton,
   AuthAlert,
 } from '@/features/auth/components/AuthShell';
 import { playLock, vibrate } from '@/features/camera/lib/fx';
-import { COUNTRIES, DEFAULT_COUNTRY, buildE164, isPlausibleNational, type Country } from '@/features/auth/phone-input';
-
-function formatUzPhone(val: string): string {
-  const chunks = [2, 3, 2, 2];
-  const parts: string[] = [];
-  let r = 0;
-  for (const c of chunks) {
-    if (r >= val.length) break;
-    parts.push(val.slice(r, r + c));
-    r += c;
-  }
-  if (r < val.length) parts.push(val.slice(r));
-  return parts.join(' ');
-}
+import { DEFAULT_DIGITS, detectCountry, nationalLength } from '@/features/auth/lib/phone-countries';
 
 type FieldErrors = { phone?: string | undefined; pwd?: string | undefined };
 
 export default function LoginPage() {
   const t = useTranslations('login');
-  const tReg = useTranslations('register');
   const router = useRouter();
   const params = useParams();
   const locale = (params['locale'] as string) || 'uz';
   const { user, signIn } = useAuth();
 
-  const [country, setCountry] = React.useState<Country>(DEFAULT_COUNTRY);
-  const [phone, setPhone] = React.useState('');
+  const [phone, setPhone] = React.useState(DEFAULT_DIGITS);
   const [password, setPassword] = React.useState('');
   const [rememberMe, setRememberMe] = React.useState(true);
   const [errors, setErrors] = React.useState<FieldErrors>({});
@@ -49,13 +35,19 @@ export default function LoginPage() {
   const [shake, setShake] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
 
+  // Warm up the pages the user is most likely to open next.
+  React.useEffect(() => {
+    router.prefetch(`/${locale}/seller`);
+    router.prefetch(`/${locale}/register`);
+  }, [router, locale]);
+
   // If already authenticated, redirect to the Veloce App
   React.useEffect(() => {
     if (user) {
       if (user.role === 'super_admin') {
-        router.push(`/${locale}/admin`);
+        router.replace(`/${locale}/admin`);
       } else {
-        router.push(`/${locale}/seller`);
+        router.replace(`/${locale}/seller`);
       }
     }
   }, [user, locale, router]);
@@ -71,7 +63,7 @@ export default function LoginPage() {
     if (loading) return;
     const errs: FieldErrors = {};
 
-    if (!isPlausibleNational(phone, country)) errs.phone = t('errPhone');
+    if (nationalLength(phone) < (detectCountry(phone)?.iso === 'UZ' ? 9 : 7)) errs.phone = t('errPhone');
     if (password.length < 8) errs.pwd = t('errPassword');
 
     if (Object.keys(errs).length > 0) {
@@ -83,7 +75,7 @@ export default function LoginPage() {
     setFormError(null);
     setLoading(true);
     try {
-      const res = await signIn(buildE164(country, phone), password);
+      const res = await signIn(`+${phone}`, password);
       if (res.success) {
         playLock();
         vibrate(25);
@@ -122,41 +114,15 @@ export default function LoginPage() {
         <AuthAlert message={formError} />
 
         <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-3.5">
-          <div className="flex gap-2">
-            <label className="auth-input relative flex h-14 shrink-0 items-center rounded-xl ps-3 pe-2">
-              <span className="sr-only">{tReg('searchCountry')}</span>
-              <select
-                value={country.id}
-                onChange={(e) => {
-                  setCountry(COUNTRIES.find((c) => c.id === e.target.value) ?? DEFAULT_COUNTRY);
-                  setErrors((p) => ({ ...p, phone: undefined }));
-                }}
-                className="h-full cursor-pointer appearance-none bg-transparent pe-1 text-base text-foreground outline-none"
-                aria-label={tReg('searchCountry')}
-              >
-                {COUNTRIES.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-[#12141A] text-white">
-                    {c.flag} {c.code}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="min-w-0 flex-1">
-              <FloatingInput
-                icon={<Smartphone className="h-4 w-4" />}
-                label={t('phone')}
-                inputMode="tel"
-                autoComplete="tel-national"
-                value={phone}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  setPhone(country.code === '+998' && !raw.trim().startsWith('+') && raw.replace(/\D/g, '').length <= 9 ? formatUzPhone(raw.replace(/\D/g, '')) : raw.slice(0, 20));
-                  if (errors.phone) setErrors((p) => ({ ...p, phone: undefined }));
-                }}
-                error={errors.phone}
-              />
-            </div>
-          </div>
+          <PhoneInput
+            label={t('phone')}
+            value={phone}
+            onChange={(d) => {
+              setPhone(d);
+              if (errors.phone) setErrors((p) => ({ ...p, phone: undefined }));
+            }}
+            error={errors.phone}
+          />
 
           <FloatingInput
             icon={<Lock className="h-4 w-4" />}
