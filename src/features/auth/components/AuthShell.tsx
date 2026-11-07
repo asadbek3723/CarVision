@@ -2,6 +2,12 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
+import {
+  DEFAULT_DIGITS,
+  MAX_PHONE_DIGITS,
+  detectCountry,
+  formatInternational,
+} from '../lib/phone-countries';
 import { motion, AnimatePresence, type HTMLMotionProps } from 'framer-motion';
 import {
   ArrowLeft,
@@ -16,21 +22,14 @@ export function BrandHeader() {
     <motion.div
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="mb-4 sm:mb-5 flex flex-col items-center select-none"
     >
-      <motion.svg
+      <svg
         viewBox="0 0 60 44"
         className="h-8 w-11 sm:h-9 sm:w-12"
         aria-hidden={true}
-        animate={{
-          filter: [
-            'drop-shadow(0 0 6px oklch(0.86 0.07 85 / 0.3))',
-            'drop-shadow(0 0 16px oklch(0.86 0.07 85 / 0.6))',
-            'drop-shadow(0 0 6px oklch(0.86 0.07 85 / 0.3))',
-          ],
-        }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ filter: 'drop-shadow(0 0 10px oklch(0.86 0.07 85 / 0.45))' }}
       >
         <defs>
           <linearGradient id="cv-gold-lg" x1="0" x2="1" y1="0" y2="1">
@@ -39,7 +38,7 @@ export function BrandHeader() {
           </linearGradient>
         </defs>
         <path d="M58 2H22L4 22l18 20h36l-6-6H25L13 22 25 8h27z" fill="url(#cv-gold-lg)" />
-      </motion.svg>
+      </svg>
       <h1 className="font-display mt-2 text-3xl sm:text-[34px] tracking-[0.32em] text-foreground leading-none">
         CARVISION
       </h1>
@@ -65,7 +64,7 @@ export function GlassCard({
       transition={
         shake
           ? { duration: 0.45 }
-          : { duration: 0.85, delay: 0.18, ease: [0.22, 1, 0.36, 1] }
+          : { duration: 0.4, delay: 0, ease: [0.22, 1, 0.36, 1] }
       }
       className="glass-card w-full max-w-[390px] sm:max-w-[410px] overflow-hidden rounded-[24px] px-6 py-6 sm:px-8 sm:py-7"
     >
@@ -172,6 +171,68 @@ export function FloatingInput({
   );
 }
 
+export interface PhoneInputProps {
+  label: string;
+  /** Full international digits, e.g. "998901234567". */
+  value: string;
+  onChange: (digits: string) => void;
+  error?: string | undefined;
+}
+
+/**
+ * One field for the whole number. Starts as +998 (Uzbekistan); typing or pasting another
+ * country code switches the flag automatically.
+ */
+export function PhoneInput({ label, value, onChange, error }: PhoneInputProps) {
+  const [isFocused, setIsFocused] = React.useState(false);
+  const country = detectCountry(value);
+  return (
+    <div>
+      <label
+        className={`auth-input relative flex h-12 items-center gap-2.5 rounded-xl px-4 ${
+          error ? 'auth-input-error' : ''
+        }`}
+      >
+        <span className="w-6 text-center text-lg leading-none" aria-hidden={true}>
+          {country ? country.flag : '🌐'}
+        </span>
+        <input
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          value={formatInternational(value)}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/\D/g, '').slice(0, MAX_PHONE_DIGITS);
+            onChange(digits || DEFAULT_DIGITS);
+          }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className="h-full flex-1 bg-transparent pt-3.5 text-[14px] tabular-nums text-foreground outline-none"
+        />
+        <span
+          className={`pointer-events-none absolute start-[52px] top-1 text-[9px] font-medium uppercase tracking-[0.16em] transition-colors duration-300 ${
+            isFocused ? 'text-gold' : 'text-gold/80'
+          }`}
+        >
+          {label}
+        </span>
+      </label>
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-1 ps-4 text-[11px] text-destructive"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export interface GoldButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   children?: React.ReactNode;
   loading?: boolean | undefined;
@@ -221,9 +282,9 @@ export function AuthShell({
         alt={t('heroAlt')}
         width={1920}
         height={1088}
-        initial={{ scale: 1.15, opacity: 0 }}
-        animate={{ scale: 1.03, opacity: 0.95 }}
-        transition={{ duration: 2.4, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.95 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         className="absolute inset-0 h-full w-full object-cover select-none pointer-events-none"
       />
       {/* Cinematic Vignette Overlay so the sports car is crisp and visible */}
@@ -236,19 +297,19 @@ export function AuthShell({
       />
 
       {/* Aurora Ambient Blobs */}
-      <div className="animate-aurora pointer-events-none absolute -start-40 top-1/4 h-[24rem] w-[24rem] rounded-full bg-gold/15 blur-[120px]" />
-      <div className="animate-aurora pointer-events-none absolute -end-32 bottom-0 h-[20rem] w-[20rem] rounded-full bg-gold-deep/15 blur-[120px] [animation-delay:-4.5s]" />
+      <div className="pointer-events-none absolute -start-40 top-1/4 h-[24rem] w-[24rem] rounded-full bg-gold/15 blur-[60px]" />
+      <div className="pointer-events-none absolute -end-32 bottom-0 h-[20rem] w-[20rem] rounded-full bg-gold-deep/15 blur-[60px] [animation-delay:-4.5s]" />
 
       {/* Vertical Golden Laser Beams */}
-      <div className="animate-beam pointer-events-none absolute end-[12%] top-0 h-full w-[3px] bg-gold blur-[2px]" />
-      <div className="animate-beam pointer-events-none absolute end-[11%] top-0 h-full w-24 bg-gold/10 blur-3xl [animation-delay:-2.5s]" />
+      <div className="pointer-events-none absolute end-[12%] top-0 h-full w-[3px] bg-gold/80" />
+      
 
       {/* Back button */}
       {onBack && (
         <motion.button
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.1 }}
           onClick={onBack}
           whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
@@ -266,7 +327,7 @@ export function AuthShell({
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
+          transition={{ delay: 0.2 }}
           className="mt-4 sm:mt-5 text-[9px] tracking-[0.35em] text-foreground/40 select-none"
         >
           PREMIUM AUTO TUNING · EST. 2026

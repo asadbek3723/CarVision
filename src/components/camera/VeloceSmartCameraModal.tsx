@@ -18,7 +18,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
   SmartCameraLandscapeView,
   LuxuryCarCompass,
@@ -91,7 +91,6 @@ export function VeloceSmartCameraModal({
   onClose,
   onCaptured,
 }: VeloceSmartCameraModalProps) {
-  const router = useRouter();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
 

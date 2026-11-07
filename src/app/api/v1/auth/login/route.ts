@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, after, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase/server';
 import { loadSession } from '@/server/auth/session';
@@ -46,6 +46,9 @@ export async function POST(request: NextRequest) {
       return fail(401, 'INVALID_CREDENTIALS', "Telefon raqam yoki parol noto'g'ri");
     }
 
+    // Monthly free credits (idempotent, once per 30 days) run before the single profile read,
+    // so the returned balance is already fresh and login needs one fewer database round trip.
+    await createAdminClient().rpc('claim_monthly_credits', { p_user_id: data.user.id });
     const session = await loadSession(data.user.id);
     if (!session) {
       await supabase.auth.signOut();
@@ -56,13 +59,10 @@ export async function POST(request: NextRequest) {
       return fail(403, 'ACCOUNT_BLOCKED', 'Akkaunt bloklangan');
     }
 
-    await recordAttempt('login', phone, ip, true);
+    // Audit row is not needed for the response: write it after the reply is sent.
+    after(() => recordAttempt('login', phone, ip, true));
 
-    // Monthly free credits (idempotent, once per 30 days)
-    await createAdminClient().rpc('claim_monthly_credits', { p_user_id: session.userId });
-    const fresh = (await loadSession(session.userId)) ?? session;
-
-    return NextResponse.json({ success: true, user: fresh.profile });
+    return NextResponse.json({ success: true, user: session.profile });
   } catch (err) {
     console.error('Login error:', err);
     return fail(500, 'INTERNAL', 'Serverda xatolik yuz berdi');
