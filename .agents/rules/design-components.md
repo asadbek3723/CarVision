@@ -67,3 +67,32 @@ Every interactive component needs ALL states: default, hover, active/pressed, fo
 - Semantic HTML, correct heading order, labels on every input, ARIA on custom components, full keyboard navigation, visible focus, screen-reader-friendly modals and menus.
 - Lighthouse targets: Performance 90+, Accessibility 95+, Best Practices 95+, SEO 95+.
 - Code-split, lazy-load below the fold, preload critical font and hero image, CLS < 0.1, virtualize long lists, keep bundle small.
+---
+
+## 6. FOUNDATION: TOKENS AND SHARED COMPONENTS (use these, do not re-create)
+
+Tokens live only in `styles/tokens.css` and reach code through `tailwind.config.ts`. Colours are stored as RGB channels (`--c-gold-500: 212 174 98`), so opacity modifiers work: `bg-gold-500/15`, `text-foreground/60`. Plain CSS/SVG uses the ready colour (`var(--gold)`, `var(--surface-1)`).
+
+| Group | Tailwind | Token |
+|---|---|---|
+| Brand gold 50–900 (500 = `#D4AE62`) | `gold-50` … `gold-900`, `gold` (=500), `gold-soft` (=300), `gold-deep` (=600) | `--c-gold-*`, `--gold`, `--gold-soft`, `--gold-deep` |
+| Warm neutral 50–950 | `neutral-50` … `neutral-950` (replaces Tailwind's grey neutral) | `--c-neutral-*` |
+| Surfaces (page → popover) | `surface-0` `#0D0E12`, `surface-1` card, `surface-2` raised/field, `surface-3` popover/hover | `--c-surface-*`, `--surface-*` |
+| Semantic | `primary` (=gold), `primary-foreground`, `foreground`, `muted-foreground`, `card`, `muted`, `accent`, `background` (current page bg `#0A0B0F`), `ink` (text on gold), `border` (`--line`, 6% white), `ring`, `success`, `warning`, `danger`, `danger-soft`, `destructive`, `info` | `--c-fg`, `--c-fg-muted`, … |
+| Elevation | `shadow-e1` cards, `shadow-e2`, `shadow-e3` popovers, `shadow-e4` modals, `shadow-glow-gold` primary CTA only, `shadow-highlight` | `--e1`…`--e4`, `--glow-gold`, `--highlight` |
+| Radius | `rounded-sm` 8, `rounded-md` 12 (buttons, inputs), `rounded-lg` 16 (cards), `rounded-xl` 24 (panels, modals), `rounded-full` | `--r-sm` `--r-md` `--r-lg` `--r-xl` |
+| Motion | `duration-micro` 160ms, `duration-ui` 240ms, `duration-section` 500ms, `ease-brand` `cubic-bezier(.22,1,.36,1)`, `ease-brand-in-out` | `--dur-*`, `--ease-out`, `--ease-in-out` |
+
+**Radius change (Nov 2026).** The old scale was inverted (`2xl` 32px > `3xl` 24px). Now: `sm` 10→8, `md` 14→12, `lg` 18→16, `xl` 24 (same), `2xl` 32→28 (−4px, the least that restores order), `3xl` 24→32. Prefer `rounded-lg`/`rounded-xl` in new code; `2xl`/`3xl` remain only for existing pages.
+
+**Classes that used to render nothing** (`text-primary`, `text-muted-foreground`, `border-primary`, `bg-card`, `bg-primary`, `text-foreground/…`, `border-border`, `hover:text-gold-soft`, `bg-gold/15` …) now produce CSS. Pages using them will look different (usually as their author intended); check them during page migration.
+
+Components in `src/components/ui/` (import from `@/components/ui`):
+
+- **`Button`**: `variant` `gold` (the one primary action) / `quiet` (secondary, filled) / `ghost` (tertiary) / `danger`; `size` `sm` 44px / `md` 48px / `lg` 56px; `loading` (spinner, width kept), `disabled`, `fullWidth`; pass `href` to render a `next/link`. `buttonClasses()` gives the same look for elements that cannot be a Button.
+- **`Surface`**: borderless card. `tone` 1–3, `elevation` 0–4, `padding` none/sm/md/lg, `radius` lg/xl, `interactive` (hover lift, only for clickable cards), `as` div/section/article/aside/li.
+- **`Input` / `Select` / `Textarea`** (Field.tsx): filled, borderless, 48px, 16px text (no iOS zoom), `label`, `hint`, `error` (sets `aria-invalid`, links text via `aria-describedby`). `Field` wraps custom controls; `fieldClass` is the raw look.
+- **`Sheet`** (bottom sheet on phones, centred from 640px) and **`Modal`** (always centred): `open`, `onClose`, `title`, `description`, `footer`, `size` sm/md/lg. Spring motion (300/30, fade only with reduced motion), ESC and backdrop close, focus trap and restore, scroll lock, `dvh` heights, safe-area padding. `data-autofocus` picks the first focused element.
+- **`PageHeader`**: the single h1 style, optional `subtitle`, `back` (`{ href, label? }`, RTL-aware chevron) and `actions`.
+
+Still to migrate (page work, not done in the foundation): `.btn-gold`, `.gold-btn`, `.shimmer` + `bg-gold-gradient` buttons and inline gold buttons → `Button`; the admin `Surface`/`Sheet`/`Field`/`PageHeader` in `src/components/admin/ui.tsx` → these; hardcoded `#D4AE62` → `gold-500` / `primary`; legacy aliases at the end of `tokens.css` (`--bg-primary`, `--glass-*` …) → delete once unused.

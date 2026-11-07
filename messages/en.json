@@ -7,6 +7,7 @@
     "delete": "Delete",
     "retry": "Retry",
     "back": "Back",
+    "close": "Close",
     "next": "Next",
     "loading": "Loading...",
     "offlineNotice": "Offline Mode — Changes will sync when connected",

@@ -96,7 +96,7 @@ export function BeforeAfterSlider({
       }}
       style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
       className={cn(
-        'relative w-full aspect-[16/9] select-none overflow-hidden rounded-3xl bg-[#070709] cursor-ew-resize shadow-[0_30px_90px_-20px_rgba(0,0,0,0.95),0_0_50px_rgba(25,211,255,0.04)]',
+        'relative w-full aspect-[16/9] select-none overflow-hidden rounded-3xl bg-[#070709] cursor-ew-resize shadow-[0_30px_90px_-20px_rgba(0,0,0,0.95),0_0_50px_rgb(var(--c-gold-500)/0.04)]',
         className
       )}
     >
@@ -122,7 +122,7 @@ export function BeforeAfterSlider({
 
       {/* 3. The Vertical Dividing Line with Glowing Neon Cyan Line and Draggable Handle */}
       <div
-        className="absolute top-0 bottom-0 w-[2px] bg-gradient-to-b from-[#19D3FF] via-white to-[#19D3FF] z-20 pointer-events-none shadow-[0_0_15px_rgba(25,211,255,0.9)]"
+        className="absolute top-0 bottom-0 w-[2px] bg-gradient-to-b from-gold-500 via-neutral-50 to-gold-500 z-20 pointer-events-none shadow-glow-gold"
         style={{
           insetInlineStart: `${sliderPosition}%`,
           transform: 'translateX(-50%)',
@@ -131,12 +131,12 @@ export function BeforeAfterSlider({
         {/* Center Circular Draggable Handle - Borderless with luminous glow */}
         <div
           className={cn(
-            'absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-[#0D0F15] flex items-center justify-center shadow-[0_0_25px_rgba(25,211,255,0.9),inset_0_0_12px_rgba(25,211,255,0.35)] cursor-ew-resize pointer-events-none transition-transform duration-75',
-            isDragging ? 'scale-115 shadow-[0_0_35px_rgba(25,211,255,1),inset_0_0_15px_rgba(25,211,255,0.5)]' : 'hover:scale-105'
+            'absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-[#0D0F15] flex items-center justify-center shadow-[0_0_25px_rgb(var(--c-gold-500)/0.9),inset_0_0_12px_rgb(var(--c-gold-500)/0.35)] cursor-ew-resize pointer-events-none transition-transform duration-75',
+            isDragging ? 'scale-115 shadow-[0_0_35px_rgb(var(--c-gold-500)/1),inset_0_0_15px_rgb(var(--c-gold-500)/0.5)]' : 'hover:scale-105'
           )}
         >
           <svg
-            className="w-5 h-5 text-[#19D3FF] drop-shadow-[0_0_6px_rgba(25,211,255,0.9)] pointer-events-none"
+            className="w-5 h-5 text-gold-500 drop-shadow-[0_0_6px_rgb(var(--c-gold-500)/0.9)] pointer-events-none"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

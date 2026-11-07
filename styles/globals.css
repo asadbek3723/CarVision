@@ -4,40 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===================================================================
-   VELOCE Luxury Black-Gold Design System Tokens (1:1 with Reference)
-   =================================================================== */
-:root {
-  --radius: 1rem;
-  --background: oklch(10% .004 70);
-  --foreground: oklch(95% .01 85);
-  --card: oklch(15% .005 70);
-  --card-foreground: oklch(95% .01 85);
-  --popover: oklch(17% .006 70);
-  --popover-foreground: oklch(95% .01 85);
-  --primary: oklch(80% .12 82);
-  --primary-foreground: oklch(15% .01 70);
-  --secondary: oklch(21% .008 70);
-  --secondary-foreground: oklch(95% .01 85);
-  --muted: oklch(21% .008 70);
-  --muted-foreground: oklch(65% .02 80);
-  --accent: oklch(25% .02 80);
-  --accent-foreground: oklch(85% .1 85);
-  --destructive: oklch(60% .2 25);
-  --destructive-foreground: oklch(98% 0 0);
-  --border: oklch(80% .12 82 / .16);
-  --input: oklch(80% .12 82 / .22);
-  --ring: oklch(80% .12 82);
-  --gold: oklch(80% .12 82);
-  --gold-soft: oklch(88% .08 88);
-  --success: oklch(75% .15 150);
-  --gradient-gold: linear-gradient(135deg, oklch(88% .09 88), oklch(72% .12 75) 55%, oklch(60% .1 65));
-  --gradient-card: linear-gradient(160deg, oklch(20% .008 70), oklch(14% .005 70));
-  --gradient-fade: linear-gradient(to top, var(--background), transparent);
-  --shadow-gold: 0 10px 40px -10px oklch(80% .12 82 / .45);
-  --shadow-card: 0 20px 50px -20px oklch(0% 0 0 / .8);
-}
-
 .font-display {
   font-family: var(--nf-montserrat), 'Montserrat', sans-serif;
 }
@@ -46,12 +12,6 @@
 }
 .bg-gold-gradient {
   background-image: var(--gradient-gold);
-}
-.text-gold-gradient {
-  background-image: var(--gradient-gold);
-  color: transparent !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
 }
 .bg-card-gradient {
   background-image: var(--gradient-card);
@@ -66,40 +26,6 @@
 .shimmer {
   position: relative;
   overflow: hidden;
-}
-.shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 30%, oklch(100% 0 0 / .35) 50%, transparent 70%);
-  transform: translateX(-100%);
-  animation: 3.2s ease-in-out infinite shimmer;
-}
-@keyframes shimmer {
-  60%, 100% {
-    transform: translateX(100%);
-  }
-}
-@keyframes rise {
-  0% {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-.rise {
-  animation: 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both rise;
-}
-@keyframes float {
-  50% {
-    transform: translateY(-10px);
-  }
-}
-.float-slow {
-  animation: 6s ease-in-out infinite float;
 }
 @keyframes glowPulse {
   50% {
@@ -186,37 +112,7 @@ html {
   text-size-adjust: 100%;
 }
 
-/* Luxury Glassmorphism Utilities */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  border: 1px solid var(--glass-border);
-}
-
-.glass-panel-dense {
-  background: var(--glass-bg-dense);
-  backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%);
-  -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%);
-  border: 1px solid var(--glass-border);
-}
-
-.glass-panel-dock {
-  background: linear-gradient(180deg, rgba(18, 20, 26, 0.72) 0%, rgba(10, 11, 15, 0.92) 100%);
-  backdrop-filter: blur(var(--glass-blur-heavy)) saturate(190%);
-  -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
 /* Luxury Glow Effects */
-.glow-cyan {
-  box-shadow: 0 0 25px var(--accent-glow);
-}
-
-.glow-cyan-lg {
-  box-shadow: 0 0 35px var(--accent-glow-strong);
-}
-
 .glow-green {
   box-shadow: 0 0 25px var(--accent-green-glow);
 }
@@ -553,22 +449,6 @@ html {
   animation: laser-sweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-/* Premium Automotive CTA button */
-.cv-cta {
-  background: linear-gradient(180deg, #19D3FF 0%, #00BEEA 58%, #0090B3 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-    0 10px 28px -10px rgba(25, 211, 255, 0.75),
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-}
-
-.cv-cta:active {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 4px 14px -8px rgba(25, 211, 255, 0.7);
-}
-
 .shimmer::after {
   content: '';
   position: absolute;
@@ -593,6 +473,8 @@ html {
   .cv-float,
   .cv-breathe,
   .cv-turn,
+  .reveal,
+  .animate-rise,
   .shimmer::after {
     animation: none !important;
   }
@@ -604,38 +486,6 @@ html {
   .cv-flash {
     animation-duration: 0.12s;
   }
-}
-
-/* Neon Electric-Cyan Button Glow */
-.neon-cyan-button {
-  background: linear-gradient(135deg, rgba(25, 211, 255, 0.08) 0%, rgba(10, 14, 22, 0.72) 48%, rgba(0, 102, 255, 0.08) 100%);
-  border: 1.5px solid rgba(25, 211, 255, 0.85);
-  box-shadow: 0 0 24px rgba(25, 211, 255, 0.45), 0 0 55px rgba(25, 211, 255, 0.2), inset 0 0 16px rgba(25, 211, 255, 0.18);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.neon-cyan-button:hover {
-  border-color: #19d3ff;
-  box-shadow: 0 0 42px rgba(25, 211, 255, 0.75), 0 0 85px rgba(25, 211, 255, 0.4), inset 0 0 24px rgba(25, 211, 255, 0.3);
-  transform: scale(1.03);
-}
-
-.neon-cyan-button:active {
-  transform: scale(0.98);
-  box-shadow: 0 0 20px rgba(25, 211, 255, 0.5), inset 0 0 12px rgba(25, 211, 255, 0.3);
-}
-
-@keyframes cv-neon-pulse {
-  0%, 100% {
-    box-shadow: 0 0 22px rgba(25, 211, 255, 0.45), 0 0 50px rgba(25, 211, 255, 0.18), inset 0 0 14px rgba(25, 211, 255, 0.16);
-  }
-  50% {
-    box-shadow: 0 0 34px rgba(25, 211, 255, 0.65), 0 0 70px rgba(25, 211, 255, 0.28), inset 0 0 20px rgba(25, 211, 255, 0.25);
-  }
-}
-
-.animate-neon-pulse {
-  animation: cv-neon-pulse 3.6s ease-in-out infinite;
 }
 
 /* ===================================================================
@@ -768,20 +618,6 @@ html {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   position: absolute;
   inset: 0;
-}
-
-.reveal {
-  opacity: 0;
-  filter: blur(6px);
-  transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.9s;
-  transform: translateY(30px);
-}
-
-.reveal.in,
-.reveal[data-revealed="true"] {
-  opacity: 1 !important;
-  filter: none !important;
-  transform: none !important;
 }
 
 .mask-fade-x {

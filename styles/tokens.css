@@ -1,97 +1,126 @@
+/* ===================================================================
+   CarVision design tokens: the single source of truth.
+   Components use these through the Tailwind theme (tailwind.config.ts);
+   never hardcode a hex, shadow, radius or duration in a component.
+
+   Colour tokens come in two forms:
+     --c-<name>  space-separated RGB channels, so Tailwind can apply
+                 opacity modifiers (bg-gold-500/15, text-primary/60 ...)
+     --<name>    ready-to-use colour for plain CSS / SVG (var(--gold))
+   =================================================================== */
 :root {
-  /* Automotive Luxury Typography */
-  --font-outfit: var(--nf-outfit), 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-jakarta: var(--nf-jakarta), 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: var(--nf-mono), 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-cinzel: var(--nf-cinzel), 'Cinzel', Georgia, serif;
-  --font-cormorant: var(--nf-cormorant), 'Cormorant Garamond', Georgia, serif;
-  --font-manrope: var(--nf-manrope), 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-noto-arabic: var(--nf-noto-arabic), 'Noto Sans Arabic', system-ui, sans-serif;
+  /* ---------------------------------------------------------- typography */
+  --font-outfit: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-jakarta: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-cinzel: 'Cinzel', Georgia, serif;
+  --font-cormorant: 'Cormorant Garamond', Georgia, serif;
+  --font-manrope: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-noto-arabic: 'Noto Sans Arabic', system-ui, sans-serif;
 
-  /* Lovable Luxury Gold System */
-  --gold: oklch(86% 0.07 85);
-  --gold-deep: oklch(70% 0.09 75);
-  --glass: oklch(14% 0.005 60 / 0.55);
-  --glass-border: oklch(86% 0.07 85 / 0.28);
-  --ink: oklch(10% 0.004 60);
-  --primary-glow: oklch(90% 0.08 88);
-  --gradient-gold: linear-gradient(100deg, oklch(93% 0.04 90), oklch(82% 0.08 82) 55%, oklch(72% 0.08 72));
+  /* ---------------------------------------------------------- gold (brand accent, 500 = #D4AE62) */
+  --c-gold-50: 251 247 238;   /* #FBF7EE */
+  --c-gold-100: 246 237 216;  /* #F6EDD8 */
+  --c-gold-200: 238 221 180;  /* #EEDDB4 */
+  --c-gold-300: 230 204 144;  /* #E6CC90 */
+  --c-gold-400: 221 189 120;  /* #DDBD78 */
+  --c-gold-500: 212 174 98;   /* #D4AE62  brand */
+  --c-gold-600: 185 146 74;   /* #B9924A */
+  --c-gold-700: 148 115 58;   /* #94733A */
+  --c-gold-800: 110 85 45;    /* #6E552D */
+  --c-gold-900: 74 58 33;     /* #4A3A21 */
+
+  /* ---------------------------------------------------------- neutral (warm-tinted toward the gold hue) */
+  --c-neutral-50: 250 249 247;  /* #FAF9F7 */
+  --c-neutral-100: 244 243 240; /* #F4F3F0 */
+  --c-neutral-200: 230 228 224; /* #E6E4E0 */
+  --c-neutral-300: 213 210 205; /* #D5D2CD */
+  --c-neutral-400: 166 162 155; /* #A6A29B */
+  --c-neutral-500: 117 114 108; /* #75726C */
+  --c-neutral-600: 87 84 79;    /* #57544F */
+  --c-neutral-700: 66 64 60;    /* #42403C */
+  --c-neutral-800: 41 40 38;    /* #292826 */
+  --c-neutral-900: 26 25 24;    /* #1A1918 */
+  --c-neutral-950: 14 13 12;    /* #0E0D0C */
+
+  /* ---------------------------------------------------------- surfaces (dark: depth = lightness steps) */
+  --c-page: 10 11 15;       /* #0A0B0F  current body background (legacy pages) */
+  --c-surface-0: 13 14 18;  /* #0D0E12  page */
+  --c-surface-1: 22 23 28;  /* #16171C  card */
+  --c-surface-2: 31 32 38;  /* #1F2026  raised / field */
+  --c-surface-3: 41 42 49;  /* #292A31  popover / hover */
+
+  /* ---------------------------------------------------------- semantic */
+  --c-fg: var(--c-neutral-50);           /* main text */
+  --c-fg-muted: var(--c-neutral-400);    /* secondary text */
+  --c-ink: 11 10 9;                      /* text on gold */
+  --c-success: 52 211 153;               /* #34D399 */
+  --c-warning: 251 191 36;               /* #FBBF24 */
+  --c-danger: 239 68 68;                 /* #EF4444 */
+  --c-danger-soft: 252 165 165;          /* #FCA5A5  danger text on dark */
+  --c-info: 96 165 250;                  /* #60A5FA */
+
+  /* ready-to-use colours */
+  --gold: rgb(var(--c-gold-500));
+  --gold-soft: rgb(var(--c-gold-300));
+  --gold-deep: rgb(var(--c-gold-600));
+  --ink: rgb(var(--c-ink));
+  --surface-0: rgb(var(--c-surface-0));
+  --surface-1: rgb(var(--c-surface-1));
+  --surface-2: rgb(var(--c-surface-2));
+  --surface-3: rgb(var(--c-surface-3));
+  --line: rgb(255 255 255 / 0.06);       /* the only divider, when one is unavoidable */
+  --focus-ring: rgb(var(--c-gold-500) / 0.45);
+
+  /* ---------------------------------------------------------- elevation (layered, warm-tinted, dark-tuned) */
+  --c-shadow: 4 3 2;
+  --e1: 0 1px 2px rgb(var(--c-shadow) / 0.28), 0 1px 3px rgb(var(--c-shadow) / 0.18);
+  --e2: 0 2px 4px rgb(var(--c-shadow) / 0.28), 0 4px 12px rgb(var(--c-shadow) / 0.24);
+  --e3: 0 4px 8px rgb(var(--c-shadow) / 0.30), 0 12px 32px rgb(var(--c-shadow) / 0.34);
+  --e4: 0 8px 16px rgb(var(--c-shadow) / 0.34), 0 24px 56px rgb(var(--c-shadow) / 0.48);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --glow-gold: 0 8px 24px -6px rgb(var(--c-gold-500) / 0.4); /* primary CTA only */
+
+  /* ---------------------------------------------------------- radius */
+  --r-sm: 8px;   /* chips, small inputs */
+  --r-md: 12px;  /* buttons, inputs */
+  --r-lg: 16px;  /* cards */
+  --r-xl: 24px;  /* panels, modals */
+  --r-full: 9999px;
+
+  /* ---------------------------------------------------------- motion */
+  --dur-micro: 160ms;
+  --dur-ui: 240ms;
+  --dur-section: 500ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ---------------------------------------------------------- gradients & legacy effects (one definition each) */
+  --gradient-gold: linear-gradient(135deg, rgb(var(--c-gold-300)), rgb(var(--c-gold-600)) 55%, rgb(var(--c-gold-700)));
   --gradient-gold-text: linear-gradient(100deg, oklch(95% 0.05 92), oklch(82% 0.12 82) 40%, oklch(66% 0.11 66) 80%);
-  --gradient-card: linear-gradient(160deg, oklch(19% 0.012 75 / 0.9), oklch(13% 0.006 70 / 0.9));
-  --shadow-gold: 0 0 30px -6px oklch(86% 0.07 85 / 0.55);
-  --shadow-card: 0 30px 80px -30px oklch(0% 0 0 / 0.8);
+  --gradient-card: linear-gradient(160deg, oklch(20% 0.008 70), oklch(14% 0.005 70));
+  --gradient-fade: linear-gradient(to top, var(--background), transparent);
+  --shadow-gold: 0 10px 40px -10px rgb(var(--c-gold-500) / 0.45);
+  --shadow-card: 0 20px 50px -20px rgb(0 0 0 / 0.8);
 
-  /* Base Theme Variables */
-  --background: #0A0B0F;
-  --foreground: #F5F7FA;
-  --muted-foreground: #94A3B8;
-  --primary: oklch(86% 0.07 85);
-  --border: rgba(255, 255, 255, 0.08);
-
-  /* Carbon Dark Luxury Palette */
-  --bg-primary: #0A0B0F;        /* Obsidian Deep Space */
-  --bg-surface: #12141A;        /* Carbon Surface */
-  --bg-elevated: #181B22;       /* Elevated Titanium */
-  --bg-card: #151821;           /* Card Fill */
-  --bg-card-hover: #1C202C;     /* Card Hover */
-
-  /* Electric Highlights & Accents */
-  --accent-cyan: #19D3FF;       /* Electric Cyan */
-  --accent-cyan-hover: #00BEEA; /* Cyan Hover */
-  --accent-cyan-subtle: rgba(25, 211, 255, 0.12);
-  --accent-glow: rgba(25, 211, 255, 0.28);
-  --accent-glow-strong: rgba(25, 211, 255, 0.55);
-
-  /* Emerald Alignment & Verified */
-  --accent-green: #00E599;
-  --accent-green-hover: #00CC88;
-  --accent-green-subtle: rgba(0, 229, 153, 0.12);
-  --accent-green-glow: rgba(0, 229, 153, 0.35);
-
-  /* VIP Luxury Gold */
-  --accent-gold: #E8C26A;
-  --accent-gold-hover: #D8AF55;
-  --accent-gold-subtle: rgba(232, 194, 106, 0.15);
-  --accent-gold-glow: rgba(232, 194, 106, 0.35);
-
-  /* Status Colors */
-  --status-danger: #EF4444;
-  --status-danger-glow: rgba(239, 68, 68, 0.3);
-  --status-warning: #F59E0B;
-  --status-info: #3B82F6;
-
-  /* Text & Typography */
-  --text-primary: #F5F7FA;      /* Brushed Aluminum */
-  --text-pure: #FFFFFF;         /* Pure High-Contrast White */
-  --text-secondary: #94A3B8;    /* Slate Secondary */
-  --text-muted: #64748B;        /* Muted Titanium */
-  --text-disabled: #475569;
-
-  /* Borders & Dividers */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-light: #232733;
-  --border-active: #19D3FF;
-  --border-active-glow: rgba(25, 211, 255, 0.45);
-
-  /* Radii */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-  --radius-full: 9999px;
-
-  /* Luxury Glassmorphism */
+  /* ---------------------------------------------------------- legacy aliases (pages still read these; migrate, then delete) */
+  --background: rgb(var(--c-page));
+  --foreground: rgb(var(--c-fg));
+  --primary: var(--gold);
+  --muted-foreground: rgb(var(--c-fg-muted));
+  --border: var(--line);
+  --bg-primary: rgb(var(--c-page));
+  --text-primary: rgb(var(--c-fg));
+  --border-subtle: rgb(255 255 255 / 0.08);
   --glass-bg: rgba(18, 20, 26, 0.78);
   --glass-bg-dense: rgba(14, 16, 22, 0.88);
-  --glass-bg-subtle: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-border-hover: rgba(25, 211, 255, 0.4);
   --glass-blur: 20px;
   --glass-blur-heavy: 28px;
+  --accent-gold-glow: rgb(var(--c-gold-500) / 0.35);
+  --accent-green-glow: rgba(0, 229, 153, 0.35);
 
-  /* Safe Area Insets for Mobile PWA */
+  /* ---------------------------------------------------------- safe-area insets (PWA) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
