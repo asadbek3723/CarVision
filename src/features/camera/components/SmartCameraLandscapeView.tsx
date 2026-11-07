@@ -28,7 +28,7 @@ export const SCAN_5_ANGLES: ScanAngle[] = GUIDED_SCAN_ANGLES;
 export interface LuxuryCarCompassProps {
   activeAngleId: number;
   completedAngles: number[];
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 /** Radius of the badge ring as a percentage of the compass box (matches the r=92 ring of the 240 viewBox). */
@@ -59,14 +59,18 @@ export function LuxuryCarCompass({
     SCAN_5_ANGLES.find((a) => a.id === activeAngleId) || SCAN_5_ANGLES[0]!;
 
   const containerSizeClass =
-    size === 'lg'
+    size === 'xl'
+      ? 'h-[19rem] w-[19rem] xl:h-[24rem] xl:w-[24rem]'
+      : size === 'lg'
       ? 'h-56 w-56 sm:h-64 sm:w-64'
       : size === 'sm'
       ? 'h-32 w-32 sm:h-36 sm:w-36'
       : 'h-40 w-40 sm:h-48 sm:w-48 md:h-56 md:w-56 lg:h-64 lg:w-64';
 
   const carSizeClass =
-    size === 'lg'
+    size === 'xl'
+      ? 'h-52 w-32 xl:h-64 xl:w-40'
+      : size === 'lg'
       ? 'h-40 w-24 sm:h-44 sm:w-28'
       : size === 'sm'
       ? 'h-22 w-14 sm:h-24 sm:w-16'

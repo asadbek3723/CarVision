@@ -65,6 +65,20 @@ export function VeloceSmartCameraModal({
   const [isOnline, setIsOnline] = React.useState(true);
 
   // Monitor network connectivity for PWA Offline & Wi-Fi Bridge
+  // While this window is open nothing behind it (or in it) may scroll or rubber-band.
+  React.useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = [html.style.overflow, body.style.overflow, html.style.overscrollBehavior, body.style.overscrollBehavior];
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    body.style.overscrollBehavior = 'none';
+    return () => {
+      [html.style.overflow, body.style.overflow, html.style.overscrollBehavior, body.style.overscrollBehavior] = prev as [string, string, string, string];
+    };
+  }, []);
+
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     setIsOnline(navigator.onLine);
@@ -324,7 +338,7 @@ export function VeloceSmartCameraModal({
 
       {/* 2. DESKTOP VIEW: BORDERLESS, NO-BOX, STRICT ALL-5-ANGLES REQUIREMENT */}
       {!isMobileDevice && (
-        <div className="relative min-h-screen w-full flex flex-col bg-[#07080B] px-8 sm:px-14 md:px-20 py-5 sm:py-6 overflow-y-auto">
+        <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#07080B] px-8 py-5 sm:px-14 sm:py-6 md:px-20">
           {/* Subtle Ambient Radial Glow */}
           <div className="pointer-events-none absolute start-1/2 top-0 h-[450px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-b from-gold-500/8 via-gold-500/3 to-transparent blur-[140px]" />
 
@@ -335,24 +349,18 @@ export function VeloceSmartCameraModal({
                 <button
                   type="button"
                   onClick={() => setDesktopView('initial-choice')}
-                  className="flex items-center gap-1.5 rounded-full bg-white/5 px-4 py-2 text-xs font-medium text-muted-foreground hover:text-white hover:bg-white/10 transition cursor-pointer"
+                  className="-ms-3 flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-white/60 transition hover:text-white cursor-pointer"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <span>{t('back')}</span>
                 </button>
               )}
-              <div>
-                <h1 className="text-xl sm:text-2xl font-light tracking-wide text-foreground">
-                  {desktopView === 'initial-choice'
-                    ? t('titleChoice')
-                    : t('titleUpload')}
-                </h1>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {desktopView === 'initial-choice'
-                    ? t('subChoice')
-                    : t('progress', { current: currentStepIndex + 1, total: REQUIRED_ANGLE_COUNT, uploaded: uploadedCount })}
-                </p>
-              </div>
+              {desktopView === 'initial-choice' && (
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-light tracking-wide text-foreground">{t('titleChoice')}</h1>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t('subChoice')}</p>
+                </div>
+              )}
             </div>
 
             <button
@@ -518,7 +526,7 @@ export function VeloceSmartCameraModal({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.99 }}
                 transition={{ duration: 0.2 }}
-                className="relative z-10 flex-1 flex flex-col justify-between my-auto py-2 sm:py-3 max-w-6xl mx-auto w-full space-y-4 sm:space-y-5"
+                className="relative z-10 mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col justify-center gap-8 py-2"
               >
                 {/* 4-Step Program-Controlled Progress Bar (Cannot Skip Ahead!) */}
                 <div className="grid grid-cols-5 gap-2 sm:gap-4 w-full pb-3">
@@ -536,11 +544,11 @@ export function VeloceSmartCameraModal({
                         onClick={() => {
                           if (canNavigate) setCurrentStepIndex(idx);
                         }}
-                        className={`relative flex items-center justify-center sm:justify-start gap-3 py-2.5 px-3 rounded-xl transition text-start ${
- isActive
- ? 'text-gold-500 bg-white/[0.04]'
+                        className={`relative flex items-center justify-center sm:justify-start gap-3 py-2.5 px-3 transition text-start ${
+                          isActive
+                            ? 'text-gold-500'
                             : isUploaded
-                            ? 'text-emerald-400 hover:bg-white/[0.03] cursor-pointer'
+                            ? 'text-emerald-400 cursor-pointer'
                             : 'text-white/30 cursor-not-allowed'
                         }`}
                       >
@@ -589,9 +597,6 @@ export function VeloceSmartCameraModal({
                   {/* LEFT: Program-Driven 3D Car Compass (Non-clickable arrows) */}
                   <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-start space-y-4">
                     <div className="space-y-1">
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300">
-                        <span>{currentStepIndex + 1}-Qadam (Majburiy)</span>
-                      </span>
                       <h2 className="text-xl sm:text-2xl font-light text-foreground tracking-tight">
                         {angleTitle}
                       </h2>
@@ -601,11 +606,11 @@ export function VeloceSmartCameraModal({
                     </div>
 
                     {/* Non-clickable 4-Direction Car Compass */}
-                    <div className="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center mx-auto my-2">
+                    <div className="relative mx-auto my-2 flex items-center justify-center">
                       <LuxuryCarCompass
                         activeAngleId={currentAngle.id}
                         completedAngles={uploadedAngleIds}
-                        size="lg"
+                        size="xl"
                       />
                     </div>
                   </div>
@@ -626,29 +631,15 @@ export function VeloceSmartCameraModal({
                       onChange={handleFileInputChange}
                     />
 
-                    <div className="space-y-1 w-full">
-                      <h2 className="text-xl sm:text-2xl font-light text-foreground tracking-tight">
-                        {currentAnglePhoto
-                          ? t('angleUploaded', { angle: angleTitle })
-                          : t('angleUpload', { angle: angleTitle })}
-                      </h2>
-                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                        {currentAnglePhoto
-                          ? allAnglesUploaded
-                            ? t('allDoneHint', { total: REQUIRED_ANGLE_COUNT })
-                            : t('nextHint')
-                          : t('dropHint')}
-                      </p>
-                    </div>
 
                     {/* Borderless Interactive Upload Drop Target */}
                     <div className="w-full">
                       {currentAnglePhoto ? (
-                        <div className="relative w-full h-[220px] sm:h-[240px] flex flex-col items-center justify-center select-none rounded-3xl bg-white/[0.02]">
+                        <div className="relative flex h-[22rem] w-full select-none flex-col items-center justify-center xl:h-[26rem]">
                           <img
                             src={currentAnglePhoto}
                             alt={angleTitle}
-                            className="max-h-[165px] w-auto max-w-full rounded-2xl object-contain shadow-[0_24px_60px_rgba(0,0,0,0.95)]"
+                            className="max-h-[17rem] w-auto max-w-full rounded-2xl object-contain shadow-[0_24px_60px_rgba(0,0,0,0.95)] xl:max-h-[20rem]"
                           />
 
                           <div className="mt-3 flex items-center gap-3">
@@ -676,7 +667,7 @@ export function VeloceSmartCameraModal({
                           onDragLeave={handleDragLeave}
                           onDrop={handleDrop}
                           onClick={() => fileInputRef.current?.click()}
-                          className="relative w-full h-[220px] sm:h-[240px] flex flex-col items-center justify-center text-center cursor-pointer select-none transition group rounded-3xl bg-white/[0.02] hover:bg-white/[0.04]"
+                          className="group relative flex h-[22rem] w-full cursor-pointer select-none flex-col items-center justify-center text-center transition xl:h-[26rem]"
                         >
                           {/* Ambient glow on hover/drag */}
                           <div
@@ -687,22 +678,22 @@ export function VeloceSmartCameraModal({
                             }`}
                           />
 
-                          <div className="relative z-10 flex flex-col items-center space-y-3">
-                            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/5 text-gold-500 group-hover:scale-105 group-hover:bg-gold-500/15 transition duration-300 shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
-                              <Upload className="h-7 w-7 stroke-[1.6]" />
+                          <div className="relative z-10 flex flex-col items-center space-y-5">
+                            <div className="grid h-24 w-24 place-items-center rounded-full bg-white/[0.04] text-gold-500 transition duration-300 group-hover:scale-105 group-hover:bg-gold-500/15">
+                              <Upload className="h-10 w-10 stroke-[1.5]" />
                             </div>
 
-                            <div className="space-y-0.5">
-                              <p className="text-sm font-medium text-foreground">
+                            <div className="space-y-1">
+                              <p className="text-lg font-medium text-foreground">
                                 {t('clickToPick', { angle: angleTitle })}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-sm text-muted-foreground">
                                 {t('formats')}
                               </p>
                             </div>
 
-                            <div className="inline-flex items-center gap-2 rounded-2xl bg-gold-gradient px-6 py-2.5 text-xs font-semibold text-black tracking-wide shadow-gold group-hover:brightness-110 active:scale-98 transition">
-                              <ImageIcon className="h-4 w-4" />
+                            <div className="inline-flex min-h-14 items-center gap-2.5 rounded-full bg-gold-gradient px-8 text-base font-semibold tracking-wide text-black shadow-gold transition group-hover:brightness-110 active:scale-98">
+                              <ImageIcon className="h-5 w-5" />
                               <span>{t('pickBtn', { angle: t(`angles.${currentAngle.key}.short`) })}</span>
                             </div>
                           </div>
@@ -712,28 +703,6 @@ export function VeloceSmartCameraModal({
 
                     {/* Mandatory All-Angles Status & Davom Etish Gate */}
                     <div className="w-full pt-2 space-y-3">
-                      <div className="flex items-center justify-between text-xs px-1">
-                        <span className="inline-flex items-center gap-1.5 text-white/60">
-                          {allAnglesUploaded ? (
-                            <>
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                              <span className="text-emerald-400 font-medium">
-                                {t('allReady', { total: REQUIRED_ANGLE_COUNT })}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="h-3.5 w-3.5 text-gold-500" />
-                              <span>
-                                {t('locked', { total: REQUIRED_ANGLE_COUNT })}
-                              </span>
-                            </>
-                          )}
-                        </span>
-                        <span className="font-semibold text-gold-500">
-                          {uploadedCount} / {REQUIRED_ANGLE_COUNT}
-                        </span>
-                      </div>
 
                       <div className="w-full flex items-center justify-between gap-3">
                         <button
