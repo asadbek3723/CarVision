@@ -9,7 +9,6 @@ import {
   ShoppingCart,
   CirclePlus,
   Plus,
-  Menu,
   User,
   X,
   LogOut,
@@ -243,13 +242,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
  isImmersive ? 'max-md:hidden' : ''
  }`}
       >
-        <button
-          onClick={() => setMobileMenuOpen(true)}
-          aria-label={t('menu')}
-          className="text-foreground/80 md:invisible cursor-pointer p-1"
-        >
-          <Menu className="h-6 w-6" />
-        </button>
+        {/* Phones: no menu button (everything is in the bottom dock); keeps the logo centred. */}
+        <span aria-hidden className="block h-8 w-8" />
 
         <Link href={`/${locale}/seller`} className="text-center leading-none">
           <div className="font-display text-lg font-light tracking-[0.6em] ps-[0.6em] text-foreground">
@@ -361,17 +355,19 @@ export function VeloceShell({ children }: VeloceShellProps) {
             href={`/${locale}/profile`}
             aria-label={t('profile')}
             data-status={isProfile ? 'active' : 'inactive'}
-            className="grid h-11 w-11 place-items-center rounded-full text-gold-500 transition hover:bg-white/[0.06] data-[status=active]:text-gold-500 data-[status=active]:bg-gold-500/10  md:text-foreground/90 cursor-pointer"
+            className="hidden h-11 w-11 place-items-center rounded-full text-foreground/90 transition hover:bg-white/[0.06] data-[status=active]:bg-gold-500/10 data-[status=active]:text-gold-500 cursor-pointer md:grid"
           >
-            <User className="h-[18px] w-[18px] md:h-4 md:w-4" />
+            <User className="h-4 w-4" />
           </Link>
+          {/* Phones: Profile lives in the bottom dock; this keeps the logo centred. */}
+          <span aria-hidden className="block h-8 w-8 md:hidden" />
         </div>
       </header>
 
       {/* Main Content */}
       <main className={isImmersive ? 'md:pb-0' : 'pb-28 md:pb-12'}>{children}</main>
 
-      {/* Mobile bottom dock: Home, Garage, [Create], Shop, Dashboard. Profile is the icon in the header. */}
+      {/* Mobile bottom dock: Home, Garage, [Create], Shop, Profile. The dashboard opens from Profile. */}
       {!isImmersive && (
         <nav
           aria-label={t('menu')}
@@ -398,7 +394,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
             </button>
 
             <DockLink href={`/${locale}/shop`} icon={ShoppingCart} label={t('shop')} active={isShop} />
-            <DockLink href={dashboardHref} icon={LayoutDashboard} label={t('panel')} active={isDashboard} locked={!studioUnlocked} />
+            <DockLink href={`/${locale}/profile`} icon={User} label={t('profile')} active={isProfile || isDashboard} />
           </div>
         </nav>
       )}

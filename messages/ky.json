@@ -666,7 +666,13 @@
     "language": "Тил",
     "currency": "Валюта",
     "account": "Аккаунт",
-    "saveError": "Сактоо мүмкүн болгон жок. Атын текшериңиз (кеминде 2 белги)."
+    "saveError": "Сактоо мүмкүн болгон жок. Атын текшериңиз (кеминде 2 белги).",
+    "dashboard": "Панель",
+    "editProfile": "Профилди түзөтүү",
+    "statsTitle": "Статистика",
+    "statRenders": "Рендерлер",
+    "statBookings": "Броньдор",
+    "viewStats": "Статистиканы көрүү"
   },
   "customize": {
     "saveConfig": "Конфигурацияны сактоо",
@@ -2016,5 +2022,29 @@
     "retry": "Кайра аракет",
     "download": "Жүктөп алуу",
     "rsBuy": "Сатып алуу ({amount} кепилдик)"
+  },
+  "statsPage": {
+    "title": "Статистика",
+    "subtitle": "Аккаунтуңуз боюнча бардык сандар",
+    "creditsTitle": "Кредит жана рендерлер",
+    "balance": "Кредит калдыгы",
+    "renders": "Бардык рендерлер",
+    "last30": "Акыркы 30 күн: {count}",
+    "spent": "Короттулган кредит",
+    "received": "Алынган кредит",
+    "bookingsTitle": "Броньдор",
+    "bookingsAll": "Бардык броньдор",
+    "bookingsWaiting": "Төлөм күтүлүүдө",
+    "bookingsUnlocked": "Дарек ачылды",
+    "bookingsDone": "Аткарылды",
+    "bookingsCancelled": "Жокко чыгарылды",
+    "bookingsValue": "Ачылган броньдордун наркы",
+    "studioTitle": "Студия",
+    "products": "Товарлар",
+    "inStock": "Бар",
+    "drafts": "Долбоорлор",
+    "orders": "Буйрутмалар",
+    "ordersDone": "Аякталган",
+    "deposits": "Депозиттер"
   }
 }

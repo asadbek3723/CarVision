@@ -666,7 +666,13 @@
     "language": "Dil",
     "currency": "Para birimi",
     "account": "Hesap",
-    "saveError": "Kaydedilemedi. Adı kontrol edin (en az 2 karakter)."
+    "saveError": "Kaydedilemedi. Adı kontrol edin (en az 2 karakter).",
+    "dashboard": "Panel",
+    "editProfile": "Profili düzenle",
+    "statsTitle": "İstatistikler",
+    "statRenders": "Render",
+    "statBookings": "Rezervasyonlar",
+    "viewStats": "İstatistikleri gör"
   },
   "customize": {
     "saveConfig": "Yapılandırmayı kaydet",
@@ -2016,5 +2022,29 @@
     "retry": "Tekrar dene",
     "download": "İndir",
     "rsBuy": "Satın al ({amount} kapora)"
+  },
+  "statsPage": {
+    "title": "İstatistikler",
+    "subtitle": "Hesabınızla ilgili tüm rakamlar",
+    "creditsTitle": "Kredi ve render",
+    "balance": "Kredi bakiyesi",
+    "renders": "Toplam render",
+    "last30": "Son 30 gün: {count}",
+    "spent": "Harcanan kredi",
+    "received": "Alınan kredi",
+    "bookingsTitle": "Rezervasyonlar",
+    "bookingsAll": "Tüm rezervasyonlar",
+    "bookingsWaiting": "Ödeme bekleniyor",
+    "bookingsUnlocked": "Adres açıldı",
+    "bookingsDone": "Tamamlandı",
+    "bookingsCancelled": "İptal edildi",
+    "bookingsValue": "Açılan rezervasyon değeri",
+    "studioTitle": "Stüdyo",
+    "products": "Ürünler",
+    "inStock": "Stokta",
+    "drafts": "Taslaklar",
+    "orders": "Siparişler",
+    "ordersDone": "Tamamlanan",
+    "deposits": "Depozitolar"
   }
 }

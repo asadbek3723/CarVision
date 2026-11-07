@@ -666,7 +666,13 @@
     "language": "Забон",
     "currency": "Асъор",
     "account": "Ҳисоб",
-    "saveError": "Захира нашуд. Номро санҷед (на камтар аз 2 аломат)."
+    "saveError": "Захира нашуд. Номро санҷед (на камтар аз 2 аломат).",
+    "dashboard": "Панел",
+    "editProfile": "Таҳрири профил",
+    "statsTitle": "Омор",
+    "statRenders": "Рендерҳо",
+    "statBookings": "Броньҳо",
+    "viewStats": "Дидани омор"
   },
   "customize": {
     "saveConfig": "Нигоҳ доштани танзим",
@@ -2016,5 +2022,29 @@
     "retry": "Такрор",
     "download": "Зеркашӣ",
     "rsBuy": "Харидан (бетона {amount})"
+  },
+  "statsPage": {
+    "title": "Омор",
+    "subtitle": "Ҳамаи рақамҳо оид ба ҳисоби шумо",
+    "creditsTitle": "Кредит ва рендерҳо",
+    "balance": "Бақияи кредит",
+    "renders": "Ҳамаи рендерҳо",
+    "last30": "30 рӯзи охир: {count}",
+    "spent": "Кредити сарфшуда",
+    "received": "Кредити гирифташуда",
+    "bookingsTitle": "Броньҳо",
+    "bookingsAll": "Ҳамаи броньҳо",
+    "bookingsWaiting": "Интизори пардохт",
+    "bookingsUnlocked": "Суроға кушода шуд",
+    "bookingsDone": "Иҷрошуда",
+    "bookingsCancelled": "Бекоршуда",
+    "bookingsValue": "Арзиши броньҳои кушода",
+    "studioTitle": "Студия",
+    "products": "Маҳсулот",
+    "inStock": "Дар анбор",
+    "drafts": "Сиёҳнависҳо",
+    "orders": "Фармоишҳо",
+    "ordersDone": "Анҷомёфта",
+    "deposits": "Депозитҳо"
   }
 }

@@ -666,7 +666,13 @@
     "language": "Til",
     "currency": "Valyuta",
     "account": "Hisob",
-    "saveError": "Saqlab bo'lmadi. Ismni tekshiring (kamida 2 belgi)."
+    "saveError": "Saqlab bo'lmadi. Ismni tekshiring (kamida 2 belgi).",
+    "dashboard": "Dashboard",
+    "editProfile": "Profilni tahrirlash",
+    "statsTitle": "Statistika",
+    "statRenders": "Renderlar",
+    "statBookings": "Bronlar",
+    "viewStats": "Statistikani ko'rish"
   },
   "customize": {
     "saveConfig": "Konfiguratsiyani saqlash",
@@ -2016,5 +2022,29 @@
     "retry": "Qayta urinish",
     "download": "Yuklab olish",
     "rsBuy": "Sotib olish ({amount} zakalat)"
+  },
+  "statsPage": {
+    "title": "Statistika",
+    "subtitle": "Hisobingiz bo'yicha barcha raqamlar",
+    "creditsTitle": "Kredit va renderlar",
+    "balance": "Kredit qoldig'i",
+    "renders": "Jami renderlar",
+    "last30": "Oxirgi 30 kunda: {count}",
+    "spent": "Sarflangan kredit",
+    "received": "Olingan kredit",
+    "bookingsTitle": "Bronlar",
+    "bookingsAll": "Jami bronlar",
+    "bookingsWaiting": "To'lov kutilmoqda",
+    "bookingsUnlocked": "Manzil ochilgan",
+    "bookingsDone": "Bajarilgan",
+    "bookingsCancelled": "Bekor qilingan",
+    "bookingsValue": "Ochilgan bronlar qiymati",
+    "studioTitle": "Studiya",
+    "products": "Mahsulotlar",
+    "inStock": "Mavjud",
+    "drafts": "Qoralamalar",
+    "orders": "Buyurtmalar",
+    "ordersDone": "Yakunlangan",
+    "deposits": "Depozitlar"
   }
 }

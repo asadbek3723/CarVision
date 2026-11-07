@@ -666,7 +666,13 @@
     "language": "Language",
     "currency": "Currency",
     "account": "Account",
-    "saveError": "Couldn't save. Check the name (at least 2 characters)."
+    "saveError": "Couldn't save. Check the name (at least 2 characters).",
+    "dashboard": "Dashboard",
+    "editProfile": "Edit profile",
+    "statsTitle": "Statistics",
+    "statRenders": "Renders",
+    "statBookings": "Bookings",
+    "viewStats": "View statistics"
   },
   "customize": {
     "saveConfig": "Save config",
@@ -2016,5 +2022,29 @@
     "retry": "Try again",
     "download": "Download",
     "rsBuy": "Buy ({amount} deposit)"
+  },
+  "statsPage": {
+    "title": "Statistics",
+    "subtitle": "Every number about your account",
+    "creditsTitle": "Credits and renders",
+    "balance": "Credit balance",
+    "renders": "Total renders",
+    "last30": "Last 30 days: {count}",
+    "spent": "Credits spent",
+    "received": "Credits received",
+    "bookingsTitle": "Bookings",
+    "bookingsAll": "All bookings",
+    "bookingsWaiting": "Awaiting payment",
+    "bookingsUnlocked": "Address unlocked",
+    "bookingsDone": "Completed",
+    "bookingsCancelled": "Cancelled",
+    "bookingsValue": "Value of unlocked bookings",
+    "studioTitle": "Studio",
+    "products": "Products",
+    "inStock": "In stock",
+    "drafts": "Drafts",
+    "orders": "Orders",
+    "ordersDone": "Completed",
+    "deposits": "Deposits"
   }
 }

@@ -666,7 +666,13 @@
     "language": "اللغة",
     "currency": "العملة",
     "account": "الحساب",
-    "saveError": "تعذّر الحفظ. تحقق من الاسم (حرفان على الأقل)."
+    "saveError": "تعذّر الحفظ. تحقق من الاسم (حرفان على الأقل).",
+    "dashboard": "لوحة التحكم",
+    "editProfile": "تعديل الملف",
+    "statsTitle": "الإحصائيات",
+    "statRenders": "التصاميم",
+    "statBookings": "الحجوزات",
+    "viewStats": "عرض الإحصائيات"
   },
   "customize": {
     "saveConfig": "حفظ التهيئة",
@@ -2016,5 +2022,29 @@
     "retry": "إعادة المحاولة",
     "download": "تنزيل",
     "rsBuy": "شراء (عربون {amount})"
+  },
+  "statsPage": {
+    "title": "الإحصائيات",
+    "subtitle": "كل الأرقام الخاصة بحسابك",
+    "creditsTitle": "الرصيد والتصاميم",
+    "balance": "رصيد النقاط",
+    "renders": "إجمالي التصاميم",
+    "last30": "آخر 30 يومًا: {count}",
+    "spent": "النقاط المستخدمة",
+    "received": "النقاط المستلمة",
+    "bookingsTitle": "الحجوزات",
+    "bookingsAll": "كل الحجوزات",
+    "bookingsWaiting": "بانتظار الدفع",
+    "bookingsUnlocked": "تم فتح العنوان",
+    "bookingsDone": "مكتملة",
+    "bookingsCancelled": "ملغاة",
+    "bookingsValue": "قيمة الحجوزات المفتوحة",
+    "studioTitle": "الاستوديو",
+    "products": "المنتجات",
+    "inStock": "متوفر",
+    "drafts": "المسودات",
+    "orders": "الطلبات",
+    "ordersDone": "المكتملة",
+    "deposits": "العربون"
   }
 }

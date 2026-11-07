@@ -666,7 +666,13 @@
     "language": "Тіл",
     "currency": "Валюта",
     "account": "Аккаунт",
-    "saveError": "Сақтау мүмкін болмады. Атын тексеріңіз (кемінде 2 таңба)."
+    "saveError": "Сақтау мүмкін болмады. Атын тексеріңіз (кемінде 2 таңба).",
+    "dashboard": "Панель",
+    "editProfile": "Профильді өзгерту",
+    "statsTitle": "Статистика",
+    "statRenders": "Рендерлер",
+    "statBookings": "Броньдар",
+    "viewStats": "Статистиканы көру"
   },
   "customize": {
     "saveConfig": "Конфигурацияны сақтау",
@@ -2016,5 +2022,29 @@
     "retry": "Қайталау",
     "download": "Жүктеп алу",
     "rsBuy": "Сатып алу ({amount} кепілақы)"
+  },
+  "statsPage": {
+    "title": "Статистика",
+    "subtitle": "Аккаунтыңыз бойынша барлық сандар",
+    "creditsTitle": "Кредит және рендерлер",
+    "balance": "Кредит қалдығы",
+    "renders": "Барлық рендерлер",
+    "last30": "Соңғы 30 күн: {count}",
+    "spent": "Жұмсалған кредит",
+    "received": "Алынған кредит",
+    "bookingsTitle": "Броньдар",
+    "bookingsAll": "Барлық броньдар",
+    "bookingsWaiting": "Төлем күтілуде",
+    "bookingsUnlocked": "Мекенжай ашылды",
+    "bookingsDone": "Орындалды",
+    "bookingsCancelled": "Бас тартылды",
+    "bookingsValue": "Ашылған броньдар құны",
+    "studioTitle": "Студия",
+    "products": "Тауарлар",
+    "inStock": "Қоймада",
+    "drafts": "Жобалар",
+    "orders": "Тапсырыстар",
+    "ordersDone": "Аяқталған",
+    "deposits": "Депозиттер"
   }
 }

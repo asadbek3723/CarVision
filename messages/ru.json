@@ -666,7 +666,13 @@
     "language": "Язык",
     "currency": "Валюта",
     "account": "Аккаунт",
-    "saveError": "Не удалось сохранить. Проверьте имя (минимум 2 символа)."
+    "saveError": "Не удалось сохранить. Проверьте имя (минимум 2 символа).",
+    "dashboard": "Панель",
+    "editProfile": "Редактировать",
+    "statsTitle": "Статистика",
+    "statRenders": "Рендеры",
+    "statBookings": "Брони",
+    "viewStats": "Вся статистика"
   },
   "customize": {
     "saveConfig": "Сохранить конфигурацию",
@@ -2016,5 +2022,29 @@
     "retry": "Повторить",
     "download": "Скачать",
     "rsBuy": "Купить (залог {amount})"
+  },
+  "statsPage": {
+    "title": "Статистика",
+    "subtitle": "Все цифры по вашему аккаунту",
+    "creditsTitle": "Кредиты и рендеры",
+    "balance": "Остаток кредитов",
+    "renders": "Всего рендеров",
+    "last30": "За 30 дней: {count}",
+    "spent": "Потрачено кредитов",
+    "received": "Получено кредитов",
+    "bookingsTitle": "Брони",
+    "bookingsAll": "Всего броней",
+    "bookingsWaiting": "Ожидают оплаты",
+    "bookingsUnlocked": "Адрес открыт",
+    "bookingsDone": "Выполнены",
+    "bookingsCancelled": "Отменены",
+    "bookingsValue": "Сумма открытых броней",
+    "studioTitle": "Студия",
+    "products": "Товары",
+    "inStock": "В наличии",
+    "drafts": "Черновики",
+    "orders": "Заказы",
+    "ordersDone": "Завершены",
+    "deposits": "Депозиты"
   }
 }
