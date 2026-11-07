@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Check, Clock, Loader2, MapPin, Phone, Upload, XCircle } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { compressForUpload, loadImageFromBlob } from '@/features/seller/lib/image-tools';
@@ -28,12 +29,12 @@ export interface PaymentInfo {
 }
 
 const STATUS_TEXT: Record<BookingView['status'], { label: string; cls: string }> = {
-  AWAITING_PAYMENT: { label: 'To‘lov kutilmoqda', cls: 'bg-amber-500/15 text-amber-300' },
-  PENDING_ADMIN_APPROVAL: { label: 'Chek tekshirilmoqda', cls: 'bg-sky-500/15 text-sky-300' },
-  UNLOCKED: { label: 'Tasdiqlandi', cls: 'bg-emerald-500/15 text-emerald-300' },
-  REDEEMED: { label: 'Yakunlandi', cls: 'bg-white/10 text-white/70' },
-  REJECTED: { label: 'Chek rad etildi', cls: 'bg-red-500/15 text-red-300' },
-  CANCELLED: { label: 'Bekor qilindi', cls: 'bg-white/10 text-white/50' },
+  AWAITING_PAYMENT: { label: 'stAwaiting', cls: 'bg-amber-500/15 text-amber-300' },
+  PENDING_ADMIN_APPROVAL: { label: 'stPending', cls: 'bg-sky-500/15 text-sky-300' },
+  UNLOCKED: { label: 'stUnlocked', cls: 'bg-emerald-500/15 text-emerald-300' },
+  REDEEMED: { label: 'stRedeemed', cls: 'bg-white/10 text-white/70' },
+  REJECTED: { label: 'stRejected', cls: 'bg-red-500/15 text-red-300' },
+  CANCELLED: { label: 'stCancelled', cls: 'bg-white/10 text-white/50' },
 };
 
 interface Props {
@@ -44,6 +45,7 @@ interface Props {
 
 /** One booking: payment instructions, receipt upload, approval status and (after approval) the workshop. */
 export function BookingCard({ booking, payment, onChanged }: Props) {
+  const t = useTranslations('shopFlow');
   const { formatPrice } = useCurrency();
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -70,10 +72,10 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
       form.append('file', new File([blob], 'receipt.jpg', { type: 'image/jpeg' }));
       const res = await fetch(`/api/v1/bookings/${booking.id}/receipt`, { method: 'POST', body: form });
       const data = (await readJson(res)).data;
-      if (!res.ok || !data.success) throw new Error(data.error || 'Chekni yuborib bo‘lmadi');
+      if (!res.ok || !data.success) throw new Error(data.error || t('errReceipt'));
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Chekni yuborib bo‘lmadi');
+      setError(err instanceof Error ? err.message : t('errReceipt'));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -81,17 +83,17 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
   };
 
   const cancel = async () => {
-    if (!window.confirm('Bronni bekor qilasizmi?')) return;
+    if (!window.confirm(t('confirmCancel'))) return;
     const res = await fetch(`/api/v1/bookings/${booking.id}`, { method: 'DELETE' });
     if (res.ok) onChanged();
-    else setError('Bekor qilib bo‘lmadi');
+    else setError(t('errCancel'));
   };
 
   return (
     <article className="rounded-3xl border border-white/[0.07] bg-[#0B0D13] p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-mono text-sm font-bold text-white">#{booking.bookingNumber}</p>
-        <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${status.cls}`}>{status.label}</span>
+        <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${status.cls}`}>{t(status.label)}</span>
       </div>
 
       <ul className="mt-4 space-y-3">
@@ -109,12 +111,12 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
 
       <div className="mt-4 flex items-end justify-between border-t border-white/[0.06] pt-4">
         <div>
-          <p className="text-[11px] text-white/45">Ustaxonadagi jami narx</p>
+          <p className="text-[11px] text-white/45">{t('workshopTotal')}</p>
           <p className="text-lg font-bold text-white">{formatPrice(booking.totalUSD)}</p>
         </div>
         <div className="text-end">
-          <p className="text-[11px] text-white/45">3% zakalat</p>
-          <p className="text-lg font-bold text-[#D4AE62]">{new Intl.NumberFormat('uz-UZ').format(booking.depositUZS)} so‘m</p>
+          <p className="text-[11px] text-white/45">{t('deposit3')}</p>
+          <p className="text-lg font-bold text-[#D4AE62]">{t('uzsAmount', { amount: new Intl.NumberFormat('en-US').format(booking.depositUZS).replace(/,/g, ' ') })}</p>
           <p className="text-[11px] text-white/40">≈ ${booking.depositUSD.toFixed(2)}</p>
         </div>
       </div>
@@ -124,21 +126,21 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
           {booking.status === 'REJECTED' && (
             <p className="flex items-start gap-2 text-xs text-red-300">
               <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              {booking.rejectedReason || 'Chek tasdiqlanmadi'}. To‘g‘ri chekni qayta yuboring.
+              {booking.rejectedReason || t('rejectedFallback')}. {t('rejectedSuffix')}
             </p>
           )}
-          <p className="text-sm font-semibold text-white">1. Zakalatni shu kartaga o‘tkazing</p>
+          <p className="text-sm font-semibold text-white">{t('step1')}</p>
           {payment.configured ? (
             <div className="rounded-xl bg-black/40 p-4">
               <p className="select-all font-mono text-lg tracking-wider text-white">{payment.cardNumber}</p>
               <p className="mt-1 text-xs text-white/60">{payment.holder}{payment.bank ? ` · ${payment.bank}` : ''}</p>
-              <p className="mt-3 text-xs text-amber-300">Izohga bron raqamini yozing: <span className="font-mono font-bold">{booking.bookingNumber}</span></p>
+              <p className="mt-3 text-xs text-amber-300">{t('writeNote')} <span className="font-mono font-bold">{booking.bookingNumber}</span></p>
             </div>
           ) : (
-            <p className="rounded-xl bg-amber-500/10 p-4 text-xs text-amber-200">To‘lov rekvizitlari hali sozlanmagan. Iltimos, administrator bilan bog‘laning.</p>
+            <p className="rounded-xl bg-amber-500/10 p-4 text-xs text-amber-200">{t('noPayment')}</p>
           )}
 
-          <p className="text-sm font-semibold text-white">2. To‘lov chekini yuklang</p>
+          <p className="text-sm font-semibold text-white">{t('step2')}</p>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => void upload(e.target.files?.[0])} />
           <button
             type="button"
@@ -147,12 +149,12 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50"
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {uploading ? 'Yuborilmoqda…' : 'Chekni yuborish'}
+            {uploading ? t('sending') : t('sendReceipt')}
           </button>
           {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
           {booking.status === 'AWAITING_PAYMENT' && (
             <button type="button" onClick={() => void cancel()} className="text-xs text-white/40 underline hover:text-white/70">
-              Bronni bekor qilish
+              {t('cancelBooking')}
             </button>
           )}
         </div>
@@ -161,7 +163,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
       {booking.status === 'PENDING_ADMIN_APPROVAL' && (
         <p className="mt-5 flex items-start gap-2 rounded-2xl bg-sky-500/10 p-4 text-xs text-sky-200">
           <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-          Chekingiz qabul qilindi. Tasdiqlangach ustaxona manzili va telefon raqami shu yerda ochiladi.
+          {t('receiptReceived')}
         </p>
       )}
 
@@ -169,7 +171,7 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
         <div className="mt-5 space-y-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4">
           <p className="flex items-center gap-2 text-sm font-bold text-emerald-300">
             <Check className="h-4 w-4" />
-            Ustaxona ochildi
+            {t('workshopOpened')}
           </p>
           <p className="text-base font-bold text-white">{booking.workshop.name}</p>
           {booking.workshop.address && (
@@ -186,12 +188,12 @@ export function BookingCard({ booking, payment, onChanged }: Props) {
           )}
           {booking.workshop.lat !== undefined && booking.workshop.lat !== 0 && (
             <a href={`https://www.google.com/maps?q=${booking.workshop.lat},${booking.workshop.lng}`} target="_blank" rel="noreferrer" className="inline-block text-xs font-semibold text-[#D4AE62] underline">
-              Xaritada ochish
+              {t('openMap')}
             </a>
           )}
           {booking.redemptionCode && (
             <div className="rounded-xl bg-black/40 p-3 text-center">
-              <p className="text-[11px] text-white/50">Ustaxonaga ko‘rsatadigan vaucher kodi</p>
+              <p className="text-[11px] text-white/50">{t('voucherCode')}</p>
               <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">{booking.redemptionCode}</p>
             </div>
           )}

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
 import { LogOut, Globe, Check, ArrowRight } from 'lucide-react';
@@ -32,6 +33,7 @@ const CURRENCIES: SupportedCurrency[] = [
 ];
 
 export function VeloceProfile() {
+  const t = useTranslations('studio');
   const params = useParams();
   const pathname = usePathname();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -98,7 +100,7 @@ export function VeloceProfile() {
       <div className="flex flex-col gap-4 pb-10 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-medium tracking-widest uppercase text-[#D4AE62]">
-            Shaxsiy Profil
+            {t('pTitle')}
           </p>
           {editingName ? (
             <form onSubmit={handleSaveIdentity} className="mt-3 flex flex-wrap items-center gap-3">
@@ -106,7 +108,7 @@ export function VeloceProfile() {
                 type="text"
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                placeholder="Ismingiz"
+                placeholder={t('pYourName')}
                 className="rounded-xl bg-white/[0.06] px-4 py-2.5 text-sm text-white focus:outline-none"
               />
               <input
@@ -120,7 +122,7 @@ export function VeloceProfile() {
                 type="submit"
                 className="rounded-xl bg-[#D4AE62] px-4 py-2.5 text-xs font-bold uppercase text-black cursor-pointer"
               >
-                Saqlash
+                {t('pSave')}
               </button>
             </form>
           ) : (
@@ -152,7 +154,7 @@ export function VeloceProfile() {
                   href={`/${locale}/seller?tab=dashboard`}
                   className="rounded-2xl bg-gold-gradient px-5 py-2.5 text-xs font-bold uppercase text-black"
                 >
-                  Ustaxona Boshqaruvi
+                  {t('pStudio')}
                 </Link>
               )}
               <button
@@ -161,7 +163,7 @@ export function VeloceProfile() {
                 className="flex items-center gap-1.5 rounded-2xl bg-white/[0.04] px-4 py-2.5 text-xs text-white/60 hover:text-red-400 cursor-pointer"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Chiqish</span>
+                <span>{t('pLogout')}</span>
               </button>
             </>
           ) : (
@@ -169,7 +171,7 @@ export function VeloceProfile() {
               href={`/${locale}/login`}
               className="rounded-2xl bg-gold-gradient px-6 py-3 text-xs font-bold uppercase text-black"
             >
-              Tizimga Kirish
+              {t('pLogin')}
             </Link>
           )}
         </div>
@@ -178,16 +180,16 @@ export function VeloceProfile() {
       {/* 2. My bookings (3% deposit flow) */}
       {user && (
         <section className="pb-12 pt-4">
-          <h2 className="font-display text-xl font-light text-white">Mening bronlarim</h2>
-          <p className="mt-1 text-xs text-white/50">3% zakalat to‘langach ustaxona manzili va telefoni shu yerda ochiladi.</p>
+          <h2 className="font-display text-xl font-light text-white">{t('pBookings')}</h2>
+          <p className="mt-1 text-xs text-white/50">{t('pBookingsHint')}</p>
 
           {bookingsLoading ? (
-            <p className="mt-6 text-sm text-white/50">Yuklanmoqda…</p>
+            <p className="mt-6 text-sm text-white/50">{t('pLoading')}</p>
           ) : bookings.length === 0 ? (
             <div className="mt-6 py-6">
-              <p className="text-sm text-white/50">Hozircha bronlar yo‘q.</p>
+              <p className="text-sm text-white/50">{t('pNoBookings')}</p>
               <Link href={`/${locale}/shop`} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/[0.06] px-5 py-3 text-xs font-semibold uppercase text-[#D4AE62] hover:bg-white/[0.1]">
-                <span>Detallarni ko‘rish</span>
+                <span>{t('pViewParts')}</span>
                 <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </div>
@@ -205,7 +207,7 @@ export function VeloceProfile() {
       <section className="space-y-6 pt-6">
         <div className="flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-[#D4AE62]">
           <Globe className="h-4 w-4" />
-          <span>Til va Valyuta</span>
+          <span>{t('pLangCurrency')}</span>
         </div>
 
         <div className="flex flex-wrap gap-2">
