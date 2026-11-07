@@ -14,7 +14,6 @@ import {
   Layers,
   MoreHorizontal,
   Maximize2,
-  SlidersHorizontal,
   X,
 } from 'lucide-react';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -277,12 +276,6 @@ export function VeloceCustomize() {
     };
   }, []);
 
-  const capturedAnglesCount = React.useMemo(() => {
-    // Only the five studio sides count (the store also keeps extra frames, e.g. guided-scan shots).
-    const sides = FIVE_CAR_ANGLES.filter((a) => Boolean(multiAngles[a.id])).length;
-    if (sides > 0) return sides;
-    return photo ? 1 : 0;
-  }, [multiAngles, photo]);
 
   // The sides that were actually photographed. A single plain photo counts as the hero side.
   const planAngles = React.useMemo<PlanAngle[]>(() => {
@@ -413,7 +406,7 @@ export function VeloceCustomize() {
       {showGate && <CarIdentifyGate photo={multiAngles['front'] || photo || ''} onDone={confirmCar} />}
 
       {/* Top bar: back, title, photo counter */}
-      <div className="grid grid-cols-[44px_1fr_auto] items-center gap-2 lg:grid-cols-[44px_1fr] lg:gap-10 lg:pt-1">
+      <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2 lg:grid-cols-[44px_1fr] lg:gap-10 lg:pt-1">
         <Link
           href={isSeller ? `/${locale}/seller?tab=dashboard` : `/${locale}/shop`}
           aria-label={t('back')}
@@ -423,21 +416,12 @@ export function VeloceCustomize() {
         </Link>
 
         <div className="min-w-0 text-center lg:text-start">
-          <h1 className="font-display text-[12px] leading-snug font-medium uppercase tracking-[0.28em] ps-[0.28em] text-white lg:ps-0 lg:text-[17px] lg:font-light lg:tracking-[0.42em]">
+          <h1 className="truncate whitespace-nowrap font-display text-[12px] leading-snug font-medium uppercase tracking-[0.16em] ps-[0.16em] text-white sm:tracking-[0.28em] sm:ps-[0.28em] lg:ps-0 lg:text-[17px] lg:font-light lg:tracking-[0.42em]">
             {isSeller ? t('titleSeller') : t('titleUser')}
           </h1>
           <p className="mt-0.5 truncate text-[11px] text-white/40 lg:mt-1 lg:text-sm">{myCar ? `${myCar.label}${myCar.year ? ` · ${myCar.year}` : ''}` : t('subtitle')}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={openCamera}
-          aria-label={t('refreshPhoto')}
-          className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-gold-500 transition hover:bg-gold-500/10 lg:hidden"
-        >
-          <Camera className="h-[18px] w-[18px]" />
-          <span className="tabular-nums">{capturedAnglesCount}/5</span>
-        </button>
       </div>
 
       <div className="mt-2 min-h-[130px] flex-1 lg:mt-3 lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -505,7 +489,7 @@ export function VeloceCustomize() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => stepAngle(-1)}
             aria-label={tr('prevAngle')}
-            className="absolute start-2 top-1/2 z-[3] grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:start-6 lg:h-12 lg:w-12 lg:bg-black/40"
+            className="absolute start-2 top-1/2 z-[3] grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/25 text-white/45 opacity-60 backdrop-blur-sm transition hover:bg-black/60 hover:text-white hover:opacity-100 active:opacity-100 lg:start-6 lg:h-12 lg:w-12 lg:bg-black/40"
           >
             <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
           </button>
@@ -514,7 +498,7 @@ export function VeloceCustomize() {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => stepAngle(1)}
             aria-label={tr('nextAngle')}
-            className="absolute end-2 top-1/2 z-[3] grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/85 backdrop-blur-md transition hover:bg-black/75 lg:end-6 lg:h-12 lg:w-12 lg:bg-black/40"
+            className="absolute end-2 top-1/2 z-[3] grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/25 text-white/45 opacity-60 backdrop-blur-sm transition hover:bg-black/60 hover:text-white hover:opacity-100 active:opacity-100 lg:end-6 lg:h-12 lg:w-12 lg:bg-black/40"
           >
             <ChevronRight className="h-5 w-5 rtl:rotate-180" />
           </button>
@@ -530,16 +514,9 @@ export function VeloceCustomize() {
             </div>
           )}
 
-          {selectedProducts.length > 0 && !hasAfter && (
-            <div className="absolute start-3 top-3 z-[2] flex items-center gap-1.5 rounded-full bg-[#090A0F]/80 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-md lg:start-5 lg:top-5 lg:gap-2.5 lg:bg-black/30 lg:px-4 lg:py-2.5 lg:text-[13px] lg:font-medium">
-              <SlidersHorizontal className="h-3.5 w-3.5 text-gold-500 lg:hidden" />
-              <span aria-hidden className="hidden h-2.5 w-2.5 rounded-full bg-gold-500 lg:block" />
-              {t('selectedCount', { count: selectedProducts.length })}
-            </div>
-          )}
 
           {/* Angle pills */}
-          <div onPointerDown={(e) => e.stopPropagation()} className="absolute inset-x-3 bottom-3 z-[2] flex items-center gap-1 overflow-x-auto rounded-full bg-[#090A0F]/80 p-1 backdrop-blur-md lg:inset-x-auto lg:bottom-5 lg:start-5 lg:max-w-[calc(100%-2.5rem)] lg:gap-2 lg:bg-transparent lg:p-0 lg:backdrop-blur-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div onPointerDown={(e) => e.stopPropagation()} className="absolute inset-x-3 bottom-3 z-[2] flex items-center gap-1 overflow-x-auto rounded-full bg-[#090A0F]/35 p-1 opacity-55 backdrop-blur-sm transition-opacity duration-ui hover:opacity-100 focus-within:opacity-100 active:opacity-100 lg:opacity-100 lg:inset-x-auto lg:bottom-5 lg:start-5 lg:max-w-[calc(100%-2.5rem)] lg:gap-2 lg:bg-transparent lg:p-0 lg:backdrop-blur-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {FIVE_CAR_ANGLES.map((ang) => {
               const isActive = activeAngleId === ang.id;
               const hasCaptured = Boolean(multiAngles[ang.id]);
@@ -693,8 +670,6 @@ export function VeloceCustomize() {
             onPointerStart={unlockAudio}
             prevLabel={t('scrollBack')}
             nextLabel={t('scrollForward')}
-            selectLabel={t('select')}
-            selectedLabel={t('selected')}
             formatPrice={formatPrice}
             fitFallback={t('fitFallback')}
             ariaLabel={t('pickFromStrip')}

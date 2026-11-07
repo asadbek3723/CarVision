@@ -20,9 +20,6 @@ interface PartReelProps {
   /** Label for the previous / next arrows (desktop). */
   prevLabel: string;
   nextLabel: string;
-  /** Text for the pick / picked pill under the centred part. */
-  selectLabel: string;
-  selectedLabel: string;
   /** Formats a catalog (USD) price into the user's currency. */
   formatPrice: (usd: number) => string;
   /** Fallback when a part carries no "fits this car" text. */
@@ -94,8 +91,6 @@ export function PartReel({
   onPointerStart,
   prevLabel,
   nextLabel,
-  selectLabel,
-  selectedLabel,
   formatPrice,
   fitFallback,
   ariaLabel,
@@ -383,7 +378,6 @@ export function PartReel({
 
   if (n === 0) return null;
 
-  const isSelected = current ? selectedIds.includes(current.id) : false;
   const currentFit = current ? current.targetCar || current.compatibility?.[0]?.name || fitFallback : '';
 
   const slides: number[] = [];
@@ -410,16 +404,6 @@ export function PartReel({
           style={{ height: metrics.height, touchAction: 'pan-y' }}
           className="relative cursor-grab overflow-hidden outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-gold-500/50"
         >
-          {/* Gear rim: teeth slide past as the wheel turns */}
-          <div
-            ref={teethRef}
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-2 h-3 [mask-image:linear-gradient(90deg,transparent,#000_20%,#000_80%,transparent)]"
-            style={{
-              backgroundImage: 'linear-gradient(90deg, rgba(212,174,98,0.5) 0 2px, transparent 2px)',
-              backgroundSize: `${metrics.slot / 2}px 100%`,
-            }}
-          />
           {slides.map((k) => {
             const part = items[mod(k, n)]!;
             const picked = selectedIds.includes(part.id);
@@ -500,17 +484,6 @@ export function PartReel({
           <p className="mt-1 truncate text-xs text-white/50 lg:mt-3 lg:whitespace-normal lg:text-[15px] lg:leading-relaxed lg:text-white/60 lg:[display:-webkit-box] lg:[-webkit-box-orient:vertical] lg:[-webkit-line-clamp:5]">{[current.spec, currentFit].filter(Boolean).join(' · ')}</p>
           <div className="mt-2 flex items-center justify-center gap-3 lg:mt-5 lg:justify-start lg:gap-5">
             <span className="text-base font-semibold tabular-nums text-gold-500 lg:text-3xl">{formatPrice(Number(current.price) || 0)}</span>
-            <button
-              type="button"
-              onClick={() => onToggle(current.id)}
-              aria-pressed={isSelected}
-              className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full px-4 text-xs font-semibold transition active:scale-95 lg:min-h-10 lg:px-6 lg:text-sm ${
- isSelected ? 'bg-emerald-400/15 text-emerald-300' : 'bg-white/[0.08] text-white/85 hover:bg-white/[0.14]'
- }`}
-            >
-              {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-              {isSelected ? selectedLabel : selectLabel}
-            </button>
           </div>
           <p className="mt-2 hidden text-[11px] tabular-nums tracking-[0.2em] text-white/30 lg:mt-4 lg:block">
             {activeIdx + 1} / {n}
