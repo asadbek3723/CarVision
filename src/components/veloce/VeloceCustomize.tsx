@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -25,21 +26,22 @@ import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderB
 
 const CONFIRMED_KEY = 'carvision_car_confirmed_for';
 
+/** `label` / `short` are translation keys of the `flow` namespace (see messages). */
 export const FIVE_CAR_ANGLES = [
-  { id: 'front', label: 'Oldi tomon', short: 'Oldi' },
-  { id: 'rear', label: 'Orqa tomon', short: 'Orqa' },
-  { id: 'right', label: 'O‘ng tomon', short: 'O‘ng' },
-  { id: 'front-left', label: 'Oldi-chap tomon', short: 'Oldi-Chap' },
-  { id: 'rear-right', label: 'Orqa-o‘ng tomon', short: 'Orqa-O‘ng' },
+  { id: 'front', label: 'aFront', short: 'aFrontS' },
+  { id: 'rear', label: 'aRear', short: 'aRearS' },
+  { id: 'right', label: 'aRight', short: 'aRightS' },
+  { id: 'front-left', label: 'aFrontLeft', short: 'aFrontLeftS' },
+  { id: 'rear-right', label: 'aRearRight', short: 'aRearRightS' },
 ] as const;
 
 const CATEGORIES = [
-  { id: 'All', label: 'Barcha detallar' },
-  { id: 'Wheels', label: 'Disklar (Wheels)' },
-  { id: 'Body Kit', label: 'Bamper va Obves' },
-  { id: 'Performance', label: 'Fara va Chiroqlar' },
-  { id: 'Interior', label: 'Salon va Rul' },
-  { id: 'Color', label: 'Kuzov Rangi' },
+  { id: 'All', label: 'cuCatAll' },
+  { id: 'Wheels', label: 'cuCatWheels' },
+  { id: 'Body Kit', label: 'cuCatBody' },
+  { id: 'Performance', label: 'cuCatPerf' },
+  { id: 'Interior', label: 'cuCatInterior' },
+  { id: 'Color', label: 'cuCatColor' },
 ];
 
 import { composeCarAnglePhotorealistic } from '@/lib/automotive-compositor';
@@ -51,6 +53,7 @@ const getUSDPrice = (raw?: number) => {
 };
 
 export function VeloceCustomize() {
+  const t = useTranslations('flow');
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -222,12 +225,12 @@ export function VeloceCustomize() {
 
   // The sides that were actually photographed. A single plain photo counts as the hero side.
   const planAngles = React.useMemo<PlanAngle[]>(() => {
-    const sides: PlanAngle[] = FIVE_CAR_ANGLES.map((a) => ({ id: a.id, label: a.label, photo: multiAngles[a.id] }));
+    const sides: PlanAngle[] = FIVE_CAR_ANGLES.map((a) => ({ id: a.id, label: t(a.label), photo: multiAngles[a.id] }));
     if (!sides.some((a) => a.photo) && photo) {
       return sides.map((a) => (a.id === 'front-left' ? { ...a, photo } : a));
     }
     return sides;
-  }, [multiAngles, photo]);
+  }, [multiAngles, photo, t]);
   const renderPlan = React.useMemo(() => planRender(planAngles), [planAngles]);
   const creditsLeft = user?.credits_balance ?? 0;
   const notEnoughCredits = Boolean(user) && renderPlan.creditsNeeded > creditsLeft;
@@ -250,7 +253,7 @@ export function VeloceCustomize() {
 
     const partsToApply = selectedProducts;
     if (partsToApply.length === 0) {
-      setApplyError('Avval kamida bitta detalni tanlang.');
+      setApplyError(t('cuNeedPart'));
       return;
     }
 
@@ -259,7 +262,7 @@ export function VeloceCustomize() {
       return;
     }
     if (renderPlan.order.length === 0) {
-      setApplyError('Avval mashinangizni suratga oling.');
+      setApplyError(t('cuNeedPhoto'));
       return;
     }
     setApplyError(null);
@@ -316,10 +319,10 @@ export function VeloceCustomize() {
 
         <div className="text-center">
           <h1 className="text-base md:text-lg font-bold tracking-wide text-white">
-            {isSeller ? 'Planshet Tuning Studiyasi' : 'Avtomobil Tuning Studiyasi'}
+            {isSeller ? t('cuTitleTablet') : t('cuTitleCar')}
           </h1>
           <p className="text-xs text-[#A69F92]">
-            Yoqqan detallarni lentadan surib tanlang va natijani ko‘ring
+            {t('cuHint')}
           </p>
         </div>
 
@@ -328,7 +331,7 @@ export function VeloceCustomize() {
           className="inline-flex items-center gap-2 rounded-full bg-[#D4AE62]/15 px-4 py-2 text-xs font-bold text-[#D4AE62] hover:bg-[#D4AE62]/25 transition cursor-pointer"
         >
           <Camera className="h-4 w-4" />
-          <span className="hidden sm:inline">5 Rakursda Rasmga Olish</span>
+          <span className="hidden sm:inline">{t('cu5Angles')}</span>
           <span className="sm:hidden">{capturedAnglesCount}/5</span>
         </button>
       </div>
@@ -338,7 +341,7 @@ export function VeloceCustomize() {
         <div className="relative aspect-[16/9] max-h-[460px] w-full overflow-hidden">
           <img
             src={currentAnglePhoto}
-            alt="Mijoz avtomobili"
+            alt={t('cuClientCar')}
             className="h-full w-full object-cover transition-all duration-300"
           />
 
@@ -350,8 +353,8 @@ export function VeloceCustomize() {
             <SlidersHorizontal className="h-3.5 w-3.5 text-[#D4AE62]" />
             <span>
               {selectedProducts.length > 0
-                ? `${selectedProducts.length} ta detal tanlandi`
-                : 'Lentadan detal tanlang'}
+                ? t('cuSelected', { n: selectedProducts.length })
+                : t('cuPickStrip')}
             </span>
           </div>
 
@@ -372,7 +375,7 @@ export function VeloceCustomize() {
                         : 'text-white/75 hover:text-white'
                     }`}
                   >
-                    <span>{ang.short}</span>
+                    <span>{t(ang.short)}</span>
                     {hasCaptured && (
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${
@@ -390,7 +393,7 @@ export function VeloceCustomize() {
               onClick={openCamera}
               className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
             >
-              Rasmni yangilash
+              {t('cuRefresh')}
             </button>
           </div>
         </div>
@@ -425,7 +428,7 @@ export function VeloceCustomize() {
                     : 'bg-[#12151E] text-white/75 hover:bg-[#181C28] hover:text-white'
                 }`}
               >
-                {cat.label}
+                {t(cat.label)}
               </button>
             );
           })}
@@ -445,7 +448,7 @@ export function VeloceCustomize() {
             type="button"
             onClick={() => scrollFilmstrip('next')}
             className="grid h-10 w-10 place-items-center rounded-full bg-[#12151E] text-white/80 hover:bg-[#1A1E2B] hover:text-white transition cursor-pointer"
-            aria-label="O‘ngga surish"
+            aria-label={t('cuSwipe')}
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -466,20 +469,20 @@ export function VeloceCustomize() {
         ) : catalogProducts.length === 0 ? (
           <div className="rounded-[28px] bg-[#11141D] px-6 py-12 text-center">
             <p className="text-base font-semibold text-white">
-              {isSeller ? 'Garajingizda hali detal yo‘q' : 'Bu mashinaga mos detal topilmadi'}
+              {isSeller ? t('cuEmptyGarage') : t('cuNoFit')}
             </p>
             <p className="mx-auto mt-2 max-w-sm text-sm text-white/55">
               {isSeller
                 ? user?.plan?.isPaid
-                  ? 'Avval garajga detal qo‘shing, keyin uni mijoz mashinasida sinab ko‘rasiz.'
-                  : 'Garaj pullik tarifda ochiladi. Tarifni faollashtirib o‘z detallaringizni qo‘shing.'
-                : 'Mashina yoki yilni o‘zgartirib ko‘ring.'}
+                  ? t('cuHintSeller')
+                  : t('cuHintLocked')
+                : t('cuHintChange')}
             </p>
             <Link
               href={isSeller ? (user?.plan?.isPaid ? `/${locale}/seller/new-part` : `/${locale}/plans`) : `/${locale}/shop`}
               className="mt-5 inline-block rounded-full bg-[#D4AE62] px-6 py-2.5 text-xs font-bold text-black transition hover:brightness-110"
             >
-              {isSeller ? (user?.plan?.isPaid ? 'Detal qo‘shish' : 'Tariflarni ko‘rish') : 'Do‘konga o‘tish'}
+              {isSeller ? (user?.plan?.isPaid ? t('cuAddPart') : t('cuViewPlans')) : t('cuGoShop')}
             </Link>
           </div>
         ) : (
@@ -569,8 +572,8 @@ export function VeloceCustomize() {
           <div>
             <p className="text-xs text-[#A69F92]">
               {selectedProducts.length > 0
-                ? `${selectedProducts.length} ta detal tanlandi`
-                : 'Detallarni tanlang'}
+                ? t('cuSelected', { n: selectedProducts.length })
+                : t('cuChoose')}
             </p>
             <p className="text-base md:text-lg font-extrabold text-white tabular-nums">
               {selectedProducts.length > 0
@@ -593,7 +596,7 @@ export function VeloceCustomize() {
           >
             <Layers className="h-4 w-4" />
             <span>
-              Natijani ko‘rish
+              {t('cuSee')}
               {renderPlan.creditsNeeded > 0 && <span className="ms-2 rounded-full bg-black/15 px-2.5 py-1 text-[11px]">{renderPlan.order.length} rakurs · {renderPlan.creditsNeeded} kredit</span>}
             </span>
           </button>
