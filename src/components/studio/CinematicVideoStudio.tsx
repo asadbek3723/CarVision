@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { Download, Film, Loader2, RefreshCw, Share2, X } from 'lucide-react';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -59,6 +60,7 @@ export function CinematicVideoStudio({
   carName = 'CarVision Tuning',
 }: CinematicVideoStudioProps) {
   const { user } = useAuth();
+  const t = useTranslations('flow');
   const [phase, setPhase] = React.useState<Phase>('idle');
   const [progress, setProgress] = React.useState(0);
   const [errorText, setErrorText] = React.useState('');
@@ -92,7 +94,7 @@ export function CinematicVideoStudio({
       blobRef.current = null;
 
       if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
-        setErrorText("Bu brauzer video yaratishni qo'llamaydi. Chrome yoki Safari'ning yangi versiyasini ishlating.");
+        setErrorText(t('vsNoSupport'));
         setPhase('error');
         return;
       }
@@ -107,7 +109,7 @@ export function CinematicVideoStudio({
       }
       if (cancelled) return;
       if (loaded.length === 0) {
-        setErrorText("Rasmlarni yuklab bo'lmadi. Avval avtomobil rasmini oling.");
+        setErrorText(t('vsNoImages'));
         setPhase('error');
         return;
       }
@@ -115,7 +117,7 @@ export function CinematicVideoStudio({
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d', { alpha: false });
       if (!canvas || !ctx) {
-        setErrorText("Video yaratib bo'lmadi.");
+        setErrorText(t('vsFail'));
         setPhase('error');
         return;
       }
@@ -203,10 +205,10 @@ export function CinematicVideoStudio({
 
     run().catch((err: unknown) => {
       if (err instanceof RecordingAborted) {
-        setErrorText("Video yaratish to'xtadi. Oynani ochiq qoldirib, qayta urinib ko'ring.");
+        setErrorText(t('vsStopped'));
       } else {
         console.error('Reel render failed:', err);
-        setErrorText("Video yaratib bo'lmadi. Qayta urinib ko'ring.");
+        setErrorText(t('vsFail'));
       }
       setPhase('error');
     });
@@ -293,7 +295,7 @@ export function CinematicVideoStudio({
           {phase === 'loading' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 text-center">
               <Loader2 className="h-8 w-8 animate-spin text-[#D4AE62]" />
-              <p className="text-sm text-white/80">Rasmlar tayyorlanmoqda…</p>
+              <p className="text-sm text-white/80">{t('vsPreparing')}</p>
             </div>
           )}
           {phase === 'error' && (
@@ -307,7 +309,7 @@ export function CinematicVideoStudio({
                 className="inline-flex items-center gap-2 rounded-full bg-[#D4AE62] px-5 py-2.5 text-sm font-bold text-black transition hover:brightness-110"
               >
                 <RefreshCw className="h-4 w-4" />
-                Qayta urinish
+                {t('retry')}
               </button>
             </div>
           )}
@@ -332,7 +334,7 @@ export function CinematicVideoStudio({
               className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#D4AE62] px-5 py-3 text-sm font-bold text-black transition hover:brightness-110"
             >
               <Download className="h-4 w-4" />
-              Yuklab olish
+              {t('download')}
             </a>
             {canShare && (
               <button

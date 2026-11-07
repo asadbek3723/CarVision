@@ -82,7 +82,7 @@ async function renderAngle(angle: PlanAngle, parts: BuildPart[], reference?: str
       await sleep(4000 * (attempt + 1));
       continue;
     }
-    throw new RenderError(data.error || "Rasm yaratib bo'lmadi", res.status, code);
+    throw new RenderError(data.error || code, res.status, code);
   }
 }
 
@@ -115,14 +115,14 @@ export function useRenderBuild(onCreditsChanged?: () => void) {
         onCreditsChanged?.();
         return true;
       } catch (e) {
-        const err = e instanceof RenderError ? e : new RenderError("Tarmoq xatosi. Qayta urinib ko'ring", 0, 'NETWORK');
+        const err = e instanceof RenderError ? e : new RenderError('NETWORK', 0, 'NETWORK');
         onCreditsChanged?.();
         if ((FATAL_CODES as string[]).includes(err.code)) {
-          setFatal({ code: err.code as FatalCode, message: err.message });
-          patch(angle.id, { status: 'failed', error: err.message });
+          setFatal({ code: err.code as FatalCode, message: err.code });
+          patch(angle.id, { status: 'failed', error: err.code });
           throw err;
         }
-        patch(angle.id, { status: 'failed', error: err.message });
+        patch(angle.id, { status: 'failed', error: err.code });
         return false;
       }
     },

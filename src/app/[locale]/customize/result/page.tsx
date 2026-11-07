@@ -496,7 +496,7 @@ export default function CustomizeResultPage() {
                 ) : (
                   <>
                     <ShoppingBag className="h-5 w-5" />
-                    <span>Sotib olish ({formatPrice(deposit3PercentUSD)} Zakalat)</span>
+                    <span>{t('rsBuy', { amount: formatPrice(deposit3PercentUSD) })}</span>
                   </>
                 )}
               </button>
