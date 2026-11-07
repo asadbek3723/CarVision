@@ -1771,7 +1771,10 @@
     "NOT_PAID": "Kapora henüz onaylanmadı.",
     "TOO_SOON": "Yeni kod istemeden önce biraz bekleyin.",
     "SEND_FAILED": "SMS gönderilemedi.",
-    "SMS_DISABLED": "SMS doğrulaması şu anda kullanılamıyor."
+    "SMS_DISABLED": "SMS doğrulaması şu anda kullanılamıyor.",
+    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
+    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again"
   },
   "capturePage": {
     "sent": "Fotoğraf bilgisayara gönderildi",

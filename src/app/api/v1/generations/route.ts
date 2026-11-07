@@ -48,7 +48,7 @@ const requestSchema = z.object({
   partAngleImage: short(2000).optional(),
   partPrice: z.number().nonnegative().max(10_000_000).optional(),
   swatchColor: short(40).optional(),
-  parts: z.array(partInputSchema).max(8).optional(),
+  parts: z.array(partInputSchema).max(12).optional(),
   idempotencyKey: z.string().uuid().optional(),
   /** Finished render of the same build from another angle (consistency reference). */
   referenceAfterUrl: short(2000).optional(),

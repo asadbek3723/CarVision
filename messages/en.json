@@ -1771,7 +1771,10 @@
     "NOT_PAID": "The deposit has not been confirmed yet.",
     "TOO_SOON": "Please wait a moment before requesting another code.",
     "SEND_FAILED": "Couldn't send the SMS.",
-    "SMS_DISABLED": "SMS verification is currently unavailable."
+    "SMS_DISABLED": "SMS verification is currently unavailable.",
+    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
+    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again"
   },
   "capturePage": {
     "sent": "The photo was sent to the computer",

@@ -1771,7 +1771,10 @@
     "NOT_PAID": "Пардохти пешакӣ ҳанӯз тасдиқ нашудааст.",
     "TOO_SOON": "Пеш аз дархости рамзи нав андаке интизор шавед.",
     "SEND_FAILED": "SMS фиристода нашуд.",
-    "SMS_DISABLED": "Тасдиқи SMS ҳоло дастрас нест."
+    "SMS_DISABLED": "Тасдиқи SMS ҳоло дастрас нест.",
+    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
+    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again"
   },
   "capturePage": {
     "sent": "Акс ба компютер фиристода шуд",

@@ -1771,7 +1771,10 @@
     "NOT_PAID": "Кепілақы әлі расталмаған.",
     "TOO_SOON": "Жаңа код сұрамас бұрын біраз күтіңіз.",
     "SEND_FAILED": "SMS жіберу мүмкін болмады.",
-    "SMS_DISABLED": "SMS растау қазір қолжетімсіз."
+    "SMS_DISABLED": "SMS растау қазір қолжетімсіз.",
+    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
+    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again"
   },
   "capturePage": {
     "sent": "Сурет компьютерге жіберілді",

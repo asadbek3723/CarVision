@@ -1771,7 +1771,10 @@
     "NOT_PAID": "لم يتم تأكيد العربون بعد.",
     "TOO_SOON": "يرجى الانتظار قليلًا قبل طلب رمز جديد.",
     "SEND_FAILED": "تعذّر إرسال الرسالة النصية.",
-    "SMS_DISABLED": "التحقق عبر SMS غير متاح حاليًا."
+    "SMS_DISABLED": "التحقق عبر SMS غير متاح حاليًا.",
+    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
+    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again"
   },
   "capturePage": {
     "sent": "تم إرسال الصورة إلى الحاسوب",

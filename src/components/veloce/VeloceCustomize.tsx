@@ -319,10 +319,16 @@ export function VeloceCustomize() {
     const generatedMap: Record<string, string> = {};
     for (const angle of renderPlan.order) {
       const before = angle.photo as string;
-      generatedMap[angle.id] = render.demo
-        ? await composeCarAnglePhotorealistic({ baseCarSrc: before, aiGeneratedUrl: null, parts, angleId: angle.id })
-        : (render.results[angle.id] ?? before);
+      if (render.demo) {
+        generatedMap[angle.id] = await composeCarAnglePhotorealistic({ baseCarSrc: before, aiGeneratedUrl: null, parts, angleId: angle.id });
+        continue;
+      }
+      // Only real AI results are shown; a side that failed stays out instead of passing the
+      // untouched photo off as the "after" picture.
+      const result = render.results[angle.id];
+      if (result) generatedMap[angle.id] = result;
     }
+    if (Object.keys(generatedMap).length === 0) return;
     setGeneratedAngles(generatedMap);
     playLock();
     vibrate(50);

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
 import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
+import { envKeys } from '@/server/providers/ai/key-pool';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -21,7 +22,9 @@ interface Candidate {
 
 /** Asks Gemini which car is in the photo. Returns null when no key is set or the call fails. */
 async function askGemini(photo: string): Promise<{ isCar: boolean; make: string; model: string; confidence: number } | null> {
-  const key = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
+  // Same key pool as image generation (GEMINI_API_KEYS, GEMINI_API_KEY or GOOGLE_API_KEY).
+  const keys = envKeys('gemini');
+  const key = keys[Math.floor(Math.random() * keys.length)] ?? '';
   if (key.length < 8) return null;
   const match = photo.match(/^data:(image\/[a-z]+);base64,(.+)$/);
   if (!match) return null;
