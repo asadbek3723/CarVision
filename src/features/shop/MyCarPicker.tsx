@@ -48,24 +48,23 @@ export function MyCarPicker() {
   if (car && !open) {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-gold-500/10 px-4 py-2 text-xs font-semibold text-gold-500">
-          <Car className="h-4 w-4" />
-          {car.label}
-          {car.year ? ` · ${car.year}` : ''}
+        {/* One pill: tap the car to change it, the cross to clear it */}
+        <span className="inline-flex min-w-0 max-w-full items-center rounded-full bg-gold-500/10 text-gold-300">
+          <button type="button" onClick={() => setOpen(true)} aria-label={t('change')} className="inline-flex min-h-9 min-w-0 items-center gap-2 ps-3.5 pe-2 text-[13px] font-semibold">
+            <Car className="h-4 w-4 shrink-0" />
+            <span className="truncate">{car.label}{car.year ? ` · ${car.year}` : ''}</span>
+          </button>
+          <button type="button" aria-label={t('removeCar')} onClick={() => setCar(null)} className="me-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-gold-300/80 transition hover:bg-gold-500/15 hover:text-gold-300">
+            <X className="h-3.5 w-3.5" />
+          </button>
         </span>
-        <button type="button" onClick={() => setOpen(true)} className="text-xs text-white/60 underline hover:text-white">
-          {t('change')}
-        </button>
-        <button type="button" aria-label={t('removeCar')} onClick={() => setCar(null)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
-          <X className="h-3.5 w-3.5" />
-        </button>
       </div>
     );
   }
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-white/85 transition hover:bg-white/[0.06]">
+      <button type="button" onClick={() => setOpen(true)} className="inline-flex min-h-9 items-center gap-2 rounded-full ps-1 pe-3 text-[13px] font-semibold text-white/80 transition hover:bg-white/[0.06]">
         <Car className="h-4 w-4 text-gold-500" />
         {t('chip')}
       </button>

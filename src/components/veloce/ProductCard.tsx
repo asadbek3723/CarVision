@@ -34,74 +34,80 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
     return names.length > 1 ? `${names[0]} +${names.length - 1}` : (names[0] as string);
   }, [p, t]);
 
+  const addButton = (extra: string) => (
+    <button
+      type="button"
+      onClick={() => add(p.id)}
+      disabled={p.stock === 0}
+      aria-label={t('addToCart', { name: p.name })}
+      className={`grid place-items-center rounded-full bg-gold-500 text-ink shadow-glow-gold transition active:scale-90 disabled:opacity-40 cursor-pointer ${extra}`}
+    >
+      <Plus className="h-4 w-4" strokeWidth={2.5} />
+    </button>
+  );
+
   return (
     <div
-      className="rise group relative overflow-hidden rounded-2xl bg-surface-1 shadow-[0_12px_32px_rgba(0,0,0,0.6)] transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(212,174,98,0.18)]"
-      style={{ animationDelay: `${i * 60}ms` }}
+      className="rise group relative flex flex-col overflow-hidden rounded-2xl bg-surface-1 transition duration-500 md:shadow-[0_12px_32px_rgba(0,0,0,0.6)] md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(212,174,98,0.18)]"
+      style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
     >
       <Link href={`/${locale}/shop/${p.id}`} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-square overflow-hidden md:aspect-[4/3]">
           {p.swatch ? (
             <div
-              className="h-full w-full transition duration-700 group-hover:scale-110"
-              style={{
-                background: `radial-gradient(circle at 30% 30%, ${p.swatch}, oklch(0.08 0 0))`,
-              }}
+              className="h-full w-full transition duration-700 md:group-hover:scale-110"
+              style={{ background: `radial-gradient(circle at 30% 30%, ${p.swatch}, oklch(0.08 0 0))` }}
             />
+          ) : imgFailed || !p.image ? (
+            <div className="h-full w-full bg-surface-2" />
           ) : (
-            imgFailed || !p.image ? (
-              <div className="flex h-full w-full items-center justify-center bg-surface-1 text-[10px] uppercase tracking-widest text-white/30">Rasm yo‘q</div>
-            ) : (
-              <img
-                src={p.image}
-                alt={p.name}
-                loading="lazy"
-                onError={() => setImgFailed(true)}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-              />
-            )
+            <img
+              src={p.image}
+              alt={p.name}
+              loading="lazy"
+              decoding="async"
+              onError={() => setImgFailed(true)}
+              className="h-full w-full object-cover transition duration-700 md:group-hover:scale-110"
+            />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent" />
-          <span className="absolute bottom-3 start-3 rounded-full bg-background/80 px-3 py-1 text-[10px] font-semibold tracking-widest text-primary uppercase backdrop-blur">
+          <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent md:from-card" />
+          <span className="absolute bottom-3 start-3 hidden rounded-full bg-background/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-primary backdrop-blur md:inline-block">
             {categoryLabel(p.category)}
           </span>
         </div>
 
-        <div className="space-y-1.5 p-4">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
-            <span className="min-w-0 max-w-full truncate text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              {p.brand}
-            </span>
+        <div className="p-3 md:space-y-1.5 md:p-4">
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-[10px] uppercase tracking-[0.16em] text-muted-foreground md:tracking-[0.2em]">{p.brand}</span>
             {carLabel && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-gold-500">
+              <span className="hidden items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-gold-500 md:inline-flex">
                 <Car className="h-3 w-3" />
                 <span className="max-w-[110px] truncate">{carLabel}</span>
               </span>
             )}
           </div>
-          <h3 className="truncate font-semibold text-white">{p.name}</h3>
-          <p className="truncate text-xs text-muted-foreground">{p.spec}</p>
+          {/* Phones: two lines of name, no spec; desktop: one line each */}
+          <h3 className="mt-1 line-clamp-2 min-h-[2.6em] text-[14px] font-semibold leading-[1.3] text-white md:mt-0 md:line-clamp-1 md:min-h-0 md:text-base">{p.name}</h3>
+          <p className="hidden truncate text-xs text-muted-foreground md:block">{p.spec}</p>
         </div>
       </Link>
 
+      {/* Phones: the add button sits on the photo, so the price gets the full width below */}
       {showPrice && (
-        <div className="flex items-center justify-between px-4 pb-4">
-          <div>
-            <div className="text-gold-gradient font-bold tabular-nums tracking-tight font-display text-sm sm:text-base">
+        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square md:hidden">
+          <div className="pointer-events-auto absolute bottom-2.5 end-2.5">{addButton('h-10 w-10')}</div>
+        </div>
+      )}
+
+      {showPrice && (
+        <div className="mt-auto flex items-center justify-between gap-2 px-3 pb-3 md:px-4 md:pb-4">
+          <div className="min-w-0">
+            <div className="truncate whitespace-nowrap font-display text-[15px] font-bold tabular-nums tracking-tight text-gold-gradient md:text-base">
               {formatPrice(p.price)}
             </div>
-            <div className="text-[10px] text-white/40">
-              {t('depositHint')}
-            </div>
+            <div className="hidden text-[10px] text-white/40 md:block">{t('depositHint')}</div>
           </div>
-          <button
-            onClick={() => add(p.id)}
-            disabled={p.stock === 0}
-            aria-label={t('addToCart', { name: p.name })}
-            className="grid h-11 w-11 place-items-center rounded-full bg-gold-gradient text-primary-foreground transition active:scale-90 hover:shadow-gold cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+          {addButton('hidden h-11 w-11 shrink-0 md:grid')}
         </div>
       )}
     </div>
