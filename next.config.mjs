@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import withSerwistInit from '@serwist/next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
@@ -13,6 +15,12 @@ const withSerwist = withSerwistInit({
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  // This folder is the project root, even when it sits inside another checkout (git worktree)
+  // that has its own lockfile.
+  outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
+  images: {
+    qualities: [70, 75],
+  },
   async headers() {
     return [
       {
