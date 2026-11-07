@@ -19,7 +19,7 @@ interface Props {
   backdrop?: string | undefined;
   locale: string;
   demo?: boolean | undefined;
-  onRetry: (angleId: string) => void;
+  onRetry: (angleId: string) => void | Promise<void>;
   onContinue: () => void;
   onClose: () => void;
 }
@@ -36,6 +36,16 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
   const [stage, setStage] = React.useState(0);
   const done = states.filter((s) => s.status === 'done').length;
   const failed = states.filter((s) => s.status === 'failed');
+  const [retrying, setRetrying] = React.useState(false);
+  // One after another: the server allows only a few renders in flight per user.
+  const retryAll = async () => {
+    setRetrying(true);
+    try {
+      for (const f of failed) await onRetry(f.id);
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   React.useEffect(() => {
     if (!running) return;
@@ -147,19 +157,17 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
             </div>
           )}
 
+          {/* Failed sides are already marked in the list; one action retries them all. */}
           {!running && failed.length > 0 && !fatal && (
-            <div className="mt-5 space-y-2">
-              {failed.map((f) => (
-                <div key={f.id} className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3">
-                  <span className="min-w-0 text-sm text-white/80">{f.label}: <span className="text-red-300">{apiError({ code: f.errorCode, error: f.error }, t('errorFallback'))}</span></span>
-                  <button type="button" onClick={() => onRetry(f.id)} className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10">
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    {t('retry')}
-                  </button>
-                </div>
-              ))}
-              <p className="text-[11px] text-white/40">{t('refundNote')}</p>
-            </div>
+            <button
+              type="button"
+              disabled={retrying}
+              onClick={() => void retryAll()}
+              className={buttonClasses({ variant: 'quiet', size: 'lg', fullWidth: true, className: 'mt-5 gap-2.5 px-5' })}
+            >
+              <RefreshCw className={`h-4 w-4 shrink-0 ${retrying && !reduce ? 'animate-spin' : ''}`} />
+              <span className="min-w-0 truncate whitespace-nowrap">{t('retryAll', { count: failed.length })}</span>
+            </button>
           )}
 
           {!running && done > 0 && (

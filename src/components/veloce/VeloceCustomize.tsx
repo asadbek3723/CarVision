@@ -405,7 +405,7 @@ export function VeloceCustomize() {
           backdrop={renderPlan.order[0]?.photo}
           locale={locale}
           demo={render.demo}
-          onRetry={(id) => void render.retry(id)}
+          onRetry={(id) => render.retry(id)}
           onContinue={() => void openResult()}
           onClose={() => setShowProgress(false)}
         />

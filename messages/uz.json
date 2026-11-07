@@ -778,7 +778,8 @@
     "errorFallback": "xato",
     "retry": "Qayta (1 kredit)",
     "refundNote": "Xato boʻlgan rakurslar uchun kredit avtomatik qaytarilgan.",
-    "viewResult": "Natijani koʻrish ({count} ta rakurs)"
+    "viewResult": "Natijani koʻrish ({count} ta rakurs)",
+    "retryAll": "Qayta generatsiya qilish · {count} kredit"
   },
   "result": {
     "fullscreen": "To'liq ekran",

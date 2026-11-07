@@ -61,6 +61,9 @@
 @layer base {
   * {
     border-color: var(--border-subtle);
+    /* App-like everywhere: no scroll container (page, dialog, horizontal strip) rubber-bands
+       past its edge or drags the page behind it. */
+    overscroll-behavior: none;
   }
 
   html,

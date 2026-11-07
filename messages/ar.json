@@ -778,7 +778,8 @@
     "errorFallback": "خطأ",
     "retry": "إعادة (رصيد واحد)",
     "refundNote": "أُعيد الرصيد تلقائيًا عن الزوايا التي فشلت.",
-    "viewResult": "عرض النتيجة ({count})"
+    "viewResult": "عرض النتيجة ({count})",
+    "retryAll": "إعادة الإنشاء · {count} رصيد"
   },
   "result": {
     "fullscreen": "ملء الشاشة",
