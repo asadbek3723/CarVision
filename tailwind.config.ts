@@ -8,10 +8,11 @@ const scale = (name: string, steps: number[]) =>
 
 const config: Config = {
   darkMode: ['class'],
-  content: [
-    './src/**/*.{ts,tsx}',
-    './styles/**/*.css'
-  ],
+  // Paths are resolved from this file, not from the process folder (see postcss.config.mjs).
+  content: {
+    relative: true,
+    files: ['./src/**/*.{ts,tsx}', './styles/**/*.css'],
+  },
   theme: {
     extend: {
       colors: {
