@@ -125,8 +125,9 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
       </Link>
 
       <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-6">
         {/* Image Visual */}
-        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#11131A] shadow-[0_24px_60px_rgba(0,0,0,0.65)] lg:col-span-6">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#11131A] shadow-[0_24px_60px_rgba(0,0,0,0.65)]">
           {product.swatch ? (
             <div
               className="h-full w-full"
@@ -144,7 +145,7 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
         </div>
 
         {gallery.length > 1 && !product.swatch && (
-          <div className="-mt-6 flex gap-2 lg:col-span-6 lg:-mt-4">
+          <div className="mt-3 flex gap-2">
             {gallery.map((src, idx) => (
               <button
                 key={src}
@@ -158,6 +159,17 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
             ))}
           </div>
         )}
+
+
+        {/* Why the workshop stays hidden: a wide, boxless line right under the photo */}
+        <div className="mt-4 flex items-start gap-3 px-1">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
+          <p className="text-[11px] leading-relaxed text-white/55">
+            <span className="font-semibold text-white">{t('lockedTitle')}</span>{' '}
+            {t('lockedBody', { amount: formatPrice(deposit3PercentUSD) })}
+          </p>
+        </div>
+        </div>
 
         {/* Clean Boxless Info */}
         <div className="space-y-6 lg:col-span-6">
@@ -215,23 +227,6 @@ export function VeloceProductDetail({ id }: VeloceProductDetailProps) {
           <p className={`text-xs font-semibold ${outOfStock ? 'text-red-300' : 'text-emerald-400'}`}>
             {outOfStock ? t('outOfStock') : t('inStock', { count: product.stock })}
           </p>
-
-          {/* Locked Workshop Explanation (Boxless soft surface) */}
-          <div className="rounded-2xl bg-white/[0.03] p-5">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-500/15 text-gold-500">
-                <Lock className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-white">
-                  {t('lockedTitle')}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-white/55">
-                  {t('lockedBody', { amount: formatPrice(deposit3PercentUSD) })}
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Actions */}
           <div className="flex flex-col gap-3 pt-2 sm:flex-row">
