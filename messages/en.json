@@ -691,8 +691,6 @@
     "emptyHint": "Use the <shop>shop</shop> to make a new booking"
   },
   "customize": {
-    "saveConfig": "Save config",
-    "configSaved": "Saved",
     "clearBuild": "Clear build",
     "angles": {
       "front": "Front",

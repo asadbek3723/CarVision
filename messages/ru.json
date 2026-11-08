@@ -691,8 +691,6 @@
     "emptyHint": "Чтобы забронировать, загляните в <shop>магазин</shop>"
   },
   "customize": {
-    "saveConfig": "Сохранить конфигурацию",
-    "configSaved": "Сохранено",
     "clearBuild": "Очистить сборку",
     "angles": {
       "front": "Спереди",

@@ -691,8 +691,6 @@
     "emptyHint": "Жаңа брон жасау үшін <shop>дүкенді</shop> пайдаланыңыз"
   },
   "customize": {
-    "saveConfig": "Конфигурацияны сақтау",
-    "configSaved": "Сақталды",
     "clearBuild": "Таңдауды тазалау",
     "angles": {
       "front": "Алдыңғы жағы",

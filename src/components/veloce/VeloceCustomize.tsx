@@ -9,8 +9,6 @@ import {
   ChevronRight,
   Download,
   Camera,
-  Bookmark,
-  Check,
   Layers,
   MoreHorizontal,
   Maximize2,
@@ -226,16 +224,6 @@ export function VeloceCustomize() {
   const [sliderPos, setSliderPos] = React.useState(50);
   const sliderRef = React.useRef<HTMLDivElement | null>(null);
   const stageRef = React.useRef<HTMLDivElement | null>(null);
-  const [configSaved, setConfigSaved] = React.useState(false);
-  const saveConfig = () => {
-    try {
-      localStorage.setItem('carvision_saved_build', JSON.stringify(selectedPartIds));
-    } catch {
-      /* storage blocked: nothing to remember */
-    }
-    setConfigSaved(true);
-    window.setTimeout(() => setConfigSaved(false), 2200);
-  };
   const toggleFullscreen = () => {
     const el = stageRef.current;
     if (!el) return;
@@ -591,30 +579,21 @@ export function VeloceCustomize() {
           ))}
         </ul>
         <div className="mt-5 pt-5">
-          <div className="mb-4 flex items-center justify-between px-1 text-sm">
-            <span className="text-white/45">{selectedProducts.length > 0 ? t('selectedCount', { count: selectedProducts.length }) : t('tapHint')}</span>
-            {selectedProducts.length > 0 && (
+          {selectedProducts.length > 0 && (
+            <div className="mb-4 flex items-center justify-between px-1 text-sm">
+              <span className="text-white/45">{t('selectedCount', { count: selectedProducts.length })}</span>
               <span className="text-[17px] tabular-nums text-white/85">
                 {t('total', { amount: '§' }).split('§')[0]}
                 <span className="text-[22px] font-semibold text-white">{formatPrice(totalSelectedUSD)}</span>
                 {t('total', { amount: '§' }).split('§')[1]}
               </span>
-            )}
-          </div>
+            </div>
+          )}
           {creditsNote}
           {applyButtonDesktop}
           {renderPlan.creditsNeeded > 0 && (
             <p className="mt-2 text-center text-[11px] text-white/40">{t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}</p>
           )}
-          <button
-            type="button"
-            onClick={saveConfig}
-            disabled={selectedProducts.length === 0}
-            className="mt-4 inline-flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-black/20 text-[15px] font-medium uppercase tracking-[0.1em] text-[#F1E6CC] transition  hover:bg-gold-500/[0.05] active:scale-[0.99] disabled:cursor-default disabled:opacity-40"
-          >
-            {configSaved ? <Check className="h-5 w-5 text-emerald-400" /> : <Bookmark className="h-5 w-5" strokeWidth={1.6} />}
-            <span>{configSaved ? t('configSaved') : t('saveConfig')}</span>
-          </button>
         </div>
       </aside>
       </div>

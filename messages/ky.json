@@ -691,8 +691,6 @@
     "emptyHint": "Жаңы брондоо үчүн <shop>дүкөндү</shop> колдонуңуз"
   },
   "customize": {
-    "saveConfig": "Конфигурацияны сактоо",
-    "configSaved": "Сакталды",
     "clearBuild": "Тандоону тазалоо",
     "angles": {
       "front": "Алдыңкы жагы",

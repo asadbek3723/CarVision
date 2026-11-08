@@ -691,8 +691,6 @@
     "emptyHint": "Yangi bron qilish uchun <shop>do‘kondan</shop> foydalaning"
   },
   "customize": {
-    "saveConfig": "Konfiguratsiyani saqlash",
-    "configSaved": "Saqlandi",
     "clearBuild": "Tanlovni tozalash",
     "angles": {
       "front": "Oldi tomon",

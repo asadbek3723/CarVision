@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026-11-08] - Customize build panel: fewer controls
+### Removed
+- Desktop build panel ("Sizning to'plamingiz"): the "Lentadan yoqqan jihozlarni bosing" hint row (the count/total row now shows only once a part is picked) and the "Konfiguratsiyani saqlash" button, whose localStorage copy was never read anywhere. Unused `saveConfig` / `configSaved` strings dropped from all locales.
+
 ## [2026-11-08] - Smart camera subject colours & Vertex AI Gemini keys
 ### Added
 - **Smart camera subject detection** (`useSubjectDetector`, `subject-classify.ts`): on-device MediaPipe EfficientDet-Lite0 (CPU, ~4 checks/s). Car/truck/bus -> green outline + frame + "Car detected"; person -> red; anything else -> yellow. Most prominent object (area x score) wins, majority smoothing stops flicker. Advisory only: the shutter is never blocked; without the model the camera behaves as before. Strings in all 8 locales (`scanLive.subject`).

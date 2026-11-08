@@ -691,8 +691,6 @@
     "emptyHint": "استخدم <shop>المتجر</shop> لإجراء حجز جديد"
   },
   "customize": {
-    "saveConfig": "حفظ التهيئة",
-    "configSaved": "تم الحفظ",
     "clearBuild": "مسح التحديد",
     "angles": {
       "front": "الأمام",

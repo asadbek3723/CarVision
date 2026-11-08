@@ -691,8 +691,6 @@
     "emptyHint": "Yeni rezervasyon için <shop>mağazayı</shop> kullanın"
   },
   "customize": {
-    "saveConfig": "Yapılandırmayı kaydet",
-    "configSaved": "Kaydedildi",
     "clearBuild": "Seçimi temizle",
     "angles": {
       "front": "Ön",
