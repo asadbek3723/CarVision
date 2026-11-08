@@ -68,6 +68,10 @@
      overscroll-behavior on every element blocked page scrolling over any nested container. */
   .overflow-x-auto {
     overscroll-behavior-x: contain;
+    /* overflow-x: auto silently turns overflow-y into auto as well, so a 1px underline or shadow
+       made the strip scrollable up/down and its chips slid out of view under a vertical swipe.
+       Strips only scroll sideways (an explicit overflow-y-auto utility still wins). */
+    overflow-y: hidden;
   }
 
   html,

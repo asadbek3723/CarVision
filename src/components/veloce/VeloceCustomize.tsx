@@ -608,7 +608,7 @@ export function VeloceCustomize() {
       )}
 
       {/* Category tabs */}
-      <div role="tablist" aria-label={t('subtitle')} className="mt-2 flex shrink-0 gap-6 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
+      <div role="tablist" aria-label={t('subtitle')} className="mt-2 flex shrink-0 touch-pan-x gap-6 overflow-x-auto overflow-y-hidden overscroll-none px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
         {visibleCategories.map((cat) => {
           const active = activeCategory === cat.id;
           return (

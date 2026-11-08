@@ -100,7 +100,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
   const statusText = fatal ? t('stopped') : running ? t(STAGES[stage] ?? 'stage1') : failed.length && !done ? t('noneReady') : failed.length ? t('someFailed') : t('allReady');
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={t('dialog')} className="fixed inset-0 z-[90] flex flex-col overflow-y-auto overflow-x-hidden overscroll-contain bg-[#07080B]">
+    <div role="dialog" aria-modal="true" aria-label={t('dialog')} className="fixed inset-0 z-[90] flex flex-col overflow-y-auto overflow-x-hidden overscroll-none bg-[#07080B]">
       {backdrop && <div className="pointer-events-none absolute inset-0 scale-110 bg-cover bg-center opacity-[0.18] blur-3xl" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden />}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,174,98,0.06),transparent_60%)]" aria-hidden />
 

@@ -7,6 +7,7 @@ import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { VeloceStoreProvider } from '@/context/VeloceStore';
 import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt';
+import { TouchGuard } from '@/components/pwa/TouchGuard';
 import { JsonLd, organizationLd, websiteLd } from '@/lib/seo/jsonld';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { DEFAULT_LOCALE, SITE_NAME, SITE_URL, isLocale } from '@/lib/seo/site';
@@ -63,6 +64,9 @@ export const viewport: Viewport = {
   themeColor: '#12141A',
   width: 'device-width',
   initialScale: 1,
+  // App-like: no pinch zoom (Android honours this; iOS is handled by <TouchGuard />).
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default async function LocaleLayout({
@@ -101,6 +105,7 @@ export default async function LocaleLayout({
                 <JsonLd data={[organizationLd(), websiteLd(locale as Locale)]} />
                 {children}
                 <PwaInstallPrompt />
+                <TouchGuard />
               </VeloceStoreProvider>
             </CurrencyProvider>
           </AuthProvider>

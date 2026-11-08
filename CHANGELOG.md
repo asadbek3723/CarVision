@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026-11-08] - App-like touch behaviour: no zoom, no rubber-band
+### Changed
+- Viewport: `maximum-scale=1, user-scalable=no`; new `TouchGuard` (mounted in the locale layout) cancels pinch gestures on iOS/in-app browsers and any swipe that nothing under the finger can scroll further, so the page never bounces past its edges and fixed screens (render progress) never reveal the page behind them.
+- Customize category tabs: `touch-pan-x` + `overflow-y-hidden`, so a vertical swipe no longer slides the chips out of view. Global `.overflow-x-auto` now also sets `overflow-y: hidden` (the 1px underline had made every such strip scrollable vertically).
+- Render progress dialog: `overscroll-none` instead of `overscroll-contain`.
+
 ## [2026-11-08] - Customize build panel: fewer controls
 ### Removed
 - Desktop build panel ("Sizning to'plamingiz"): the "Lentadan yoqqan jihozlarni bosing" hint row (the count/total row now shows only once a part is picked) and the "Konfiguratsiyani saqlash" button, whose localStorage copy was never read anywhere. Unused `saveConfig` / `configSaved` strings dropped from all locales.
