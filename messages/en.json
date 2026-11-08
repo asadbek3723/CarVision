@@ -1816,7 +1816,9 @@
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
     "PART_NOT_VISIBLE": "The selected part is not visible from this angle. No credit was charged",
-    "CAR_NOT_VERIFIED": "The car isn't confirmed. Please confirm the photos again. No credit was charged"
+    "CAR_NOT_VERIFIED": "The car isn't confirmed. Please confirm the photos again. No credit was charged",
+    "AI_BLOCKED": "The AI could not process this photo (safety filter). Keep people out of the shot, frame the whole car and retake it. Your credit was refunded",
+    "AI_STORAGE_FAILED": "The result could not be saved. Your credit was refunded, please try again"
   },
   "capturePage": {
     "sent": "The photo was sent to the computer",

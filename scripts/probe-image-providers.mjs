@@ -36,39 +36,63 @@ const t = (url, init = {}, ms = 15000) => fetch(url, { ...init, signal: AbortSig
 const pad = (s, n) => String(s).padEnd(n);
 const report = { gemini: [], openrouter: [], fal: [], openai: [] };
 
+/** Model ids the app may use (see src/server/providers/ai/image-models.ts and the car detection route). */
+const GEMINI_IMAGE_IDS = [
+  'gemini-3.1-flash-image',
+  'gemini-3.1-flash-image-preview',
+  'gemini-3-pro-image',
+  'gemini-3-pro-image-preview',
+  'gemini-nano-banana-2.1',
+  'gemini-2.5-flash-image',
+];
+const GEMINI_TEXT_IDS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
+
+/**
+ * FREE availability check of one model for one key (no image is generated, nothing is billed):
+ * AI Studio keys ask for the model's metadata, Vertex AI (AQ.) keys count the tokens of one word.
+ * 200 = usable, 404 = the id does not exist for this key, 401/403/400 = key problem.
+ */
+async function geminiModelStatus(key, id) {
+  try {
+    if (key.startsWith('AQ.')) {
+      const res = await t(`${geminiBase(key)}/${id}:countTokens`, {
+        method: 'POST',
+        headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }] }),
+      });
+      return res.status;
+    }
+    const res = await t(`${geminiBase(key)}/${id}`, { headers: { 'x-goog-api-key': key } });
+    return res.status;
+  } catch {
+    return 'ERR';
+  }
+}
+
 async function geminiProbe() {
   const list = keys('GEMINI_API_KEYS', 'GEMINI_API_KEY', 'GOOGLE_API_KEY');
   for (const [i, key] of list.entries()) {
-    if (key.startsWith('AQ.')) {
-      // Vertex AI express key: no model list API, so check it with one tiny text call.
-      try {
-        const res = await t(`${geminiBase(key)}/gemini-2.5-flash:generateContent`, {
-          method: 'POST',
-          headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }] }),
-        });
-        report.gemini.push({ i, status: res.status, note: res.ok ? 'vertex key OK' : `vertex key: ${(await res.text()).slice(0, 160)}` });
-      } catch (e) {
-        report.gemini.push({ i, status: 'ERR', note: e.name });
-      }
+    const kind = key.startsWith('AQ.') ? 'Vertex-AI(AQ.)' : key.startsWith('AIza') ? 'AI-Studio(AIza)' : 'unknown-format';
+    const [img, txt] = await Promise.all([
+      Promise.all(GEMINI_IMAGE_IDS.map(async (id) => [id, await geminiModelStatus(key, id)])),
+      Promise.all(GEMINI_TEXT_IDS.map(async (id) => [id, await geminiModelStatus(key, id)])),
+    ]);
+    const all = [...img, ...txt];
+    const usable = (rows) => rows.filter(([, st]) => st === 200).map(([id]) => id);
+    const rejected = all.find(([, st]) => st === 401 || st === 400 || st === 403);
+    if (usable(all).length === 0) {
+      report.gemini.push({ i, kind, status: rejected ? rejected[1] : all[0][1], note: rejected ? 'key rejected (invalid, wrong type or API not enabled)' : 'no model reachable' });
       continue;
     }
-    try {
-      const res = await t('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {
-        headers: { 'x-goog-api-key': key },
-      });
-      if (!res.ok) {
-        report.gemini.push({ i, status: res.status, note: 'rejected' });
-        continue;
-      }
-      const data = await res.json();
-      const imageModels = (data.models ?? [])
-        .map((m) => m.name.replace('models/', ''))
-        .filter((n) => /image/.test(n) && /generateContent|predict/.test(JSON.stringify((data.models ?? []).find((m) => m.name === `models/${n}`)?.supportedGenerationMethods ?? [])));
-      report.gemini.push({ i, status: 200, models: imageModels });
-    } catch (e) {
-      report.gemini.push({ i, status: 'ERR', note: e.name });
-    }
+    report.gemini.push({
+      i,
+      kind,
+      status: 200,
+      note: 'key ok',
+      image_models_ok: usable(img),
+      image_models_missing: img.filter(([, st]) => st === 404).map(([id]) => id),
+      car_detect_models_ok: usable(txt),
+    });
   }
 }
 

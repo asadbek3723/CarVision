@@ -20,8 +20,13 @@ const TEXT_ONLY_PENALTY = 1000;
 export const STATIC_IMAGE_MODELS: ImageModelSpec[] = [
   // Nano Banana 2: about half the price of Pro with near-Pro quality, so it goes first and Pro is
   // the fallback when it is busy or fails (override per task with IMAGE_MODEL_FITMENT).
+  // Google's current stable ids come first; the `-preview` ids are what some Vertex AI setups still
+  // call the same models. An id that does not exist answers 404 (free) and is skipped for an hour.
   { provider: 'gemini', model: 'gemini-3.1-flash-image', supportsEdit: true, rank: 3 },
-  { provider: 'gemini', model: 'gemini-3-pro-image-preview', supportsEdit: true, rank: 4 },
+  { provider: 'gemini', model: 'gemini-3.1-flash-image-preview', supportsEdit: true, rank: 3.1 },
+  { provider: 'gemini', model: 'gemini-3-pro-image', supportsEdit: true, rank: 4 },
+  { provider: 'gemini', model: 'gemini-3-pro-image-preview', supportsEdit: true, rank: 4.1 },
+  // Legacy (Google announced its shutdown for 2027); keeps working as a last Gemini fallback.
   { provider: 'gemini', model: 'gemini-2.5-flash-image', supportsEdit: true, rank: 14 },
   { provider: 'fal', model: 'fal-ai/nano-banana/edit', supportsEdit: true, rank: 16 },
   { provider: 'fal', model: 'fal-ai/flux-pro/kontext/multi', supportsEdit: true, rank: 31 },

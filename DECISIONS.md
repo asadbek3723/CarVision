@@ -446,3 +446,14 @@
 ## [2026-11-08] Video: a separate paid AI provider is wanted (amends plans/09_VIDEO_ENGINE.md)
 - **Decision**: the owner wants AI video from a separate provider, added last. `plans/09_VIDEO_ENGINE.md` (100% client-side, no paid video API) is no longer the final word; a provider module must stay outside the image chain (`ProviderId`/`hasAnyImageKey`) and reserve credits before submitting an async job.
 - **Candidate**: Higgsfield (Kling, Seedance, Wan models) at https://open.higgsfield.ai/, paid, minimum $5 top-up. Pricing, async API and terms still to be read from its docs before building.
+
+## [2026-11-08] Nano Banana model ids and defaults (verified against Google's docs)
+- **Decision**: stable ids `gemini-3.1-flash-image` (Nano Banana 2, first) and `gemini-3-pro-image` (Pro, fallback), each also tried under its `-preview` name; `gemini-2.5-flash-image` last (legacy, shutdown announced for 2027). Output 2K by default (`IMAGE_SIZE_FITMENT`). Google's newest `gemini-nano-banana-2.1` is not default (the owner chose Nano Banana 2; it is one env line away).
+- **Reason**: Google's docs list `gemini-3-pro-image` as the stable id and `generateContent` as "legacy but still supported". Thinking cannot be disabled on these models and drafts ("thought" images) may appear, so the last real image is used.
+- **Prices (Google, per picture, from a summarised page, verify before paying)**: Nano Banana 2 $0.067 at 1K, $0.101 at 2K, $0.151 at 4K; Pro $0.134 at 1K/2K, $0.24 at 4K. A 5-angle render at 2K is about $0.50.
+
+## [2026-11-08] Car detection no longer uses gemini-2.5-flash
+- **Decision**: `gemini-3.6-flash`, then `gemini-3.5-flash-lite`. **Reason**: 2.5 Flash is deprecated for new accounts and rerouted on 2026-12-01.
+
+## [2026-11-08] Test credits are expensive: verify before generating
+- **Decision**: use `node scripts/probe-image-providers.mjs` (free: model metadata / countTokens) after adding or changing a key; `--generate` only after it shows the wanted ids as available.

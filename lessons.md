@@ -44,3 +44,11 @@
 ## Rule: Verify On-Device ML Output, Not Just That It Loads
 - **Mistake**: The MediaPipe GPU delegate loaded without error but returned zero detections for the int8 model.
 - **Rule**: Test detectors on real sample images in the browser and compare delegates before shipping.
+
+## Rule: Check Provider Model Ids Against Their Docs, Not Memory
+- **Mistake**: the code used `gemini-3-pro-image-preview` and the deprecated `gemini-2.5-flash` because those ids were remembered; Google's docs list `gemini-3-pro-image` and mark 2.5 Flash as closed to new accounts.
+- **Rule**: before wiring or changing a model id, read the provider's current models page, keep a fallback id, and verify availability with a free call (`scripts/probe-image-providers.mjs`) instead of a paid generation.
+
+## Rule: Take the Last Real Image of a Thinking Image Model
+- **Mistake**: the first image part of an answer was returned; Gemini 3 image models may put interim "thought" drafts before the final picture.
+- **Rule**: skip parts with `thought: true` and use the last image; treat safety refusals (`finishReason`, `promptFeedback`) separately from empty answers.

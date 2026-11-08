@@ -1816,7 +1816,9 @@
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
     "PART_NOT_VISIBLE": "Seçilen parça bu açıdan görünmüyor. Kredi düşülmedi",
-    "CAR_NOT_VERIFIED": "Araç doğrulanmadı. Lütfen fotoğrafları yeniden doğrulayın. Kredi düşülmedi"
+    "CAR_NOT_VERIFIED": "Araç doğrulanmadı. Lütfen fotoğrafları yeniden doğrulayın. Kredi düşülmedi",
+    "AI_BLOCKED": "Yapay zekâ bu fotoğrafı işleyemedi (güvenlik filtresi). Kareden insanları çıkarın, aracı tamamen çekin ve yeniden deneyin. Krediniz iade edildi",
+    "AI_STORAGE_FAILED": "Sonuç kaydedilemedi. Krediniz iade edildi, lütfen tekrar deneyin"
   },
   "capturePage": {
     "sent": "Fotoğraf bilgisayara gönderildi",

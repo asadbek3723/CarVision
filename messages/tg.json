@@ -1816,7 +1816,9 @@
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
     "PART_NOT_VISIBLE": "Қисми интихобшуда аз ин ракурс намоён нест. Кредит гирифта нашуд",
-    "CAR_NOT_VERIFIED": "Мошин тасдиқ нашудааст. Аксҳоро аз нав тасдиқ кунед. Кредит гирифта нашуд"
+    "CAR_NOT_VERIFIED": "Мошин тасдиқ нашудааст. Аксҳоро аз нав тасдиқ кунед. Кредит гирифта нашуд",
+    "AI_BLOCKED": "Зеҳни сунъӣ ин аксро коркард карда натавонист (филтри бехатарӣ). Одамонро аз кадр дур кунед, мошинро пурра гиред ва аз нав акс гиред. Кредит баргардонида шуд",
+    "AI_STORAGE_FAILED": "Натиҷаро захира кардан натавонист. Кредит баргардонида шуд, аз нав кӯшиш кунед"
   },
   "capturePage": {
     "sent": "Акс ба компютер фиристода шуд",

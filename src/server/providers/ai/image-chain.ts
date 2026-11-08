@@ -22,9 +22,16 @@ import {
 
 const ALL_PROVIDERS: ProviderId[] = ['gemini', 'openrouter', 'fal', 'openai'];
 
-/** Whole chain must finish inside the route's maxDuration (60s). */
-const DEFAULT_DEADLINE_MS = 52_000;
-const MAX_ATTEMPT_MS = 28_000;
+/**
+ * Whole chain must finish inside the route's maxDuration (60s) with time left to store the picture
+ * (a 2K PNG is several MB) and settle the credit, so the chain stops at 44s.
+ */
+const DEFAULT_DEADLINE_MS = 44_000;
+/** A 2K render with thinking can take 20-35s: a shorter cap would throw away a render that is being paid for. */
+const MAX_ATTEMPT_MS = 40_000;
+/** A transient 5xx / short rate limit gets one more try on the same key if this much time is left. */
+const RETRY_MIN_LEFT_MS = 14_000;
+const RETRY_DELAY_MS = 1_500;
 const MIN_ATTEMPT_MS = 3_000;
 /** Keys tried per model before moving on (a 22-key pool must not eat the whole budget). */
 const MAX_KEYS_PER_MODEL = 4;
@@ -47,7 +54,7 @@ export interface ChainAttempt {
 
 export type ChainResult =
   | { ok: true; image: string; provider: ProviderId; model: string; attempts: ChainAttempt[] }
-  | { ok: false; reason: 'no_provider' | 'busy' | 'no_quota' | 'failed'; attempts: ChainAttempt[] };
+  | { ok: false; reason: 'no_provider' | 'busy' | 'no_quota' | 'blocked' | 'failed'; attempts: ChainAttempt[] };
 
 export interface ChainOptions {
   deadlineMs?: number;
@@ -61,6 +68,8 @@ export interface ChainOptions {
   /** Replaces the env preference (tests). */
   prefs?: ModelPref[];
   now?: () => number;
+  /** Replaces the retry pause (tests). */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 /** True when at least one provider has a usable key. */
@@ -74,6 +83,7 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
   const deadline = started + (opts.deadlineMs ?? DEFAULT_DEADLINE_MS);
   const keysFor = opts.keysFor ?? ((p: ProviderId) => envKeys(p));
   const adapters = { ...ADAPTERS, ...opts.adapters };
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
   const keyMap = new Map<ProviderId, string[]>();
   for (const provider of ALL_PROVIDERS) {
@@ -97,6 +107,7 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
   let limited = 0; // rate limit / quota / cooling down: "come back later"
   let quotaFails = 0; // keys that said they have no allowance at all
   let hardFails = 0; // model really failed on a real attempt
+  let blockedFails = 0; // the model refused the content (safety filter)
 
   for (const spec of plan) {
     if (now() >= deadline - MIN_ATTEMPT_MS) break;
@@ -112,12 +123,19 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
       const remaining = deadline - now();
       if (remaining < MIN_ATTEMPT_MS) break;
 
-      const result = await adapters[spec.provider]!(
-        spec,
-        key,
-        input,
-        Math.min(MAX_ATTEMPT_MS, remaining - 500)
-      );
+      const call = (budgetMs: number) => adapters[spec.provider]!(spec, key, input, Math.min(MAX_ATTEMPT_MS, budgetMs - 500));
+      let result = await call(remaining);
+      // Overload (5xx) and very short rate limits are usually gone a moment later: one more try on
+      // the same key is cheaper than falling through to a pricier model.
+      if (
+        !result.ok &&
+        (result.kind === 'server' || (result.kind === 'rate_limit' && (result.retryAfterMs ?? Infinity) <= 3_000)) &&
+        deadline - now() > RETRY_MIN_LEFT_MS
+      ) {
+        await sleep(Math.min(result.kind === 'rate_limit' ? (result.retryAfterMs ?? RETRY_DELAY_MS) : RETRY_DELAY_MS, 3_000));
+        const left = deadline - now();
+        if (left >= MIN_ATTEMPT_MS) result = await call(left);
+      }
       if (result.ok) {
         advanceCursor(spec.provider, index, keys.length);
         return { ok: true, image: result.image, provider: spec.provider, model: spec.model, attempts };
@@ -147,6 +165,11 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
           setCooldown(modelScope(spec.provider, spec.model), COOLDOWN_MS.notFound, t);
           nextKey = false;
           break;
+        case 'blocked':
+          // Content refusal: other keys would refuse too, a different model might not.
+          blockedFails += 1;
+          nextKey = false;
+          break;
         case 'bad_request':
         case 'empty':
           // The model refused this input: other keys would get the same answer.
@@ -167,6 +190,10 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
     }
   }
 
+  if (blockedFails > 0 && hardFails === 0 && limited === 0) {
+    // Every model that answered refused the picture: say so instead of a vague failure.
+    return { ok: false, reason: 'blocked', attempts };
+  }
   if (limited > 0 && hardFails === 0) {
     // Every key said "no allowance" (or was parked for it): waiting a minute will not help.
     const onlyQuota = quotaFails > 0 && attempts.every((a) => a.kind === 'quota' || a.kind === 'skipped_cooldown');

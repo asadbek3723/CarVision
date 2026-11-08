@@ -137,3 +137,18 @@ describe('direct-fitment-engine', () => {
     expect(polish.promptUsed).toContain('Dents, creases, deep scratches');
   });
 });
+
+describe('fitment prompt output rules', () => {
+  it('asks for one picture with the same framing and nothing added', async () => {
+    const res = await executeDirectAiFitment({
+      carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
+      angleId: 'rear',
+      parts: [{ id: 'w', name: 'BBS', category: 'Wheels' }],
+      mode: 'fitment',
+    });
+    expect(res.promptUsed).toMatch(/exactly one picture/i);
+    expect(res.promptUsed).toMatch(/same framing, aspect ratio and camera angle/i);
+    expect(res.promptUsed).toMatch(/No text, captions, logos, watermark/i);
+    expect(res.promptUsed).toMatch(/Do not add people/i);
+  });
+});

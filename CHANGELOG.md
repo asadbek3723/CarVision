@@ -1,5 +1,20 @@
 # Changelog
 
+## [2026-11-08] - Nano Banana 2 hardening (full pipeline audit)
+### Fixed
+- **Model ids** (checked against Google's docs): Pro is `gemini-3-pro-image` (stable); our `gemini-3-pro-image-preview` was the old name. The chain now tries stable and `-preview` ids (Vertex setups may still use them); an id that does not exist answers 404 for free and is skipped for an hour.
+- **Car detection used the deprecated `gemini-2.5-flash`** (closed to new accounts, rerouted on 2026-12-01): now `gemini-3.6-flash` then `gemini-3.5-flash-lite` (`GEMINI_DETECT_MODEL` overrides), with a 404 fallback; an answer without a clear yes/no is "could not check", never "not a car".
+- **Picked the wrong picture**: Gemini 3 image models can return interim "thought" drafts; the adapter now skips them and takes the last real image.
+- **Aspect ratio / size**: the render is requested in the photo's own aspect ratio (read from the image header) and at `IMAGE_SIZE_FITMENT` (default 2K, sharper than the 1K default); the config is retried with fewer fields if the API rejects it (a 400 costs nothing); `imageSize` is not sent to `gemini-2.5-flash-image`.
+- **Reference photos are labelled** ("IMAGE 2: reference photo of the part ...") and kept in step with the parts; the prompt demands one picture with the same framing and nothing added.
+- **Safety-filter refusals** are reported as `AI_BLOCKED` (credit refunded, clear message) instead of a vague failure.
+- **Time budget**: provider chain stops at 44s (was 52s, which left no time to store a multi-MB 2K picture before the 60s kill), one retry on a transient 5xx / short rate limit, per-attempt cap 40s.
+- **Delivery**: the answer is verified to be a real image by its bytes before anything is stored or charged; storage upload is retried once; if storage is down and the picture is too big for the JSON answer the credit is refunded (`AI_STORAGE_FAILED`); the 3 MB before-photo is no longer echoed back in every answer; DB bookkeeping errors no longer turn a delivered render into a failed one.
+- **Credit hygiene**: renders killed by the platform are refunded after 75s (was 90s) and when the list is opened; the client asks again after 80s; per-minute limit 10 (5 angles plus retries).
+### Added
+- `scripts/probe-image-providers.mjs` is now a FREE preflight: for every key it checks which image and vision model ids exist (AI Studio: model metadata, Vertex: countTokens), no image is generated.
+- Tests: image header reader, Gemini request/response (thought parts, refusals, retry with less config), chain (blocked, retry, 404 ids), prompt rules.
+
 ## [2026-11-08] - Render pipeline: no more paying for nothing
 ### Added
 - **Per-task AI models**: image chain takes a task (`fitment` / `video_frame`) and honours `IMAGE_MODEL_FITMENT` / `IMAGE_MODEL_VIDEO_FRAME` (`provider:model` lists). Nano Banana 2 (`gemini-3.1-flash-image`) is now tried before Nano Banana Pro; text, translation and car detection share the Gemini key pool and have `GEMINI_TEXT_MODEL` / `GEMINI_DETECT_MODEL`.

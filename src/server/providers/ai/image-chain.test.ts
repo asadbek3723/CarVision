@@ -85,8 +85,13 @@ describe('per-task model preferences', () => {
 
   it('tries Nano Banana 2 before Pro by default', () => {
     const plan = planModels(STATIC_IMAGE_MODELS, new Set<ProviderId>(['gemini']), true);
-    expect(plan[0]!.model).toBe('gemini-3.1-flash-image');
-    expect(plan[1]!.model).toBe('gemini-3-pro-image-preview');
+    expect(plan.map((m) => m.model)).toEqual([
+      'gemini-3.1-flash-image',
+      'gemini-3.1-flash-image-preview',
+      'gemini-3-pro-image',
+      'gemini-3-pro-image-preview',
+      'gemini-2.5-flash-image',
+    ]);
   });
 
   it('runImageChain honours prefs', async () => {
@@ -181,5 +186,57 @@ describe('runImageChain', () => {
     });
     expect(res.ok).toBe(false);
     expect(slow).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('runImageChain: blocked answers and transient errors', () => {
+  const models = [spec('gemini', 'g1', 1), spec('gemini', 'g2', 2)];
+  const keysFor = (p: ProviderId) => (p === 'gemini' ? ['gem-key-aaaa'] : []);
+  const instant = { sleep: async () => undefined };
+
+  it('reports blocked when every model refused the picture', async () => {
+    resetCooldowns();
+    const refuse = vi.fn<Adapter>().mockResolvedValue({ ok: false, kind: 'blocked' });
+    const res = await runImageChain(input, { keysFor, models, adapters: { gemini: refuse }, ...instant });
+    expect(res).toMatchObject({ ok: false, reason: 'blocked' });
+    expect(refuse).toHaveBeenCalledTimes(2);
+  });
+
+  it('a refusal by one model does not stop the next one from trying', async () => {
+    resetCooldowns();
+    const adapter = vi
+      .fn<Adapter>()
+      .mockResolvedValueOnce({ ok: false, kind: 'blocked' })
+      .mockResolvedValueOnce(ok('img'));
+    const res = await runImageChain(input, { keysFor, models, adapters: { gemini: adapter }, ...instant });
+    expect(res).toMatchObject({ ok: true, model: 'g2' });
+  });
+
+  it('retries a transient 5xx once on the same key before moving on', async () => {
+    resetCooldowns();
+    const adapter = vi.fn<Adapter>().mockResolvedValueOnce(fail('server')).mockResolvedValueOnce(ok('img'));
+    const res = await runImageChain(input, { keysFor, models, adapters: { gemini: adapter }, ...instant });
+    expect(res).toMatchObject({ ok: true, model: 'g1' });
+    expect(adapter).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry when little time is left', async () => {
+    resetCooldowns();
+    let t = 0;
+    const adapter = vi.fn<Adapter>().mockImplementation(async () => {
+      t += 38_000;
+      return fail('server');
+    });
+    const res = await runImageChain(input, { keysFor, models, adapters: { gemini: adapter }, now: () => t, ...instant });
+    expect(res.ok).toBe(false);
+    // one try per model, no same-key retry (only 6s were left after the first answer)
+    expect(adapter).toHaveBeenCalledTimes(2);
+  });
+
+  it('a model id that does not exist (404) is skipped without cost and the next id answers', async () => {
+    resetCooldowns();
+    const adapter = vi.fn<Adapter>().mockResolvedValueOnce(fail('not_found')).mockResolvedValueOnce(ok('img'));
+    const res = await runImageChain(input, { keysFor, models, adapters: { gemini: adapter }, ...instant });
+    expect(res).toMatchObject({ ok: true, model: 'g2' });
   });
 });

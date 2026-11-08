@@ -134,6 +134,14 @@ export function useRenderBuild(onCreditsChanged?: () => void) {
           throw err;
         }
         patch(angle.id, { status: 'failed', error: err.message, errorCode: err.code });
+        // A render the platform killed (504 / dropped connection) is refunded by the server only once it
+        // is older than ~75s: ask again after that so the balance on screen is right without a reload.
+        // Only when the request itself died (no JSON answer from our server): a clean 503 like AI_BUSY was refunded at once.
+        if (err.code === 'FAILED' || err.code === 'NETWORK') {
+          setTimeout(() => {
+            void fetch('/api/v1/generations').finally(() => onCreditsChanged?.());
+          }, 80_000);
+        }
         return false;
       }
     },

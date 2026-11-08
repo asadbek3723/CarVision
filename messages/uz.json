@@ -1816,7 +1816,9 @@
     "VALIDATION_FAILED": "So'rov ma'lumotlari noto'g'ri. Sahifani yangilab qayta urinib ko'ring",
     "AI_NO_QUOTA": "AI kalitida rasm yaratish uchun limit yo'q (billing yoqilmagan). Kredit qaytarildi. Administrator kalitni tekshirishi kerak",
     "PART_NOT_VISIBLE": "Tanlangan detal bu rakursda ko'rinmaydi. Kredit yechilmadi",
-    "CAR_NOT_VERIFIED": "Mashina tasdiqlanmagan. Suratlarni qayta tasdiqlang. Kredit yechilmadi"
+    "CAR_NOT_VERIFIED": "Mashina tasdiqlanmagan. Suratlarni qayta tasdiqlang. Kredit yechilmadi",
+    "AI_BLOCKED": "AI bu suratni qayta ishlay olmadi (xavfsizlik filtri). Suratda odamlar bo'lmasin, mashinani to'liq kadrga olib qayta suratga oling. Kredit qaytarildi",
+    "AI_STORAGE_FAILED": "Natijani saqlab bo'lmadi. Kredit qaytarildi, qayta urinib ko'ring"
   },
   "capturePage": {
     "sent": "Rasm kompyuterga yuborildi",

@@ -23,6 +23,11 @@ export interface DirectFitmentRequest {
    * paint, wheels and body parts look identical across all angles of one build.
    */
   referenceAfter?: string | undefined;
+  /**
+   * Total time the caller allows for this call (photo loading included). The provider chain gets
+   * what is left, so it never keeps running (and being billed) after the caller gave up.
+   */
+  deadlineMs?: number | undefined;
 }
 
 export interface DirectFitmentResponse {
@@ -38,7 +43,7 @@ export interface DirectFitmentResponse {
   afterImageUrl: string | null;
   promptUsed: string;
   durationMs: number;
-  outcome?: 'no_provider' | 'failed' | 'busy' | 'no_quota' | 'invalid_image' | undefined;
+  outcome?: 'no_provider' | 'failed' | 'busy' | 'no_quota' | 'blocked' | 'invalid_image' | undefined;
 }
 
 const PROVIDER_LABEL: Record<ProviderId, Exclude<DirectFitmentResponse['providerUsed'], 'local-neural-compositor'>> = {
@@ -229,6 +234,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
       : touchesPaint
         ? 'The paint gloss level stays the same as in the original photo.'
         : 'Do not touch the paint: the same colour, the same gloss level, the same swirl marks and dull spots. Do not add extra shine, glow, bloom, HDR look or contrast.',
+    'OUTPUT: exactly one picture with the same framing, aspect ratio and camera angle as the customer photo. No text, captions, logos, watermark, border, collage or split screen. Do not add people, animals or objects that are not in the photo.',
     'Result: a photorealistic photo that looks like the same photograph taken after the work was really done, with natural shadows and reflections.',
   ]
     .filter(Boolean)
@@ -255,18 +261,27 @@ export async function executeDirectAiFitment(
   const providerConfigured = hasAnyImageKey();
 
   if (carDataUri && providerConfigured) {
-    const partDataUris = (
-      await Promise.all(req.parts.map((p) => resolveImageToDataUri(p.angleImage || p.image)))
-    ).filter((u): u is string => Boolean(u));
+    // Reference photos of the parts, each with the part's name so the model knows which is which.
+    const withPhoto = (
+      await Promise.all(
+        req.parts.map(async (p) => ({ label: `${p.name} (${p.category})`, uri: await resolveImageToDataUri(p.angleImage || p.image) }))
+      )
+    ).filter((r): r is { label: string; uri: string } => Boolean(r.uri));
+    const partDataUris = withPhoto.map((r) => r.uri);
+    const partLabels = withPhoto.map((r) => r.label);
     const referenceDataUri = req.referenceAfter ? await resolveImageToDataUri(req.referenceAfter) : null;
 
     const chain = await runImageChain({
       carDataUri,
       partDataUris,
+      partLabels,
       referenceDataUri,
       prompt: promptUsed,
       mode: req.mode || 'fitment',
-    }, { task: 'fitment' });
+    }, {
+      task: 'fitment',
+      ...(req.deadlineMs ? { deadlineMs: Math.max(8_000, req.deadlineMs - (Date.now() - startMs)) } : {}),
+    });
 
     if (chain.ok) {
       return {
@@ -289,7 +304,8 @@ export async function executeDirectAiFitment(
       afterImageUrl: null,
       promptUsed,
       durationMs: Date.now() - startMs,
-      outcome: chain.reason === 'busy' ? 'busy' : chain.reason === 'no_quota' ? 'no_quota' : 'failed',
+      outcome:
+        chain.reason === 'busy' ? 'busy' : chain.reason === 'no_quota' ? 'no_quota' : chain.reason === 'blocked' ? 'blocked' : 'failed',
     };
   }
 

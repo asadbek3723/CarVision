@@ -1,6 +1,7 @@
 import type { ImageModelSpec } from './image-models';
 import type { ProviderId } from './key-pool';
 import { geminiGenerateUrls } from './google-endpoint';
+import { dataUriBytes, nearestAspectRatio, readImageDims } from './image-info';
 
 export type FailKind =
   | 'rate_limit' // 429: this key is exhausted for this model right now
@@ -10,6 +11,7 @@ export type FailKind =
   | 'bad_request' // 400/422: model refused this input (would fail on every key)
   | 'server' // 5xx / network
   | 'timeout'
+  | 'blocked' // the model refused the content (safety filter): retrying the same photo will not help
   | 'empty'; // 200 but no image in the answer
 
 export type AttemptResult =
@@ -19,6 +21,8 @@ export type AttemptResult =
 export interface ChainInput {
   carDataUri: string;
   partDataUris: string[];
+  /** One short name per entry of `partDataUris` (same order), used to label the reference photos. */
+  partLabels?: string[] | undefined;
   referenceDataUri: string | null;
   prompt: string;
   mode: 'fitment' | 'enhance_for_video';
@@ -109,37 +113,125 @@ function referenceImages(input: ChainInput): string[] {
 const PART_NOTE =
   "The first image is the customer's car. Any following images are the exact tuning parts that must be installed onto the car with 100% identical visual details.";
 
-export const geminiAdapter: Adapter = async (spec, key, input, timeoutMs) => {
-  const parts: Array<Record<string, unknown>> = [{ text: `${input.prompt}\n${PART_NOTE}` }];
-  for (const uri of referenceImages(input)) {
-    const inline = parseDataUri(uri);
-    if (inline) parts.push({ inlineData: inline });
+/** Image sizes the Gemini 3 image models accept (uppercase K is required). */
+const IMAGE_SIZES = new Set(['1K', '2K', '4K']);
+
+/** Output size for a call: IMAGE_SIZE_FITMENT / IMAGE_SIZE_VIDEO_FRAME, default 2K (sharper than the 1K default). */
+export function geminiImageSize(mode: ChainInput['mode'], env: NodeJS.ProcessEnv = process.env): string {
+  const raw = (mode === 'enhance_for_video' ? env['IMAGE_SIZE_VIDEO_FRAME'] : env['IMAGE_SIZE_FITMENT'])?.trim().toUpperCase();
+  return raw && IMAGE_SIZES.has(raw) ? raw : '2K';
+}
+
+/** `imageSize` exists only on the Gemini 3 / Nano Banana 2+ models; gemini-2.5-flash-image rejects it. */
+const supportsImageSize = (model: string) => /gemini-3|nano-banana/.test(model);
+
+const BLOCK_REASONS = new Set([
+  'SAFETY',
+  'IMAGE_SAFETY',
+  'PROHIBITED_CONTENT',
+  'IMAGE_PROHIBITED_CONTENT',
+  'BLOCKLIST',
+  'SPII',
+  'RECITATION',
+  'IMAGE_RECITATION',
+]);
+
+interface GeminiPart {
+  text?: string;
+  thought?: boolean;
+  inlineData?: { mimeType?: string; data?: string };
+  inline_data?: { mime_type?: string; data?: string };
+}
+interface GeminiResponse {
+  candidates?: Array<{ finishReason?: string; content?: { parts?: GeminiPart[] } }>;
+  promptFeedback?: { blockReason?: string };
+}
+
+/**
+ * Picks the finished picture out of a generateContent answer. Gemini 3 image models may add
+ * interim "thought" images (drafts); those are skipped and the LAST real image wins. A refusal
+ * (safety filter) is reported as `blocked`, any other answer without a picture as `empty`.
+ */
+export function extractGeminiImage(data: GeminiResponse): AttemptResult {
+  const candidate = data.candidates?.[0];
+  let image: string | null = null;
+  for (const part of candidate?.content?.parts ?? []) {
+    if (part.thought) continue;
+    const mime = part.inlineData?.mimeType ?? part.inline_data?.mime_type;
+    const b64 = part.inlineData?.data ?? part.inline_data?.data;
+    if (!b64 || b64.length < 1000) continue;
+    const type = mime && /^image\/(png|jpeg|webp)$/.test(mime) ? mime : 'image/png';
+    image = `data:${type};base64,${b64}`;
   }
-  const body = { contents: [{ role: 'user', parts }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } };
+  if (image) return { ok: true, image };
+  if (data.promptFeedback?.blockReason || BLOCK_REASONS.has(candidate?.finishReason ?? '')) {
+    return { ok: false, kind: 'blocked' };
+  }
+  return EMPTY;
+}
+
+/**
+ * The request: instruction first, then every picture with a short label saying what it is, so the
+ * model never has to guess which reference photo belongs to which part.
+ */
+export function buildGeminiParts(input: ChainInput): Array<Record<string, unknown>> {
+  const parts: Array<Record<string, unknown>> = [{ text: input.prompt }];
+  const add = (label: string, uri: string) => {
+    const inline = parseDataUri(uri);
+    if (!inline) return;
+    parts.push({ text: label }, { inlineData: inline });
+  };
+  let n = 1;
+  add(`IMAGE ${n++}: the customer's real car photo. This is the photo to edit; keep everything in it except the requested changes.`, input.carDataUri);
+  input.partDataUris.slice(0, 3).forEach((uri, i) => {
+    const name = input.partLabels?.[i]?.trim() || 'part';
+    add(`IMAGE ${n++}: reference photo of the part "${name}". Reproduce exactly this part (shape, design, finish).`, uri);
+  });
+  if (input.referenceDataUri) {
+    add(`IMAGE ${n++}: the same car already finished from another angle. Reference only for how the new parts and paint look; never copy its angle or background.`, input.referenceDataUri);
+  }
+  return parts;
+}
+
+export const geminiAdapter: Adapter = async (spec, key, input, timeoutMs) => {
+  const parts = buildGeminiParts(input);
+
+  // Same framing as the customer's photo: the before/after slider and the video overlay them.
+  const bytes = dataUriBytes(input.carDataUri);
+  const dims = bytes ? readImageDims(bytes) : null;
+  const aspectRatio = dims ? nearestAspectRatio(dims.width, dims.height) : undefined;
+  const imageSize = supportsImageSize(spec.model) ? geminiImageSize(input.mode) : undefined;
+
+  // Preferred config first; if the API rejects a field (400), retry with less (a 400 costs nothing).
+  const configs: Array<Record<string, string> | undefined> = [];
+  if (aspectRatio || imageSize) configs.push({ ...(aspectRatio ? { aspectRatio } : {}), ...(imageSize ? { imageSize } : {}) });
+  if (aspectRatio && imageSize) configs.push({ aspectRatio });
+  configs.push(undefined);
+
   const started = Date.now();
   let out: HttpOutcome = { fail: { ok: false, kind: 'auth' } };
-  // AI Studio keys and Vertex AI keys live on different APIs: try the matching one first, and the
-  // other only when this one rejects the key itself.
-  for (const url of geminiGenerateUrls(key, spec.model)) {
-    const left = timeoutMs - (Date.now() - started);
-    if (left < 2_000) break;
-    out = await post(url, { 'x-goog-api-key': key }, body, left);
-    if (!('fail' in out) || out.fail.kind !== 'auth') break;
+  for (const imageConfig of configs) {
+    const body = {
+      contents: [{ role: 'user', parts }],
+      generationConfig: { responseModalities: ['TEXT', 'IMAGE'], ...(imageConfig ? { imageConfig } : {}) },
+    };
+    out = { fail: { ok: false, kind: 'auth' } };
+    // AI Studio keys and Vertex AI keys live on different APIs: try the matching one first, and the
+    // other only when this one rejects the key itself.
+    for (const url of geminiGenerateUrls(key, spec.model)) {
+      const left = timeoutMs - (Date.now() - started);
+      if (left < 2_000) break;
+      out = await post(url, { 'x-goog-api-key': key }, body, left);
+      if (!('fail' in out) || out.fail.kind !== 'auth') break;
+    }
+    if (!('fail' in out) || out.fail.kind !== 'bad_request') break;
   }
   if ('fail' in out) return out.fail;
   try {
-    const data = (await out.res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string } }> } }>;
-    };
-    for (const part of data.candidates?.[0]?.content?.parts ?? []) {
-      if (part.inlineData?.data) {
-        return { ok: true, image: `data:${part.inlineData.mimeType || 'image/jpeg'};base64,${part.inlineData.data}` };
-      }
-    }
+    return extractGeminiImage((await out.res.json()) as GeminiResponse);
   } catch {
-    // fall through
+    return EMPTY;
   }
-  return EMPTY;
 };
 
 /**

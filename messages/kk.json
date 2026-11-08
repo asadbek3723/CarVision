@@ -1816,7 +1816,9 @@
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
     "PART_NOT_VISIBLE": "Таңдалған бөлшек бұл ракурсте көрінбейді. Кредит алынбады",
-    "CAR_NOT_VERIFIED": "Көлік расталмаған. Суреттерді қайта растаңыз. Кредит алынбады"
+    "CAR_NOT_VERIFIED": "Көлік расталмаған. Суреттерді қайта растаңыз. Кредит алынбады",
+    "AI_BLOCKED": "Жасанды интеллект бұл суретті өңдей алмады (қауіпсіздік сүзгісі). Кадрдан адамдарды алып тастап, көлікті толық түсіріп, қайталаңыз. Кредит қайтарылды",
+    "AI_STORAGE_FAILED": "Нәтижені сақтау мүмкін болмады. Кредит қайтарылды, қайталап көріңіз"
   },
   "capturePage": {
     "sent": "Сурет компьютерге жіберілді",

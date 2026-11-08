@@ -29,6 +29,16 @@ interface Candidate {
   label: string;
 }
 
+/**
+ * Vision models tried in order. `gemini-2.5-flash` is deprecated (closed to new accounts, rerouted
+ * on 2026-12-01), so the default is a current stable model, with a cheaper one behind it; a model
+ * that is not available to this key answers 404 and the next one is tried.
+ */
+function detectModels(): string[] {
+  const configured = process.env['GEMINI_DETECT_MODEL']?.trim();
+  return [...new Set([configured, 'gemini-3.6-flash', 'gemini-3.5-flash-lite'].filter((m): m is string => Boolean(m)))];
+}
+
 interface CarAnswer {
   isCar: boolean;
   make: string;
@@ -62,29 +72,33 @@ async function askGemini(photo: string, angles: Array<{ id: string; photo: strin
       : 'Set sameCar to true and mismatchAngles to [].');
 
   try {
-    const res = await fetchGeminiGenerate(
-      key,
-      process.env['GEMINI_DETECT_MODEL'] || 'gemini-2.5-flash',
-      {
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: match[1], data: match[2] } },
-              ...extra.flatMap((a) => [{ text: `Label: ${a.id}` }, { inline_data: { mime_type: a.m[1], data: a.m[2] } }]),
-            ],
-          },
-        ],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
-      },
-      20_000
-    );
+    const body = {
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: match[1], data: match[2] } },
+            ...extra.flatMap((a) => [{ text: `Label: ${a.id}` }, { inlineData: { mimeType: a.m[1], data: a.m[2] } }]),
+          ],
+        },
+      ],
+      generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
+    };
+    let res: Response | null = null;
+    for (const model of detectModels()) {
+      res = await fetchGeminiGenerate(key, model, body, 14_000);
+      if (res.status !== 404) break; // 404 = this model is not available to the key: try the next one
+    }
+    if (!res) return null;
     if (!res.ok) return null;
     const json = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+    // Thinking models can put a thought part first: take the first real text part.
+    const text = json.candidates?.[0]?.content?.parts?.find((p) => typeof p.text === 'string' && !(p as { thought?: boolean }).thought)?.text;
     if (!text) return null;
-    const parsed = JSON.parse(text) as { isCar?: unknown; make?: unknown; model?: unknown; confidence?: unknown; sameCar?: unknown; mismatchAngles?: unknown };
+    const parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, '')) as { isCar?: unknown; make?: unknown; model?: unknown; confidence?: unknown; sameCar?: unknown; mismatchAngles?: unknown };
+    // An answer without a clear yes/no is "could not check", never "not a car" (that blocks the customer).
+    if (typeof parsed.isCar !== 'boolean') return null;
     const sent = new Set(extra.map((a) => a.id));
     const mismatchAngleIds = Array.isArray(parsed.mismatchAngles)
       ? parsed.mismatchAngles.filter((x): x is string => typeof x === 'string' && sent.has(x))
@@ -92,7 +106,7 @@ async function askGemini(photo: string, angles: Array<{ id: string; photo: strin
     return {
       sameCar: parsed.sameCar === false && mismatchAngleIds.length > 0 ? false : true,
       mismatchAngleIds,
-      isCar: parsed.isCar === true,
+      isCar: parsed.isCar,
       make: typeof parsed.make === 'string' ? parsed.make.trim().slice(0, 60) : '',
       model: typeof parsed.model === 'string' ? parsed.model.trim().slice(0, 60) : '',
       confidence: typeof parsed.confidence === 'number' ? Math.min(1, Math.max(0, parsed.confidence)) : 0,

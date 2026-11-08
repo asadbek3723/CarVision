@@ -1816,7 +1816,9 @@
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
     "PART_NOT_VISIBLE": "القطعة المختارة غير ظاهرة من هذه الزاوية. لم يتم خصم أي رصيد",
-    "CAR_NOT_VERIFIED": "لم يتم تأكيد السيارة. يرجى تأكيد الصور مرة أخرى. لم يُخصم رصيد"
+    "CAR_NOT_VERIFIED": "لم يتم تأكيد السيارة. يرجى تأكيد الصور مرة أخرى. لم يُخصم رصيد",
+    "AI_BLOCKED": "تعذّر على الذكاء الاصطناعي معالجة هذه الصورة (مرشّح الأمان). أبعد الأشخاص عن الكادر، وصوّر السيارة كاملة وأعد المحاولة. تم استرداد رصيدك",
+    "AI_STORAGE_FAILED": "تعذّر حفظ النتيجة. تم استرداد رصيدك، يرجى المحاولة مرة أخرى"
   },
   "capturePage": {
     "sent": "تم إرسال الصورة إلى الحاسوب",

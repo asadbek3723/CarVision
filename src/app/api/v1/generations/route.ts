@@ -18,11 +18,23 @@ export const maxDuration = 60;
 const GENERATION_COST = 1;
 // Vercel rejects request bodies over ~4.5MB before our code runs, so a bigger limit here would be a lie.
 const MAX_PHOTO_CHARS = 4_200_000;
-/** The function is killed at maxDuration (60s); give up on the provider a little earlier so we can refund. */
-const AI_TIMEOUT_MS = 52_000;
-/** A PROCESSING row older than this belongs to a request that died: its credit must go back. */
-const STALE_AFTER_MS = 90_000;
-const MAX_PER_MINUTE = 6;
+/**
+ * The function is killed at maxDuration (60s). The provider chain stops at 44s; this is the outer
+ * guard, and the remaining seconds are for storing the picture (a 2K PNG is several MB) and
+ * settling the credit, so a render is never lost half-way.
+ */
+const AI_TIMEOUT_MS = 47_000;
+/** What the provider chain may use, counted from the start of the call (loading the photos included). */
+const AI_CHAIN_DEADLINE_MS = 44_000;
+/** Without storage a picture can only travel inside the JSON answer, and platforms cap that at ~4.5 MB. */
+const MAX_INLINE_RESULT_CHARS = 3_000_000;
+/**
+ * A PROCESSING row older than this belongs to a request that died (the function is killed at 60s):
+ * its credit must go back. Kept close to maxDuration so a customer is not left waiting for it.
+ */
+const STALE_AFTER_MS = 75_000;
+/** A full 5-angle render plus a couple of retries of failed angles must fit in one minute. */
+const MAX_PER_MINUTE = 10;
 const MAX_IN_FLIGHT = 3;
 
 const short = (max: number) => z.string().trim().max(max);
@@ -83,7 +95,6 @@ function buildCacheKey(photo: string, angleId: string, parts: FitmentPartInput[]
 
 interface GenerationPayload {
   id: string;
-  beforeImageUrl: string;
   afterImageUrl: string;
   liveApiActive: boolean;
   providerUsed: string;
@@ -173,7 +184,6 @@ export async function POST(request: NextRequest) {
     if (!hasAiProvider()) {
       const payload: GenerationPayload = {
         id: crypto.randomUUID(),
-        beforeImageUrl: input.photo,
         afterImageUrl: '/images/studio/studio_coupe_tuned.jpg',
         liveApiActive: false,
         providerUsed: 'demo',
@@ -210,7 +220,7 @@ export async function POST(request: NextRequest) {
         if (dup.status === 'COMPLETED' && dup.output_4k_url) {
           return NextResponse.json({
             success: true,
-            generation: cachedPayload(dup.id as string, input.photo, dup.output_4k_url as string, partPayload, currentBalance, (dup.provider as string) || 'cache'),
+            generation: cachedPayload(dup.id as string, dup.output_4k_url as string, partPayload, currentBalance, (dup.provider as string) || 'cache'),
             meta: meta(),
           });
         }
@@ -232,7 +242,7 @@ export async function POST(request: NextRequest) {
     if (hit?.output_4k_url) {
       return NextResponse.json({
         success: true,
-        generation: cachedPayload(hit.id as string, input.photo, hit.output_4k_url as string, partPayload, currentBalance, (hit.provider as string) || 'cache'),
+        generation: cachedPayload(hit.id as string, hit.output_4k_url as string, partPayload, currentBalance, (hit.provider as string) || 'cache'),
         meta: meta(),
       });
     }
@@ -306,6 +316,7 @@ export async function POST(request: NextRequest) {
       parts: fitmentParts,
       mode: 'fitment',
       referenceAfter: input.referenceAfterUrl,
+      deadlineMs: AI_CHAIN_DEADLINE_MS,
     });
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timedOut = new Promise<'timeout'>((resolve) => {
@@ -331,6 +342,11 @@ export async function POST(request: NextRequest) {
           creditsRemaining: currentBalance,
         });
       }
+      if (ai.outcome === 'blocked') {
+        return errorResponse(422, 'AI_BLOCKED', "AI bu suratni qayta ishlay olmadi (xavfsizlik filtri). Kredit qaytarildi", {
+          creditsRemaining: currentBalance,
+        });
+      }
       if (ai.outcome === 'busy') {
         return errorResponse(503, 'AI_BUSY', "Hozir so'rovlar ko'p, barcha AI modellar band. Kredit qaytarildi, 1-2 daqiqadan keyin qayta urinib ko'ring", {
           creditsRemaining: currentBalance,
@@ -341,33 +357,50 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const storedUrl = await persistGenerationImage(session.userId, generationId, ai.afterImageUrl);
-    const finalUrl = storedUrl ?? ai.afterImageUrl;
+    const stored = await persistGenerationImage(session.userId, generationId, ai.afterImageUrl);
+    if (!stored.ok && stored.reason === 'invalid') {
+      // The provider answered with something that is not a picture: never show it, never charge for it.
+      await refund(db, session, generationId, 'AI answer was not a valid image');
+      reserved = null;
+      return errorResponse(502, 'AI_FAILED', "Rasm yaratib bo'lmadi. Kredit qaytarildi, qayta urinib ko'ring", {
+        creditsRemaining: currentBalance,
+      });
+    }
+    if (!stored.ok && ai.afterImageUrl.startsWith('data:') && ai.afterImageUrl.length > MAX_INLINE_RESULT_CHARS) {
+      // Storage is down and the picture is too big to send back inside the answer: do not charge for what cannot be delivered.
+      await refund(db, session, generationId, 'Result could not be stored');
+      reserved = null;
+      return errorResponse(503, 'AI_STORAGE_FAILED', "Natijani saqlab bo'lmadi. Kredit qaytarildi, qayta urinib ko'ring", {
+        creditsRemaining: currentBalance,
+      });
+    }
+    const finalUrl = stored.ok ? stored.url : ai.afterImageUrl;
 
-    await db
-      .from('generations')
-      .update({
-        status: 'COMPLETED',
-        output_4k_url: finalUrl,
-        preview_url: finalUrl,
-        provider: ai.modelUsed ? `${ai.providerUsed}:${ai.modelUsed}`.slice(0, 120) : ai.providerUsed,
-        prompt: ai.promptUsed,
-        duration_ms: ai.durationMs,
-        completed_at: new Date().toISOString(),
-      })
-      .eq('id', generationId);
+    const completed = {
+      status: 'COMPLETED',
+      output_4k_url: finalUrl,
+      preview_url: finalUrl,
+      provider: ai.modelUsed ? `${ai.providerUsed}:${ai.modelUsed}`.slice(0, 120) : ai.providerUsed,
+      prompt: ai.promptUsed,
+      duration_ms: ai.durationMs,
+      completed_at: new Date().toISOString(),
+    };
+    let updateErr = (await db.from('generations').update(completed).eq('id', generationId)).error;
+    if (updateErr) updateErr = (await db.from('generations').update(completed).eq('id', generationId)).error;
+    if (updateErr) console.error('generation update failed:', updateErr.message);
 
-    await db.rpc('commit_credits', {
+    const { error: commitErr } = await db.rpc('commit_credits', {
       p_user_id: session.userId,
       p_shop_id: session.shop?.id ?? null,
       p_amount: GENERATION_COST,
       p_generation_id: generationId,
     });
+    // The customer already has the picture: a failed bookkeeping call must not turn into a failed render.
+    if (commitErr) console.error('commit_credits failed:', commitErr.message);
     reserved = null;
 
     const payload: GenerationPayload = {
       id: generationId,
-      beforeImageUrl: input.photo,
       afterImageUrl: finalUrl,
       liveApiActive: true,
       providerUsed: ai.providerUsed,
@@ -390,7 +423,6 @@ export async function POST(request: NextRequest) {
 
 function cachedPayload(
   id: string,
-  beforeUrl: string,
   afterUrl: string,
   part: GenerationPayload['part'],
   balance: number,
@@ -398,7 +430,6 @@ function cachedPayload(
 ): GenerationPayload {
   return {
     id,
-    beforeImageUrl: beforeUrl,
     afterImageUrl: afterUrl,
     liveApiActive: true,
     providerUsed: provider,
@@ -440,6 +471,9 @@ async function refundStale(db: ReturnType<typeof createAdminClient>, session: Se
 export async function GET() {
   const session = await getSession();
   if (!session) return errorResponse(401, 'UNAUTHENTICATED', 'Kirish talab qilinadi');
+
+  // Opening the list also gives back the credit of any render that was killed mid-flight.
+  await refundStale(createAdminClient(), session).catch(() => undefined);
 
   const { data, error } = await createAdminClient()
     .from('generations')
