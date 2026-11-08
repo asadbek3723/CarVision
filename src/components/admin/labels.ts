@@ -9,6 +9,8 @@ const ACTIONS = new Set([
   'UNVERIFY_SHOP',
   'APPROVE_DEPOSIT',
   'REJECT_DEPOSIT',
+  'SET_BANNER',
+  'REMOVE_BANNER',
 ]);
 const ATTEMPTS = new Set(['login', 'admin_pin', 'register', 'otp', 'camera_session']);
 

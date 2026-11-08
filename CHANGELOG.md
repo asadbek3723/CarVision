@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026-11-09] - Shop banner from the admin console, two-step car dialog, settings dropdowns, sign-out on Profile
+### Added
+- **Advertising banner in the shop.** On phones it sits after the first two cards, on desktop above the grid; the static "3% zakalat" note is gone. The admin sets it in the new **Reklama** section of the admin console (picture, optional link `https://…` or an in-app path like `/shop`, picture description, show/hide, remove). The picture is shrunk in the browser (JPEG, max 1600px wide), checked by its bytes on the server and stored in the `catalog` bucket under `banners/`; every change is written to the audit log (`SET_BANNER`, `REMOVE_BANNER`). Public `GET /api/v1/banners?slot=shop` answers `banner: null` for any problem, so the shop never shows an error.
+- **Migration `20261115000000_app_banners.sql` must be run** (Supabase SQL editor or `supabase db push`). Until then the shop shows no banner and the admin Reklama section says the database is not ready.
+- **Car dialog in two steps** (`MyCarPicker`): first make and model, then the production year (quick year chips, type a year, or save without a year). The choice is kept on the device until the customer changes or removes it.
+### Changed
+- The "my car" line under the search has no box and no border: a quiet icon and text; once a car is set it reads "Chevrolet Nexia · 2020" with a small ✕.
+- **Settings**: language and currency are dropdowns; the Sign out section is removed (Sign out is the last button of the Profile page).
+- Admin bottom bar has 7 sections on phones.
+
 ## [2026-11-08] - Shop and Profile follow the Figma "Minimal Dark" design
 ### Changed
 - **Shop (`/[locale]/shop`)** rebuilt from the Figma frame "CarVision · Doʻkon / Minimal Dark": title + subtitle with a cart button, search field with a yellow filter button (opens brand filters), "my car" chip, category chips, a 2-column card grid (square photo, brand, name, price, yellow arrow) and the 3% deposit note after the first row.

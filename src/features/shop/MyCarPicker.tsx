@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
-import { Car, Search, X } from 'lucide-react';
+import { Car, ChevronLeft, Search, X } from 'lucide-react';
+import { Sheet } from '@/components/ui/Sheet';
+import { geist, md } from '@/features/minimal/theme';
 import { useMyCar } from './useMyCar';
 
 interface ModelResult {
@@ -10,25 +12,55 @@ interface ModelResult {
   label: string;
 }
 
-/** "My car" chip + search. Picking a car filters the shop to parts that fit it. */
+type Step = 'model' | 'year';
+
+const MIN_YEAR = 1950;
+/** Quick picks in the year step: the latest model years, newest first. */
+const QUICK_YEARS = 12;
+
+/**
+ * "My car": a quiet line under the search (no box, no border) that opens a two-step dialog,
+ * first the make and model, then the production year. The choice is kept on this device until the
+ * customer changes or removes it, and filters the shop to parts that fit it.
+ */
 export function MyCarPicker() {
   const t = useTranslations('shop.myCar');
   const { car, setCar } = useMyCar();
+
   const [open, setOpen] = React.useState(false);
+  const [step, setStep] = React.useState<Step>('model');
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<ModelResult[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [picked, setPicked] = React.useState<ModelResult | null>(null);
   const [year, setYear] = React.useState('');
 
+  const maxYear = new Date().getFullYear() + 1;
+  const yearNumber = Number(year);
+  const yearValid = /^\d{4}$/.test(year) && yearNumber >= MIN_YEAR && yearNumber <= maxYear;
+  const quickYears = React.useMemo(() => Array.from({ length: QUICK_YEARS }, (_, i) => new Date().getFullYear() - i), []);
+
+  const openDialog = () => {
+    setStep('model');
+    setQuery('');
+    setResults([]);
+    setPicked(null);
+    setYear('');
+    setOpen(true);
+  };
+
+  // Model search (only while the first step is showing).
   React.useEffect(() => {
+    if (!open || step !== 'model') return;
     const q = query.trim();
     if (q.length < 2) {
       setResults([]);
+      setLoading(false);
       return;
     }
     let cancelled = false;
     setLoading(true);
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         const res = await fetch(`/api/v1/catalog/vehicles?q=${encodeURIComponent(q)}`);
         const data = await res.json();
@@ -41,85 +73,138 @@ export function MyCarPicker() {
     }, 250);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, open, step]);
 
-  if (car && !open) {
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        {/* One pill: tap the car to change it, the cross to clear it */}
-        <span className="inline-flex min-w-0 max-w-full items-center rounded-full border border-[#262626] bg-[#161616] text-white">
-          <button type="button" onClick={() => setOpen(true)} aria-label={t('change')} className="inline-flex min-h-[35px] min-w-0 items-center gap-2 ps-3 pe-1 text-[14px] font-medium">
-            <Car className="h-4 w-4 shrink-0" />
-            <span className="truncate">{car.label}{car.year ? ` · ${car.year}` : ''}</span>
-          </button>
-          <button type="button" aria-label={t('removeCar')} onClick={() => setCar(null)} className="me-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[#9A9A9A] transition hover:bg-white/[0.06] hover:text-white">
-            <X className="h-4 w-4" />
-          </button>
-        </span>
-      </div>
-    );
-  }
+  const choose = (m: ModelResult) => {
+    setPicked(m);
+    setStep('year');
+  };
 
-  if (!open) {
-    return (
-      <button type="button" onClick={() => setOpen(true)} className="inline-flex min-h-[35px] max-w-full items-center gap-2 rounded-full border border-[#262626] bg-[#161616] ps-3 pe-3.5 text-[14px] font-medium text-white transition hover:bg-[#1c1c1c]">
-        <Car className="h-4 w-4 shrink-0 text-[#FDC902]" />
-        <span className="truncate">{t('chip')}</span>
-      </button>
-    );
-  }
+  const save = (withYear: boolean) => {
+    if (!picked || (withYear && !yearValid)) return;
+    setCar({ modelId: picked.id, label: picked.label, year: withYear ? yearNumber : undefined });
+    setOpen(false);
+  };
+
+  const quiet = 'text-[#8C8C8C] transition hover:text-white';
 
   return (
-    <div className="rounded-[20px] bg-[#161616] p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-white">{t('pickTitle')}</p>
-        <button type="button" aria-label={t('close')} onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20">
-          <X className="h-3.5 w-3.5" />
+    <>
+      {/* The quiet line: icon and text only */}
+      <div className="flex min-w-0 items-center">
+        <button type="button" onClick={openDialog} aria-label={car ? t('change') : undefined} className={`inline-flex min-h-9 min-w-0 items-center gap-2 text-[13px] font-medium ${quiet}`}>
+          <Car className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+          <span className="truncate">{car ? `${car.label}${car.year ? ` · ${car.year}` : ''}` : t('chip')}</span>
         </button>
+        {car && (
+          <button type="button" onClick={() => setCar(null)} aria-label={t('removeCar')} className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${quiet}`}>
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
-      <div className="relative mt-3">
-        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-        <input
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('searchPlaceholder')}
-          className="w-full rounded-xl bg-[#222222] py-2.5 ps-9 pe-3 text-sm text-white outline-none placeholder:text-white/35 "
-        />
-      </div>
-      <input
-        type="number"
-        inputMode="numeric"
-        min={1950}
-        max={2100}
-        value={year}
-        onChange={(e) => setYear(e.target.value)}
-        placeholder={t('yearPlaceholder')}
-        className="mt-2 w-full rounded-xl bg-[#222222] px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/35 "
-      />
-      {query.trim().length >= 2 && (
-        <div className="mt-2 max-h-56 overflow-y-auto rounded-xl ">
-          {loading && <p className="px-3 py-3 text-xs text-white/50">{t('searching')}</p>}
-          {!loading && results.length === 0 && <p className="px-3 py-3 text-xs text-white/50">{t('notFound')}</p>}
-          {results.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => {
-                const y = Number(year);
-                setCar({ modelId: r.id, label: r.label, year: y >= 1950 && y <= 2100 ? y : undefined });
-                setOpen(false);
-                setQuery('');
-              }}
-              className="block w-full px-3 py-2.5 text-start text-sm text-white/90 transition hover:bg-white/[0.06]"
-            >
-              {r.label}
-            </button>
-          ))}
+
+      <Sheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title={step === 'model' ? t('pickTitle') : t('yearTitle')}
+        description={step === 'year' && picked ? t('yearSub', { car: picked.label }) : undefined}
+        size="sm"
+        className={`${geist.className} ${md.card}`}
+        footer={
+          step === 'year' ? (
+            <>
+              <button type="button" onClick={() => setStep('model')} className="me-auto inline-flex min-h-12 items-center gap-1 rounded-full px-4 text-sm font-semibold text-[#9A9A9A] transition hover:text-white">
+                <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+                {t('back')}
+              </button>
+              <button
+                type="button"
+                onClick={() => save(true)}
+                disabled={!yearValid}
+                className={`inline-flex min-h-12 items-center justify-center rounded-full px-7 text-sm font-semibold text-[#0A0A0A] transition disabled:opacity-40 ${md.accentBg}`}
+              >
+                {t('save')}
+              </button>
+            </>
+          ) : undefined
+        }
+      >
+        {/* Two thin bars show the step */}
+        <div className="mb-4 flex gap-1.5" role="img" aria-label={t('stepOf', { step: step === 'model' ? 1 : 2, total: 2 })}>
+          <span className="h-1 flex-1 rounded-full bg-[#FDC902]" />
+          <span className={`h-1 flex-1 rounded-full transition-colors ${step === 'year' ? 'bg-[#FDC902]' : 'bg-[#2a2a2a]'}`} />
         </div>
-      )}
-    </div>
+
+        {step === 'model' ? (
+          <div>
+            <label className={`flex h-12 items-center gap-2.5 rounded-[14px] px-3.5 ${md.tile}`}>
+              <Search className="h-[18px] w-[18px] shrink-0 text-[#6B6B6B]" />
+              <input
+                data-autofocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('searchPlaceholder')}
+                autoComplete="off"
+                enterKeyHint="search"
+                className="w-full min-w-0 bg-transparent text-[14px] text-white outline-none placeholder:text-[#6B6B6B]"
+              />
+            </label>
+            {query.trim().length >= 2 && (
+              <div className="mt-2 max-h-64 overflow-y-auto overscroll-contain">
+                {loading && <p className="px-1 py-3 text-xs text-[#9A9A9A]">{t('searching')}</p>}
+                {!loading && results.length === 0 && <p className="px-1 py-3 text-xs text-[#9A9A9A]">{t('notFound')}</p>}
+                {results.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => choose(r)}
+                    className={`flex min-h-12 w-full items-center border-b px-1 text-start text-[15px] text-white transition last:border-b-0 hover:bg-white/[0.04] ${md.line}`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <input
+              data-autofocus
+              value={year}
+              onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') save(true);
+              }}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder={t('yearPlaceholder')}
+              aria-invalid={year.length === 4 && !yearValid}
+              className={`h-14 w-full rounded-[14px] px-4 text-center text-[24px] font-semibold tabular-nums tracking-[0.05em] text-white outline-none placeholder:text-[#4a4a4a] focus:ring-2 focus:ring-[#FDC902]/50 ${md.tile}`}
+            />
+            {year.length === 4 && !yearValid && <p className="mt-2 text-center text-xs text-red-300">{t('yearInvalid', { max: maxYear })}</p>}
+            <div className="mt-4 grid grid-cols-4 gap-2">
+              {quickYears.map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => setYear(String(y))}
+                  aria-pressed={year === String(y)}
+                  className={`h-10 rounded-full text-[13px] font-medium tabular-nums transition ${
+                    year === String(y) ? `${md.accentBg} text-[#0A0A0A]` : `${md.tile} text-white hover:bg-[#2a2a2a]`
+                  }`}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => save(false)} className="mt-4 w-full py-2 text-center text-[13px] font-medium text-[#8C8C8C] transition hover:text-white">
+              {t('skipYear')}
+            </button>
+          </div>
+        )}
+      </Sheet>
+    </>
   );
 }

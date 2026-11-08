@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCategoryLabel } from '@/lib/category-label';
-import { Search, ShieldCheck, ShoppingBag, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Search, ShoppingBag, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { MinimalProductCard } from '@/components/veloce/MinimalProductCard';
 import { MyCarPicker } from '@/features/shop/MyCarPicker';
+import { ShopBanner } from '@/features/shop/ShopBanner';
 import { useMyCar } from '@/features/shop/useMyCar';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -100,17 +101,6 @@ export function VeloceShop() {
     }`;
 
   const shown = filtered.slice(0, visible);
-  const depositBanner = (
-    <div className={`flex items-center gap-3.5 rounded-[20px] p-4 ${md.card}`}>
-      <span aria-hidden className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${md.accentSoft} ${md.accentText}`}>
-        <ShieldCheck className="h-5 w-5" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[15px] font-medium leading-tight text-white">{t('depositTitle')}</p>
-        <p className={`mt-1 text-[13px] leading-[1.35] ${md.muted}`}>{t('depositBody')}</p>
-      </div>
-    </div>
-  );
 
   return (
     <div className={`${geist.className} ${md.page} min-h-full`}>
@@ -193,8 +183,8 @@ export function VeloceShop() {
           <span className={`shrink-0 text-[13px] tabular-nums ${md.faint}`}>{loading ? t('loading') : t('count', { count: filtered.length })}</span>
         </div>
 
-        {/* Desktop: the deposit note sits above the grid */}
-        <div className="mb-6 hidden md:block">{depositBanner}</div>
+        {/* Desktop: the advertising banner sits above the grid */}
+        <ShopBanner className="mb-6 hidden md:block" />
 
         {loading ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
@@ -213,8 +203,8 @@ export function VeloceShop() {
             {shown.map((p, idx) => (
               <React.Fragment key={p.id}>
                 <MinimalProductCard p={p} i={idx} />
-                {/* Phones: after the first row, as in the design */}
-                {idx === Math.min(1, shown.length - 1) && <div className="col-span-full md:hidden">{depositBanner}</div>}
+                {/* Phones: the advertising banner after the first two cards */}
+                {idx === Math.min(1, shown.length - 1) && <ShopBanner className="col-span-full md:hidden" />}
               </React.Fragment>
             ))}
             {visible < filtered.length && <MoreSentinel onVisible={() => setVisible((v) => v + PAGE)} />}

@@ -7,11 +7,12 @@ import { AdminShopsView } from './AdminShopsView';
 import { AdminEscrowView } from './AdminEscrowView';
 import { AdminUsersView } from './AdminUsersView';
 import { AdminRendersView } from './AdminRendersView';
+import { AdminBannersView } from './AdminBannersView';
 import { AdminSecurityView } from './AdminSecurityView';
 import { AdminSessionProvider } from './ui';
 
 const TAB_KEY = 'carvision_admin_tab';
-const TABS: AdminTab[] = ['dashboard', 'shops', 'escrow', 'users', 'renders', 'security'];
+const TABS: AdminTab[] = ['dashboard', 'shops', 'escrow', 'users', 'renders', 'banners', 'security'];
 
 /** The verified admin console. A 401 from any admin API sends the admin back to the PIN screen. */
 export function AdminApp({ adminName, onExpired, onLock }: { adminName: string; onExpired: () => void; onLock: () => void }) {
@@ -62,6 +63,7 @@ export function AdminApp({ adminName, onExpired, onLock }: { adminName: string; 
         {tab === 'escrow' && <AdminEscrowView onChanged={() => void refreshPending()} />}
         {tab === 'users' && <AdminUsersView />}
         {tab === 'renders' && <AdminRendersView />}
+        {tab === 'banners' && <AdminBannersView />}
         {tab === 'security' && <AdminSecurityView />}
       </AdminShell>
     </AdminSessionProvider>

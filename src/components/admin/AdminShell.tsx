@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
-import { Banknote, Cpu, LayoutDashboard, Lock, Shield, ShieldCheck, Store, Users } from 'lucide-react';
+import { Banknote, Cpu, LayoutDashboard, Lock, Megaphone, Shield, ShieldCheck, Store, Users } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 
-export type AdminTab = 'dashboard' | 'shops' | 'escrow' | 'users' | 'renders' | 'security';
+export type AdminTab = 'dashboard' | 'shops' | 'escrow' | 'users' | 'renders' | 'banners' | 'security';
 
 const NAV: Array<{ id: AdminTab; label: string; short: string; icon: React.ComponentType<{ className?: string }> }> = [
   { id: 'dashboard', label: 'dashboard', short: 'sDashboard', icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const NAV: Array<{ id: AdminTab; label: string; short: string; icon: React.Compo
   { id: 'escrow', label: 'escrow', short: 'sEscrow', icon: Banknote },
   { id: 'users', label: 'users', short: 'sUsers', icon: Users },
   { id: 'renders', label: 'renders', short: 'sRenders', icon: Cpu },
+  { id: 'banners', label: 'banners', short: 'sBanners', icon: Megaphone },
   { id: 'security', label: 'security', short: 'sSecurity', icon: ShieldCheck },
 ];
 
@@ -85,7 +86,7 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
       </div>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 bg-surface-1/95 px-1 pt-2 pb-[max(env(safe-area-inset-bottom),10px)] backdrop-blur-xl md:hidden" aria-label={t('sections')}>
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 bg-surface-1/95 px-1 pt-2 pb-[max(env(safe-area-inset-bottom),10px)] backdrop-blur-xl md:hidden" aria-label={t('sections')}>
         {NAV.map((n) => (
           <button
             key={n.id}

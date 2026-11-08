@@ -491,9 +491,7 @@
       "title": "Mağaza",
       "subtitle": "Aracınıza uygun parçalar ve hizmetler.",
       "filters": "Filtreler",
-      "brands": "Markalar",
-      "depositTitle": "%3 kaporayla rezervasyon yapın",
-      "depositBody": "Atölyenin adresi ve telefonu ödemeden sonra açılır."
+      "brands": "Markalar"
     },
     "card": {
       "allCars": "Tüm araçlar",
@@ -541,13 +539,20 @@
     "myCar": {
       "change": "Değiştir",
       "removeCar": "Aracı kaldır",
-      "chip": "Aracım: yalnızca uyumlu parçaları göster",
+      "chip": "Aracınızı seçin",
       "pickTitle": "Aracınızı seçin",
       "close": "Kapat",
       "searchPlaceholder": "Örn: Gentra, Toyota Camry, BYD Song",
-      "yearPlaceholder": "Üretim yılı (isteğe bağlı)",
+      "yearPlaceholder": "2020",
       "searching": "Aranıyor…",
-      "notFound": "Bulunamadı"
+      "notFound": "Bulunamadı",
+      "stepOf": "Adım {step} / {total}",
+      "yearTitle": "Hangi yılda üretildi?",
+      "yearSub": "{car} için yılı seçin veya yazın.",
+      "back": "Geri",
+      "save": "Kaydet",
+      "skipYear": "Yılsız kaydet",
+      "yearInvalid": "1950 ile {max} arasında bir yıl girin."
     }
   },
   "checkout": {
@@ -1501,7 +1506,9 @@
       "sSecurity": "Denetim",
       "sections": "Yönetim bölümleri",
       "backToApp": "Uygulamaya dön",
-      "lock": "Konsolu kilitle"
+      "lock": "Konsolu kilitle",
+      "banners": "Reklam",
+      "sBanners": "Reklam"
     },
     "gate": {
       "title": "Yönetici PIN",
@@ -1529,7 +1536,9 @@
       "VERIFY_SHOP": "Atölye onaylandı",
       "UNVERIFY_SHOP": "Atölye onayı kaldırıldı",
       "APPROVE_DEPOSIT": "Kapora onaylandı",
-      "REJECT_DEPOSIT": "Kapora reddedildi"
+      "REJECT_DEPOSIT": "Kapora reddedildi",
+      "SET_BANNER": "Reklam bannerı güncellendi",
+      "REMOVE_BANNER": "Reklam bannerı kaldırıldı"
     },
     "attempts": {
       "login": "Giriş",
@@ -1714,6 +1723,32 @@
       "fReasonOpt": "Neden (isteğe bağlı)",
       "banSubmit": "Engelle",
       "banning": "Engelleniyor…"
+    },
+    "banners": {
+      "title": "Mağaza reklamı",
+      "subtitle": "Mağazada ürünlerin arasında görünen banner.",
+      "preview": "Mağazada böyle görünür",
+      "empty": "Banner görselini seçin",
+      "hidden": "Gizli",
+      "sizeHint": "Önerilen: 1280×560 px (16:7), JPG, PNG veya WebP.",
+      "choose": "Görsel seç",
+      "replace": "Görseli değiştir",
+      "undo": "Geri al",
+      "link": "Bağlantı (isteğe bağlı)",
+      "linkHint": "Dokunulunca açılacak yer: https://… veya uygulama içi sayfa (örneğin /shop).",
+      "alt": "Görsel açıklaması (isteğe bağlı)",
+      "active": "Mağazada göster",
+      "updated": "Son değişiklik: {at}",
+      "save": "Kaydet",
+      "remove": "Banner'ı kaldır",
+      "removeAsk": "Banner silinsin mi?",
+      "removeYes": "Evet, sil",
+      "removeNo": "Hayır",
+      "saved": "Banner kaydedildi",
+      "removed": "Banner kaldırıldı",
+      "needImage": "Önce banner görselini seçin",
+      "badType": "Yalnızca JPG, PNG veya WebP yükleyin",
+      "badImage": "Görsel okunamadı"
     }
   },
   "profileExtras": {

@@ -491,9 +491,7 @@
       "title": "Doʻkon",
       "subtitle": "Mashinangizga mos detallar va xizmatlar.",
       "filters": "Filtrlar",
-      "brands": "Brendlar",
-      "depositTitle": "3% zakalat bilan bron qiling",
-      "depositBody": "Ustaxona manzili va telefoni toʻlovdan soʻng ochiladi."
+      "brands": "Brendlar"
     },
     "card": {
       "allCars": "Barcha mashinalar",
@@ -541,13 +539,20 @@
     "myCar": {
       "change": "Oʻzgartirish",
       "removeCar": "Mashinani olib tashlash",
-      "chip": "Mening mashinam: faqat mos detallarni koʻrsat",
+      "chip": "Mashinangizni tanlang",
       "pickTitle": "Mashinangizni tanlang",
       "close": "Yopish",
       "searchPlaceholder": "Masalan: Gentra, Toyota Camry, BYD Song",
-      "yearPlaceholder": "Ishlab chiqarilgan yili (ixtiyoriy)",
+      "yearPlaceholder": "2020",
       "searching": "Qidirilmoqda…",
-      "notFound": "Topilmadi"
+      "notFound": "Topilmadi",
+      "stepOf": "{step}-qadam / {total}",
+      "yearTitle": "Qaysi yilda ishlab chiqarilgan?",
+      "yearSub": "{car} uchun yilni tanlang yoki yozing.",
+      "back": "Orqaga",
+      "save": "Saqlash",
+      "skipYear": "Yilsiz saqlash",
+      "yearInvalid": "Yilni 1950 dan {max} gacha kiriting."
     }
   },
   "checkout": {
@@ -1501,7 +1506,9 @@
       "sSecurity": "Audit",
       "sections": "Admin boʻlimlari",
       "backToApp": "Ilovaga qaytish",
-      "lock": "Konsolni qulflash"
+      "lock": "Konsolni qulflash",
+      "banners": "Reklama",
+      "sBanners": "Reklama"
     },
     "gate": {
       "title": "Admin PIN",
@@ -1529,7 +1536,9 @@
       "VERIFY_SHOP": "Ustaxona tasdiqlandi",
       "UNVERIFY_SHOP": "Ustaxona tasdigʻi olib tashlandi",
       "APPROVE_DEPOSIT": "Zakalat tasdiqlandi",
-      "REJECT_DEPOSIT": "Zakalat rad etildi"
+      "REJECT_DEPOSIT": "Zakalat rad etildi",
+      "SET_BANNER": "Reklama banneri oʻzgartirildi",
+      "REMOVE_BANNER": "Reklama banneri olib tashlandi"
     },
     "attempts": {
       "login": "Kirish",
@@ -1714,6 +1723,32 @@
       "fReasonOpt": "Sabab (ixtiyoriy)",
       "banSubmit": "Bloklash",
       "banning": "Bloklanmoqda…"
+    },
+    "banners": {
+      "title": "Doʻkon reklamasi",
+      "subtitle": "Doʻkon sahifasida mahsulotlar orasida koʻrinadigan banner.",
+      "preview": "Doʻkonda shunday koʻrinadi",
+      "empty": "Banner rasmini tanlang",
+      "hidden": "Yashirilgan",
+      "sizeHint": "Tavsiya: 1280×560 px (16:7), JPG, PNG yoki WebP.",
+      "choose": "Rasm tanlash",
+      "replace": "Rasmni almashtirish",
+      "undo": "Bekor qilish",
+      "link": "Havola (ixtiyoriy)",
+      "linkHint": "Bosilganda ochiladigan manzil: https://… yoki ilova ichidagi sahifa (masalan /shop).",
+      "alt": "Rasm tavsifi (ixtiyoriy)",
+      "active": "Doʻkonda koʻrsatish",
+      "updated": "Oxirgi oʻzgarish: {at}",
+      "save": "Saqlash",
+      "remove": "Bannerni olib tashlash",
+      "removeAsk": "Banner oʻchirilsinmi?",
+      "removeYes": "Ha, oʻchirish",
+      "removeNo": "Yoʻq",
+      "saved": "Banner saqlandi",
+      "removed": "Banner olib tashlandi",
+      "needImage": "Avval banner rasmini tanlang",
+      "badType": "Faqat JPG, PNG yoki WebP rasm yuklang",
+      "badImage": "Rasmni oʻqib boʻlmadi"
     }
   },
   "profileExtras": {

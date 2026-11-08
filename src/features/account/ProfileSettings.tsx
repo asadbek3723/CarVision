@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { Check, ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { PageHeader } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -11,26 +11,33 @@ import { CreditHistory } from '@/features/account/ProfileExtras';
 import { ProfileSection } from '@/features/account/ProfileSection';
 import { CURRENCIES, LANGUAGES, focusRing, localizedPath, pageWrap } from '@/features/account/preferences';
 
-function Choice({ active, onClick, label, hint }: { active: boolean; onClick: () => void; label: string; hint?: string }) {
+function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: ReadonlyArray<{ value: string; label: string }> }) {
+  const id = React.useId();
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-xl px-4 text-start transition ${
-        active ? 'bg-gold-500/10 text-gold-300' : 'text-white/75 hover:bg-white/[0.05] hover:text-white'
-      } ${focusRing}`}
-    >
-      <span className="min-w-0 truncate text-base font-medium">{label}</span>
-      <span className="flex shrink-0 items-center gap-2 text-xs text-white/35">
-        {hint}
-        {active && <Check className="h-4 w-4 text-gold-500" />}
-      </span>
-    </button>
+    <div className="min-w-0">
+      <label htmlFor={id} className="mb-2 block text-sm text-white/55">
+        {label}
+      </label>
+      <div className="relative">
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`h-12 w-full cursor-pointer appearance-none rounded-xl bg-white/[0.06] ps-4 pe-11 text-base font-medium text-white transition [color-scheme:dark] hover:bg-white/[0.09] ${focusRing}`}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value} className="bg-[#161616] text-white">
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown aria-hidden="true" className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+      </div>
+    </div>
   );
 }
 
-/** Language, currency, credit history and sign out — kept off the profile itself. */
+/** Language and currency (as dropdowns) and the credit history — kept off the profile itself. */
 export function ProfileSettings() {
   const t = useTranslations('profilePage');
   const tx = useTranslations('profileExtras');
@@ -38,7 +45,7 @@ export function ProfileSettings() {
   const pathname = usePathname();
   const router = useRouter();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { currency, setCurrency } = useCurrency();
   const [historyOpen, setHistoryOpen] = React.useState(false);
 
@@ -58,19 +65,10 @@ export function ProfileSettings() {
     <div className={pageWrap}>
       <PageHeader title={t('settings')} subtitle={t('settingsSub')} back={{ href: `/${locale}/profile` }} />
 
-      <ProfileSection title={t('language')}>
-        <div className="grid gap-1 sm:grid-cols-2 xl:grid-cols-4">
-          {LANGUAGES.map((l) => (
-            <Choice key={l.code} active={l.code === locale} onClick={() => changeLanguage(l.code)} label={l.name} hint={l.code.toUpperCase()} />
-          ))}
-        </div>
-      </ProfileSection>
-
-      <ProfileSection title={t('currency')}>
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
-          {CURRENCIES.map((c) => (
-            <Choice key={c} active={c === currency} onClick={() => setCurrency(c)} label={c} />
-          ))}
+      <ProfileSection title={t('langCurrency')}>
+        <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
+          <SelectField label={t('language')} value={locale} onChange={changeLanguage} options={LANGUAGES.map((l) => ({ value: l.code, label: l.name }))} />
+          <SelectField label={t('currency')} value={currency} onChange={(c) => setCurrency(c as typeof currency)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
         </div>
       </ProfileSection>
 
@@ -90,17 +88,6 @@ export function ProfileSettings() {
             <CreditHistory />
           </div>
         )}
-      </ProfileSection>
-
-      <ProfileSection title={t('account')}>
-        <button
-          type="button"
-          onClick={signOut}
-          className={`inline-flex min-h-11 items-center gap-3 rounded-lg text-base font-medium text-red-300/90 transition hover:text-red-300 ${focusRing}`}
-        >
-          <LogOut className="h-5 w-5 shrink-0 rtl:rotate-180" />
-          {t('signOut')}
-        </button>
       </ProfileSection>
     </div>
   );

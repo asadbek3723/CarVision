@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowRight, ArrowUpRight, CalendarCheck, CarFront, ChevronRight, CircleHelp, Globe, LayoutDashboard, Loader2, Package, Pencil, Settings2 } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, CalendarCheck, CarFront, ChevronRight, CircleHelp, Globe, LayoutDashboard, Loader2, Package, LogOut, Pencil, Settings2 } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { BOOKING_STATUS_STYLE, type BookingView } from '@/features/shop/BookingCard';
@@ -74,7 +74,7 @@ export function VeloceProfile() {
   const t = useTranslations('profilePage');
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   const [bookings, setBookings] = React.useState<BookingView[]>([]);
   const [bookingsLoading, setBookingsLoading] = React.useState(true);
@@ -226,6 +226,16 @@ export function VeloceProfile() {
           <SettingsRow href={`${base}/settings`} icon={Globe} title={t('language')} value={languageName} />
           <SettingsRow href={`/${locale}#faq`} icon={CircleHelp} title={t('help')} last />
         </ul>
+
+        {/* Sign out: the shell sends a signed-out visitor to the login page */}
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className={`mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] text-[15px] font-semibold text-red-400 transition hover:bg-red-500/10 ${md.card} ${mdFocus}`}
+        >
+          <LogOut className="h-[18px] w-[18px]" strokeWidth={2} />
+          {t('signOut')}
+        </button>
       </div>
     </div>
   );

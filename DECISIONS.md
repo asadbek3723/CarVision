@@ -1,5 +1,11 @@
 # Architecture & Product Decisions
 
+## 2026-11-09: Shop advertising banner is a server-managed single slot
+- **Decision**: one table `app_banners` (primary key `slot`, only `shop` for now), written and read only by the server with the service role (RLS on, no policies). Pictures live in the public `catalog` bucket under `banners/`. The public API caches for 60 s and never errors to the shop; the admin API uses `adminLiveOr401` and writes the audit log. Links may only be `https://…` or an in-app path starting with `/` (never `javascript:`, `data:` or `//host`).
+- **Reason**: the owner wants to change the shop advertisement from the admin console without a deploy. One slot is the smallest thing that does it; the `slot` key leaves room for more places later.
+- **Rejected**: storing the banner in a config file or env variable (needs a deploy); several rotating banners (not asked for); a direct browser upload to storage (the server must check the file's bytes).
+- **Also**: the car chip is a plain line, and choosing a car is a two-step dialog (model, then year) kept in `localStorage` until changed.
+
 ## 2026-11-08: Shop and Profile take the Figma "Minimal Dark" look
 - **Decision**: `VeloceShop` and `VeloceProfile` follow the Figma file "Car Viison" (frames Doʻkon and Profil, 390px wide): Geist font, #0A0A0A page, #161616 cards, #262626 hairlines, #FDC902 accent. The font is loaded only by these two screens; the shell, header and bottom dock are unchanged.
 - **Deviations from the frames**: the card's label slot shows the part brand, not the workshop name (the workshop stays hidden until the 3% deposit); a "Dashboard" row is added to the profile list because the dashboard opens only from Profile; "Yordam" opens the FAQ on the landing page.

@@ -491,9 +491,7 @@
       "title": "المتجر",
       "subtitle": "قطع وخدمات تناسب سيارتك.",
       "filters": "الفلاتر",
-      "brands": "العلامات التجارية",
-      "depositTitle": "احجز بعربون 3%",
-      "depositBody": "يظهر عنوان الورشة ورقم هاتفها بعد الدفع."
+      "brands": "العلامات التجارية"
     },
     "card": {
       "allCars": "جميع السيارات",
@@ -541,13 +539,20 @@
     "myCar": {
       "change": "تغيير",
       "removeCar": "إزالة السيارة",
-      "chip": "سيارتي: أظهر القطع المناسبة فقط",
+      "chip": "اختر سيارتك",
       "pickTitle": "اختر سيارتك",
       "close": "إغلاق",
       "searchPlaceholder": "مثال: Gentra أو Toyota Camry أو BYD Song",
-      "yearPlaceholder": "سنة الصنع (اختياري)",
+      "yearPlaceholder": "2020",
       "searching": "جارٍ البحث…",
-      "notFound": "لم يتم العثور على نتائج"
+      "notFound": "لم يتم العثور على نتائج",
+      "stepOf": "الخطوة {step} من {total}",
+      "yearTitle": "في أي سنة صُنعت؟",
+      "yearSub": "اختر السنة أو اكتبها لـ {car}.",
+      "back": "رجوع",
+      "save": "حفظ",
+      "skipYear": "الحفظ بدون سنة",
+      "yearInvalid": "أدخل سنة بين 1950 و{max}."
     }
   },
   "checkout": {
@@ -1501,7 +1506,9 @@
       "sSecurity": "التدقيق",
       "sections": "أقسام الإدارة",
       "backToApp": "العودة إلى التطبيق",
-      "lock": "قفل لوحة الإدارة"
+      "lock": "قفل لوحة الإدارة",
+      "banners": "الإعلانات",
+      "sBanners": "إعلان"
     },
     "gate": {
       "title": "رمز PIN للمسؤول",
@@ -1529,7 +1536,9 @@
       "VERIFY_SHOP": "تم توثيق الورشة",
       "UNVERIFY_SHOP": "تم إلغاء توثيق الورشة",
       "APPROVE_DEPOSIT": "تمت الموافقة على العربون",
-      "REJECT_DEPOSIT": "تم رفض العربون"
+      "REJECT_DEPOSIT": "تم رفض العربون",
+      "SET_BANNER": "تم تحديث البانر الإعلاني",
+      "REMOVE_BANNER": "تم حذف البانر الإعلاني"
     },
     "attempts": {
       "login": "تسجيل الدخول",
@@ -1714,6 +1723,32 @@
       "fReasonOpt": "السبب (اختياري)",
       "banSubmit": "حظر",
       "banning": "جارٍ الحظر…"
+    },
+    "banners": {
+      "title": "إعلان المتجر",
+      "subtitle": "البانر الذي يظهر بين المنتجات في المتجر.",
+      "preview": "هكذا يظهر في المتجر",
+      "empty": "اختر صورة البانر",
+      "hidden": "مخفي",
+      "sizeHint": "المقاس الموصى به: 1280×560 بكسل (16:7)، JPG أو PNG أو WebP.",
+      "choose": "اختيار صورة",
+      "replace": "استبدال الصورة",
+      "undo": "تراجع",
+      "link": "الرابط (اختياري)",
+      "linkHint": "وجهة الضغط: https://… أو صفحة داخل التطبيق (مثل /shop).",
+      "alt": "وصف الصورة (اختياري)",
+      "active": "عرضه في المتجر",
+      "updated": "آخر تعديل: {at}",
+      "save": "حفظ",
+      "remove": "إزالة البانر",
+      "removeAsk": "هل تريد حذف البانر؟",
+      "removeYes": "نعم، احذف",
+      "removeNo": "لا",
+      "saved": "تم حفظ البانر",
+      "removed": "تمت إزالة البانر",
+      "needImage": "اختر صورة البانر أولاً",
+      "badType": "ارفع صورة JPG أو PNG أو WebP فقط",
+      "badImage": "تعذّرت قراءة الصورة"
     }
   },
   "profileExtras": {

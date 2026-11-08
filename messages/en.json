@@ -491,9 +491,7 @@
       "title": "Shop",
       "subtitle": "Parts and services that fit your car.",
       "filters": "Filters",
-      "brands": "Brands",
-      "depositTitle": "Book with a 3% deposit",
-      "depositBody": "The workshop address and phone open after payment."
+      "brands": "Brands"
     },
     "card": {
       "allCars": "All cars",
@@ -541,13 +539,20 @@
     "myCar": {
       "change": "Change",
       "removeCar": "Remove car",
-      "chip": "My car: show only matching parts",
+      "chip": "Choose your car",
       "pickTitle": "Choose your car",
       "close": "Close",
       "searchPlaceholder": "e.g. Gentra, Toyota Camry, BYD Song",
-      "yearPlaceholder": "Year of manufacture (optional)",
+      "yearPlaceholder": "2020",
       "searching": "Searching…",
-      "notFound": "Nothing found"
+      "notFound": "Nothing found",
+      "stepOf": "Step {step} of {total}",
+      "yearTitle": "Which year was it made?",
+      "yearSub": "Pick or type the year for {car}.",
+      "back": "Back",
+      "save": "Save",
+      "skipYear": "Save without a year",
+      "yearInvalid": "Enter a year from 1950 to {max}."
     }
   },
   "checkout": {
@@ -1501,7 +1506,9 @@
       "sSecurity": "Audit",
       "sections": "Admin sections",
       "backToApp": "Back to the app",
-      "lock": "Lock the console"
+      "lock": "Lock the console",
+      "banners": "Banner ads",
+      "sBanners": "Ads"
     },
     "gate": {
       "title": "Admin PIN",
@@ -1529,7 +1536,9 @@
       "VERIFY_SHOP": "Workshop verified",
       "UNVERIFY_SHOP": "Workshop verification removed",
       "APPROVE_DEPOSIT": "Deposit approved",
-      "REJECT_DEPOSIT": "Deposit rejected"
+      "REJECT_DEPOSIT": "Deposit rejected",
+      "SET_BANNER": "Ad banner updated",
+      "REMOVE_BANNER": "Ad banner removed"
     },
     "attempts": {
       "login": "Sign in",
@@ -1714,6 +1723,32 @@
       "fReasonOpt": "Reason (optional)",
       "banSubmit": "Ban",
       "banning": "Banning…"
+    },
+    "banners": {
+      "title": "Shop advertising",
+      "subtitle": "The banner shown between the products in the shop.",
+      "preview": "How it looks in the shop",
+      "empty": "Choose the banner picture",
+      "hidden": "Hidden",
+      "sizeHint": "Recommended: 1280×560 px (16:7), JPG, PNG or WebP.",
+      "choose": "Choose picture",
+      "replace": "Replace picture",
+      "undo": "Undo",
+      "link": "Link (optional)",
+      "linkHint": "Where a tap leads: https://… or a page inside the app (for example /shop).",
+      "alt": "Picture description (optional)",
+      "active": "Show in the shop",
+      "updated": "Last changed: {at}",
+      "save": "Save",
+      "remove": "Remove banner",
+      "removeAsk": "Remove the banner?",
+      "removeYes": "Yes, remove",
+      "removeNo": "No",
+      "saved": "Banner saved",
+      "removed": "Banner removed",
+      "needImage": "Choose the banner picture first",
+      "badType": "Upload a JPG, PNG or WebP picture",
+      "badImage": "The picture could not be read"
     }
   },
   "profileExtras": {
