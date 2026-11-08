@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { requestMotionAccess } from '@/features/camera/hooks/useDeviceLevel';
 
 // The camera (≈800 lines + animation + QR code) is downloaded only the first time it is opened,
 // not with every page of the site.
@@ -250,6 +251,9 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   );
 
   const openCamera = React.useCallback(() => {
+    // Runs inside the tap that opens the camera: the only moment iOS lets us ask for the motion
+    // sensor, which the camera needs to notice a phone held sideways under rotation lock.
+    requestMotionAccess();
     setIsCameraOpen(true);
   }, []);
 

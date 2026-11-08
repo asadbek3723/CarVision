@@ -19,6 +19,38 @@ export interface UseDeviceLevel {
 
 const SMOOTHING = 0.25;
 
+/** Motion access is per page load; remembered here so every camera screen can use it at once. */
+let motionGranted = false;
+const grantListeners = new Set<() => void>();
+function markGranted() {
+  motionGranted = true;
+  grantListeners.forEach((fn) => fn());
+}
+
+/**
+ * Asks for motion-sensor access. iOS only allows this from a tap, so it is called from the button
+ * that opens the camera: the camera can then notice a phone held sideways even while the screen
+ * is locked to portrait. Elsewhere (Android, desktop) access needs no prompt.
+ */
+export function requestMotionAccess(): void {
+  if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window) || motionGranted) return;
+  const ctor = window.DeviceOrientationEvent as OrientationCtor;
+  if (typeof ctor.requestPermission !== 'function') {
+    markGranted();
+    return;
+  }
+  try {
+    ctor
+      .requestPermission()
+      .then((res) => {
+        if (res === 'granted') markGranted();
+      })
+      .catch(() => {});
+  } catch {
+    /* outside a tap: the camera screen asks again from its own button */
+  }
+}
+
 function screenAngle(): number {
   if (typeof window === 'undefined') return 0;
   return window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0;
@@ -39,18 +71,23 @@ export function useDeviceLevel(enabled = true, screenAngleOverride: number | nul
   React.useEffect(() => {
     if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) return;
     const ctor = window.DeviceOrientationEvent as OrientationCtor;
-    if (typeof ctor.requestPermission === 'function') setNeedsPermission(true);
-    else setGranted(true);
+    const sync = () => {
+      setGranted(true);
+      setNeedsPermission(false);
+    };
+    if (motionGranted || typeof ctor.requestPermission !== 'function') sync();
+    else setNeedsPermission(true);
+    grantListeners.add(sync);
+    return () => {
+      grantListeners.delete(sync);
+    };
   }, []);
 
   const requestPermission = React.useCallback(async () => {
     const ctor = (typeof window !== 'undefined' ? window.DeviceOrientationEvent : undefined) as OrientationCtor | undefined;
     try {
       const res = await ctor?.requestPermission?.();
-      if (res === 'granted') {
-        setGranted(true);
-        setNeedsPermission(false);
-      }
+      if (res === 'granted') markGranted();
     } catch {
       /* The guide simply stays off. */
     }

@@ -45,3 +45,19 @@ describe('playTick haptics', () => {
     expect(vibrate).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('vibrate', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('still taps when the phone has "Reduce motion" on (haptics are not motion)', async () => {
+    vi.resetModules();
+    const vib = vi.fn();
+    vi.stubGlobal('navigator', { vibrate: vib });
+    vi.stubGlobal('window', { matchMedia: () => ({ matches: true }) });
+    const { vibrate } = await import('./fx');
+    vibrate(12);
+    expect(vib).toHaveBeenCalledWith(12);
+  });
+});

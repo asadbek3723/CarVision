@@ -19,7 +19,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useMyCar } from '@/features/shop/useMyCar';
 import { useCurrency } from '@/context/CurrencyContext';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
-import { playShutter, playLock, playTick, unlockAudio, vibrate } from '@/features/camera/lib/fx';
+import { playTick, unlockAudio, vibrate } from '@/features/camera/lib/fx';
 import { CarIdentifyGate } from './CarIdentifyGate';
 import { PartReel } from './PartReel';
 import { onePerSlot, partSlot, toggleInSlot } from '@/lib/part-slot';
@@ -360,7 +360,7 @@ export function VeloceCustomize() {
       return;
     }
     setApplyError(null);
-    playShutter();
+    // Silent on purpose: only a light tap is felt, no sound.
     vibrate(40);
     setShowProgress(true);
     await render.run(planAngles, buildParts(partsToApply));
@@ -383,7 +383,6 @@ export function VeloceCustomize() {
     }
     if (Object.keys(generatedMap).length === 0) return;
     setGeneratedAngles(generatedMap);
-    playLock();
     vibrate(50);
     router.push(`/${locale}/customize/result`);
   };

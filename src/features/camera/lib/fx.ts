@@ -23,10 +23,6 @@ export function setMuted(muted: boolean): void {
   }
 }
 
-function reducedMotion(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 let iosSwitch: HTMLLabelElement | null = null;
 
 /**
@@ -54,8 +50,12 @@ function iosHaptic(): void {
   }
 }
 
+/**
+ * Haptic tap. Not tied to "Reduce motion": that setting is about movement on screen, and turning
+ * it on used to silence every vibration in the app (the parts wheel included).
+ */
 export function vibrate(pattern: number | number[]): void {
-  if (typeof navigator === 'undefined' || reducedMotion()) return;
+  if (typeof navigator === 'undefined') return;
   if ('vibrate' in navigator) {
     try {
       navigator.vibrate(pattern);

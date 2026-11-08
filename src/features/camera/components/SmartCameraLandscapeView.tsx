@@ -265,19 +265,45 @@ export function SmartCameraLandscapeView({
     if (stream) void bg.play().catch(() => {});
   }, [stream]);
 
-  // While the UI is turned by CSS, follow which way the phone is actually held (with a wide dead
-  // zone so it never flips while the user is just tilting the phone).
+  // Screen locked to portrait: the viewport never turns, so the motion sensor tells us how the phone
+  // is really held. Held sideways for a moment -> the UI turns to face the user (no tap needed);
+  // back upright after that -> the "turn your phone" screen returns. A phone lying flat is ignored.
+  const forcedRef = React.useRef(forced);
+  forcedRef.current = forced;
+  const sawSidewaysRef = React.useRef(false);
   React.useEffect(() => {
-    if (!forced || typeof window === 'undefined') return;
+    if (!isPortrait || typeof window === 'undefined') {
+      sawSidewaysRef.current = false;
+      return;
+    }
+    let want: 'ccw' | 'cw' | 'upright' | null = null;
+    let since = 0;
     const onOrientation = (e: DeviceOrientationEvent) => {
       if (typeof e.beta !== 'number' || typeof e.gamma !== 'number') return;
-      const { roll } = computeLevel(e.beta, e.gamma, 0);
-      if (roll > 55) setSide('ccw');
-      else if (roll < -55) setSide('cw');
+      const { roll, pitch } = computeLevel(e.beta, e.gamma, 0);
+      if (Math.abs(pitch) > 55) return; // lying flat: roll means nothing
+      const next = roll > 60 ? 'ccw' : roll < -60 ? 'cw' : Math.abs(roll) < 25 ? 'upright' : null;
+      const now = performance.now();
+      if (next !== want) {
+        want = next;
+        since = now;
+        return;
+      }
+      if (!next || now - since < 450) return;
+      if (next === 'upright') {
+        if (forcedRef.current && sawSidewaysRef.current) {
+          sawSidewaysRef.current = false;
+          setForceLandscape(false);
+        }
+        return;
+      }
+      sawSidewaysRef.current = true;
+      setSide(next);
+      setForceLandscape(true);
     };
     window.addEventListener('deviceorientation', onOrientation);
     return () => window.removeEventListener('deviceorientation', onOrientation);
-  }, [forced]);
+  }, [isPortrait]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
