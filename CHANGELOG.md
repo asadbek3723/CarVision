@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-11-08] - Render pipeline: no more paying for nothing
+### Added
+- **Per-task AI models**: image chain takes a task (`fitment` / `video_frame`) and honours `IMAGE_MODEL_FITMENT` / `IMAGE_MODEL_VIDEO_FRAME` (`provider:model` lists). Nano Banana 2 (`gemini-3.1-flash-image`) is now tried before Nano Banana Pro; text, translation and car detection share the Gemini key pool and have `GEMINI_TEXT_MODEL` / `GEMINI_DETECT_MODEL`.
+- **Part visibility rule** (`src/lib/part-visibility.ts`): spoiler/exhaust/performance only from rear and side, front/rear lights, bumpers and body kits by `attributes.zone` or name, interior never. `planRender(angles, parts)` skips angles that cannot show any chosen part (no credit, shown as skipped with a reason), the apply button is blocked with a message when nothing is visible, the request carries only visible parts, and `/api/v1/generations` answers `422 PART_NOT_VISIBLE` before reserving a credit.
+- **Car check before rendering**: `/api/v1/vehicles/detect` also compares the other photographed sides with the front photo (`mismatch` + angle ids). `CarIdentifyGate` shows a blocking retake screen for "not a car" and "different cars" instead of falling through to manual selection. Opt-in signed token (`CAR_CHECK_SECRET`, `src/server/car-check.ts`) is required by `/api/v1/generations` (`403 CAR_NOT_VERIFIED`); an expired token reopens the gate.
+### Fixed
+- One uploaded photo was copied into all five angles and charged five credits (`VeloceSmartCameraModal`); missing angles are now left out.
+### Notes
+- Translations (8 locales) for all new messages; `.env.example` documents the new variables.
+- A separate paid video model is planned, see DECISIONS.md (2026-11-08).
+
 ## [2026-11-08] - Parts wheel: soft haptic on every notch
 ### Changed
 - `playTick` (parts wheel): the haptic was 8 ms, below what most phone motors show. Every notch now gives a soft 16 ms tap (11 ms when spinning fast), pulses are spaced at least 50 ms apart so they never stack into a buzz, and the tick sound is unchanged. Covered by `fx.test.ts`.

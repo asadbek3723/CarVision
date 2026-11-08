@@ -120,9 +120,8 @@ export function VeloceCustomize() {
   const [applyError, setApplyError] = React.useState<string | null>(null);
   const render = useRenderBuild(refreshProfile);
   const isApplying = render.running;
-  // The server no longer accepts the car check (expired / missing): ask the customer to confirm again.
-  React.useEffect(() => {
-    if (render.running || !render.states.some((s) => s.errorCode === 'CAR_NOT_VERIFIED')) return;
+  // Shows the car check again (server no longer accepts it, or the remembered car is gone).
+  const reopenCarGate = React.useCallback(() => {
     try {
       sessionStorage.removeItem(CONFIRMED_KEY);
     } catch {
@@ -130,7 +129,12 @@ export function VeloceCustomize() {
     }
     setConfirmedStamp('');
     setShowProgress(false);
-  }, [render.running, render.states]);
+  }, []);
+  // The server no longer accepts the car check (expired / missing): ask the customer to confirm again.
+  React.useEffect(() => {
+    if (render.running || !render.states.some((s) => s.errorCode === 'CAR_NOT_VERIFIED')) return;
+    reopenCarGate();
+  }, [render.running, render.states, reopenCarGate]);
 
   // Load catalog products
   React.useEffect(() => {
@@ -340,6 +344,11 @@ export function VeloceCustomize() {
     // The photos must have passed the car check (a car, one car on all sides) before anything is rendered.
     if (!carConfirmed) {
       setApplyError(t('errConfirmCar'));
+      return;
+    }
+    // Confirmed once but the remembered car is gone (cleared storage): ask again instead of rendering blind.
+    if (!myCar) {
+      reopenCarGate();
       return;
     }
     if (renderPlan.noneVisible) {

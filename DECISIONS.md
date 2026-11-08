@@ -432,3 +432,17 @@
 ## [2026-11-08] Gemini endpoint chosen by key type
 - **Decision**: `AQ.` keys go to Vertex AI (`aiplatform.googleapis.com`), `AIza` keys to AI Studio; the other API is tried on 401/403.
 - **Reason**: production GEMINI_API_KEY is a Vertex AI express key; AI Studio rejects it.
+
+## [2026-11-08] Image model: Nano Banana 2 first, Pro as fallback; models per task by env
+- **Decision**: default chain tries `gemini-3.1-flash-image` (about $0.07-0.08 per image) before `gemini-3-pro-image-preview` (about $0.134). `IMAGE_MODEL_FITMENT` / `IMAGE_MODEL_VIDEO_FRAME` override the order per task without code changes.
+- **Reason**: a full render is 5 angles; this halves the cost with near-Pro quality. Prices are from third-party pages and must be checked on Google's price page.
+- **Rejected**: Higgsfield for fitment edits (API is pay-as-you-go from a separate USD balance, no free API tier; its listed image models do not include Nano Banana/Seedream/FLUX Kontext and multi-reference editing is unconfirmed); GPT Image 2 (strong but high quality tier costs about $0.21).
+
+## [2026-11-08] Never render or charge for something the photos cannot show
+- **Decision**: (1) photos that are not a car, or whose sides are not one car, block rendering; (2) an angle where no chosen part is visible is skipped and costs nothing, and a part that no photo can show blocks the render with a message; (3) the same rule runs on the server.
+- **Reason**: before, a rear light on a front-only photo, a non-car photo or one photo copied five times each spent credits and returned an unchanged picture.
+- **Limits**: the car-check token is bound to the user, not the photo (photos are re-compressed), so it is a barrier, not a guarantee; the AI "same car" check can be wrong, so it leans towards allowing when unsure.
+
+## [2026-11-08] Video: a separate paid AI provider is wanted (amends plans/09_VIDEO_ENGINE.md)
+- **Decision**: the owner wants AI video from a separate provider, added last. `plans/09_VIDEO_ENGINE.md` (100% client-side, no paid video API) is no longer the final word; a provider module must stay outside the image chain (`ProviderId`/`hasAnyImageKey`) and reserve credits before submitting an async job.
+- **Candidate**: Higgsfield (Kling, Seedance, Wan models) at https://open.higgsfield.ai/, paid, minimum $5 top-up. Pricing, async API and terms still to be read from its docs before building.

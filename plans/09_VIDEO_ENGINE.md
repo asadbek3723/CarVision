@@ -6,6 +6,8 @@
 **Status:** Normative. Implementation must strictly execute client-side rendering without external AI video API charges.  
 **Read together with:** `01_PRD_BUSINESS_LOGIC.md` (FR-VID), `02_DESIGN_SYSTEM.md`, `04_ARCHITECTURE.md` (ADR-008).
 
+> **Amended 2026-11-08:** the owner now wants AI video generation from a separate paid provider, added after the image work (see DECISIONS.md, 2026-11-08). The client-side engine below stays as the default and fallback until that provider is built.
+
 ---
 
 ## 1. PURPOSE & CORE ECONOMIC DIRECTIVE
