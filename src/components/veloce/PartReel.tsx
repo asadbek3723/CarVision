@@ -17,6 +17,8 @@ interface PartReelProps {
   onTick?: () => void;
   /** First touch on the strip (e.g. to unlock audio for the tick sound). */
   onPointerStart?: () => void;
+  /** Finger lifted after a drag; runs inside the touch-end event (iPhone haptic needs that). */
+  onRelease?: () => void;
   /** Label for the previous / next arrows (desktop). */
   prevLabel: string;
   nextLabel: string;
@@ -89,6 +91,7 @@ export function PartReel({
   onFocusChange,
   onTick,
   onPointerStart,
+  onRelease,
   prevLabel,
   nextLabel,
   formatPrice,
@@ -338,6 +341,7 @@ export function PartReel({
     d.down = false;
     if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
     if (d.moved) {
+      onRelease?.();
       // A finger that stopped before lifting carries no momentum.
       const idle = performance.now() - d.lastT > 90;
       const flick = idle ? 0 : (-dirRef.current * d.v * 1000 * FLICK_GAIN) / metricsRef.current.slot; // cards per second

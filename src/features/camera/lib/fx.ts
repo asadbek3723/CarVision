@@ -67,6 +67,17 @@ export function vibrate(pattern: number | number[]): void {
   iosHaptic();
 }
 
+/**
+ * One tap for iPhone at the moment the finger lifts. iOS has no Vibration API and only lets the
+ * switch haptic through inside a real tap (touch end / click), never during a drag or a spin, so
+ * the per-notch ticks cannot be felt there; this is the one moment that is. No-op on Android,
+ * which already feels every notch.
+ */
+export function hapticOnRelease(): void {
+  if (typeof navigator === 'undefined' || 'vibrate' in navigator) return;
+  iosHaptic();
+}
+
 let audio: AudioContext | null = null;
 
 /** Birinchi foydalanuvchi bosishida chaqiriladi (browser autoplay policy unlock) */

@@ -217,7 +217,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
 
           {!running && done > 0 && (
             <button type="button" onClick={onContinue} className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#E2BF78] to-[#C79F4E] text-base font-bold text-black shadow-[0_10px_30px_-8px_rgba(212,174,98,0.55)] transition hover:brightness-105 active:scale-[0.98]">
-              {t('viewResult', { count: done })}
+              {t('viewResult')}
               <ArrowRight className="h-5 w-5 rtl:rotate-180" />
             </button>
           )}

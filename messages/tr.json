@@ -851,7 +851,7 @@
     "errorFallback": "hata",
     "retry": "Tekrar dene (1 kredi)",
     "refundNote": "Başarısız açılar için kredi otomatik olarak iade edildi.",
-    "viewResult": "Sonucu gör ({count} açı)",
+    "viewResult": "Sonucu gör",
     "retryAll": "Yeniden oluştur · {count} kredi",
     "skippedHidden": "Parça görünmüyor, kredi düşülmedi"
   },

@@ -851,7 +851,7 @@
     "errorFallback": "error",
     "retry": "Retry (1 credit)",
     "refundNote": "Credits for failed angles were refunded automatically.",
-    "viewResult": "{count, plural, one {See result (# angle)} other {See result (# angles)}}",
+    "viewResult": "See result",
     "retryAll": "Generate again · {count} credits",
     "skippedHidden": "Part not visible, no credit charged"
   },
