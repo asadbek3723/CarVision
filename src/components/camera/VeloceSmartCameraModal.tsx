@@ -164,13 +164,16 @@ export function VeloceSmartCameraModal({
 
       if (!primaryUrl) return;
 
-      // Every named angle gets its own real photo (keys match `FIVE_CAR_ANGLES` in the studio).
+      // Every named angle that was really photographed gets its own photo (keys match
+      // `FIVE_CAR_ANGLES` in the studio). A missing angle is left out: filling it with the front
+      // photo made one picture look like five and charged five credits for copies.
       const normalizedMultiAngles: Record<string, string> = { ...finalAngles };
       for (const angle of GUIDED_SCAN_ANGLES) {
-        normalizedMultiAngles[angle.slug] = finalAngles[angle.id] || primaryUrl;
+        const own = finalAngles[angle.id];
+        if (own) normalizedMultiAngles[angle.slug] = own;
       }
-      normalizedMultiAngles.side = normalizedMultiAngles.right!;
-      normalizedMultiAngles.left = normalizedMultiAngles['front-left']!;
+      if (normalizedMultiAngles.right) normalizedMultiAngles.side = normalizedMultiAngles.right;
+      if (normalizedMultiAngles['front-left']) normalizedMultiAngles.left = normalizedMultiAngles['front-left'];
 
       // The store keeps the photos in memory (storage may be full) and opens the studio.
       setTimeout(() => {
