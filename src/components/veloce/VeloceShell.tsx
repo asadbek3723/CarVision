@@ -397,7 +397,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
       </header>
 
       {/* Main Content */}
-      <main className={hideDock ? 'md:pb-0' : 'pb-28 md:pb-12'}>{children}</main>
+      {/* Phones: room for the dock only (measured, hidden behind it); each page keeps its own small bottom gap. */}
+      <main className={hideDock ? 'md:pb-0' : 'pb-[var(--dock-h,72px)] md:pb-12'}>{children}</main>
 
       {/* Mobile bottom dock: Home, Garage (workshop owners) or Cart (everyone else), [Create], Shop, Profile. */}
       {!hideDock && (

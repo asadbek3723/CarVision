@@ -104,7 +104,7 @@ export function VeloceShop() {
 
   return (
     <div className={`${geist.className} ${md.page} min-h-full`}>
-      <div className="mx-auto max-w-7xl px-5 pb-28 pt-3 md:px-10 md:pt-8">
+      <div className="mx-auto max-w-7xl px-5 pb-6 pt-3 md:px-10 md:pt-8">
         {/* Title row */}
         <header className="flex items-start justify-between gap-4">
           <div className="min-w-0">

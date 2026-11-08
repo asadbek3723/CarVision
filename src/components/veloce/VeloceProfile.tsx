@@ -136,7 +136,7 @@ export function VeloceProfile() {
 
   return (
     <div className={`${geist.className} ${md.page} min-h-full`}>
-      <div className="mx-auto w-full max-w-2xl px-5 pb-28 pt-3 md:pt-8">
+      <div className="mx-auto w-full max-w-2xl px-5 pb-6 pt-3 md:pt-8">
         {/* Title row */}
         <header className="flex items-center justify-between gap-4">
           <h1 className="text-[30px] font-semibold leading-none tracking-[-0.03em] text-white md:text-[40px]">{t('title')}</h1>

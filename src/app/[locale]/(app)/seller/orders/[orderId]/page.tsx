@@ -59,7 +59,7 @@ export default function SellerOrderDetailPage() {
 
   const shell = (children: React.ReactNode) => (
     <>
-      <div className="mx-auto max-w-xl px-4 pb-32 pt-4 md:px-8">{children}</div>
+      <div className="mx-auto max-w-xl px-4 pb-6 pt-4 md:px-8">{children}</div>
     </>
   );
 

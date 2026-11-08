@@ -30,4 +30,4 @@ export function initialsOf(name: string): string {
 }
 
 /** Page container shared by the profile screens: full width up to 1500px. */
-export const pageWrap = 'mx-auto w-full max-w-[1500px] px-5 pb-28 pt-6 md:px-10 md:pt-14 lg:px-16';
+export const pageWrap = 'mx-auto w-full max-w-[1500px] px-5 pb-6 pt-6 md:px-10 md:pt-14 lg:px-16';

@@ -171,7 +171,7 @@ export function VeloceCart() {
     );
 
   return (
-    <div className="mx-auto max-w-5xl px-5 pb-[calc(var(--dock-h,0px)+170px)] pt-2 md:px-10 md:pt-8 lg:pb-16">
+    <div className="mx-auto max-w-5xl px-5 pb-[170px] pt-2 md:px-10 md:pt-8 lg:pb-16">
       <h1 className="pb-4 text-center font-heading text-[22px] font-semibold tracking-[-0.02em] text-white md:pb-6 md:text-3xl">
         {t('itemsCount', { count: totalUnits })}
       </h1>

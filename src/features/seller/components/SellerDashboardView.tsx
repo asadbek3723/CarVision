@@ -164,7 +164,7 @@ export function SellerDashboardView() {
     'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/80 transition hover:bg-white/[0.12] hover:text-white active:scale-95 disabled:opacity-40';
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] px-5 pb-32 pt-4 md:px-10 md:pt-10 lg:px-16">
+    <div className="mx-auto w-full max-w-[1500px] px-5 pb-6 pt-4 md:px-10 md:pt-10 lg:px-16">
       {/* Header */}
       <header className="md:flex md:items-end md:justify-between md:gap-8">
         <div className="min-w-0">

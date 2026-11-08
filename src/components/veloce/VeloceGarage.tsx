@@ -87,7 +87,7 @@ export function VeloceGarage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pb-28 pt-6 md:px-10 md:pt-10">
+    <div className="mx-auto max-w-6xl px-5 pb-6 pt-6 md:px-10 md:pt-10">
       <header className="pb-6 sm:flex sm:items-end sm:justify-between sm:gap-6 sm:pb-8">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold-500 sm:text-xs">{t('eyebrow')}</p>

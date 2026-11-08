@@ -171,7 +171,7 @@ export function VeloceHome() {
       </section>
 
       {/* Main Page Container */}
-      <div className="mx-auto max-w-[1500px] px-5 md:px-10 lg:px-14">
+      <div className="mx-auto max-w-[1500px] px-5 pb-6 md:px-10 lg:px-14">
         {/* 3 Bento Feature Cards */}
         <section className="mt-8 grid grid-cols-3 gap-2.5 md:gap-6 lg:mt-16">
           {FEATURES.map((feat, idx) => {

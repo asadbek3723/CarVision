@@ -305,7 +305,7 @@ function SellerNewPartPageInner() {
   // ---- screens -------------------------------------------------------------------------------------
   const shell = (children: React.ReactNode) => (
     <>
-      <div className="mx-auto max-w-xl px-4 pb-40 pt-4 md:px-8 lg:max-w-6xl">{children}</div>
+      <div className="mx-auto max-w-xl px-4 pb-28 pt-4 md:px-8 lg:max-w-6xl">{children}</div>
     </>
   );
 
@@ -602,7 +602,7 @@ function SellerNewPartPageInner() {
 
       {error && <p role="alert" className="mt-5 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 
-      <div className="fixed inset-x-0 bottom-[84px] z-30 px-4 md:bottom-6 md:ps-28">
+      <div className="fixed inset-x-0 bottom-[calc(var(--dock-h,72px)+12px)] z-30 px-4 md:bottom-6 md:ps-28">
         <button
           type="button"
           onClick={() => void save()}

@@ -49,7 +49,7 @@ export default function PlansPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-6xl px-5 pb-32 pt-8 md:px-10 md:pt-12">
+      <div className="mx-auto max-w-6xl px-5 pb-6 pt-8 md:px-10 md:pt-12">
         <div className="text-center">
           <p className="text-xs font-medium uppercase tracking-widest text-gold-500">{t('eyebrow')}</p>
           <h1 className="mt-2 text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('title')}</h1>
