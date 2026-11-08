@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requirePaidSeller } from '@/server/auth/guards';
 import { fetchGeminiGenerate } from '@/server/providers/ai/google-endpoint';
+import { envKeys } from '@/server/providers/ai/key-pool';
 import { categoryLabel } from '@/domain/catalog';
 
 const schema = z.object({
@@ -36,7 +37,7 @@ function localClean(text: string): string {
 async function viaGemini(key: string, prompt: string): Promise<{ name: string; description: string } | null> {
   const res = await fetchGeminiGenerate(
     key,
-    process.env['GEMINI_MODEL'] || 'gemini-3.1-flash-lite',
+    process.env['GEMINI_TEXT_MODEL'] || process.env['GEMINI_MODEL'] || 'gemini-3.1-flash-lite',
     {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
@@ -103,7 +104,8 @@ export async function POST(request: NextRequest) {
   await db.from('auth_attempts').insert({ kind: 'improve_text', login_key: guard.value.session.userId, success: true });
 
   const prompt = PROMPT(input);
-  const gemini = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
+  const geminiKeys = envKeys('gemini');
+  const gemini = geminiKeys[Math.floor(Math.random() * geminiKeys.length)] ?? '';
   const openai = (process.env.OPENAI_API_KEY || '').trim();
 
   let result: { name: string; description: string } | null = null;

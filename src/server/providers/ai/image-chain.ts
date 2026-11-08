@@ -2,8 +2,12 @@ import { ADAPTERS, type Adapter, type ChainInput, type FailKind } from './image-
 import {
   STATIC_IMAGE_MODELS,
   discoverOpenRouterModels,
+  modelPrefsFor,
   planModels,
+  prioritizeModels,
   type ImageModelSpec,
+  type ImageTask,
+  type ModelPref,
 } from './image-models';
 import {
   advanceCursor,
@@ -52,6 +56,10 @@ export interface ChainOptions {
   keysFor?: (provider: ProviderId) => string[];
   /** Replaces model discovery (tests). */
   models?: ImageModelSpec[];
+  /** What this call is for: picks the `IMAGE_MODEL_<TASK>` env preference. */
+  task?: ImageTask;
+  /** Replaces the env preference (tests). */
+  prefs?: ModelPref[];
   now?: () => number;
 }
 
@@ -78,7 +86,12 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
     ...STATIC_IMAGE_MODELS,
     ...(keyMap.has('openrouter') ? await discoverOpenRouterModels() : []),
   ];
-  const plan = planModels(candidates, new Set(keyMap.keys()), true);
+  const configured = new Set(keyMap.keys());
+  const plan = prioritizeModels(
+    planModels(candidates, configured, true),
+    opts.prefs ?? modelPrefsFor(opts.task),
+    configured
+  );
 
   const attempts: ChainAttempt[] = [];
   let limited = 0; // rate limit / quota / cooling down: "come back later"

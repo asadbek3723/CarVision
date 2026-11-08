@@ -18,6 +18,9 @@ export interface ImageModelSpec {
 const TEXT_ONLY_PENALTY = 1000;
 
 export const STATIC_IMAGE_MODELS: ImageModelSpec[] = [
+  // Nano Banana 2: about half the price of Pro with near-Pro quality, so it goes first and Pro is
+  // the fallback when it is busy or fails (override per task with IMAGE_MODEL_FITMENT).
+  { provider: 'gemini', model: 'gemini-3.1-flash-image', supportsEdit: true, rank: 3 },
   { provider: 'gemini', model: 'gemini-3-pro-image-preview', supportsEdit: true, rank: 4 },
   { provider: 'gemini', model: 'gemini-2.5-flash-image', supportsEdit: true, rank: 14 },
   { provider: 'fal', model: 'fal-ai/nano-banana/edit', supportsEdit: true, rank: 16 },
@@ -92,6 +95,74 @@ export async function discoverOpenRouterModels(now = Date.now()): Promise<ImageM
   } catch {
     return discovered?.models ?? [];
   }
+}
+
+/** What a call is for. Each task can have its own preferred models (env, see `modelPrefsFor`). */
+export type ImageTask = 'fitment' | 'video_frame';
+
+export interface ModelPref {
+  provider: ProviderId;
+  model: string;
+}
+
+const PROVIDER_IDS: ProviderId[] = ['gemini', 'openrouter', 'fal', 'openai'];
+
+/**
+ * Parses `provider:model,provider:model` (for example
+ * `gemini:gemini-3.1-flash-image,openrouter:openai/gpt-image-2`). Unknown providers and malformed
+ * entries are ignored, so a typo in an env var cannot break rendering.
+ */
+export function parseModelPrefs(value: string | undefined): ModelPref[] {
+  const prefs: ModelPref[] = [];
+  for (const raw of (value ?? '').split(',')) {
+    const entry = raw.trim();
+    const at = entry.indexOf(':');
+    if (at <= 0) continue;
+    const provider = entry.slice(0, at).trim().toLowerCase() as ProviderId;
+    const model = entry.slice(at + 1).trim();
+    if (!PROVIDER_IDS.includes(provider) || model.length < 2) continue;
+    prefs.push({ provider, model });
+  }
+  return prefs;
+}
+
+const TASK_ENV: Record<ImageTask, string> = {
+  fitment: 'IMAGE_MODEL_FITMENT',
+  video_frame: 'IMAGE_MODEL_VIDEO_FRAME',
+};
+
+export function modelPrefsFor(task: ImageTask | undefined, env: NodeJS.ProcessEnv = process.env): ModelPref[] {
+  return task ? parseModelPrefs(env[TASK_ENV[task]]) : [];
+}
+
+/**
+ * Puts the preferred models first (in the order given) and keeps everything else behind them as
+ * fallback. A preferred model that is not in the plan yet is added as an image editor, as long as
+ * its provider has a key; so any new model id works without a code change.
+ */
+export function prioritizeModels(
+  plan: ImageModelSpec[],
+  prefs: ModelPref[],
+  configuredProviders: Set<ProviderId>
+): ImageModelSpec[] {
+  if (prefs.length === 0) return plan;
+  const front: ImageModelSpec[] = [];
+  const used = new Set<string>();
+  for (const pref of prefs) {
+    if (!configuredProviders.has(pref.provider)) continue;
+    const id = `${pref.provider}:${pref.model}`;
+    if (used.has(id)) continue;
+    used.add(id);
+    front.push(
+      plan.find((m) => m.provider === pref.provider && m.model === pref.model) ?? {
+        provider: pref.provider,
+        model: pref.model,
+        supportsEdit: true,
+        rank: 2,
+      }
+    );
+  }
+  return [...front, ...plan.filter((m) => !used.has(`${m.provider}:${m.model}`))];
 }
 
 export function resetModelDiscovery(): void {

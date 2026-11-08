@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ITEM_LOCALES, type ItemLocale } from '@/domain/catalog';
 import { fetchGeminiGenerate } from '@/server/providers/ai/google-endpoint';
+import { envKeys } from '@/server/providers/ai/key-pool';
 
 /** How each storefront language is named to the model (script matters for uz and the Cyrillic Turkic/Iranian ones). */
 const LANGUAGE_NAMES: Record<ItemLocale, string> = {
@@ -59,9 +60,9 @@ DESCRIPTION: ${input.description || ''}
 const RETRYABLE = new Set([429, 500, 502, 503, 504]);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Gemini first (model from GEMINI_MODEL), retrying on temporary overload. */
+/** Gemini first (model from GEMINI_TEXT_MODEL, else GEMINI_MODEL), retrying on temporary overload. */
 async function viaGemini(key: string, prompt: string): Promise<string | null> {
-  const model = process.env['GEMINI_MODEL'] || 'gemini-3.1-flash-lite';
+  const model = process.env['GEMINI_TEXT_MODEL'] || process.env['GEMINI_MODEL'] || 'gemini-3.1-flash-lite';
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const res = await fetchGeminiGenerate(
@@ -121,7 +122,9 @@ function clean(text: string, max: number): string {
  */
 export async function translateListing(input: ListingText): Promise<ListingTranslation | null> {
   const prompt = buildPrompt(input);
-  const gemini = process.env['GEMINI_API_KEY'];
+  // Same key pool as image generation: GEMINI_API_KEYS, GEMINI_API_KEY or GOOGLE_API_KEY.
+  const geminiKeys = envKeys('gemini');
+  const gemini = geminiKeys[Math.floor(Math.random() * geminiKeys.length)];
   const openai = process.env['OPENAI_API_KEY'];
 
   let raw: string | null = null;

@@ -37,7 +37,7 @@ async function askGemini(photo: string): Promise<{ isCar: boolean; make: string;
   try {
     const res = await fetchGeminiGenerate(
       key,
-      'gemini-2.5-flash',
+      process.env['GEMINI_DETECT_MODEL'] || 'gemini-2.5-flash',
       {
         contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: { mime_type: match[1], data: match[2] } }] }],
         generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },

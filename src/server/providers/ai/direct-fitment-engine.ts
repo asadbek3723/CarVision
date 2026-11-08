@@ -266,7 +266,7 @@ export async function executeDirectAiFitment(
       referenceDataUri,
       prompt: promptUsed,
       mode: req.mode || 'fitment',
-    });
+    }, { task: 'fitment' });
 
     if (chain.ok) {
       return {
@@ -371,7 +371,7 @@ export async function executeVideoEnhance(req: VideoEnhanceRequest): Promise<Vid
     referenceDataUri: null,
     prompt: buildVideoMasterPrompt(req),
     mode: 'enhance_for_video',
-  });
+  }, { task: 'video_frame' });
   if (!chain.ok) return { image: null, providerUsed: 'none', outcome: 'failed' };
 
   const valid = validDataUri(chain.image) ?? (await providerImageToDataUri(chain.image));

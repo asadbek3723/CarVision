@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Adapter, AttemptResult, ChainInput } from './image-adapters';
 import { runImageChain } from './image-chain';
-import { planModels, rankOpenRouterModel, type ImageModelSpec } from './image-models';
+import { parseModelPrefs, planModels, prioritizeModels, rankOpenRouterModel, STATIC_IMAGE_MODELS, type ImageModelSpec } from './image-models';
 import { resetCooldowns, type ProviderId } from './key-pool';
 
 const input: ChainInput = {
@@ -51,6 +51,54 @@ describe('planModels / ranking', () => {
     expect(r('tencent/hy-image-v3.5-preview')).toBeLessThan(r('meta/muse-image'));
     expect(r('meta/muse-image')).toBeLessThan(r('black-forest-labs/flux-3-image-klein'));
     expect(r('black-forest-labs/flux-3-image-klein')).toBeLessThan(r('some/unknown'));
+  });
+});
+
+describe('per-task model preferences', () => {
+  it('parses provider:model lists and ignores junk', () => {
+    expect(parseModelPrefs('gemini:gemini-3.1-flash-image, openrouter:openai/gpt-image-2 ,bogus:x,nocolon,fal:')).toEqual([
+      { provider: 'gemini', model: 'gemini-3.1-flash-image' },
+      { provider: 'openrouter', model: 'openai/gpt-image-2' },
+    ]);
+    expect(parseModelPrefs(undefined)).toEqual([]);
+  });
+
+  it('puts preferred models first, adds unknown ones and keeps the rest as fallback', () => {
+    const configured = new Set<ProviderId>(['gemini', 'openrouter']);
+    const plan = planModels(
+      [spec('gemini', 'g-a', 5), spec('gemini', 'g-b', 6), spec('openrouter', 'or-a', 7)],
+      configured,
+      true
+    );
+    const out = prioritizeModels(
+      plan,
+      [
+        { provider: 'openrouter', model: 'or-new' },
+        { provider: 'gemini', model: 'g-b' },
+        { provider: 'fal', model: 'not-configured' },
+      ],
+      configured
+    );
+    expect(out.map((m) => m.model)).toEqual(['or-new', 'g-b', 'g-a', 'or-a']);
+    expect(out[0]).toMatchObject({ supportsEdit: true });
+  });
+
+  it('tries Nano Banana 2 before Pro by default', () => {
+    const plan = planModels(STATIC_IMAGE_MODELS, new Set<ProviderId>(['gemini']), true);
+    expect(plan[0]!.model).toBe('gemini-3.1-flash-image');
+    expect(plan[1]!.model).toBe('gemini-3-pro-image-preview');
+  });
+
+  it('runImageChain honours prefs', async () => {
+    resetCooldowns();
+    const adapter = vi.fn<Adapter>().mockResolvedValue(ok('x'));
+    const res = await runImageChain(input, {
+      keysFor: (p) => (p === 'gemini' ? ['gem-key-aaaa'] : []),
+      models: [spec('gemini', 'g1', 1), spec('gemini', 'g2', 2)],
+      prefs: [{ provider: 'gemini', model: 'g2' }],
+      adapters: { gemini: adapter },
+    });
+    expect(res).toMatchObject({ ok: true, model: 'g2' });
   });
 });
 
