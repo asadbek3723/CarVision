@@ -756,7 +756,8 @@
     "before": "قبل",
     "after": "بعد",
     "partsHiddenAll": "القطع المختارة غير ظاهرة في صورك. أضف صورة من الجهة المناسبة (مثلاً الخلفية للأضواء الخلفية).",
-    "partsHiddenSome": "هذه القطع غير ظاهرة في صورك ولن يتم رسمها: {names}. أضف صورة من الجهة المناسبة."
+    "partsHiddenSome": "هذه القطع غير ظاهرة في صورك ولن يتم رسمها: {names}. أضف صورة من الجهة المناسبة.",
+    "errConfirmCar": "أكّد السيارة أولاً"
   },
   "identify": {
     "dialog": "تحديد السيارة",
@@ -778,7 +779,12 @@
     "yearTitle": "في أي سنة صُنعت؟",
     "yearLabel": "سنة الصنع",
     "showParts": "عرض القطع المناسبة",
-    "preparing": "جارٍ تجهيز القطع المناسبة…"
+    "preparing": "جارٍ تجهيز القطع المناسبة…",
+    "blockedNotCarTitle": "هذه ليست سيارة",
+    "blockedNotCarBody": "لم نجد سيارة في الصورة. صوّر السيارة كاملة وأعد التصوير. لن يُخصم أي رصيد.",
+    "blockedMismatchTitle": "الصور لا تعود لسيارة واحدة",
+    "blockedMismatchBody": "صور {angles} تبدو لسيارة أخرى. يجب أن تكون كل الصور لنفس السيارة. أعد التصوير.",
+    "retake": "إعادة التصوير"
   },
   "render": {
     "dialog": "تقدّم المعالجة",
@@ -1809,7 +1815,8 @@
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
-    "PART_NOT_VISIBLE": "القطعة المختارة غير ظاهرة من هذه الزاوية. لم يتم خصم أي رصيد"
+    "PART_NOT_VISIBLE": "القطعة المختارة غير ظاهرة من هذه الزاوية. لم يتم خصم أي رصيد",
+    "CAR_NOT_VERIFIED": "لم يتم تأكيد السيارة. يرجى تأكيد الصور مرة أخرى. لم يُخصم رصيد"
   },
   "capturePage": {
     "sent": "تم إرسال الصورة إلى الحاسوب",

@@ -5,6 +5,7 @@ import { requireUser } from '@/server/auth/guards';
 import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 import { envKeys } from '@/server/providers/ai/key-pool';
 import { fetchGeminiGenerate } from '@/server/providers/ai/google-endpoint';
+import { signCarCheck } from '@/server/car-check';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -12,8 +13,15 @@ export const maxDuration = 30;
 const MAX_PHOTO_CHARS = 3_000_000;
 const MAX_PER_MINUTE = 8;
 
+const DATA_URI = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+
 const bodySchema = z.object({
-  photo: z.string().min(50).max(MAX_PHOTO_CHARS).regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/),
+  photo: z.string().min(50).max(MAX_PHOTO_CHARS).regex(DATA_URI),
+  /** The other photographed sides (small copies): checked to be the same car as `photo`. */
+  angles: z
+    .array(z.object({ id: z.string().regex(/^[a-z-]{2,20}$/), photo: z.string().min(50).max(700_000).regex(DATA_URI) }))
+    .max(4)
+    .optional(),
 });
 
 interface Candidate {
@@ -21,8 +29,18 @@ interface Candidate {
   label: string;
 }
 
-/** Asks Gemini which car is in the photo. Returns null when no key is set or the call fails. */
-async function askGemini(photo: string): Promise<{ isCar: boolean; make: string; model: string; confidence: number } | null> {
+interface CarAnswer {
+  isCar: boolean;
+  make: string;
+  model: string;
+  confidence: number;
+  /** False only when the AI says some of the other photos show a different car. */
+  sameCar: boolean;
+  mismatchAngleIds: string[];
+}
+
+/** Asks Gemini which car is in the photo (and whether the other sides are the same car). Null = unavailable. */
+async function askGemini(photo: string, angles: Array<{ id: string; photo: string }> = []): Promise<CarAnswer | null> {
   // Same key pool as image generation (GEMINI_API_KEYS, GEMINI_API_KEY or GOOGLE_API_KEY).
   const keys = envKeys('gemini');
   const key = keys[Math.floor(Math.random() * keys.length)] ?? '';
@@ -30,16 +48,34 @@ async function askGemini(photo: string): Promise<{ isCar: boolean; make: string;
   const match = photo.match(/^data:(image\/[a-z]+);base64,(.+)$/);
   if (!match) return null;
 
+  const extra = angles
+    .map((a) => ({ id: a.id, m: a.photo.match(/^data:(image\/[a-z]+);base64,(.+)$/) }))
+    .filter((a): a is { id: string; m: RegExpMatchArray } => Boolean(a.m));
+
   const prompt =
-    'Identify the car in this photo. Reply ONLY with JSON: {"isCar": boolean, "make": string, "model": string, "confidence": number between 0 and 1}. ' +
-    'Use the commonly known market name (for example "Chevrolet" + "Cobalt", "Toyota" + "Camry"). If it is not a car, set isCar to false and leave make and model empty.';
+    'Identify the car in IMAGE 1. Reply ONLY with JSON: {"isCar": boolean, "make": string, "model": string, "confidence": number between 0 and 1, "sameCar": boolean, "mismatchAngles": string[]}. ' +
+    'Use the commonly known market name (for example "Chevrolet" + "Cobalt", "Toyota" + "Camry"). If it is not a car, set isCar to false and leave make and model empty. ' +
+    (extra.length > 0
+      ? `The following labelled images are other sides of the car the customer photographed: ${extra.map((a) => a.id).join(', ')}. ` +
+        'Set sameCar to true when every labelled image shows the same physical car as IMAGE 1 (same make, model, body style and colour; the side or angle may differ). ' +
+        'Put the labels of images that clearly show a different car, or no car at all, in mismatchAngles. If you are unsure, set sameCar to true.'
+      : 'Set sameCar to true and mismatchAngles to [].');
 
   try {
     const res = await fetchGeminiGenerate(
       key,
       process.env['GEMINI_DETECT_MODEL'] || 'gemini-2.5-flash',
       {
-        contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: { mime_type: match[1], data: match[2] } }] }],
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: match[1], data: match[2] } },
+              ...extra.flatMap((a) => [{ text: `Label: ${a.id}` }, { inline_data: { mime_type: a.m[1], data: a.m[2] } }]),
+            ],
+          },
+        ],
         generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
       },
       20_000
@@ -48,8 +84,14 @@ async function askGemini(photo: string): Promise<{ isCar: boolean; make: string;
     const json = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
     const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) return null;
-    const parsed = JSON.parse(text) as { isCar?: unknown; make?: unknown; model?: unknown; confidence?: unknown };
+    const parsed = JSON.parse(text) as { isCar?: unknown; make?: unknown; model?: unknown; confidence?: unknown; sameCar?: unknown; mismatchAngles?: unknown };
+    const sent = new Set(extra.map((a) => a.id));
+    const mismatchAngleIds = Array.isArray(parsed.mismatchAngles)
+      ? parsed.mismatchAngles.filter((x): x is string => typeof x === 'string' && sent.has(x))
+      : [];
     return {
+      sameCar: parsed.sameCar === false && mismatchAngleIds.length > 0 ? false : true,
+      mismatchAngleIds,
       isCar: parsed.isCar === true,
       make: typeof parsed.make === 'string' ? parsed.make.trim().slice(0, 60) : '',
       model: typeof parsed.model === 'string' ? parsed.model.trim().slice(0, 60) : '',
@@ -102,9 +144,12 @@ async function matchModels(make: string, model: string): Promise<Candidate[]> {
  * Always answers 200 with `detected: false` when the AI is unavailable, so the UI can fall back to manual search.
  */
 export async function POST(request: NextRequest) {
+  // Set once the user is known, so even a failed check can still hand out the "could not verify" token.
+  let userId: string | null = null;
   try {
     const guard = await requireUser();
     if (!guard.ok) return guard.response;
+    userId = guard.value.userId;
     // Persisted in the database, so the limit holds across serverless instances
     const used = await recentFailures('login_key', guard.value.userId, 'vehicle_detect', 60_000, true);
     if (used >= MAX_PER_MINUTE) {
@@ -116,9 +161,16 @@ export async function POST(request: NextRequest) {
     const parsed = bodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Rasm noto‘g‘ri' }, { status: 400 });
 
-    const ai = await askGemini(parsed.data.photo);
-    if (!ai) return NextResponse.json({ success: true, detected: false, reason: 'unavailable' });
+    // The check could not be run (no AI key, provider down): the customer may pick the car by hand,
+    // and the token still lets the render through. Only a definite "not a car" / "different cars" is blocked.
+    const unverified = () => ({ carCheckToken: signCarCheck(guard.value.userId) });
+
+    const ai = await askGemini(parsed.data.photo, parsed.data.angles);
+    if (!ai) return NextResponse.json({ success: true, detected: false, reason: 'unavailable', ...unverified() });
     if (!ai.isCar) return NextResponse.json({ success: true, detected: false, reason: 'not_a_car' });
+    if (!ai.sameCar) {
+      return NextResponse.json({ success: true, detected: false, reason: 'mismatch', mismatchAngleIds: ai.mismatchAngleIds });
+    }
 
     const candidates = await matchModels(ai.make, ai.model);
     return NextResponse.json({
@@ -128,9 +180,10 @@ export async function POST(request: NextRequest) {
       model: ai.model,
       confidence: ai.confidence,
       candidates,
+      ...unverified(),
     });
   } catch (err) {
     console.error('vehicle detect error:', err);
-    return NextResponse.json({ success: true, detected: false, reason: 'error' });
+    return NextResponse.json({ success: true, detected: false, reason: 'error', carCheckToken: userId ? signCarCheck(userId) : null });
   }
 }

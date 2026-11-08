@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { planRender, summarize, usableReference, type AngleState, type PlanAngle } from './render-plan';
 import { visibleParts } from '@/lib/part-visibility';
+import { getCarCheckToken } from './car-check';
 import { readJson } from '@/lib/safe-json';
 import { fitDataUrlToLimit } from '@/features/camera/lib/image-compressor';
 
@@ -81,7 +82,7 @@ async function renderAngle(angle: PlanAngle, parts: BuildPart[], reference?: str
     const res = await fetch('/api/v1/generations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(toRequestBody({ ...angle, photo }, parts, reference)),
+      body: JSON.stringify({ ...toRequestBody({ ...angle, photo }, parts, reference), carCheckToken: getCarCheckToken() }),
     });
     const data = (await readJson(res)).data;
     if (res.ok && data.success && data.generation?.afterImageUrl) {

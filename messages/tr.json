@@ -756,7 +756,8 @@
     "before": "Önce",
     "after": "Sonra",
     "partsHiddenAll": "Seçilen parçalar fotoğraflarınızda görünmüyor. İlgili taraftan fotoğraf ekleyin (örneğin arka farlar için arka taraf).",
-    "partsHiddenSome": "Bu parçalar fotoğraflarınızda görünmüyor ve işlenmeyecek: {names}. İlgili taraftan fotoğraf ekleyin."
+    "partsHiddenSome": "Bu parçalar fotoğraflarınızda görünmüyor ve işlenmeyecek: {names}. İlgili taraftan fotoğraf ekleyin.",
+    "errConfirmCar": "Önce aracı doğrulayın"
   },
   "identify": {
     "dialog": "Aracı belirle",
@@ -778,7 +779,12 @@
     "yearTitle": "Hangi yıl üretildi?",
     "yearLabel": "Üretim yılı",
     "showParts": "Uygun parçaları göster",
-    "preparing": "Uygun parçalar hazırlanıyor…"
+    "preparing": "Uygun parçalar hazırlanıyor…",
+    "blockedNotCarTitle": "Bu bir araç değil",
+    "blockedNotCarBody": "Fotoğrafta araç bulunamadı. Aracı tamamen kadraja alıp fotoğrafları yeniden çekin. Kredi düşülmez.",
+    "blockedMismatchTitle": "Fotoğraflar tek bir araca ait görünmüyor",
+    "blockedMismatchBody": "{angles} fotoğrafları başka bir araca benziyor. Tüm fotoğraflar aynı araca ait olmalı. Lütfen yeniden çekin.",
+    "retake": "Yeniden çek"
   },
   "render": {
     "dialog": "Render ilerlemesi",
@@ -1809,7 +1815,8 @@
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
-    "PART_NOT_VISIBLE": "Seçilen parça bu açıdan görünmüyor. Kredi düşülmedi"
+    "PART_NOT_VISIBLE": "Seçilen parça bu açıdan görünmüyor. Kredi düşülmedi",
+    "CAR_NOT_VERIFIED": "Araç doğrulanmadı. Lütfen fotoğrafları yeniden doğrulayın. Kredi düşülmedi"
   },
   "capturePage": {
     "sent": "Fotoğraf bilgisayara gönderildi",

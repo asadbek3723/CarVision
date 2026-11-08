@@ -756,7 +756,8 @@
     "before": "Мурун",
     "after": "Кийин",
     "partsHiddenAll": "Тандалган тетиктер сүрөттөрүңүздө көрүнбөйт. Тийиштүү тараптан сүрөт кошуңуз (мисалы, арткы чырактар үчүн арт жагынан).",
-    "partsHiddenSome": "Бул тетиктер сүрөттөрүңүздө көрүнбөйт жана тартылбайт: {names}. Тийиштүү тараптан сүрөт кошуңуз."
+    "partsHiddenSome": "Бул тетиктер сүрөттөрүңүздө көрүнбөйт жана тартылбайт: {names}. Тийиштүү тараптан сүрөт кошуңуз.",
+    "errConfirmCar": "Адегенде унааны тастыктаңыз"
   },
   "identify": {
     "dialog": "Унааны аныктоо",
@@ -778,7 +779,12 @@
     "yearTitle": "Кайсы жылы чыгарылган?",
     "yearLabel": "Чыгарылган жылы",
     "showParts": "Ылайыктуу тетиктерди көрсөтүү",
-    "preparing": "Ылайыктуу тетиктер даярдалууда…"
+    "preparing": "Ылайыктуу тетиктер даярдалууда…",
+    "blockedNotCarTitle": "Бул унаа эмес",
+    "blockedNotCarBody": "Сүрөттө унаа табылган жок. Унааны толугу менен кадрга алып, кайра тартыңыз. Кредит алынбайт.",
+    "blockedMismatchTitle": "Сүрөттөр бир унааныкы эмес",
+    "blockedMismatchBody": "{angles} сүрөттөрү башка унаага окшош. Бардык сүрөттөр бир унаадан болушу керек. Кайра тартыңыз.",
+    "retake": "Кайра тартуу"
   },
   "render": {
     "dialog": "Рендер жүрүшү",
@@ -1809,7 +1815,8 @@
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
-    "PART_NOT_VISIBLE": "Тандалган тетик бул бурчтан көрүнбөйт. Кредит алынган жок"
+    "PART_NOT_VISIBLE": "Тандалган тетик бул бурчтан көрүнбөйт. Кредит алынган жок",
+    "CAR_NOT_VERIFIED": "Унаа тастыкталган жок. Сүрөттөрдү кайра тастыктаңыз. Кредит алынган жок"
   },
   "capturePage": {
     "sent": "Сүрөт компьютерге жөнөтүлдү",

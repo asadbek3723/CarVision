@@ -756,7 +756,8 @@
     "before": "Бұрын",
     "after": "Кейін",
     "partsHiddenAll": "Таңдалған бөлшектер суреттеріңізде көрінбейді. Сәйкес жағынан сурет қосыңыз (мысалы, артқы шамдар үшін артқы жағынан).",
-    "partsHiddenSome": "Бұл бөлшектер суреттеріңізде көрінбейді және салынбайды: {names}. Сәйкес жағынан сурет қосыңыз."
+    "partsHiddenSome": "Бұл бөлшектер суреттеріңізде көрінбейді және салынбайды: {names}. Сәйкес жағынан сурет қосыңыз.",
+    "errConfirmCar": "Алдымен көлікті растаңыз"
   },
   "identify": {
     "dialog": "Көлікті анықтау",
@@ -778,7 +779,12 @@
     "yearTitle": "Қай жылы шығарылған?",
     "yearLabel": "Шығарылған жылы",
     "showParts": "Сәйкес бөлшектерді көрсету",
-    "preparing": "Сәйкес бөлшектер дайындалуда…"
+    "preparing": "Сәйкес бөлшектер дайындалуда…",
+    "blockedNotCarTitle": "Бұл көлік емес",
+    "blockedNotCarBody": "Суретте көлік табылмады. Көлікті толық кадрға алып, қайта түсіріңіз. Кредит алынбайды.",
+    "blockedMismatchTitle": "Суреттер бір көлікке ұқсамайды",
+    "blockedMismatchBody": "{angles} суреттері басқа көлікке ұқсайды. Барлық суреттер бір көліктен болуы керек. Қайта түсіріңіз.",
+    "retake": "Қайта түсіру"
   },
   "render": {
     "dialog": "Рендер барысы",
@@ -1809,7 +1815,8 @@
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
-    "PART_NOT_VISIBLE": "Таңдалған бөлшек бұл ракурсте көрінбейді. Кредит алынбады"
+    "PART_NOT_VISIBLE": "Таңдалған бөлшек бұл ракурсте көрінбейді. Кредит алынбады",
+    "CAR_NOT_VERIFIED": "Көлік расталмаған. Суреттерді қайта растаңыз. Кредит алынбады"
   },
   "capturePage": {
     "sent": "Сурет компьютерге жіберілді",

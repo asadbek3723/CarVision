@@ -756,7 +756,8 @@
     "before": "Oldin",
     "after": "Keyin",
     "partsHiddenAll": "Tanlangan detallar suratlaringizda ko'rinmaydi. Mos tomondan rasm qo'shing (masalan, orqa fara uchun orqa rasm).",
-    "partsHiddenSome": "Bu detallar rasmlaringizda ko'rinmaydi va yaratilmaydi: {names}. Mos tomondan rasm qo'shing."
+    "partsHiddenSome": "Bu detallar rasmlaringizda ko'rinmaydi va yaratilmaydi: {names}. Mos tomondan rasm qo'shing.",
+    "errConfirmCar": "Avval mashinani tasdiqlang"
   },
   "identify": {
     "dialog": "Mashinani aniqlash",
@@ -778,7 +779,12 @@
     "yearTitle": "Qaysi yilda ishlab chiqarilgan?",
     "yearLabel": "Ishlab chiqarilgan yili",
     "showParts": "Mos detallarni koʻrsat",
-    "preparing": "Mos detallar tayyorlanmoqda…"
+    "preparing": "Mos detallar tayyorlanmoqda…",
+    "blockedNotCarTitle": "Bu mashina emas",
+    "blockedNotCarBody": "Suratda mashina topilmadi. Mashinani to'liq kadrga olib, qayta suratga oling. Kredit yechilmaydi.",
+    "blockedMismatchTitle": "Suratlar bitta mashinaga o'xshamaydi",
+    "blockedMismatchBody": "{angles} suratlari boshqa mashinaga o'xshaydi. Hamma suratlar bitta mashinadan bo'lishi kerak. Qayta suratga oling.",
+    "retake": "Qayta suratga olish"
   },
   "render": {
     "dialog": "Render jarayoni",
@@ -1809,7 +1815,8 @@
     "AI_TIMEOUT": "Rasm yaratish juda uzoq davom etdi. Kredit qaytarildi, qayta urinib ko'ring",
     "VALIDATION_FAILED": "So'rov ma'lumotlari noto'g'ri. Sahifani yangilab qayta urinib ko'ring",
     "AI_NO_QUOTA": "AI kalitida rasm yaratish uchun limit yo'q (billing yoqilmagan). Kredit qaytarildi. Administrator kalitni tekshirishi kerak",
-    "PART_NOT_VISIBLE": "Tanlangan detal bu rakursda ko'rinmaydi. Kredit yechilmadi"
+    "PART_NOT_VISIBLE": "Tanlangan detal bu rakursda ko'rinmaydi. Kredit yechilmadi",
+    "CAR_NOT_VERIFIED": "Mashina tasdiqlanmagan. Suratlarni qayta tasdiqlang. Kredit yechilmadi"
   },
   "capturePage": {
     "sent": "Rasm kompyuterga yuborildi",

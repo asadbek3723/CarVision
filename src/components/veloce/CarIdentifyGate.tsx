@@ -3,11 +3,12 @@
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Check, ChevronRight, Loader2, Search, Sparkles } from 'lucide-react';
+import { Camera, Check, ChevronRight, Loader2, Search, Sparkles, TriangleAlert } from 'lucide-react';
 import { useMyCar } from '@/features/shop/useMyCar';
 import { buttonClasses } from '@/components/ui';
+import { setCarCheckToken } from '@/features/visualizer/car-check';
 
-type Phase = 'scan' | 'confirm' | 'manual' | 'year' | 'done';
+type Phase = 'scan' | 'confirm' | 'manual' | 'year' | 'done' | 'blocked';
 
 interface Candidate {
   id: string;
@@ -17,6 +18,10 @@ interface Candidate {
 interface CarIdentifyGateProps {
   /** Front photo of the car (data URL or same-origin path). */
   photo: string;
+  /** The other photographed sides: checked to be the same car as the front photo. */
+  angles?: Array<{ id: string; label: string; photo: string }>;
+  /** Opens the camera again (shown when the photos are not a car / not one car). */
+  onRetake?: () => void;
   onDone: () => void;
 }
 
@@ -49,7 +54,7 @@ async function downscale(src: string, maxSide = 768): Promise<string | null> {
  * 1. AI names the car  2. user confirms (or searches by hand)  3. user picks the year.
  * The year matters: a 1990 and a 2026 model of the same name rarely share body parts.
  */
-export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
+export function CarIdentifyGate({ photo, angles, onRetake, onDone }: CarIdentifyGateProps) {
   const t = useTranslations('identify');
   const reduce = useReducedMotion();
   const { setCar } = useMyCar();
@@ -62,6 +67,10 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
   const [picked, setPicked] = React.useState<Candidate | null>(null);
   const [year, setYear] = React.useState(() => maxYear - 6);
   const [notice, setNotice] = React.useState<'' | 'notCar' | 'failed'>('');
+  // A definite "not a car" / "different cars" stops here: nothing is rendered or charged.
+  const [blocked, setBlocked] = React.useState<{ kind: 'notCar' | 'mismatch'; labels: string[] } | null>(null);
+  const anglesRef = React.useRef(angles);
+  anglesRef.current = angles;
 
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<Candidate[]>([]);
@@ -75,20 +84,31 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
 
     (async () => {
       let found: { name: string; list: Candidate[] } | null = null;
-      let reason: '' | 'notCar' = '';
+      let stop: { kind: 'notCar' | 'mismatch'; labels: string[] } | null = null;
+      setCarCheckToken(null);
       try {
         const small = await downscale(photo);
         if (small) {
+          // Small copies of the other sides, to check they show the same car.
+          const others = (
+            await Promise.all(
+              (anglesRef.current ?? []).filter((a) => a.photo && a.photo !== photo).slice(0, 4).map(async (a) => ({ id: a.id, photo: await downscale(a.photo, 448) }))
+            )
+          ).filter((a): a is { id: string; photo: string } => Boolean(a.photo));
           const res = await fetch('/api/v1/vehicles/detect', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photo: small }),
+            body: JSON.stringify({ photo: small, ...(others.length > 0 ? { angles: others } : {}) }),
           });
           const data = await res.json().catch(() => ({}));
+          if (data?.carCheckToken) setCarCheckToken(data.carCheckToken as string);
           if (data?.detected) {
             found = { name: `${data.make ?? ''} ${data.model ?? ''}`.trim(), list: (data.candidates ?? []) as Candidate[] };
           } else if (data?.reason === 'not_a_car') {
-            reason = 'notCar';
+            stop = { kind: 'notCar', labels: [] };
+          } else if (data?.reason === 'mismatch') {
+            const ids = new Set((data.mismatchAngleIds ?? []) as string[]);
+            stop = { kind: 'mismatch', labels: (anglesRef.current ?? []).filter((a) => ids.has(a.id)).map((a) => a.label) };
           }
         }
       } catch {
@@ -99,14 +119,17 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
       if (cancelled) return;
       clearInterval(hintTimer);
 
-      if (found && found.list.length > 0) {
+      if (stop) {
+        setBlocked(stop);
+        setPhase('blocked');
+      } else if (found && found.list.length > 0) {
         setAiName(found.name);
         setCandidates(found.list);
         setPicked(found.list[0]!);
         setPhase('confirm');
       } else {
         if (found) setQuery(found.name);
-        setNotice(reason || 'failed');
+        setNotice('failed');
         setPhase('manual');
       }
     })();
@@ -279,6 +302,25 @@ export function CarIdentifyGate({ photo, onDone }: CarIdentifyGateProps) {
                     {t('confirmNo')}
                   </button>
                 </div>
+              </motion.div>
+            )}
+
+            {phase === 'blocked' && blocked && (
+              <motion.div key="blocked" {...fade} className="text-center">
+                <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-amber-400/10 text-amber-300">
+                  <TriangleAlert className="h-6 w-6" />
+                </span>
+                <h2 className="mt-4 font-display text-2xl font-light text-white">
+                  {blocked.kind === 'notCar' ? t('blockedNotCarTitle') : t('blockedMismatchTitle')}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-white/60">
+                  {blocked.kind === 'notCar' ? t('blockedNotCarBody') : t('blockedMismatchBody', { angles: blocked.labels.join(', ') })}
+                </p>
+                {onRetake && (
+                  <button type="button" onClick={onRetake} className={buttonClasses({ size: 'lg', fullWidth: true, className: 'mt-7 gap-2' })}>
+                    <Camera className="h-4 w-4" /> {t('retake')}
+                  </button>
+                )}
               </motion.div>
             )}
 

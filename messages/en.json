@@ -756,7 +756,8 @@
     "before": "Before",
     "after": "After",
     "partsHiddenAll": "The selected parts are not visible in your photos. Add a photo from the matching side (for example the rear for rear lights).",
-    "partsHiddenSome": "These parts are not visible in your photos and won't be rendered: {names}. Add a photo from the matching side."
+    "partsHiddenSome": "These parts are not visible in your photos and won't be rendered: {names}. Add a photo from the matching side.",
+    "errConfirmCar": "Confirm the car first"
   },
   "identify": {
     "dialog": "Identify your car",
@@ -778,7 +779,12 @@
     "yearTitle": "Which year was it made?",
     "yearLabel": "Year of manufacture",
     "showParts": "Show matching parts",
-    "preparing": "Preparing matching parts…"
+    "preparing": "Preparing matching parts…",
+    "blockedNotCarTitle": "This isn't a car",
+    "blockedNotCarBody": "We couldn't find a car in the photo. Frame the whole car and take the photos again. No credit is charged.",
+    "blockedMismatchTitle": "The photos don't show one car",
+    "blockedMismatchBody": "The {angles} photos look like a different car. All photos must be of the same car. Please retake them.",
+    "retake": "Retake photos"
   },
   "render": {
     "dialog": "Render progress",
@@ -1809,7 +1815,8 @@
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
-    "PART_NOT_VISIBLE": "The selected part is not visible from this angle. No credit was charged"
+    "PART_NOT_VISIBLE": "The selected part is not visible from this angle. No credit was charged",
+    "CAR_NOT_VERIFIED": "The car isn't confirmed. Please confirm the photos again. No credit was charged"
   },
   "capturePage": {
     "sent": "The photo was sent to the computer",

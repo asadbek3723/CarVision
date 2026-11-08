@@ -11,6 +11,7 @@ import {
 } from '@/server/providers/ai/direct-fitment-engine';
 import { persistGenerationImage } from '@/server/storage';
 import { visibleParts } from '@/lib/part-visibility';
+import { carCheckRequired, verifyCarCheck } from '@/server/car-check';
 
 export const maxDuration = 60;
 
@@ -40,6 +41,8 @@ const partInputSchema = z.object({
   zone: short(10).optional(),
 });
 
+const carCheckTokenSchema = short(200).optional();
+
 const requestSchema = z.object({
   photo: z.string().min(5).max(MAX_PHOTO_CHARS),
   angleId: short(40).optional(),
@@ -53,6 +56,8 @@ const requestSchema = z.object({
   swatchColor: short(40).optional(),
   parts: z.array(partInputSchema).max(12).optional(),
   idempotencyKey: z.string().uuid().optional(),
+  /** Proof from /api/v1/vehicles/detect that the photos were checked (required when CAR_CHECK_SECRET is set). */
+  carCheckToken: carCheckTokenSchema,
   /** Finished render of the same build from another angle (consistency reference). */
   referenceAfterUrl: short(2000).optional(),
 });
@@ -181,6 +186,14 @@ export async function POST(request: NextRequest) {
         durationSeconds: 0,
       };
       return NextResponse.json({ success: true, generation: payload, meta: meta() });
+    }
+
+    // Photos must have passed the car check ("it is a car, all sides are one car") before any credit
+    // is reserved. Only enforced when CAR_CHECK_SECRET is configured.
+    if (carCheckRequired() && !verifyCarCheck(input.carCheckToken, session.userId)) {
+      return errorResponse(403, 'CAR_NOT_VERIFIED', 'Mashina tasdiqlanmagan. Rasmlarni qayta tasdiqlang. Kredit yechilmadi', {
+        creditsRemaining: currentBalance,
+      });
     }
 
     const cacheKey = buildCacheKey(input.photo, angleKey, fitmentParts);

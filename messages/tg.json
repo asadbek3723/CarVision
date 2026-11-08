@@ -756,7 +756,8 @@
     "before": "Пеш",
     "after": "Баъд",
     "partsHiddenAll": "Қисмҳои интихобшуда дар аксҳои шумо намоён нестанд. Аз тарафи мувофиқ акс илова кунед (масалан, барои фарагии ақиб акси ақиб).",
-    "partsHiddenSome": "Ин қисмҳо дар аксҳои шумо намоён нестанд ва кашида намешаванд: {names}. Аз тарафи мувофиқ акс илова кунед."
+    "partsHiddenSome": "Ин қисмҳо дар аксҳои шумо намоён нестанд ва кашида намешаванд: {names}. Аз тарафи мувофиқ акс илова кунед.",
+    "errConfirmCar": "Аввал мошинро тасдиқ кунед"
   },
   "identify": {
     "dialog": "Муайян кардани мошин",
@@ -778,7 +779,12 @@
     "yearTitle": "Дар кадом сол истеҳсол шудааст?",
     "yearLabel": "Соли истеҳсол",
     "showParts": "Нишон додани қисмҳои мувофиқ",
-    "preparing": "Қисмҳои мувофиқ омода карда истодааст…"
+    "preparing": "Қисмҳои мувофиқ омода карда истодааст…",
+    "blockedNotCarTitle": "Ин мошин нест",
+    "blockedNotCarBody": "Дар акс мошин ёфт нашуд. Мошинро пурра дар кадр гиред ва аз нав акс гиред. Кредит гирифта намешавад.",
+    "blockedMismatchTitle": "Аксҳо ба як мошин монанд нестанд",
+    "blockedMismatchBody": "Аксҳои {angles} ба мошини дигар монанданд. Ҳамаи аксҳо бояд аз як мошин бошанд. Аз нав гиред.",
+    "retake": "Аз нав акс гирифтан"
   },
   "render": {
     "dialog": "Раванди рендер",
@@ -1809,7 +1815,8 @@
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
     "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
-    "PART_NOT_VISIBLE": "Қисми интихобшуда аз ин ракурс намоён нест. Кредит гирифта нашуд"
+    "PART_NOT_VISIBLE": "Қисми интихобшуда аз ин ракурс намоён нест. Кредит гирифта нашуд",
+    "CAR_NOT_VERIFIED": "Мошин тасдиқ нашудааст. Аксҳоро аз нав тасдиқ кунед. Кредит гирифта нашуд"
   },
   "capturePage": {
     "sent": "Акс ба компютер фиристода шуд",

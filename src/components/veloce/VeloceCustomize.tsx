@@ -120,6 +120,17 @@ export function VeloceCustomize() {
   const [applyError, setApplyError] = React.useState<string | null>(null);
   const render = useRenderBuild(refreshProfile);
   const isApplying = render.running;
+  // The server no longer accepts the car check (expired / missing): ask the customer to confirm again.
+  React.useEffect(() => {
+    if (render.running || !render.states.some((s) => s.errorCode === 'CAR_NOT_VERIFIED')) return;
+    try {
+      sessionStorage.removeItem(CONFIRMED_KEY);
+    } catch {
+      // nothing to clear
+    }
+    setConfirmedStamp('');
+    setShowProgress(false);
+  }, [render.running, render.states]);
 
   // Load catalog products
   React.useEffect(() => {
@@ -326,6 +337,11 @@ export function VeloceCustomize() {
       router.push(`/${locale}/login`);
       return;
     }
+    // The photos must have passed the car check (a car, one car on all sides) before anything is rendered.
+    if (!carConfirmed) {
+      setApplyError(t('errConfirmCar'));
+      return;
+    }
     if (renderPlan.noneVisible) {
       setApplyError(t('partsHiddenAll'));
       return;
@@ -428,7 +444,15 @@ export function VeloceCustomize() {
           onClose={() => setShowProgress(false)}
         />
       )}
-      {showGate && <CarIdentifyGate photo={multiAngles['front'] || photo || ''} onDone={confirmCar} />}
+      {showGate && (
+        <CarIdentifyGate
+          key={captureStamp}
+          photo={multiAngles['front'] || photo || ''}
+          angles={FIVE_CAR_ANGLES.filter((a) => a.id !== 'front' && multiAngles[a.id]).map((a) => ({ id: a.id, label: t(`angles.${a.key}`), photo: multiAngles[a.id] as string }))}
+          onRetake={openCamera}
+          onDone={confirmCar}
+        />
+      )}
 
       {/* Top bar: back, title, photo counter */}
       <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2 lg:grid-cols-[44px_1fr] lg:gap-10 lg:pt-1">
