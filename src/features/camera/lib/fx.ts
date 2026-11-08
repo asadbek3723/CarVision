@@ -130,16 +130,31 @@ export function playShutter(): void {
 }
 
 let lastTick = 0;
+let lastHaptic = 0;
+
+/** Pulse lengths (ms) of one wheel notch. 8 ms is below what most phone motors can show. */
+const NOTCH_SLOW_MS = 16;
+const NOTCH_FAST_MS = 11;
+/** Notches closer than this share one pulse, so a fast spin stays a soft patter, not a buzz. */
+const NOTCH_MIN_GAP_MS = 50;
+/** Spinning faster than this (notch every < 110 ms) gets the shorter, lighter pulse. */
+const NOTCH_FAST_GAP_MS = 110;
 
 /**
  * Ratchet "tick" for the parts wheel: a very short, quiet, high-passed click (like a gear tooth),
- * plus a light haptic. Rate-limited so a fast spin does not turn into noise.
+ * plus a soft haptic tap you can feel in the hand on every notch. Slow turns give a slightly fuller
+ * tap, fast spins a lighter one, and pulses never overlap. Rate-limited so a spin does not turn
+ * into noise.
  */
 export function playTick(): void {
   const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
   if (now - lastTick < 28) return;
   lastTick = now;
-  vibrate(8);
+  const gap = now - lastHaptic;
+  if (gap >= NOTCH_MIN_GAP_MS) {
+    lastHaptic = now;
+    vibrate(gap < NOTCH_FAST_GAP_MS ? NOTCH_FAST_MS : NOTCH_SLOW_MS);
+  }
   if (!audio || isMuted()) return;
   try {
     const len = Math.floor(audio.sampleRate * 0.012);

@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026-11-08] - Parts wheel: soft haptic on every notch
+### Changed
+- `playTick` (parts wheel): the haptic was 8 ms, below what most phone motors show. Every notch now gives a soft 16 ms tap (11 ms when spinning fast), pulses are spaced at least 50 ms apart so they never stack into a buzz, and the tick sound is unchanged. Covered by `fx.test.ts`.
+
 ## [2026-11-08] - App-like touch behaviour: no zoom, no rubber-band
 ### Changed
 - Viewport: `maximum-scale=1, user-scalable=no`; new `TouchGuard` (mounted in the locale layout) cancels pinch gestures on iOS/in-app browsers and any swipe that nothing under the finger can scroll further, so the page never bounces past its edges and fixed screens (render progress) never reveal the page behind them.
