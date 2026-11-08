@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { PageHeader } from '@/components/ui';
 import { pageWrap } from '@/features/account/preferences';
+import { isSellerUser } from '@/features/auth/roles';
 
 interface LedgerEntry {
   amount: number;
@@ -67,7 +68,7 @@ export function ProfileStats() {
   const locale = (params?.['locale'] as string) || 'uz';
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
-  const studio = user?.plan?.isPaid === true;
+  const studio = isSellerUser(user);
 
   const [loading, setLoading] = React.useState(true);
   const [ledger, setLedger] = React.useState<LedgerEntry[]>([]);

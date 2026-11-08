@@ -24,7 +24,7 @@ function CheckoutPageInner() {
   const search = useSearchParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const resumeId = search?.get('booking') ?? null;
-  const { cart, clearCart } = useVeloceStore();
+  const { cart, removeLines, cartUnselected } = useVeloceStore();
   const { formatPrice } = useCurrency();
   const { user, isLoading: authLoading } = useAuth();
 
@@ -39,7 +39,17 @@ function CheckoutPageInner() {
   const [bookings, setBookings] = React.useState<BookingView[]>([]);
   const [payment, setPayment] = React.useState<PaymentInfo>({ configured: false });
 
-  const cartIds = React.useMemo(() => Object.keys(cart), [cart]);
+  // Only the lines ticked in the cart are booked (`?ids=` from the cart page; otherwise the current ticks).
+  const idsParam = search?.get('ids') ?? null;
+  const cartIds = React.useMemo(() => {
+    const inCart = Object.keys(cart);
+    if (idsParam !== null) {
+      const wanted = new Set(idsParam.split(',').filter(Boolean));
+      return inCart.filter((id) => wanted.has(id));
+    }
+    const skip = new Set(cartUnselected);
+    return inCart.filter((id) => !skip.has(id));
+  }, [cart, idsParam, cartUnselected]);
 
   React.useEffect(() => {
     if (user) {
@@ -122,7 +132,8 @@ function CheckoutPageInner() {
       if (!res.ok || !data.success) throw new Error(apiError(data, t('errCreate')));
       setPayment(data.payment);
       setBookings(data.bookings);
-      clearCart();
+      // Booked lines leave the cart; anything left unticked stays for later.
+      removeLines(lines.map((l) => l.p.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errCreate'));
     } finally {

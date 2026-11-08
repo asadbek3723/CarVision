@@ -5,15 +5,19 @@ import { useTranslations } from 'next-intl';
 import { useCategoryLabel } from '@/lib/category-label';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ChevronLeft,
   Car,
   Sparkles,
-  MapPin,
   Lock,
   ShieldCheck,
   Package,
-  ChevronRight,
+  ShoppingBag,
+  Minus,
+  Plus,
+  Trash2,
+  ArrowRight,
 } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -21,6 +25,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { buttonClasses, ProductImage } from '@/components/ui';
 import { cachedOthers, cachedProduct, rememberProducts } from '@/features/shop/product-cache';
+import { previousPath } from '@/lib/nav-history';
 
 interface VeloceProductDetailProps {
   id: string;
@@ -32,10 +37,23 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
   const t = useTranslations('shop.detail');
   const categoryLabel = useCategoryLabel();
   const tCard = useTranslations('shop.card');
+  const tCart = useTranslations('shop.cart');
+  const tNav = useTranslations('nav');
   const params = useParams();
   const router = useRouter();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { add } = useVeloceStore();
+  const { add, remove, cart, count } = useVeloceStore();
+  const reduceMotion = useReducedMotion();
+  // Opened from the workshop's garage (?from=garage): the back button returns there, not to the shop.
+  const [fromGarage, setFromGarage] = React.useState(false);
+  React.useEffect(() => {
+    setFromGarage(new URLSearchParams(window.location.search).get('from') === 'garage');
+  }, []);
+  const cartIconRef = React.useRef<HTMLAnchorElement | null>(null);
+  const addButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  // The picture that flies from the button to the cart icon after "Add to cart".
+  const [flight, setFlight] = React.useState<{ key: number; from: DOMRect; to: DOMRect; src: string | null } | null>(null);
+  const [announce, setAnnounce] = React.useState('');
   const { formatPrice } = useCurrency();
 
   // Shown at once from the server's copy or from the card that was tapped; the network only refreshes it.
@@ -83,9 +101,52 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
     };
   }, [id, locale, initialProduct]);
 
+  const listHref = fromGarage ? `/${locale}/garage` : `/${locale}/shop`;
+  const goBack = () => {
+    // Came from the list (or another part) inside the app: real back, which keeps the list's scroll and
+    // filters. Opened directly or from anywhere else: go to the list itself.
+    const prev = previousPath() ?? '';
+    const fromList = fromGarage
+      ? prev.startsWith(`/${locale}/garage`) || prev === `/${locale}/seller`
+      : prev === `/${locale}/shop` || prev.startsWith(`/${locale}/shop/`);
+    if (fromList && window.history.length > 1) router.back();
+    else router.push(listHref);
+  };
+
+  const topBar = (
+    <div className="sticky top-0 z-30 -mx-5 mb-4 flex h-14 items-center justify-between bg-surface-0/90 px-3 backdrop-blur-md md:static md:mx-0 md:mb-8 md:bg-transparent md:px-0 md:backdrop-blur-none">
+      <button
+        type="button"
+        onClick={goBack}
+        aria-label={t('back')}
+        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-white transition hover:bg-white/[0.06] active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-500/40 md:w-auto md:gap-2 md:px-3 md:text-xs md:text-white/60"
+      >
+        <ChevronLeft className="h-6 w-6 rtl:rotate-180 md:h-4 md:w-4" />
+        <span className="hidden md:inline">{t('back')}</span>
+      </button>
+      <Link
+        ref={cartIconRef}
+        href={`/${locale}/cart`}
+        aria-label={tNav('cart')}
+        className="relative flex h-11 w-11 items-center justify-center rounded-full text-white transition hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-500/40"
+      >
+        <ShoppingBag className="h-[22px] w-[22px]" strokeWidth={1.7} />
+        {count > 0 && (
+          <span
+            key={count}
+            className="absolute end-0.5 top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-gold-500 px-1 text-[10px] font-bold leading-none tabular-nums text-black ring-2 ring-surface-0 motion-safe:animate-[badge-pop_320ms_ease-out]"
+          >
+            {count > 99 ? '99+' : count}
+          </span>
+        )}
+      </Link>
+    </div>
+  );
+
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl px-5 pt-10 md:px-10">
+      <div className="mx-auto max-w-6xl px-5 md:px-10 md:pt-10">
+        {topBar}
         <div className="grid gap-10 lg:grid-cols-2">
           <div className="aspect-square rounded-3xl bg-white/[0.03] animate-pulse" />
           <div className="space-y-5 py-6">
@@ -100,8 +161,9 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-4xl px-5 pt-20 text-center">
-        <p className="text-sm text-white/50">{t('notFound')}</p>
+      <div className="mx-auto max-w-4xl px-5 text-center md:pt-10">
+        {topBar}
+        <p className="pt-14 text-sm text-white/50">{t('notFound')}</p>
         <Link
           href={`/${locale}/shop`}
           className="mt-4 inline-block text-xs tracking-widest text-gold-500 uppercase hover:underline"
@@ -126,20 +188,27 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
   const yearText = (from?: number | null, to?: number | null) =>
     from && to ? `${from}–${to}` : from ? `${from}+` : to ? t('yearsUpTo', { year: to }) : '';
 
-  const handleUnlockAddress = () => {
+  const inCart = cart[product.id] ?? 0;
+  const atMax = product.stock > 0 && inCart >= product.stock;
+  const coverSrc = product.swatch ? null : (gallery[Math.min(activeImg, gallery.length - 1)] ?? null);
+
+  const handleAddToCart = () => {
+    if (outOfStock || atMax) return;
     add(product.id);
-    router.push(`/${locale}/cart/checkout?partId=${encodeURIComponent(product.id)}`);
+    setAnnounce(t('added'));
+    try {
+      navigator.vibrate?.(10);
+    } catch {
+      // not supported
+    }
+    const from = addButtonRef.current?.getBoundingClientRect();
+    const to = cartIconRef.current?.getBoundingClientRect();
+    if (!reduceMotion && from && to) setFlight({ key: Date.now(), from, to, src: coverSrc });
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pt-6 pb-20 md:px-10 md:pt-10">
-      <Link
-        href={`/${locale}/shop`}
-        className="mb-8 inline-flex items-center gap-2 text-xs text-white/50 transition hover:text-white"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        <span>{t('backToCatalog')}</span>
-      </Link>
+    <div className="mx-auto max-w-6xl px-5 pb-36 md:px-10 md:pt-10">
+      {topBar}
 
       <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
         <div className="lg:col-span-6">
@@ -203,7 +272,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
             <div className="flex min-w-0 items-center gap-3">
               <ShieldCheck className="h-6 w-6 shrink-0 text-gold-500" />
               <div className="min-w-0">
-                <p className="truncate font-display text-2xl font-semibold tabular-nums text-white sm:text-3xl">{formatPrice(normalizedUSD)}</p>
+                <p className="truncate font-display text-xl font-semibold tabular-nums text-white sm:text-3xl">{formatPrice(normalizedUSD)}</p>
                 <p className="truncate text-xs text-white/45">{t('workshopFullPrice')}</p>
               </div>
             </div>
@@ -215,7 +284,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
                   <p className="truncate text-base font-semibold text-red-300">{t('outOfStock')}</p>
                 ) : (
                   <>
-                    <p className="truncate font-display text-2xl font-semibold tabular-nums text-white sm:text-3xl">{t('stockCount', { count: product.stock })}</p>
+                    <p className="truncate font-display text-xl font-semibold tabular-nums text-white sm:text-3xl">{t('stockCount', { count: product.stock })}</p>
                     <p className="truncate text-xs text-white/45">{t('stockLeft')}</p>
                   </>
                 )}
@@ -223,43 +292,13 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
             </div>
           </div>
 
-          {/* 3% deposit — a plain row that starts the unlock */}
-          <button
-            type="button"
-            onClick={handleUnlockAddress}
-            disabled={outOfStock}
-            className="group flex w-full items-center gap-3 rounded-lg py-1 text-start text-sm text-white/80 transition hover:text-white disabled:opacity-50"
+          <Link
+            href={`/${locale}/customize?partId=${encodeURIComponent(product.id)}`}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white/[0.05] px-6 py-4 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-white/[0.1] sm:w-auto"
           >
-            <ShieldCheck className="h-5 w-5 shrink-0 text-gold-500" />
-            <span className="min-w-0 flex-1">
-              {t.rich('depositToUnlock', {
-                b: (chunks) => <span className="font-semibold text-white">{chunks}</span>,
-                amount: formatPrice(deposit3PercentUSD),
-              })}
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white rtl:rotate-180" />
-          </button>
-
-          {/* Actions */}
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={handleUnlockAddress}
-              disabled={outOfStock}
-              className={buttonClasses({ size: 'lg', className: 'flex-1' })}
-            >
-              <MapPin className="h-4 w-4" />
-              <span>{t('unlockCta')}</span>
-            </button>
-
-            <Link
-              href={`/${locale}/customize?partId=${encodeURIComponent(product.id)}`}
-              className="flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-white/[0.05] px-6 py-4 text-xs font-semibold tracking-wider uppercase text-white transition hover:bg-white/[0.1]"
-            >
-              <Sparkles className="h-4 w-4 text-gold-500" />
-              <span>{t('tryOnCar')}</span>
-            </Link>
-          </div>
+            <Sparkles className="h-4 w-4 text-gold-500" />
+            <span>{t('tryOnCar')}</span>
+          </Link>
 
           {/* Compatibility, exactly as entered by the workshop */}
           <div className="space-y-2">
@@ -312,6 +351,107 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
           </div>
         </section>
       )}
+
+      {/* Fixed bottom bar in place of the dock: price, the automatic 3% deposit and Add to cart. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md md:start-24 lg:start-28">
+        <span aria-hidden className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent" />
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 pt-3 sm:px-5 pb-[max(env(safe-area-inset-bottom),12px)] md:px-10">
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-[17px] font-semibold leading-tight tabular-nums text-white min-[400px]:text-xl">{formatPrice(normalizedUSD)}</p>
+            <p className="mt-0.5 truncate text-[12px] text-white/55">
+              <span className="font-semibold text-gold-500">3%</span> {t('depositShort', { amount: formatPrice(deposit3PercentUSD) })}
+            </p>
+          </div>
+
+          {outOfStock ? (
+            <button type="button" disabled className={buttonClasses({ size: 'lg', className: 'shrink-0 px-6' })}>
+              {t('outOfStock')}
+            </button>
+          ) : inCart === 0 ? (
+            <button
+              ref={addButtonRef}
+              type="button"
+              onClick={handleAddToCart}
+              className={buttonClasses({ size: 'lg', className: 'shrink-0 whitespace-nowrap px-5 active:scale-[0.97]' })}
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span>{t('addToCart')}</span>
+            </button>
+          ) : (
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="flex items-center rounded-2xl bg-white/[0.06] p-1">
+                <button
+                  type="button"
+                  aria-label={tCart('decrease')}
+                  onClick={() => remove(product.id)}
+                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-white/80 transition hover:bg-white/[0.08] active:scale-95"
+                >
+                  {inCart <= 1 ? <Trash2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+                </button>
+                <span aria-live="polite" className="min-w-[28px] text-center text-sm font-semibold tabular-nums text-white">{inCart}</span>
+                <button
+                  ref={addButtonRef}
+                  type="button"
+                  aria-label={tCart('increase')}
+                  disabled={atMax}
+                  onClick={handleAddToCart}
+                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-white/80 transition hover:bg-white/[0.08] active:scale-95 disabled:opacity-30"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+              <Link href={`/${locale}/cart`} aria-label={t('goToCart')} className={buttonClasses({ size: 'lg', className: 'px-5' })}>
+                <span className="hidden min-[400px]:inline">{t('goToCart')}</span>
+                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <p className="sr-only" role="status" aria-live="polite">{announce}</p>
+
+      {/* Add-to-cart flight: the part's picture arcs from the button into the cart icon. */}
+      <AnimatePresence>
+        {flight && (
+          <motion.div
+            key={flight.key}
+            aria-hidden
+            className="pointer-events-none fixed z-[60] h-14 w-14 overflow-hidden rounded-2xl bg-surface-2 shadow-[0_12px_32px_rgba(0,0,0,0.6)] ring-2 ring-gold-500/70"
+            style={{ top: 0, left: 0 }}
+            initial={{
+              x: flight.from.left + flight.from.width / 2 - 28,
+              y: flight.from.top + flight.from.height / 2 - 28,
+              scale: 1,
+              opacity: 1,
+            }}
+            animate={{
+              x: [
+                flight.from.left + flight.from.width / 2 - 28,
+                (flight.from.left + flight.to.left) / 2,
+                flight.to.left + flight.to.width / 2 - 28,
+              ],
+              y: [
+                flight.from.top + flight.from.height / 2 - 28,
+                Math.min(flight.from.top, flight.to.top) + 40,
+                flight.to.top + flight.to.height / 2 - 28,
+              ],
+              scale: [1, 0.9, 0.25],
+              opacity: [1, 1, 0.4],
+            }}
+            transition={{ duration: 0.7, ease: [0.45, 0, 0.2, 1], times: [0, 0.45, 1] }}
+            onAnimationComplete={() => setFlight(null)}
+          >
+            {flight.src ? (
+              <ProductImage src={flight.src} alt="" sizes="56px" className="object-cover" />
+            ) : (
+              <span className="grid h-full w-full place-items-center text-gold-500">
+                <ShoppingBag className="h-6 w-6" />
+              </span>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

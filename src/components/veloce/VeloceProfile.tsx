@@ -4,8 +4,10 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowRight, ArrowUpRight, CalendarCheck, CarFront, ChevronRight, CircleHelp, Globe, LayoutDashboard, Loader2, Package, LogOut, Pencil, Settings2 } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, CalendarCheck, CarFront, ChevronRight, CircleHelp, Globe, LayoutDashboard, Loader2, Package, LogOut, Pencil, Settings2, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { isSellerUser } from '@/features/auth/roles';
+import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { BOOKING_STATUS_STYLE, type BookingView } from '@/features/shop/BookingCard';
 import { initialsOf, LANGUAGES } from '@/features/account/preferences';
@@ -45,7 +47,7 @@ interface RowProps {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   title: string;
   sub?: string;
-  value?: string;
+  value?: string | undefined;
   last?: boolean;
 }
 
@@ -75,6 +77,7 @@ export function VeloceProfile() {
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { user, signOut } = useAuth();
+  const { count: cartCount } = useVeloceStore();
 
   const [bookings, setBookings] = React.useState<BookingView[]>([]);
   const [bookingsLoading, setBookingsLoading] = React.useState(true);
@@ -116,7 +119,8 @@ export function VeloceProfile() {
   // Signed-out visitors are redirected by the shell; render nothing meanwhile.
   if (!user) return null;
 
-  const isPaid = user.plan?.isPaid === true;
+  // Workshop owners: Dashboard and their Cart live here. Regular users have the Cart in the dock and no studio.
+  const isSeller = isSellerUser(user);
   const contact = user.phone || user.email;
   const name = user.full_name || t('guest');
   const base = `/${locale}/profile`;
@@ -154,10 +158,12 @@ export function VeloceProfile() {
                   {contact}
                 </p>
               )}
-              <span className={`mt-2 inline-flex items-center gap-1.5 rounded-full py-[3px] pe-2.5 ps-2 text-[12px] font-medium ${md.accentSoft} ${isPaid ? md.accentText : 'text-white/80'}`}>
-                <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${md.accentBg}`} />
-                {planLabel}
-              </span>
+              {isSeller && (
+                <span className={`mt-2 inline-flex items-center gap-1.5 rounded-full py-[3px] pe-2.5 ps-2 text-[12px] font-medium ${md.accentSoft} ${md.accentText}`}>
+                  <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${md.accentBg}`} />
+                  {planLabel}
+                </span>
+              )}
             </div>
             <Link href={`${base}/edit`} aria-label={t('editProfile')} title={t('editProfile')} className={`${roundBtn} ${md.tile} text-white hover:bg-[#2a2a2a]`}>
               <Pencil className="h-[18px] w-[18px]" strokeWidth={1.8} />
@@ -222,7 +228,12 @@ export function VeloceProfile() {
         {/* Settings list */}
         <ul className={`mt-5 overflow-hidden rounded-[20px] py-1 ${md.card}`}>
           <SettingsRow href={`/${locale}/customize`} icon={CarFront} title={t('carSetup')} sub={t('carSetupSub')} />
-          <SettingsRow href={isPaid ? `/${locale}/seller?tab=dashboard` : `/${locale}/plans`} icon={LayoutDashboard} title={t('dashboard')} sub={t('manage')} />
+          {isSeller && (
+            <>
+              <SettingsRow href={`/${locale}/cart`} icon={ShoppingBag} title={t('cartRow')} value={cartCount > 0 ? String(cartCount) : undefined} />
+              <SettingsRow href={`/${locale}/seller?tab=dashboard`} icon={LayoutDashboard} title={t('dashboard')} sub={t('manage')} />
+            </>
+          )}
           <SettingsRow href={`${base}/settings`} icon={Globe} title={t('language')} value={languageName} />
           <SettingsRow href={`/${locale}#faq`} icon={CircleHelp} title={t('help')} last />
         </ul>

@@ -13,7 +13,13 @@ export interface CompressResult {
 export async function compressFrameToWebP(
   video: HTMLVideoElement,
   maxDimension: number = 2048,
-  quality: number = 0.85
+  quality: number = 0.85,
+  /**
+   * Turns the frame upright. Needed when the screen is locked to portrait but the phone is held
+   * sideways: the browser keeps delivering portrait frames, so the car arrives on its side.
+   * 90 = rotate clockwise, -90 = counter-clockwise.
+   */
+  rotateDeg: 0 | 90 | -90 = 0
 ): Promise<CompressResult> {
   const sourceWidth = video.videoWidth || 1920;
   const sourceHeight = video.videoHeight || 1080;
@@ -32,17 +38,24 @@ export async function compressFrameToWebP(
     }
   }
 
+  const quarterTurn = rotateDeg !== 0;
   const canvas = document.createElement('canvas');
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
+  canvas.width = quarterTurn ? targetHeight : targetWidth;
+  canvas.height = quarterTurn ? targetWidth : targetHeight;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) {
     throw new Error('Could not get 2D canvas context for compression');
   }
 
-  // Draw frame
-  ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+  // Draw frame (around the canvas centre when it has to be turned upright)
+  if (quarterTurn) {
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((rotateDeg * Math.PI) / 180);
+    ctx.drawImage(video, -targetWidth / 2, -targetHeight / 2, targetWidth, targetHeight);
+  } else {
+    ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+  }
 
   const blob = await encodeCanvas(canvas, quality);
   return { blob, width: canvas.width, height: canvas.height, sizeBytes: blob.size };

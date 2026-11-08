@@ -1,15 +1,10 @@
-import crypto from 'node:crypto';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createCode, verifyCode, type OtpPurpose } from '@/server/otp';
 
 /**
  * SMS / OTP layer. Dormant until ESKIZ_EMAIL and ESKIZ_PASSWORD are set in the
  * environment: registration then automatically requires a phone OTP.
  * Until then phones are stored unverified and no SMS is sent.
  */
-
-const OTP_TTL_MS = 5 * 60 * 1000;
-const OTP_MAX_ATTEMPTS = 5;
-const OTP_RESEND_MIN_SECONDS = 60;
 
 export function isSmsConfigured(): boolean {
   return Boolean(process.env.ESKIZ_EMAIL?.trim() && process.env.ESKIZ_PASSWORD?.trim());
@@ -53,80 +48,21 @@ async function sendSms(phoneE164: string, message: string): Promise<void> {
   }
 }
 
-function hashCode(phone: string, code: string): string {
-  const secret = process.env.OTP_HASH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return crypto.createHmac('sha256', secret).update(`${phone}:${code}`).digest('hex');
-}
-
 export async function requestOtp(
-  phoneE164: string
+  phoneE164: string,
+  purpose: OtpPurpose = 'register'
 ): Promise<{ ok: true } | { ok: false; code: 'SMS_DISABLED' | 'TOO_SOON' | 'SEND_FAILED'; retryAfterSeconds?: number }> {
   if (!isSmsConfigured()) return { ok: false, code: 'SMS_DISABLED' };
-  const db = createAdminClient();
-
-  const { data: last } = await db
-    .from('otp_codes')
-    .select('created_at')
-    .eq('phone', phoneE164)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (last) {
-    const age = (Date.now() - new Date(last.created_at as string).getTime()) / 1000;
-    if (age < OTP_RESEND_MIN_SECONDS) {
-      return { ok: false, code: 'TOO_SOON', retryAfterSeconds: Math.ceil(OTP_RESEND_MIN_SECONDS - age) };
-    }
-  }
-
-  const code = crypto.randomInt(100000, 1000000).toString();
-  await db.from('otp_codes').insert({
-    phone: phoneE164,
-    code_hash: hashCode(phoneE164, code),
-    expires_at: new Date(Date.now() + OTP_TTL_MS).toISOString(),
-  });
-
+  const created = await createCode(phoneE164, purpose);
+  if (!created.ok) return { ok: false, code: 'TOO_SOON', retryAfterSeconds: created.retryAfterSeconds };
   try {
-    await sendSms(phoneE164, `CarVision tasdiqlash kodi: ${code}`);
+    await sendSms(phoneE164, `CarVision tasdiqlash kodi: ${created.code}`);
   } catch {
     return { ok: false, code: 'SEND_FAILED' };
   }
   return { ok: true };
 }
 
-export async function verifyOtp(phoneE164: string, code: string): Promise<boolean> {
-  const db = createAdminClient();
-  const { data: row } = await db
-    .from('otp_codes')
-    .select('id, code_hash, attempts, expires_at')
-    .eq('phone', phoneE164)
-    .eq('consumed', false)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!row) return false;
-  if (new Date(row.expires_at as string).getTime() < Date.now()) return false;
-  if ((row.attempts as number) >= OTP_MAX_ATTEMPTS) return false;
-
-  // Claim one attempt atomically (compare-and-set on the counter): parallel guesses cannot all
-  // read the same count and slip past OTP_MAX_ATTEMPTS.
-  const { data: claimed } = await db
-    .from('otp_codes')
-    .update({ attempts: (row.attempts as number) + 1 })
-    .eq('id', row.id)
-    .eq('attempts', row.attempts as number)
-    .eq('consumed', false)
-    .select('id')
-    .maybeSingle();
-  if (!claimed) return false;
-
-  const expected = Buffer.from(row.code_hash as string);
-  const actual = Buffer.from(hashCode(phoneE164, code));
-  let ok = expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
-
-  if (ok) {
-    // A code can be used once, even if two correct requests race.
-    const { data: used } = await db.from('otp_codes').update({ consumed: true }).eq('id', row.id).eq('consumed', false).select('id').maybeSingle();
-    ok = Boolean(used);
-  }
-  return ok;
+export async function verifyOtp(phoneE164: string, code: string, purpose: OtpPurpose = 'register'): Promise<boolean> {
+  return verifyCode(phoneE164, code, purpose);
 }

@@ -10,7 +10,8 @@ import { AlertTriangle, ArrowLeft, Camera, Check, ChevronDown, Loader2, Plus, Sp
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { VehiclePicker, type PickedVehicle } from '@/features/seller/components/VehiclePicker';
 import { ProductPhotoModal } from '@/features/seller/components/ProductPhotoModal';
-import { StudioLock } from '@/features/seller/components/StudioLock';
+import { SellerOnly } from '@/features/seller/components/SellerOnly';
+import { isSellerUser } from '@/features/auth/roles';
 import { analyzeQuality, compressForUpload, composeStudioImage, loadImage, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { dataUrlToBlob } from '@/features/seller/lib/photo-input';
 import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
@@ -76,7 +77,7 @@ function SellerNewPartPageInner() {
   const locale = (params?.['locale'] as string) || 'uz';
   const editId = search?.get('id') ?? null;
   const { user, isLoading, refreshProfile } = useAuth();
-  const unlocked = user?.plan?.isPaid === true;
+  const unlocked = isSellerUser(user);
 
   const [photos, setPhotos] = React.useState<PhotoEntry[]>([]);
   const [uploading, setUploading] = React.useState(0);
@@ -322,7 +323,7 @@ function SellerNewPartPageInner() {
       </div>
     );
   }
-  if (!unlocked) return shell(<StudioLock feature="addProduct" />);
+  if (!unlocked) return <SellerOnly />;
 
   if (done) {
     return shell(

@@ -23,7 +23,11 @@ export interface PlanState {
 export interface UserProfile {
   id: string;
   email: string;
+  /** False until the address is confirmed with a code (always false while e-mail delivery is off). */
+  email_verified?: boolean;
   phone: string;
+  /** False until the number is confirmed by SMS (always false while SMS is off). */
+  phone_verified?: boolean;
   full_name: string;
   role: UserRole;
   credits_balance: number;

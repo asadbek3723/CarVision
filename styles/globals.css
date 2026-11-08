@@ -859,3 +859,10 @@ main > section:not(#top) {
     animation: none;
   }
 }
+
+/* Cart count bubble: a short pop whenever the number changes (it is re-keyed on every change). */
+@keyframes badge-pop {
+  0% { transform: scale(0.6); }
+  55% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}

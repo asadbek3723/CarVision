@@ -12,7 +12,8 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { cachedInventory, rememberInventory } from '@/features/seller/lib/inventory-cache';
 import { ProductImage } from '@/components/ui/ProductImage';
 import type { CatalogItemDTO } from '@/domain/catalog';
-import { StudioLock } from './StudioLock';
+import { SellerOnly } from './SellerOnly';
+import { isSellerUser } from '@/features/auth/roles';
 import { buttonClasses } from '@/components/ui';
 
 interface SellerLead {
@@ -62,7 +63,7 @@ export function SellerDashboardView() {
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
-  const isSeller = user?.plan?.isPaid === true;
+  const isSeller = isSellerUser(user);
 
   const load = React.useCallback(async () => {
     // A list already on screen stays there while it refreshes; only a first visit shows the loader.
@@ -139,7 +140,7 @@ export function SellerDashboardView() {
     );
   }
 
-  if (user && !isSeller) return <StudioLock feature="dashboard" />;
+  if (user && !isSeller) return <SellerOnly />;
 
   if (!user) {
     return (

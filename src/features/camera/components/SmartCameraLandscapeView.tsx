@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCameraStream } from '../hooks/useCameraStream';
 import { useDeviceLevel } from '../hooks/useDeviceLevel';
+import { computeLevel } from '../lib/device-level';
 import { useSubjectDetector } from '../hooks/useSubjectDetector';
 import type { Subject } from '../lib/subject-classify';
 import { AngleGhostOverlay } from './AngleGhostOverlay';
@@ -208,7 +209,9 @@ export function SmartCameraLandscapeView({
 }: SmartCameraLandscapeViewProps) {
   const t = useTranslations('scanLive');
   const tAngle = useTranslations('scanModal.angles');
-  const { videoRef, isReady, permissionDenied, startCamera } = useCameraStream();
+  const { videoRef, stream, isReady, permissionDenied, startCamera } = useCameraStream();
+  // Same stream, shown full screen and blurred behind the sharp frame.
+  const bgVideoRef = React.useRef<HTMLVideoElement | null>(null);
 
   // Strictly sequential program-controlled step index (0 -> 1 -> ... -> 4)
   const [currentStepIndex, setCurrentStepIndex] = React.useState<number>(0);
@@ -224,8 +227,23 @@ export function SmartCameraLandscapeView({
   const activeAngle =
     SCAN_5_ANGLES[currentStepIndex] || SCAN_5_ANGLES[0]!;
 
+  // Orientation detection: Portrait vs Landscape.
+  // iOS fires `orientationchange` BEFORE the viewport has its new size, and sometimes fires nothing
+  // at all, so several signals are combined and a cheap poll acts as the safety net.
+  const [isPortrait, setIsPortrait] = React.useState<boolean>(false);
+  // The user can continue with the screen locked to portrait (rotation lock, installed app locked
+  // to portrait, ...) and hold the phone sideways: the UI is then turned by CSS to face them.
+  const [forceLandscape, setForceLandscape] = React.useState(false);
+  const forced = forceLandscape && isPortrait;
+  // Which way the phone is held in that case: 'ccw' = top edge to the left (the usual landscape),
+  // 'cw' = top edge to the right. Read from the motion sensor; 'ccw' until it says otherwise.
+  const [side, setSide] = React.useState<'ccw' | 'cw'>('ccw');
+
   // Phone-level guide (gyro). Purely advisory: the shutter is never blocked by it.
-  const { level, aligned, needsPermission, requestPermission } = useDeviceLevel(!isCapturing);
+  const { level, aligned, needsPermission, requestPermission } = useDeviceLevel(
+    !isCapturing,
+    forced ? (side === 'ccw' ? 90 : 270) : null
+  );
   // On-device object detection: car green, person red, anything else yellow (advisory only).
   const subject = useSubjectDetector(videoRef, isReady && !permissionDenied);
   const frame = subject ? SUBJECT_FRAME[subject] : null;
@@ -235,17 +253,31 @@ export function SmartCameraLandscapeView({
     wasAligned.current = aligned;
   }, [aligned]);
 
-  // Orientation detection: Portrait vs Landscape.
-  // iOS fires `orientationchange` BEFORE the viewport has its new size, and sometimes fires nothing
-  // at all, so several signals are combined and a cheap poll acts as the safety net.
-  const [isPortrait, setIsPortrait] = React.useState<boolean>(false);
-  // The user can continue in portrait (rotation lock on, installed app locked to portrait, ...):
-  // the camera UI is then rotated by CSS so it still reads as the landscape layout.
-  const [forceLandscape, setForceLandscape] = React.useState(false);
-
   React.useEffect(() => {
     startCamera();
   }, [startCamera]);
+
+  // The blurred backdrop plays the same camera stream as the sharp frame.
+  React.useEffect(() => {
+    const bg = bgVideoRef.current;
+    if (!bg) return;
+    bg.srcObject = stream;
+    if (stream) void bg.play().catch(() => {});
+  }, [stream]);
+
+  // While the UI is turned by CSS, follow which way the phone is actually held (with a wide dead
+  // zone so it never flips while the user is just tilting the phone).
+  React.useEffect(() => {
+    if (!forced || typeof window === 'undefined') return;
+    const onOrientation = (e: DeviceOrientationEvent) => {
+      if (typeof e.beta !== 'number' || typeof e.gamma !== 'number') return;
+      const { roll } = computeLevel(e.beta, e.gamma, 0);
+      if (roll > 55) setSide('ccw');
+      else if (roll < -55) setSide('cw');
+    };
+    window.addEventListener('deviceorientation', onOrientation);
+    return () => window.removeEventListener('deviceorientation', onOrientation);
+  }, [forced]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -287,6 +319,49 @@ export function SmartCameraLandscapeView({
 
   const showRotateHint = isPortrait && !forceLandscape;
 
+  const continueSideways = () => {
+    // iOS gives motion access only from a tap: ask here, so the side and the level guide work.
+    if (needsPermission) void requestPermission();
+    setForceLandscape(true);
+  };
+
+  // The sharp camera is clipped to the on-screen rectangle of the centre frame; everything around
+  // it shows the blurred copy. Measured in screen space, so it also works while the UI is turned.
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  const frameRef = React.useRef<HTMLDivElement | null>(null);
+  const [clip, setClip] = React.useState('inset(50%)');
+  React.useLayoutEffect(() => {
+    const root = rootRef.current;
+    const box = frameRef.current;
+    if (!root || !box) return;
+    let raf = 0;
+    const measure = () => {
+      const b = root.getBoundingClientRect();
+      const r = box.getBoundingClientRect();
+      const radius = parseFloat(getComputedStyle(box).borderTopLeftRadius) || 0;
+      setClip(
+        `inset(${Math.round(r.top - b.top)}px ${Math.round(b.right - r.right)}px ${Math.round(b.bottom - r.bottom)}px ${Math.round(r.left - b.left)}px round ${radius}px)`
+      );
+    };
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+    measure();
+    // A rotation settles a moment after the resize events: measure once more after it.
+    const late = window.setTimeout(measure, 400);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null;
+    ro?.observe(root);
+    ro?.observe(box);
+    window.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(late);
+      ro?.disconnect();
+      window.removeEventListener('resize', schedule);
+    };
+  }, [forced, side, isPortrait]);
+
   const handleShutterClick = async () => {
     if (isCapturing || showRotateHint) return;
     // iOS only allows motion access from a tap: ask on the shutter, the level guide then switches on.
@@ -307,7 +382,8 @@ export function SmartCameraLandscapeView({
         let frameResult: CompressResult | null = null;
 
         if (videoRef.current && videoRef.current.videoWidth > 0) {
-          frameResult = await compressFrameToWebP(videoRef.current, 2048, 0.88);
+          // Screen locked to portrait but phone held sideways: turn the portrait frame upright.
+          frameResult = await compressFrameToWebP(videoRef.current, 2048, 0.88, forced ? (side === 'ccw' ? -90 : 90) : 0);
         } else {
           const canvas = document.createElement('canvas');
           canvas.width = 1920;
@@ -363,22 +439,30 @@ export function SmartCameraLandscapeView({
 
   return (
     <div
+      ref={rootRef}
       className={`relative w-full h-full min-h-0 bg-[#050507] select-none overflow-hidden text-white ${className}`}
-      style={
-        forceLandscape && isPortrait
-          ? {
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100dvh',
-              height: '100dvw',
-              transformOrigin: 'top left',
-              transform: 'translateX(100vw) rotate(90deg)',
-              zIndex: 60,
-            }
-          : undefined
-      }
+      style={forced ? { position: 'fixed', inset: 0, zIndex: 60 } : undefined}
     >
+      {/* Full-screen camera (screen space, never rotated): blurred everywhere, sharp inside the frame. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <video
+          ref={bgVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 h-full w-full scale-[1.08] object-cover [filter:blur(22px)_brightness(0.55)_saturate(1.15)]"
+        />
+        <div className="absolute inset-0 bg-black/20" />
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ clipPath: clip, WebkitClipPath: clip }}
+        />
+      </div>
+
       {/* =====================================================================
           MANDATORY HORIZONTAL (LANDSCAPE) LOCK OVERLAY (WHEN PHONE IS VERTICAL)
           - Strictly buttonless ("tugma bo'lmasin")
@@ -395,95 +479,28 @@ export function SmartCameraLandscapeView({
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-[#050507] px-7 py-10 text-center select-none overflow-hidden"
           >
-            {/* Ambient Luxury Gold Radial Glow */}
-            <div className="pointer-events-none absolute top-1/2 start-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-gold-500/12 blur-[110px]" />
+            <div className="pointer-events-none absolute top-1/2 start-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold-500/10 blur-[100px] rtl:translate-x-1/2" />
 
-            {/* Animated 3D-Style Phone Rotation Stage */}
-            <div className="relative mb-10 flex h-56 w-56 items-center justify-center">
-              <div className="absolute inset-0 rounded-full animate-pulse" />
-              <div className="absolute inset-5 rounded-full border border-dashed " />
+            {/* Phone turning from portrait to landscape */}
+            <motion.div
+              aria-hidden
+              animate={{ rotate: [0, -90, -90, 0] }}
+              transition={{ duration: 3, times: [0, 0.4, 0.8, 1], repeat: Infinity, ease: 'easeInOut' }}
+              className="relative flex h-28 w-16 items-center justify-center rounded-[18px] bg-[#111319] ring-2 ring-gold-300 shadow-[0_0_36px_rgba(212,174,98,0.4)]"
+            >
+              <Camera className="h-5 w-5 text-gold-300" />
+            </motion.div>
 
-              <svg
-                viewBox="0 0 220 220"
-                className="absolute inset-0 h-full w-full pointer-events-none"
-                fill="none"
-              >
-                <path
-                  d="M 110 22 A 88 88 0 0 0 22 110"
-                  stroke="url(#rotate-trail-grad)"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeDasharray="6 6"
-                />
-                <path
-                  d="M 198 110 A 88 88 0 0 1 110 198"
-                  stroke="url(#rotate-trail-grad)"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeDasharray="6 6"
-                />
-                <defs>
-                  <linearGradient id="rotate-trail-grad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#F2D79E" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#D4AE62" stopOpacity="0.1" />
-                  </linearGradient>
-                </defs>
-              </svg>
+            <h2 className="relative mt-12 max-w-xs font-display text-2xl font-light leading-snug text-white">
+              {t('rotateTitle')}
+            </h2>
 
-              {/* Animated Rotating Smartphone Frame (0deg Portrait -> -90deg Landscape) */}
-              <motion.div
-                animate={{
-                  rotate: [0, -90, -90, 0],
-                  scale: [0.96, 1.04, 1.04, 0.96],
-                }}
-                transition={{
-                  duration: 3.4,
-                  times: [0, 0.42, 0.78, 1],
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="relative z-10 flex h-36 w-20 flex-col items-center justify-between rounded-[22px] bg-gradient-to-b from-[#1C1E26] to-[#0B0C10] p-2 ring-2 ring-gold-300 shadow-[0_0_40px_rgba(212,174,98,0.45)]"
-              >
-                <div className="h-1 w-6 rounded-full bg-gold-300/50" />
-                <div className="relative flex h-full w-full items-center justify-center my-1.5 rounded-xl bg-[#07080B] overflow-hidden">
-                  <div className="absolute top-1.5 start-1.5 h-3 w-3 border-t-2 border-s-2 border-gold-300 rounded-ss-sm" />
-                  <div className="absolute top-1.5 end-1.5 h-3 w-3 border-t-2 border-e-2 border-gold-300 rounded-se-sm" />
-                  <div className="absolute bottom-1.5 start-1.5 h-3 w-3 border-b-2 border-s-2 border-gold-300 rounded-es-sm" />
-                  <div className="absolute bottom-1.5 end-1.5 h-3 w-3 border-b-2 border-e-2 border-gold-300 rounded-ee-sm" />
-                  <Camera className="h-5 w-5 text-gold-300" />
-                </div>
-                <div className="h-1 w-8 rounded-full bg-white/30" />
-              </motion.div>
-            </div>
-
-            {/* Luxury Typography Prompt (Zero Buttons!) */}
-            <div className="relative z-10 max-w-xs space-y-3">
-              <p className="font-display text-[10px] font-semibold tracking-[0.35em] text-gold-300 uppercase">
-                {t('eyebrow')}
-              </p>
-
-              <h2 className="font-display text-xl sm:text-2xl font-light tracking-wide text-white leading-snug">
-                {t('rotateTitle')}
-              </h2>
-
-              <p className="text-xs sm:text-sm text-white/60 leading-relaxed">
-                {t('rotateBody')}
-              </p>
-            </div>
-
-            {/* Passive Status Indicator (Non-clickable) */}
-            <div className="relative z-10 mt-8 inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium text-gold-300 ring-1 ring-gold-500/25 pointer-events-none">
-              <span className="h-2 w-2 rounded-full bg-gold-300 animate-ping" />
-              <span>{t('waitingRotate')}</span>
-            </div>
-
-            {/* Escape hatch: rotation lock / portrait-locked app. Capture works in any orientation. */}
             <button
               type="button"
-              onClick={() => setForceLandscape(true)}
-              className="relative z-10 mt-5 cursor-pointer rounded-full bg-gold-500 px-6 py-3 text-xs font-bold tracking-wide text-black transition active:scale-95"
+              onClick={continueSideways}
+              className="relative mt-8 min-h-14 w-full max-w-xs cursor-pointer rounded-full bg-gold-500 px-6 text-[15px] font-semibold text-black transition active:scale-95"
             >
-              Aylanmayapti? Shu holatda davom etish
+              {t('rotateCta')}
             </button>
           </motion.div>
         )}
@@ -502,7 +519,22 @@ export function SmartCameraLandscapeView({
           Center: Golden Framed Camera Viewport + 4 Corner Brackets + Perspective Floor Grid
           Right: Luxury White & Gold Ring Shutter Button
           ===================================================================== */}
-      <div className="relative z-20 flex h-full w-full items-center justify-between gap-2 sm:gap-4 md:gap-6 px-3 sm:px-5 md:px-7 py-2.5 sm:py-4">
+      <div
+        className="absolute inset-0 z-20 flex items-center justify-between gap-2 sm:gap-4 md:gap-6 px-3 sm:px-5 md:px-7 py-2.5 sm:py-4"
+        style={
+          forced
+            ? {
+                inset: 'auto',
+                top: 0,
+                left: 0,
+                width: '100dvh',
+                height: '100dvw',
+                transformOrigin: 'top left',
+                transform: side === 'ccw' ? 'translateX(100dvw) rotate(90deg)' : 'translateY(100dvh) rotate(-90deg)',
+              }
+            : undefined
+        }
+      >
         {/* LEFT COLUMN: Top-Start Back Button & Center 3D Car Compass */}
         <div className="relative flex h-full w-[20%] min-w-[138px] max-w-[220px] shrink-0 flex-col items-center justify-center">
           {/* Top-Start Back Button (Matches Reference Image 1:1) */}
@@ -530,15 +562,11 @@ export function SmartCameraLandscapeView({
 
         {/* CENTER COLUMN: Framed Camera Viewport with Golden Corner Brackets & Perspective Floor Grid */}
         <div className="relative flex-1 h-[90%] sm:h-[92%] min-w-0 flex items-center justify-center">
-          <div className={`relative w-full h-full rounded-[22px] sm:rounded-[28px] md:rounded-[32px] overflow-hidden bg-[#0A0B0F] ring-[1.5px] transition-[box-shadow] duration-500 ${frame ? frame.ring : DEFAULT_FRAME_RING}`}>
-            {/* Live Camera Stream Contained Strictly Inside Center Frame */}
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
+          <div
+            ref={frameRef}
+            className={`relative w-full h-full rounded-[22px] sm:rounded-[28px] md:rounded-[32px] overflow-hidden ring-[1.5px] transition-[box-shadow] duration-500 ${frame ? frame.ring : DEFAULT_FRAME_RING}`}
+          >
+            {/* The sharp camera shows through here (see the full-screen layer above). */}
 
             {/* Camera Initializing Overlay */}
             {!isReady && !permissionDenied && (
@@ -571,11 +599,6 @@ export function SmartCameraLandscapeView({
                 </button>
               </div>
             )}
-
-            {/* Soft edge blur (instead of a dark overlay) so the camera feed stays visible */}
-            <div
-              className="pointer-events-none absolute inset-0 backdrop-blur-[3px] bg-black/5 [mask-image:linear-gradient(to_top,black,transparent_45%,transparent_80%,black)] [-webkit-mask-image:linear-gradient(to_top,black,transparent_45%,transparent_80%,black)]"
-            />
 
             {/* Perspective-correct car outline for the current angle + horizon level guide */}
             {isReady && !permissionDenied && (

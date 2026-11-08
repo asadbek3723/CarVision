@@ -7,7 +7,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Loader2, Search } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { StudioLock } from '@/features/seller/components/StudioLock';
+import { SellerOnly } from '@/features/seller/components/SellerOnly';
+import { isSellerUser } from '@/features/auth/roles';
 import { LeadDetail, formatDate, type SellerLeadOrder } from '@/features/seller/components/LeadDetail';
 import { readJson } from '@/lib/safe-json';
 import { buttonClasses } from '@/components/ui';
@@ -19,7 +20,7 @@ export default function SellerRedeemVoucherPage() {
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const { user, isLoading } = useAuth();
-  const unlocked = user?.role === 'b2b_seller' && user.plan?.isPaid === true;
+  const unlocked = isSellerUser(user);
 
   const [code, setCode] = React.useState('');
   const [recent, setRecent] = React.useState<SellerLeadOrder[]>([]);
@@ -85,7 +86,7 @@ export default function SellerRedeemVoucherPage() {
 
   if (isLoading) return shell(<div className="flex justify-center py-24"><Loader2 className="h-7 w-7 animate-spin text-gold-500" /></div>);
   if (!user) return shell(<div className={buttonClasses({ size: 'sm', className: 'mt-10' })}><Link href={`/${locale}/login`} className="inline-block rounded-full bg-gold-500 px-6 py-2.5 text-sm font-bold text-black">{t('login')}</Link></div>);
-  if (!unlocked) return shell(<StudioLock feature="redeem" />);
+  if (!unlocked) return <SellerOnly />;
 
   const pending = recent.filter((o) => o.status === 'verified');
   const finished = recent.filter((o) => o.status === 'completed');

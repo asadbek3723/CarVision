@@ -14,28 +14,20 @@ export async function requireUser(): Promise<GuardResult<Session>> {
   return { ok: true, value: session };
 }
 
-/** A signed-in user who owns a garage (shop). Role does not matter: a paid plan opens the garage for everyone. */
+/** A workshop owner (role b2b_seller) with a garage (shop). Regular users never get the studio, whatever their plan. */
 export async function requireSeller(): Promise<GuardResult<{ session: Session; shopId: string }>> {
   const session = await getSession();
   if (!session) return deny(401, 'UNAUTHENTICATED', 'Kirish talab qilinadi');
-  if (!session.shop) {
-    return deny(403, 'FORBIDDEN', 'Garaj faqat pullik tarifda ochiladi');
+  if (session.role !== 'b2b_seller' || !session.shop) {
+    return deny(403, 'FORBIDDEN', 'Bu bo‘lim faqat ustaxona egalari uchun');
   }
   return { ok: true, value: { session, shopId: session.shop.id } };
 }
 
-/** A garage owner with an ACTIVE paid plan. Free accounts get 402 and are sent to the plans page. */
+/**
+ * Kept for the seller routes that used to need a paid plan. The studio is no longer locked by plan:
+ * every workshop owner gets it, so this is the same check as requireSeller.
+ */
 export async function requirePaidSeller(): Promise<GuardResult<{ session: Session; shopId: string }>> {
-  const base = await requireSeller();
-  if (!base.ok) return base;
-  if (!base.value.session.plan.isPaid) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { success: false, code: 'PLAN_REQUIRED', error: 'Bu bo‘lim pullik tarifda ochiladi. Tarifni faollashtiring' },
-        { status: 402 }
-      ),
-    };
-  }
-  return base;
+  return requireSeller();
 }

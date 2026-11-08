@@ -699,13 +699,13 @@ export function VeloceCustomize() {
           <div className="mt-6 rounded-[28px] bg-[#11141D] px-6 py-12 text-center">
             <p className="text-base font-semibold text-white">{isSeller ? t('emptySeller') : t('emptyUser')}</p>
             <p className="mx-auto mt-2 max-w-sm text-sm text-white/55">
-              {isSeller ? (user?.plan?.isPaid ? t('emptySellerHint') : t('emptyLockedHint')) : t('emptyUserHint')}
+              {isSeller ? t('emptySellerHint') : t('emptyUserHint')}
             </p>
             <Link
-              href={isSeller ? (user?.plan?.isPaid ? `/${locale}/seller/new-part` : `/${locale}/plans`) : `/${locale}/shop`}
+              href={isSeller ? `/${locale}/seller/new-part` : `/${locale}/shop`}
               className={buttonClasses({ size: 'sm', className: 'mt-5' })}
             >
-              {isSeller ? (user?.plan?.isPaid ? t('ctaAddPart') : t('ctaPlans')) : t('ctaShop')}
+              {isSeller ? t('ctaAddPart') : t('ctaShop')}
             </Link>
           </div>
         ) : filteredProducts.length === 0 ? (

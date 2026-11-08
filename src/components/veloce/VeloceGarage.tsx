@@ -11,7 +11,8 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { cachedInventory, rememberInventory } from '@/features/seller/lib/inventory-cache';
 import { ProductImage } from '@/components/ui/ProductImage';
 import type { CatalogItemDTO } from '@/domain/catalog';
-import { StudioLock } from '@/features/seller/components/StudioLock';
+import { SellerOnly } from '@/features/seller/components/SellerOnly';
+import { isSellerUser } from '@/features/auth/roles';
 import { buttonClasses } from '@/components/ui';
 
 /** Workshop garage: the studio's own published parts, ready to try on a customer's car. */
@@ -34,7 +35,7 @@ export function VeloceGarage() {
   const waitingForUser = authLoading && !user;
   const [activeCategory, setActiveCategory] = React.useState(ALL);
 
-  const isSeller = user?.plan?.isPaid === true;
+  const isSeller = isSellerUser(user);
 
   React.useEffect(() => {
     if (waitingForUser) return;
@@ -72,7 +73,7 @@ export function VeloceGarage() {
     );
   }
 
-  if (user && !isSeller) return <StudioLock feature="garage" />;
+  if (user && !isSeller) return <SellerOnly />;
 
   if (!user) {
     return (
@@ -139,7 +140,10 @@ export function VeloceGarage() {
           <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-6 lg:grid-cols-4">
             {visible.map((item) => (
               <div key={item.id} className="group flex min-w-0 flex-col justify-between">
-                <div>
+                <Link
+                  href={`/${locale}/shop/${encodeURIComponent(item.id)}?from=garage`}
+                  className="block rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-500/40"
+                >
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#11131A] shadow-[0_16px_40px_rgba(0,0,0,0.55)]">
                     {item.coverImageUrl && (
                       <ProductImage
@@ -159,7 +163,7 @@ export function VeloceGarage() {
                     <p className="mt-1 truncate font-mono text-sm font-bold tabular-nums text-white/90">{formatPrice(item.priceUSD)}</p>
                     <p className={`mt-0.5 text-[11px] ${item.stock === 0 ? 'text-red-300' : 'text-white/45'}`}>{t('stock', { count: item.stock })}</p>
                   </div>
-                </div>
+                </Link>
                 <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
                   <Link href={`/${locale}/seller/new-part?id=${item.id}`} className="flex min-h-9 items-center text-xs text-white/55 hover:text-white">
                     {t('edit')}

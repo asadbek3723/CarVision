@@ -24,8 +24,14 @@ function screenAngle(): number {
   return window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0;
 }
 
-/** Live "is the phone level" signal for the Smart Camera guide. Degrades silently without sensors. */
-export function useDeviceLevel(enabled = true): UseDeviceLevel {
+/**
+ * Live "is the phone level" signal for the Smart Camera guide. Degrades silently without sensors.
+ * `screenAngleOverride` is the angle the UI is really shown at when the page rotates it by CSS
+ * (screen locked to portrait, phone held sideways); the browser still reports 0 then.
+ */
+export function useDeviceLevel(enabled = true, screenAngleOverride: number | null = null): UseDeviceLevel {
+  const angleOverride = React.useRef(screenAngleOverride);
+  angleOverride.current = screenAngleOverride;
   const [level, setLevel] = React.useState<DeviceLevel | null>(null);
   const [needsPermission, setNeedsPermission] = React.useState(false);
   const [granted, setGranted] = React.useState(false);
@@ -58,7 +64,7 @@ export function useDeviceLevel(enabled = true): UseDeviceLevel {
 
     const onOrientation = (e: DeviceOrientationEvent) => {
       if (typeof e.beta !== 'number' || typeof e.gamma !== 'number') return;
-      latest = computeLevel(e.beta, e.gamma, screenAngle());
+      latest = computeLevel(e.beta, e.gamma, angleOverride.current ?? screenAngle());
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;

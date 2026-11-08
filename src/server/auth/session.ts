@@ -39,16 +39,25 @@ const CURRENCY_BY_LOCALE: Record<string, CurrencyCode> = {
   en: 'USD',
 };
 
+const PROFILE_COLUMNS = 'id, role, full_name, phone, phone_verified, email, email_verified, preferred_locale, credits_balance, is_banned, created_at';
+// Before the profile_contacts migration is applied the e-mail columns do not exist; sign-in must keep working.
+const PROFILE_COLUMNS_LEGACY = 'id, role, full_name, phone, phone_verified, preferred_locale, credits_balance, is_banned, created_at';
+
+async function loadProfileRow(userId: string): Promise<Record<string, unknown> | null> {
+  const db = createAdminClient();
+  const first = await db.from('profiles').select(PROFILE_COLUMNS).eq('id', userId).maybeSingle();
+  if (!first.error) return (first.data as Record<string, unknown> | null) ?? null;
+  if (first.error.code !== '42703') return null; // 42703 = undefined column
+  const legacy = await db.from('profiles').select(PROFILE_COLUMNS_LEGACY).eq('id', userId).maybeSingle();
+  return (legacy.data as Record<string, unknown> | null) ?? null;
+}
+
 export async function loadSession(userId: string): Promise<Session | null> {
   const db = createAdminClient();
 
   // Independent lookups: run them together (one round trip instead of two).
-  const [{ data: p }, { data: s }] = await Promise.all([
-    db
-      .from('profiles')
-      .select('id, role, full_name, phone, preferred_locale, credits_balance, is_banned, created_at')
-      .eq('id', userId)
-      .maybeSingle(),
+  const [p, { data: s }] = await Promise.all([
+    loadProfileRow(userId),
     db
       .from('shops')
       .select('id, shop_name, city, district, exact_address, phone, credits_balance, current_plan_code, plan_expires_at, is_verified')
@@ -64,8 +73,10 @@ export async function loadSession(userId: string): Promise<Session | null> {
 
   const profile: UserProfile = {
     id: p.id as string,
-    email: '',
-    phone: p.phone as string,
+    email: (p['email'] as string | null | undefined) ?? '',
+    email_verified: p['email_verified'] === true,
+    phone: p['phone'] as string,
+    phone_verified: p['phone_verified'] === true,
     full_name: (p.full_name as string) || '',
     role,
     credits_balance: shop ? shop.credits_balance : (p.credits_balance as number),

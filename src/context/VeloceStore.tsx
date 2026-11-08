@@ -16,7 +16,13 @@ interface VeloceStoreContextType {
   add: (id: string) => void;
   remove: (id: string) => void;
   clearCart: () => void;
+  /** Removes whole lines (every unit) from the cart. */
+  removeLines: (ids: string[]) => void;
   count: number;
+  /** Cart lines the customer unticked; every other line is selected (new items arrive selected). */
+  cartUnselected: string[];
+  setCartSelected: (id: string, selected: boolean) => void;
+  setAllCartSelected: (ids: string[], selected: boolean) => void;
   photo: string | null;
   setPhoto: (photo: string | null) => void;
   selectedPartIds: string[];
@@ -42,6 +48,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   const locale = (params?.['locale'] as string) || 'uz';
 
   const [cart, setCart] = React.useState<Record<string, number>>({});
+  const [cartUnselected, setCartUnselected] = React.useState<string[]>([]);
   const [photo, setPhotoState] = React.useState<string | null>(null);
   const [selectedPartIds, setSelectedPartIdsState] = React.useState<string[]>([]);
   const [multiAngles, setMultiAnglesState] = React.useState<Record<string, string>>({});
@@ -61,6 +68,11 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
       const savedCart = sessionStorage.getItem('veloce_cart');
       if (savedCart) {
         setCart(JSON.parse(savedCart));
+      }
+      const savedUnselected = sessionStorage.getItem('veloce_cart_unselected');
+      if (savedUnselected) {
+        const parsed: unknown = JSON.parse(savedUnselected);
+        if (Array.isArray(parsed)) setCartUnselected(parsed.filter((x): x is string => typeof x === 'string'));
       }
       setCaptureStamp(sessionStorage.getItem('carvision_captured_at') || 'none');
       const savedPhoto = sessionStorage.getItem('veloce_photo') || sessionStorage.getItem('carvision_captured_image');
@@ -172,13 +184,64 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     });
   }, []);
 
-  const clearCart = React.useCallback(() => {
-    setCart({});
+  const saveUnselected = (next: string[]) => {
     try {
-      sessionStorage.removeItem('veloce_cart');
+      if (next.length === 0) sessionStorage.removeItem('veloce_cart_unselected');
+      else sessionStorage.setItem('veloce_cart_unselected', JSON.stringify(next));
     } catch {
       // Ignore
     }
+  };
+
+  const clearCart = React.useCallback(() => {
+    setCart({});
+    setCartUnselected([]);
+    try {
+      sessionStorage.removeItem('veloce_cart');
+      sessionStorage.removeItem('veloce_cart_unselected');
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  const removeLines = React.useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    const drop = new Set(ids);
+    setCart((prev) => {
+      const next = Object.fromEntries(Object.entries(prev).filter(([id]) => !drop.has(id)));
+      try {
+        sessionStorage.setItem('veloce_cart', JSON.stringify(next));
+      } catch {
+        // Ignore
+      }
+      return next;
+    });
+    setCartUnselected((prev) => {
+      const next = prev.filter((id) => !drop.has(id));
+      saveUnselected(next);
+      return next;
+    });
+  }, []);
+
+  const setCartSelected = React.useCallback((id: string, selected: boolean) => {
+    setCartUnselected((prev) => {
+      const next = selected ? prev.filter((x) => x !== id) : prev.includes(id) ? prev : [...prev, id];
+      saveUnselected(next);
+      return next;
+    });
+  }, []);
+
+  const setAllCartSelected = React.useCallback((ids: string[], selected: boolean) => {
+    setCartUnselected((prev) => {
+      const set = new Set(prev);
+      for (const id of ids) {
+        if (selected) set.delete(id);
+        else set.add(id);
+      }
+      const next = [...set];
+      saveUnselected(next);
+      return next;
+    });
   }, []);
 
   const count = React.useMemo(
@@ -223,7 +286,11 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
         add,
         remove,
         clearCart,
+        removeLines,
         count,
+        cartUnselected,
+        setCartSelected,
+        setAllCartSelected,
         photo,
         setPhoto,
         selectedPartIds,

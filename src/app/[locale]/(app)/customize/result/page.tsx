@@ -84,7 +84,7 @@ export default function CustomizeResultPage() {
     return () => {
       isMounted = false;
     };
-  }, [isSeller, user?.plan?.isPaid, locale]);
+  }, [isSeller, locale]);
 
   const selectedParts = React.useMemo(() => {
     if (catalogProducts.length === 0) return [];
