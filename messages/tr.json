@@ -754,7 +754,9 @@
     "removePart": "Kaldır",
     "noPartsInCategory": "Bu kategoride henüz parça yok",
     "before": "Önce",
-    "after": "Sonra"
+    "after": "Sonra",
+    "partsHiddenAll": "Seçilen parçalar fotoğraflarınızda görünmüyor. İlgili taraftan fotoğraf ekleyin (örneğin arka farlar için arka taraf).",
+    "partsHiddenSome": "Bu parçalar fotoğraflarınızda görünmüyor ve işlenmeyecek: {names}. İlgili taraftan fotoğraf ekleyin."
   },
   "identify": {
     "dialog": "Aracı belirle",
@@ -799,7 +801,8 @@
     "retry": "Tekrar dene (1 kredi)",
     "refundNote": "Başarısız açılar için kredi otomatik olarak iade edildi.",
     "viewResult": "Sonucu gör ({count} açı)",
-    "retryAll": "Yeniden oluştur · {count} kredi"
+    "retryAll": "Yeniden oluştur · {count} kredi",
+    "skippedHidden": "Parça görünmüyor, kredi düşülmedi"
   },
   "result": {
     "fullscreen": "Tam ekran",
@@ -1805,7 +1808,8 @@
     "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key"
+    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "PART_NOT_VISIBLE": "Seçilen parça bu açıdan görünmüyor. Kredi düşülmedi"
   },
   "capturePage": {
     "sent": "Fotoğraf bilgisayara gönderildi",

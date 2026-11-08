@@ -754,7 +754,9 @@
     "removePart": "Алып тастау",
     "noPartsInCategory": "Бұл санатта әлі бөлшек жоқ",
     "before": "Бұрын",
-    "after": "Кейін"
+    "after": "Кейін",
+    "partsHiddenAll": "Таңдалған бөлшектер суреттеріңізде көрінбейді. Сәйкес жағынан сурет қосыңыз (мысалы, артқы шамдар үшін артқы жағынан).",
+    "partsHiddenSome": "Бұл бөлшектер суреттеріңізде көрінбейді және салынбайды: {names}. Сәйкес жағынан сурет қосыңыз."
   },
   "identify": {
     "dialog": "Көлікті анықтау",
@@ -799,7 +801,8 @@
     "retry": "Қайта (1 кредит)",
     "refundNote": "Қате шыққан ракурстар үшін кредит автоматты түрде қайтарылды.",
     "viewResult": "Нәтижені көру ({count} ракурс)",
-    "retryAll": "Қайта жасау · {count} кредит"
+    "retryAll": "Қайта жасау · {count} кредит",
+    "skippedHidden": "Бөлшек көрінбейді, кредит алынбады"
   },
   "result": {
     "fullscreen": "Толық экран",
@@ -1805,7 +1808,8 @@
     "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key"
+    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "PART_NOT_VISIBLE": "Таңдалған бөлшек бұл ракурсте көрінбейді. Кредит алынбады"
   },
   "capturePage": {
     "sent": "Сурет компьютерге жіберілді",

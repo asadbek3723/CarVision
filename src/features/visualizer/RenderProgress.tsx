@@ -181,6 +181,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
                   )}
                 </span>
                 <span className={`min-w-0 flex-1 truncate text-sm transition-colors ${s.status === 'queued' || s.status === 'skipped' ? 'text-white/40' : 'text-white'}`}>{s.label}</span>
+                {s.skipReason === 'not-visible' && <span className="shrink-0 text-xs text-white/35">{t('skippedHidden')}</span>}
               </li>
             ))}
           </ul>

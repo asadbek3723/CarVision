@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { planRender, summarize, usableReference, type AngleState, type PlanAngle } from './render-plan';
+import { visibleParts } from '@/lib/part-visibility';
 import { readJson } from '@/lib/safe-json';
 import { fitDataUrlToLimit } from '@/features/camera/lib/image-compressor';
 
@@ -14,6 +15,8 @@ export interface BuildPart {
   image?: string | undefined;
   angleImage?: string | undefined;
   swatch?: string | undefined;
+  /** Where a light / bumper / body part sits: `front`, `rear` or `both` (decides which photos show it). */
+  zone?: string | undefined;
 }
 
 export type FatalCode = 'UNAUTHENTICATED' | 'INSUFFICIENT_CREDITS' | 'PLAN_EXPIRED' | 'ACCOUNT_BLOCKED';
@@ -39,7 +42,10 @@ const CONCURRENCY = 2;
 const MAX_RATE_RETRIES = 3;
 
 /** Body for POST /api/v1/generations (pure, unit-testable). */
-export function toRequestBody(angle: PlanAngle, parts: BuildPart[], referenceAfterUrl?: string) {
+export function toRequestBody(angle: PlanAngle, allParts: BuildPart[], referenceAfterUrl?: string) {
+  // Only the parts that can be seen from this side go to the AI (and are paid for).
+  const shown = visibleParts(allParts, angle.id);
+  const parts = shown.length > 0 ? shown : allParts;
   const primary = parts[0]!;
   return {
     photo: angle.photo,
@@ -60,6 +66,7 @@ export function toRequestBody(angle: PlanAngle, parts: BuildPart[], referenceAft
       image: p.image,
       angleImage: p.angleImage,
       swatch: p.swatch,
+      zone: p.zone,
     })),
     idempotencyKey: crypto.randomUUID(),
     ...(referenceAfterUrl ? { referenceAfterUrl } : {}),
@@ -134,14 +141,18 @@ export function useRenderBuild(onCreditsChanged?: () => void) {
 
   const run = React.useCallback(
     async (angles: PlanAngle[], parts: BuildPart[]) => {
-      const plan = planRender(angles);
+      const plan = planRender(angles, parts);
       if (plan.order.length === 0 || parts.length === 0) return;
       cancelled.current = false;
       ctx.current = { parts, angles: plan.order };
       setFatal(null);
       setDemo(false);
       setRunning(true);
-      setStates(plan.order.map((a) => ({ id: a.id, label: a.label, status: 'queued' })));
+      setStates([
+        ...plan.order.map((a): AngleState => ({ id: a.id, label: a.label, status: 'queued' })),
+        // Sides where no chosen part is visible: shown as skipped, never rendered, never charged.
+        ...plan.skipped.map((a): AngleState => ({ id: a.id, label: a.label, status: 'skipped', skipReason: 'not-visible' })),
+      ]);
 
       try {
         const [hero, ...rest] = plan.order;

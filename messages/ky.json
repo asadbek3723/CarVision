@@ -754,7 +754,9 @@
     "removePart": "Алып салуу",
     "noPartsInCategory": "Бул категорияда азырынча тетик жок",
     "before": "Мурун",
-    "after": "Кийин"
+    "after": "Кийин",
+    "partsHiddenAll": "Тандалган тетиктер сүрөттөрүңүздө көрүнбөйт. Тийиштүү тараптан сүрөт кошуңуз (мисалы, арткы чырактар үчүн арт жагынан).",
+    "partsHiddenSome": "Бул тетиктер сүрөттөрүңүздө көрүнбөйт жана тартылбайт: {names}. Тийиштүү тараптан сүрөт кошуңуз."
   },
   "identify": {
     "dialog": "Унааны аныктоо",
@@ -799,7 +801,8 @@
     "retry": "Кайра (1 кредит)",
     "refundNote": "Ката кеткен ракурстар үчүн кредит автоматтык түрдө кайтарылды.",
     "viewResult": "Натыйжаны көрүү ({count} ракурс)",
-    "retryAll": "Кайра түзүү · {count} кредит"
+    "retryAll": "Кайра түзүү · {count} кредит",
+    "skippedHidden": "Тетик көрүнбөйт, кредит алынган жок"
   },
   "result": {
     "fullscreen": "Толук экран",
@@ -1805,7 +1808,8 @@
     "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key"
+    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "PART_NOT_VISIBLE": "Тандалган тетик бул бурчтан көрүнбөйт. Кредит алынган жок"
   },
   "capturePage": {
     "sent": "Сүрөт компьютерге жөнөтүлдү",

@@ -754,7 +754,9 @@
     "removePart": "Remove",
     "noPartsInCategory": "No parts in this category yet",
     "before": "Before",
-    "after": "After"
+    "after": "After",
+    "partsHiddenAll": "The selected parts are not visible in your photos. Add a photo from the matching side (for example the rear for rear lights).",
+    "partsHiddenSome": "These parts are not visible in your photos and won't be rendered: {names}. Add a photo from the matching side."
   },
   "identify": {
     "dialog": "Identify your car",
@@ -799,7 +801,8 @@
     "retry": "Retry (1 credit)",
     "refundNote": "Credits for failed angles were refunded automatically.",
     "viewResult": "{count, plural, one {See result (# angle)} other {See result (# angles)}}",
-    "retryAll": "Generate again · {count} credits"
+    "retryAll": "Generate again · {count} credits",
+    "skippedHidden": "Part not visible, no credit charged"
   },
   "result": {
     "fullscreen": "Fullscreen",
@@ -1805,7 +1808,8 @@
     "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key"
+    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "PART_NOT_VISIBLE": "The selected part is not visible from this angle. No credit was charged"
   },
   "capturePage": {
     "sent": "The photo was sent to the computer",

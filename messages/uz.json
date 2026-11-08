@@ -754,7 +754,9 @@
     "removePart": "Olib tashlash",
     "noPartsInCategory": "Bu kategoriyada hali detal yo‘q",
     "before": "Oldin",
-    "after": "Keyin"
+    "after": "Keyin",
+    "partsHiddenAll": "Tanlangan detallar suratlaringizda ko'rinmaydi. Mos tomondan rasm qo'shing (masalan, orqa fara uchun orqa rasm).",
+    "partsHiddenSome": "Bu detallar rasmlaringizda ko'rinmaydi va yaratilmaydi: {names}. Mos tomondan rasm qo'shing."
   },
   "identify": {
     "dialog": "Mashinani aniqlash",
@@ -799,7 +801,8 @@
     "retry": "Qayta (1 kredit)",
     "refundNote": "Xato boʻlgan rakurslar uchun kredit avtomatik qaytarilgan.",
     "viewResult": "Natijani koʻrish ({count} ta rakurs)",
-    "retryAll": "Qayta generatsiya qilish · {count} kredit"
+    "retryAll": "Qayta generatsiya qilish · {count} kredit",
+    "skippedHidden": "Detal ko'rinmaydi, kredit yechilmadi"
   },
   "result": {
     "fullscreen": "To'liq ekran",
@@ -1805,7 +1808,8 @@
     "AI_BUSY": "Hozir AI modellar band. Kredit qaytarildi, 1-2 daqiqadan keyin qayta urinib ko'ring",
     "AI_TIMEOUT": "Rasm yaratish juda uzoq davom etdi. Kredit qaytarildi, qayta urinib ko'ring",
     "VALIDATION_FAILED": "So'rov ma'lumotlari noto'g'ri. Sahifani yangilab qayta urinib ko'ring",
-    "AI_NO_QUOTA": "AI kalitida rasm yaratish uchun limit yo'q (billing yoqilmagan). Kredit qaytarildi. Administrator kalitni tekshirishi kerak"
+    "AI_NO_QUOTA": "AI kalitida rasm yaratish uchun limit yo'q (billing yoqilmagan). Kredit qaytarildi. Administrator kalitni tekshirishi kerak",
+    "PART_NOT_VISIBLE": "Tanlangan detal bu rakursda ko'rinmaydi. Kredit yechilmadi"
   },
   "capturePage": {
     "sent": "Rasm kompyuterga yuborildi",

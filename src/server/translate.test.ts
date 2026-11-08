@@ -6,7 +6,7 @@ const geminiReply = (obj: unknown) =>
 
 describe('translateListing', () => {
   beforeEach(() => {
-    vi.stubEnv('GEMINI_API_KEY', 'test-key');
+    vi.stubEnv('GEMINI_API_KEY', 'test-key-123456');
     vi.stubEnv('OPENAI_API_KEY', '');
   });
   afterEach(() => {

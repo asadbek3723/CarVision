@@ -10,6 +10,7 @@ import {
   type FitmentPartInput,
 } from '@/server/providers/ai/direct-fitment-engine';
 import { persistGenerationImage } from '@/server/storage';
+import { visibleParts } from '@/lib/part-visibility';
 
 export const maxDuration = 60;
 
@@ -35,6 +36,8 @@ const partInputSchema = z.object({
   image: short(2000).optional(),
   angleImage: short(2000).optional(),
   swatch: short(40).optional(),
+  /** Front / rear position of a light, bumper or body part (decides which photos can show it). */
+  zone: short(10).optional(),
 });
 
 const requestSchema = z.object({
@@ -119,7 +122,7 @@ export async function POST(request: NextRequest) {
     }
     const input = parsed.data;
 
-    const fitmentParts: FitmentPartInput[] =
+    const requestedParts: Array<FitmentPartInput & { zone?: string | undefined }> =
       input.parts && input.parts.length > 0
         ? input.parts
         : [
@@ -140,6 +143,15 @@ export async function POST(request: NextRequest) {
     }
 
     const angleKey = input.angleId || 'front-left';
+
+    // A part that cannot be seen from this side (rear light on a front photo, spoiler on the front)
+    // is not rendered and not charged: stops direct API calls from paying for an invisible part.
+    const fitmentParts = visibleParts(requestedParts, angleKey);
+    if (fitmentParts.length === 0) {
+      return errorResponse(422, 'PART_NOT_VISIBLE', "Tanlangan detal bu rakursda ko'rinmaydi. Kredit yechilmadi", {
+        creditsRemaining: session.shop ? session.shop.credits_balance : session.profile.credits_balance,
+      });
+    }
     const priceUSD = input.partPrice ?? 0;
     const partPayload = {
       id: input.partId,

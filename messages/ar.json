@@ -754,7 +754,9 @@
     "removePart": "إزالة",
     "noPartsInCategory": "لا توجد قطع في هذه الفئة بعد",
     "before": "قبل",
-    "after": "بعد"
+    "after": "بعد",
+    "partsHiddenAll": "القطع المختارة غير ظاهرة في صورك. أضف صورة من الجهة المناسبة (مثلاً الخلفية للأضواء الخلفية).",
+    "partsHiddenSome": "هذه القطع غير ظاهرة في صورك ولن يتم رسمها: {names}. أضف صورة من الجهة المناسبة."
   },
   "identify": {
     "dialog": "تحديد السيارة",
@@ -799,7 +801,8 @@
     "retry": "إعادة (رصيد واحد)",
     "refundNote": "أُعيد الرصيد تلقائيًا عن الزوايا التي فشلت.",
     "viewResult": "عرض النتيجة ({count})",
-    "retryAll": "إعادة الإنشاء · {count} رصيد"
+    "retryAll": "إعادة الإنشاء · {count} رصيد",
+    "skippedHidden": "القطعة غير ظاهرة، لم يُخصم رصيد"
   },
   "result": {
     "fullscreen": "ملء الشاشة",
@@ -1805,7 +1808,8 @@
     "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key"
+    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "PART_NOT_VISIBLE": "القطعة المختارة غير ظاهرة من هذه الزاوية. لم يتم خصم أي رصيد"
   },
   "capturePage": {
     "sent": "تم إرسال الصورة إلى الحاسوب",

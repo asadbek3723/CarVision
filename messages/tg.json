@@ -754,7 +754,9 @@
     "removePart": "Бартараф кардан",
     "noPartsInCategory": "Дар ин категория ҳоло қисм нест",
     "before": "Пеш",
-    "after": "Баъд"
+    "after": "Баъд",
+    "partsHiddenAll": "Қисмҳои интихобшуда дар аксҳои шумо намоён нестанд. Аз тарафи мувофиқ акс илова кунед (масалан, барои фарагии ақиб акси ақиб).",
+    "partsHiddenSome": "Ин қисмҳо дар аксҳои шумо намоён нестанд ва кашида намешаванд: {names}. Аз тарафи мувофиқ акс илова кунед."
   },
   "identify": {
     "dialog": "Муайян кардани мошин",
@@ -799,7 +801,8 @@
     "retry": "Такрор (1 кредит)",
     "refundNote": "Кредит барои ракурсҳои хатоёфта ба таври худкор баргардонида шуд.",
     "viewResult": "Дидани натиҷа ({count} ракурс)",
-    "retryAll": "Аз нав сохтан · {count} кредит"
+    "retryAll": "Аз нав сохтан · {count} кредит",
+    "skippedHidden": "Қисм намоён нест, кредит гирифта нашуд"
   },
   "result": {
     "fullscreen": "Экрани пурра",
@@ -1805,7 +1808,8 @@
     "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
     "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
     "VALIDATION_FAILED": "The request was invalid. Refresh the page and try again",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key"
+    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "PART_NOT_VISIBLE": "Қисми интихобшуда аз ин ракурс намоён нест. Кредит гирифта нашуд"
   },
   "capturePage": {
     "sent": "Акс ба компютер фиристода шуд",

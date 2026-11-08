@@ -29,6 +29,12 @@ import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderB
 
 const CONFIRMED_KEY = 'carvision_car_confirmed_for';
 
+/** Explicit front/rear position of a part, when the seller set one (`attributes.zone`). */
+const partZoneOf = (p: VeloceProduct): string | undefined => {
+  const zone = p.attributes?.['zone'];
+  return typeof zone === 'string' ? zone : undefined;
+};
+
 /** `id` is the stable identifier; `key` selects the translated label in `customize.angles` / `customize.anglesShort`. */
 export const FIVE_CAR_ANGLES = [
   { id: 'front', key: 'front' },
@@ -285,12 +291,17 @@ export function VeloceCustomize() {
     }
     return sides;
   }, [multiAngles, photo, t]);
-  const renderPlan = React.useMemo(() => planRender(planAngles), [planAngles]);
+  // Only angles that can show a chosen part are rendered (and paid for): a rear light is not in a front photo.
+  const renderPlan = React.useMemo(
+    () => planRender(planAngles, selectedProducts.map((p) => ({ id: p.id, category: p.category, name: p.name, spec: p.spec, zone: partZoneOf(p) }))),
+    [planAngles, selectedProducts]
+  );
   const creditsLeft = user?.credits_balance ?? 0;
   const notEnoughCredits = Boolean(user) && renderPlan.creditsNeeded > creditsLeft;
 
   const buildParts = (list: VeloceProduct[]): BuildPart[] =>
     list.map((p) => ({
+      zone: partZoneOf(p),
       id: p.id,
       name: p.name,
       category: p.category || 'Wheels',
@@ -313,6 +324,10 @@ export function VeloceCustomize() {
 
     if (!user) {
       router.push(`/${locale}/login`);
+      return;
+    }
+    if (renderPlan.noneVisible) {
+      setApplyError(t('partsHiddenAll'));
       return;
     }
     if (renderPlan.order.length === 0) {
@@ -378,11 +393,21 @@ export function VeloceCustomize() {
       <ChevronRight className="relative h-4 w-4 rtl:rotate-180" strokeWidth={2.5} />
     </button>
   );
-  const creditsNote = notEnoughCredits && (
-    <p className="mb-2 px-2 text-[11px] text-amber-300">
-      {t('creditsNeeded', { needed: renderPlan.creditsNeeded, left: creditsLeft })}{' '}
-      <Link href={`/${locale}/plans`} className="font-semibold underline">{t('plans')}</Link>
-    </p>
+  const hiddenNames = selectedProducts.filter((p) => renderPlan.hiddenPartIds.includes(p.id)).map((p) => p.name).join(', ');
+  const creditsNote = (
+    <>
+      {renderPlan.noneVisible ? (
+        <p className="mb-2 px-2 text-[11px] text-amber-300">{t('partsHiddenAll')}</p>
+      ) : (
+        hiddenNames && <p className="mb-2 px-2 text-[11px] text-amber-300">{t('partsHiddenSome', { names: hiddenNames })}</p>
+      )}
+      {notEnoughCredits && (
+        <p className="mb-2 px-2 text-[11px] text-amber-300">
+          {t('creditsNeeded', { needed: renderPlan.creditsNeeded, left: creditsLeft })}{' '}
+          <Link href={`/${locale}/plans`} className="font-semibold underline">{t('plans')}</Link>
+        </p>
+      )}
+    </>
   );
 
   const showGate = carChecked && !carConfirmed && Boolean(user) && Boolean(photo);

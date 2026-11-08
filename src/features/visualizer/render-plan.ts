@@ -1,3 +1,5 @@
+import { visibleParts, type VisibilityPart } from '@/lib/part-visibility';
+
 /**
  * Pure planning helpers for rendering one build on every captured side of the car.
  * One credit buys one rendered angle (PRD 5.2), so the exact price is known up front.
@@ -29,13 +31,39 @@ export interface RenderPlan {
   order: PlanAngle[];
   creditsNeeded: number;
   heroId: string | null;
+  /** Photographed angles where none of the chosen parts can be seen: not rendered, not charged. */
+  skipped: PlanAngle[];
+  /** Chosen parts that none of the photographed angles can show (the customer must add a photo). */
+  hiddenPartIds: string[];
+  /** Parts are chosen and photos exist, but not a single angle can show any part. */
+  noneVisible: boolean;
 }
 
-export function planRender(angles: PlanAngle[]): RenderPlan {
-  const have = capturedAngles(angles);
-  const heroId = heroAngleId(angles);
+/**
+ * `parts` (optional) limits the plan to angles that can actually show at least one chosen part:
+ * the other photographed angles are `skipped` and cost nothing.
+ */
+export function planRender(angles: PlanAngle[], parts?: Array<VisibilityPart & { id: string }>): RenderPlan {
+  const photographed = capturedAngles(angles);
+  const chosen = parts ?? [];
+  const checkParts = chosen.length > 0;
+
+  const have = checkParts ? photographed.filter((a) => visibleParts(chosen, a.id).length > 0) : photographed;
+  const skipped = checkParts ? photographed.filter((a) => !have.includes(a)) : [];
+  const hiddenPartIds = checkParts
+    ? chosen.filter((p) => !photographed.some((a) => visibleParts([p], a.id).length > 0)).map((p) => p.id)
+    : [];
+
+  const heroId = heroAngleId(have);
   const order = [...have].sort((a, b) => (a.id === heroId ? -1 : b.id === heroId ? 1 : 0));
-  return { order, creditsNeeded: order.length * CREDITS_PER_ANGLE, heroId };
+  return {
+    order,
+    creditsNeeded: order.length * CREDITS_PER_ANGLE,
+    heroId,
+    skipped,
+    hiddenPartIds,
+    noneVisible: checkParts && photographed.length > 0 && order.length === 0,
+  };
 }
 
 export type AngleStatus = 'queued' | 'rendering' | 'done' | 'failed' | 'skipped';
@@ -49,6 +77,8 @@ export interface AngleState {
   error?: string;
   /** API error code of the failure; the UI translates it (`apiErrors.<code>`). */
   errorCode?: string;
+  /** Why an angle was not rendered: the chosen parts cannot be seen from this side. */
+  skipReason?: 'not-visible';
 }
 
 export function summarize(states: AngleState[]): { done: number; failed: number; total: number; percent: number } {
