@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026-11-08] - Shop and Profile follow the Figma "Minimal Dark" design
+### Changed
+- **Shop (`/[locale]/shop`)** rebuilt from the Figma frame "CarVision · Doʻkon / Minimal Dark": title + subtitle with a cart button, search field with a yellow filter button (opens brand filters), "my car" chip, category chips, a 2-column card grid (square photo, brand, name, price, yellow arrow) and the 3% deposit note after the first row.
+- **Profile (`/[locale]/profile`)** rebuilt from "CarVision · Profil / Minimal Dark": account card (avatar, phone, plan pill, edit button, 3 stats), "Mening bronlarim" card with a shop button, settings list (car customizer, dashboard, language, help).
+- Both screens use the Geist font and the Figma colours (`src/features/minimal/theme.ts`); new card `MinimalProductCard`; `MyCarPicker` restyled to the same chip look. New strings in all 8 locales.
+
 ## [2026-11-08] - Nano Banana 2 hardening (full pipeline audit)
 ### Fixed
 - **Model ids** (checked against Google's docs): Pro is `gemini-3-pro-image` (stable); our `gemini-3-pro-image-preview` was the old name. The chain now tries stable and `-preview` ids (Vertex setups may still use them); an id that does not exist answers 404 for free and is skipped for an hour.

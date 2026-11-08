@@ -477,7 +477,7 @@
   },
   "shop": {
     "list": {
-      "searchPlaceholder": "Disk, bamper, fara, brend qidiring…",
+      "searchPlaceholder": "Disk, bamper, fara, brend…",
       "badgeNew": "Yangi",
       "view": "Koʻrish",
       "all": "Hammasi",
@@ -487,7 +487,13 @@
       "loading": "Yuklanmoqda…",
       "loadError": "Detallarni yuklab boʻlmadi. Sahifani yangilang.",
       "noPartsForCar": "{car} uchun hozircha mos detal yoʻq.",
-      "noParts": "Hozircha detal topilmadi."
+      "noParts": "Hozircha detal topilmadi.",
+      "title": "Doʻkon",
+      "subtitle": "Mashinangizga mos detallar va xizmatlar.",
+      "filters": "Filtrlar",
+      "brands": "Brendlar",
+      "depositTitle": "3% zakalat bilan bron qiling",
+      "depositBody": "Ustaxona manzili va telefoni toʻlovdan soʻng ochiladi."
     },
     "card": {
       "allCars": "Barcha mashinalar",
@@ -688,7 +694,13 @@
     "itemsCount": "{count} ta detal",
     "bookedOn": "{date} kuni bron qilingan",
     "details": "Batafsil",
-    "emptyHint": "Yangi bron qilish uchun <shop>do‘kondan</shop> foydalaning"
+    "emptyHint": "Yangi bron qilish uchun <shop>do‘kondan</shop> foydalaning",
+    "title": "Profil",
+    "planName": "{plan} tarifi",
+    "shopCta": "Doʻkonni koʻrish",
+    "carSetup": "Mashinangizni sozlang",
+    "carSetupSub": "Oldin koʻring. Keyin oʻzgartiring.",
+    "help": "Yordam"
   },
   "customize": {
     "clearBuild": "Tanlovni tozalash",

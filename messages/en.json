@@ -487,7 +487,13 @@
       "loading": "Loading…",
       "loadError": "Couldn't load the parts. Please refresh the page.",
       "noPartsForCar": "No matching parts for {car} yet.",
-      "noParts": "No parts found yet."
+      "noParts": "No parts found yet.",
+      "title": "Shop",
+      "subtitle": "Parts and services that fit your car.",
+      "filters": "Filters",
+      "brands": "Brands",
+      "depositTitle": "Book with a 3% deposit",
+      "depositBody": "The workshop address and phone open after payment."
     },
     "card": {
       "allCars": "All cars",
@@ -688,7 +694,13 @@
     "itemsCount": "{count, plural, one {# part} other {# parts}}",
     "bookedOn": "Booked on {date}",
     "details": "Details",
-    "emptyHint": "Use the <shop>shop</shop> to make a new booking"
+    "emptyHint": "Use the <shop>shop</shop> to make a new booking",
+    "title": "Profile",
+    "planName": "{plan} plan",
+    "shopCta": "Browse the shop",
+    "carSetup": "Customize your car",
+    "carSetupSub": "See it first. Change it after.",
+    "help": "Help"
   },
   "customize": {
     "clearBuild": "Clear build",

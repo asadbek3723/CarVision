@@ -1,5 +1,10 @@
 # Architecture & Product Decisions
 
+## 2026-11-08: Shop and Profile take the Figma "Minimal Dark" look
+- **Decision**: `VeloceShop` and `VeloceProfile` follow the Figma file "Car Viison" (frames Doʻkon and Profil, 390px wide): Geist font, #0A0A0A page, #161616 cards, #262626 hairlines, #FDC902 accent. The font is loaded only by these two screens; the shell, header and bottom dock are unchanged.
+- **Deviations from the frames**: the card's label slot shows the part brand, not the workshop name (the workshop stays hidden until the 3% deposit); a "Dashboard" row is added to the profile list because the dashboard opens only from Profile; "Yordam" opens the FAQ on the landing page.
+- **Reason**: the user asked for these two pages to match the Figma design exactly. The Figma file is view-only (locked team), so it was read only, never edited.
+
 ## 2026-10-18: Phase 21 Universal Drop-In AI Image Generation (`FAL_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY`), Photorealistic Perspective Part Compositor & 4-Act Scripted Video Engine with Embedded Audio Muxing
 - **Decision**:
   1. **Zero-Config Drop-In AI Image Fitment Router (`src/server/providers/ai/direct-fitment-engine.ts`)**:

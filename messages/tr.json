@@ -487,7 +487,13 @@
       "loading": "Yükleniyor…",
       "loadError": "Parçalar yüklenemedi. Lütfen sayfayı yenileyin.",
       "noPartsForCar": "{car} için henüz uygun parça yok.",
-      "noParts": "Henüz parça bulunamadı."
+      "noParts": "Henüz parça bulunamadı.",
+      "title": "Mağaza",
+      "subtitle": "Aracınıza uygun parçalar ve hizmetler.",
+      "filters": "Filtreler",
+      "brands": "Markalar",
+      "depositTitle": "%3 kaporayla rezervasyon yapın",
+      "depositBody": "Atölyenin adresi ve telefonu ödemeden sonra açılır."
     },
     "card": {
       "allCars": "Tüm araçlar",
@@ -688,7 +694,13 @@
     "itemsCount": "{count} parça",
     "bookedOn": "{date} tarihinde rezerve edildi",
     "details": "Ayrıntılar",
-    "emptyHint": "Yeni rezervasyon için <shop>mağazayı</shop> kullanın"
+    "emptyHint": "Yeni rezervasyon için <shop>mağazayı</shop> kullanın",
+    "title": "Profil",
+    "planName": "{plan} paketi",
+    "shopCta": "Mağazaya göz at",
+    "carSetup": "Aracınızı özelleştirin",
+    "carSetupSub": "Önce görün. Sonra değiştirin.",
+    "help": "Yardım"
   },
   "customize": {
     "clearBuild": "Seçimi temizle",
