@@ -550,7 +550,13 @@
       "cancel": "Cancel",
       "delete": "Delete",
       "emptyTitle": "Your cart is empty",
-      "emptyBody": "Pick a part you like in the shop — it will show up here."
+      "emptyBody": "Pick a part you like in the shop — it will show up here.",
+      "explainTitle": "Book with 3%",
+      "explainPay": "You pay only 3% now — {amount}. The part is reserved for you.",
+      "explainAddress": "You get the workshop address right away.",
+      "explainPhone": "We pass your number to the tuning workshop — they will contact you.",
+      "explainRest": "The remaining {amount} is paid at the workshop.",
+      "explainCta": "Continue"
     },
     "myCar": {
       "change": "Change",
@@ -714,7 +720,7 @@
     "personalHint": "Change anything and save with one button. A new phone or email is confirmed with a code.",
     "phoneLabel": "Phone number",
     "emailLabel": "Email",
-    "emailPlaceholder": "you@example.com",
+    "emailPlaceholder": "user@gmail.com",
     "emailAddHint": "Add an email to get receipts and notifications.",
     "verified": "Verified",
     "unverified": "Not verified",

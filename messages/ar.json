@@ -550,7 +550,13 @@
       "cancel": "إلغاء",
       "delete": "حذف",
       "emptyTitle": "سلتك فارغة",
-      "emptyBody": "اختر قطعة تعجبك من المتجر وستظهر هنا."
+      "emptyBody": "اختر قطعة تعجبك من المتجر وستظهر هنا.",
+      "explainTitle": "احجز بـ 3%",
+      "explainPay": "تدفع الآن 3% فقط — {amount}. تُحجز القطعة لك.",
+      "explainAddress": "تحصل على عنوان الورشة فورًا.",
+      "explainPhone": "نرسل رقمك إلى ورشة التعديل — وسيتواصلون معك.",
+      "explainRest": "يُدفع المبلغ المتبقي {amount} في الورشة.",
+      "explainCta": "متابعة"
     },
     "myCar": {
       "change": "تغيير",
@@ -714,7 +720,7 @@
     "personalHint": "غيّر ما تريد واحفظ بزر واحد. يتم تأكيد الهاتف والبريد الجديدين برمز.",
     "phoneLabel": "رقم الهاتف",
     "emailLabel": "البريد الإلكتروني",
-    "emailPlaceholder": "you@example.com",
+    "emailPlaceholder": "user@gmail.com",
     "emailAddHint": "أضف بريدك الإلكتروني لتصلك الإيصالات والإشعارات.",
     "verified": "مؤكَّد",
     "unverified": "غير مؤكَّد",

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Camera, Check, ChevronRight, Loader2, Search, Sparkles, TriangleAlert } from 'lucide-react';
+import { Camera, Check, ChevronLeft, ChevronRight, Loader2, Search, Sparkles, TriangleAlert } from 'lucide-react';
 import { useMyCar } from '@/features/shop/useMyCar';
 import { buttonClasses } from '@/components/ui';
 import { setCarCheckToken } from '@/features/visualizer/car-check';
@@ -22,6 +22,8 @@ interface CarIdentifyGateProps {
   angles?: Array<{ id: string; label: string; photo: string }>;
   /** Opens the camera again (shown when the photos are not a car / not one car). */
   onRetake?: () => void;
+  /** Leaves the check (and the customizer) altogether. */
+  onClose?: () => void;
   onDone: () => void;
 }
 
@@ -54,8 +56,9 @@ async function downscale(src: string, maxSide = 768): Promise<string | null> {
  * 1. AI names the car  2. user confirms (or searches by hand)  3. user picks the year.
  * The year matters: a 1990 and a 2026 model of the same name rarely share body parts.
  */
-export function CarIdentifyGate({ photo, angles, onRetake, onDone }: CarIdentifyGateProps) {
+export function CarIdentifyGate({ photo, angles, onRetake, onClose, onDone }: CarIdentifyGateProps) {
   const t = useTranslations('identify');
+  const tCommon = useTranslations('common');
   const reduce = useReducedMotion();
   const { setCar } = useMyCar();
   const maxYear = React.useMemo(() => new Date().getFullYear(), []);
@@ -182,6 +185,16 @@ export function CarIdentifyGate({ photo, angles, onRetake, onDone }: CarIdentify
 
   return (
     <div role="dialog" aria-modal="true" aria-label={t('dialog')} className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto overflow-x-hidden overscroll-contain bg-[#07080C] px-5 py-8">
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={tCommon('back')}
+          className="fixed end-4 top-[max(env(safe-area-inset-top),12px)] z-[61] grid h-11 w-11 cursor-pointer place-items-center rounded-full bg-white/[0.06] text-white/85 backdrop-blur-md transition hover:bg-white/[0.12] hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-500/40"
+        >
+          <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
+        </button>
+      )}
       {/* Ambient backdrop: blurred photo + gold glow */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <img src={photo} alt="" className="h-full w-full scale-110 object-cover opacity-[0.18] blur-3xl" />

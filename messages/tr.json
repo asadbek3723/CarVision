@@ -550,7 +550,13 @@
       "cancel": "İptal",
       "delete": "Sil",
       "emptyTitle": "Sepetiniz boş",
-      "emptyBody": "Mağazadan beğendiğiniz parçayı seçin — burada görünecek."
+      "emptyBody": "Mağazadan beğendiğiniz parçayı seçin — burada görünecek.",
+      "explainTitle": "%3 ile rezerve edin",
+      "explainPay": "Şimdi yalnızca %3 ödersiniz — {amount}. Parça sizin için ayrılır.",
+      "explainAddress": "Atölye adresini hemen alırsınız.",
+      "explainPhone": "Numaranızı tuning atölyesine iletiriz — sizinle iletişime geçerler.",
+      "explainRest": "Kalan {amount} atölyede ödenir.",
+      "explainCta": "Devam et"
     },
     "myCar": {
       "change": "Değiştir",
@@ -714,7 +720,7 @@
     "personalHint": "Her şeyi değiştirip tek düğmeyle kaydedin. Yeni telefon ve e-posta kodla doğrulanır.",
     "phoneLabel": "Telefon numarası",
     "emailLabel": "E-posta",
-    "emailPlaceholder": "ornek@eposta.com",
+    "emailPlaceholder": "user@gmail.com",
     "emailAddHint": "Makbuz ve bildirimler için e-posta ekleyin.",
     "verified": "Doğrulandı",
     "unverified": "Doğrulanmadı",

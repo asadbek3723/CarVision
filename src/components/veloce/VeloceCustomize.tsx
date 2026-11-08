@@ -458,6 +458,7 @@ export function VeloceCustomize() {
           photo={multiAngles['front'] || photo || ''}
           angles={FIVE_CAR_ANGLES.filter((a) => a.id !== 'front' && multiAngles[a.id]).map((a) => ({ id: a.id, label: t(`angles.${a.key}`), photo: multiAngles[a.id] as string }))}
           onRetake={openCamera}
+          onClose={() => router.push(isSeller ? `/${locale}/seller?tab=dashboard` : `/${locale}/shop`)}
           onDone={confirmCar}
         />
       )}

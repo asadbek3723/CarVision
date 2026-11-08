@@ -550,7 +550,13 @@
       "cancel": "Bekor qilish",
       "delete": "O‘chirish",
       "emptyTitle": "Savatingiz bo‘sh",
-      "emptyBody": "Do‘kondan yoqqan detalni tanlang — u shu yerda paydo bo‘ladi."
+      "emptyBody": "Do‘kondan yoqqan detalni tanlang — u shu yerda paydo bo‘ladi.",
+      "explainTitle": "3% to‘lab bron qiling",
+      "explainPay": "Hozir faqat 3% to‘laysiz — {amount}. Detal siz uchun bron bo‘ladi.",
+      "explainAddress": "Ustaxona manzilini darhol olasiz.",
+      "explainPhone": "Raqamingizni tuning servisga beramiz — ular siz bilan bog‘lanadi.",
+      "explainRest": "Qolgan {amount} ustaxonada to‘lanadi.",
+      "explainCta": "Davom etish"
     },
     "myCar": {
       "change": "Oʻzgartirish",
@@ -714,7 +720,7 @@
     "personalHint": "Hammasini o‘zgartirib, bitta tugma bilan saqlang. Yangi telefon va email kod bilan tasdiqlanadi.",
     "phoneLabel": "Telefon raqam",
     "emailLabel": "Email",
-    "emailPlaceholder": "email@misol.uz",
+    "emailPlaceholder": "user@gmail.com",
     "emailAddHint": "Email qo‘shing — chek va xabarlar shu manzilga keladi.",
     "verified": "Tasdiqlangan",
     "unverified": "Tasdiqlanmagan",

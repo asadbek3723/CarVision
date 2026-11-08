@@ -14,9 +14,6 @@ import {
   ShieldCheck,
   Package,
   ShoppingBag,
-  Minus,
-  Plus,
-  Trash2,
   ArrowRight,
 } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
@@ -37,12 +34,11 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
   const t = useTranslations('shop.detail');
   const categoryLabel = useCategoryLabel();
   const tCard = useTranslations('shop.card');
-  const tCart = useTranslations('shop.cart');
   const tNav = useTranslations('nav');
   const params = useParams();
   const router = useRouter();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { add, remove, cart, count } = useVeloceStore();
+  const { add, cart, count } = useVeloceStore();
   const reduceMotion = useReducedMotion();
   // Opened from the workshop's garage (?from=garage): the back button returns there, not to the shop.
   const [fromGarage, setFromGarage] = React.useState(false);
@@ -267,28 +263,23 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
             )}
           </div>
 
-          {/* Price | stock — no box */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <ShieldCheck className="h-6 w-6 shrink-0 text-gold-500" />
-              <div className="min-w-0">
-                <p className="truncate font-display text-xl font-semibold tabular-nums text-white sm:text-3xl">{formatPrice(normalizedUSD)}</p>
-                <p className="truncate text-xs text-white/45">{t('workshopFullPrice')}</p>
-              </div>
+          {/* Full price (never cut off), the automatic 3% deposit, and stock */}
+          <div className="space-y-3">
+            <div>
+              <p className="break-words font-display text-[28px] font-semibold leading-tight tabular-nums text-white sm:text-4xl">{formatPrice(normalizedUSD)}</p>
+              <p className="mt-1 text-xs text-white/50">{t('workshopFullPrice')}</p>
             </div>
-            <span aria-hidden="true" className="h-10 w-px bg-gold-500/40" />
-            <div className="flex min-w-0 items-center gap-3">
-              <Package className={`h-6 w-6 shrink-0 ${outOfStock ? 'text-red-300' : 'text-gold-500'}`} />
-              <div className="min-w-0">
-                {outOfStock ? (
-                  <p className="truncate text-base font-semibold text-red-300">{t('outOfStock')}</p>
-                ) : (
-                  <>
-                    <p className="truncate font-display text-xl font-semibold tabular-nums text-white sm:text-3xl">{t('stockCount', { count: product.stock })}</p>
-                    <p className="truncate text-xs text-white/45">{t('stockLeft')}</p>
-                  </>
-                )}
-              </div>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <span className="inline-flex items-center gap-2 text-white/75">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-gold-500" />
+                <span>
+                  <span className="font-semibold text-gold-500">3%</span> {t('depositShort', { amount: formatPrice(deposit3PercentUSD) })}
+                </span>
+              </span>
+              <span className={`inline-flex items-center gap-2 ${outOfStock ? 'text-red-300' : 'text-white/75'}`}>
+                <Package className={`h-4 w-4 shrink-0 ${outOfStock ? 'text-red-300' : 'text-gold-500'}`} />
+                {outOfStock ? t('outOfStock') : t('inStock', { count: product.stock })}
+              </span>
             </div>
           </div>
 
@@ -352,19 +343,12 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
         </section>
       )}
 
-      {/* Fixed bottom bar in place of the dock: price, the automatic 3% deposit and Add to cart. */}
+      {/* Fixed bottom bar in place of the dock: one full-width button. Add to cart, then Go to cart. */}
       <div className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md md:start-24 lg:start-28">
         <span aria-hidden className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent" />
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 pt-3 sm:px-5 pb-[max(env(safe-area-inset-bottom),12px)] md:px-10">
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-[17px] font-semibold leading-tight tabular-nums text-white min-[400px]:text-xl">{formatPrice(normalizedUSD)}</p>
-            <p className="mt-0.5 truncate text-[12px] text-white/55">
-              <span className="font-semibold text-gold-500">3%</span> {t('depositShort', { amount: formatPrice(deposit3PercentUSD) })}
-            </p>
-          </div>
-
+        <div className="mx-auto max-w-6xl px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] sm:px-5 md:px-10">
           {outOfStock ? (
-            <button type="button" disabled className={buttonClasses({ size: 'lg', className: 'shrink-0 px-6' })}>
+            <button type="button" disabled className={buttonClasses({ size: 'lg', fullWidth: true })}>
               {t('outOfStock')}
             </button>
           ) : inCart === 0 ? (
@@ -372,39 +356,16 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
               ref={addButtonRef}
               type="button"
               onClick={handleAddToCart}
-              className={buttonClasses({ size: 'lg', className: 'shrink-0 whitespace-nowrap px-5 active:scale-[0.97]' })}
+              className={buttonClasses({ size: 'lg', fullWidth: true, className: 'active:scale-[0.98]' })}
             >
-              <ShoppingBag className="h-4 w-4" />
+              <ShoppingBag className="h-5 w-5" />
               <span>{t('addToCart')}</span>
             </button>
           ) : (
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="flex items-center rounded-2xl bg-white/[0.06] p-1">
-                <button
-                  type="button"
-                  aria-label={tCart('decrease')}
-                  onClick={() => remove(product.id)}
-                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-white/80 transition hover:bg-white/[0.08] active:scale-95"
-                >
-                  {inCart <= 1 ? <Trash2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
-                </button>
-                <span aria-live="polite" className="min-w-[28px] text-center text-sm font-semibold tabular-nums text-white">{inCart}</span>
-                <button
-                  ref={addButtonRef}
-                  type="button"
-                  aria-label={tCart('increase')}
-                  disabled={atMax}
-                  onClick={handleAddToCart}
-                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-white/80 transition hover:bg-white/[0.08] active:scale-95 disabled:opacity-30"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-              <Link href={`/${locale}/cart`} aria-label={t('goToCart')} className={buttonClasses({ size: 'lg', className: 'px-5' })}>
-                <span className="hidden min-[400px]:inline">{t('goToCart')}</span>
-                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-              </Link>
-            </div>
+            <Link href={`/${locale}/cart`} className={buttonClasses({ size: 'lg', fullWidth: true, className: 'motion-safe:animate-[badge-pop_320ms_ease-out]' })}>
+              <span>{t('goToCart')}</span>
+              <ArrowRight className="h-5 w-5 rtl:rotate-180" />
+            </Link>
           )}
         </div>
       </div>

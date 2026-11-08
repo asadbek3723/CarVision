@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Camera,
+  ChevronLeft,
   ChevronUp,
   Check,
 } from 'lucide-react';
@@ -505,6 +506,17 @@ export function SmartCameraLandscapeView({
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-[#050507] px-7 py-10 text-center select-none overflow-hidden"
           >
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t('back')}
+                className="absolute end-4 top-[max(env(safe-area-inset-top),12px)] z-10 grid h-11 w-11 cursor-pointer place-items-center rounded-full bg-white/[0.06] text-white/85 transition hover:bg-white/[0.12] hover:text-white active:scale-95"
+              >
+                <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
+              </button>
+            )}
+
             <div className="pointer-events-none absolute top-1/2 start-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold-500/10 blur-[100px] rtl:translate-x-1/2" />
 
             {/* Phone turning from portrait to landscape */}

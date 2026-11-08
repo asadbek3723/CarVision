@@ -3,12 +3,12 @@
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { Check, Minus, Plus, ShoppingBag, Trash2, Car, ArrowRight } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Check, Minus, Plus, ShoppingBag, Trash2, Car, ArrowRight, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
-import { Modal, ProductImage, buttonClasses } from '@/components/ui';
+import { Modal, ProductImage, Sheet, buttonClasses } from '@/components/ui';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +53,8 @@ export function VeloceCart() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [explainOpen, setExplainOpen] = React.useState(false);
+  const router = useRouter();
 
   const cartIdsKey = Object.keys(cart).sort().join(',');
 
@@ -159,16 +161,17 @@ export function VeloceCart() {
   }
 
   // --- Summary (shared by the phone bar and the desktop card) ------------------------------------
-  const checkoutButton = (className?: string) =>
-    selected.length > 0 ? (
-      <Link href={checkoutHref} className={buttonClasses({ size: 'lg', className: cn('whitespace-nowrap px-6', className) })}>
-        {t('checkoutCta')}
-      </Link>
-    ) : (
-      <button type="button" disabled className={buttonClasses({ size: 'lg', className: cn('whitespace-nowrap px-6', className) })}>
-        {t('checkoutCta')}
-      </button>
-    );
+  // Checkout first explains the 3% booking in three lines, then goes on.
+  const checkoutButton = (className?: string) => (
+    <button
+      type="button"
+      disabled={selected.length === 0}
+      onClick={() => setExplainOpen(true)}
+      className={buttonClasses({ size: 'lg', className: cn('whitespace-nowrap px-6', className) })}
+    >
+      {t('checkoutCta')}
+    </button>
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-5 pb-[170px] pt-2 md:px-10 md:pt-8 lg:pb-16">
@@ -345,6 +348,42 @@ export function VeloceCart() {
           </div>
         </div>
       </div>
+
+      <Sheet
+        open={explainOpen}
+        onClose={() => setExplainOpen(false)}
+        title={t('explainTitle')}
+        size="sm"
+        footer={
+          <button
+            type="button"
+            onClick={() => {
+              setExplainOpen(false);
+              router.push(checkoutHref);
+            }}
+            className={buttonClasses({ size: 'lg', fullWidth: true })}
+          >
+            {t('explainCta')}
+            <ArrowRight className="h-5 w-5 rtl:rotate-180" />
+          </button>
+        }
+      >
+        <ul className="space-y-4">
+          {[
+            { icon: ShieldCheck, text: t('explainPay', { amount: formatPrice(depositUSD) }) },
+            { icon: MapPin, text: t('explainAddress') },
+            { icon: Phone, text: t('explainPhone') },
+          ].map(({ icon: Icon, text }) => (
+            <li key={text} className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-500/15 text-gold-500">
+                <Icon className="h-[18px] w-[18px]" />
+              </span>
+              <span className="pt-1.5 text-[15px] leading-snug text-white/85">{text}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-5 text-[13px] text-white/50">{t('explainRest', { amount: formatPrice(atWorkshopUSD) })}</p>
+      </Sheet>
 
       <Modal
         open={confirmDelete}
