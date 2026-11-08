@@ -4,3 +4,4 @@ export { Field, Input, Select, Textarea, fieldClass, type InputProps, type Selec
 export { Sheet, Modal, type SheetProps } from './Sheet';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { ProductImage } from './ProductImage';
+export { Wordmark } from './Wordmark';

@@ -22,6 +22,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { isSellerUser } from '@/features/auth/roles';
 import { rememberPath } from '@/lib/nav-history';
 import { SupportedCurrency } from '@/domain/currency';
+import { Wordmark } from '@/components/ui/Wordmark';
 
 const LOCALE_OPTIONS = [
   { code: 'uz', label: 'UZ', name: "O'zbekcha" },
@@ -173,7 +174,10 @@ export function VeloceShell({ children }: VeloceShellProps) {
     const apply = () => {
       // md:hidden hides the dock on tablets and up; offsetParent cannot be used (it is null for fixed elements).
       const visible = dock !== null && getComputedStyle(dock).display !== 'none';
-      root.style.setProperty('--dock-h', visible ? `${Math.ceil(dock!.getBoundingClientRect().height)}px` : '0px');
+      const h = visible ? `${Math.ceil(dock!.getBoundingClientRect().height)}px` : '0px';
+      root.style.setProperty('--dock-h', h);
+      // Also for overlays mounted outside the shell (the install banner).
+      document.documentElement.style.setProperty('--dock-h', h);
     };
     apply();
     if (!dock || typeof ResizeObserver === 'undefined') return;
@@ -183,6 +187,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
     return () => {
       ro.disconnect();
       window.removeEventListener('resize', apply);
+      document.documentElement.style.removeProperty('--dock-h');
     };
   });
 
@@ -234,9 +239,10 @@ export function VeloceShell({ children }: VeloceShellProps) {
         <div className="flex flex-col items-center gap-10">
           <Link
             href={`/${locale}/seller`}
+            aria-label="CarVision"
             className="font-display text-2xl font-extralight text-gold-gradient transition hover:opacity-90"
           >
-            V
+            C
           </Link>
           <nav aria-label={t('menu')} className="flex flex-col items-center gap-8">
             <RailLink href={`/${locale}/seller`} icon={House} label={t('home')} active={isHome} />
@@ -278,13 +284,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
         {/* Phones: no menu button (everything is in the bottom dock); keeps the logo centred. */}
         <span aria-hidden className="block h-8 w-8" />
 
-        <Link href={`/${locale}/seller`} className="text-center leading-none">
-          <div className="font-display text-lg font-light tracking-[0.6em] ps-[0.6em] text-foreground">
-            VELOCE
-          </div>
-          <div className="mt-1.5 font-display text-[8px] tracking-[0.5em] ps-[0.5em] text-muted-foreground uppercase">
-            Drive Beyond
-          </div>
+        <Link href={`/${locale}/seller`} aria-label="CarVision" className="justify-self-center text-center">
+          <Wordmark />
         </Link>
 
         <div className="flex items-center justify-end gap-2.5 md:gap-3">

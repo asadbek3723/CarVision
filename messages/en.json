@@ -1128,9 +1128,8 @@
       "gold": "in your pocket.",
       "text": "Download our app — photograph your car and see its new look in seconds.",
       "rating": "4.9 · 12,000+ users",
-      "store1": "DOWNLOAD ON THE",
-      "store2": "AVAILABLE ON",
-      "alt": "CarVision mobile app"
+      "alt": "CarVision mobile app",
+      "installNote": "iPhone and Android · free · in seconds"
     },
     "faq": {
       "eyebrow": "06 — QUESTIONS",
@@ -2158,5 +2157,25 @@
     "orders": "Orders",
     "ordersDone": "Completed",
     "deposits": "Deposits"
+  },
+  "install": {
+    "cta": "Install the app",
+    "install": "Install",
+    "bannerTitle": "CarVision app",
+    "bannerText": "Install it on your phone for free",
+    "close": "Close",
+    "guideTitle": "Install the app",
+    "guideSub": "Free · 10 seconds · no App Store needed",
+    "iosSafariStep1": "Tap <b>Share</b> at the bottom (or inside <b>•••</b>)",
+    "iosOtherStep1": "Tap <b>Share</b> in the address bar",
+    "iosStep2": "<b>Add to Home Screen</b> → <b>Add</b>",
+    "inAppStep1": "Apps can’t be installed from inside this app. Tap <b>•••</b>",
+    "inAppStep2": "Choose <b>Open in Safari</b> (or Open in browser)",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "androidStep1": "Open the browser menu <b>⋮</b>",
+    "androidStep2": "Choose <b>Install app</b>",
+    "desktopStep": "Click the <b>install</b> icon in the address bar, or <b>Install app</b> in the browser menu",
+    "gotIt": "Got it"
   }
 }

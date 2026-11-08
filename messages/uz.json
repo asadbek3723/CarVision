@@ -1128,9 +1128,8 @@
       "gold": "choʻntagingizda.",
       "text": "Ilovamizni yuklab oling — mashinangizni suratga oling va soniyalar ichida yangi qiyofasini koʻring.",
       "rating": "4.9 · 12 000+ foydalanuvchi",
-      "store1": "YUKLAB OLING",
-      "store2": "MAVJUD",
-      "alt": "CarVision mobil ilovasi"
+      "alt": "CarVision mobil ilovasi",
+      "installNote": "iPhone va Android · bepul · bir necha soniyada"
     },
     "faq": {
       "eyebrow": "06 — SAVOLLAR",
@@ -2158,5 +2157,25 @@
     "orders": "Buyurtmalar",
     "ordersDone": "Yakunlangan",
     "deposits": "Depozitlar"
+  },
+  "install": {
+    "cta": "Ilovani o‘rnatish",
+    "install": "O‘rnatish",
+    "bannerTitle": "CarVision ilovasi",
+    "bannerText": "Telefoningizga bepul o‘rnating",
+    "close": "Yopish",
+    "guideTitle": "Ilovani o‘rnatish",
+    "guideSub": "Bepul · 10 soniya · App Store kerak emas",
+    "iosSafariStep1": "Pastdagi <b>Ulashish</b> tugmasini bosing (yoki <b>•••</b> ichida)",
+    "iosOtherStep1": "Manzil satridagi <b>Ulashish</b> tugmasini bosing",
+    "iosStep2": "<b>Asosiy ekranga qo‘shish</b> → <b>Qo‘shish</b>",
+    "inAppStep1": "Bu ilova ichida o‘rnatib bo‘lmaydi. <b>•••</b> menyusini bosing",
+    "inAppStep2": "<b>Safari’da ochish</b> (yoki brauzerda ochish) ni tanlang",
+    "copyLink": "Havolani nusxalash",
+    "copied": "Nusxalandi",
+    "androidStep1": "Brauzer menyusini <b>⋮</b> bosing",
+    "androidStep2": "<b>Ilovani o‘rnatish</b> ni tanlang",
+    "desktopStep": "Manzil satridagi <b>o‘rnatish</b> belgisini yoki brauzer menyusidagi <b>Ilovani o‘rnatish</b> ni bosing",
+    "gotIt": "Tushunarli"
   }
 }

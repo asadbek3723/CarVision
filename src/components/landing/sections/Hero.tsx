@@ -2,7 +2,9 @@
 
 
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';import { BrandMark } from './shared';
+import { useTranslations } from 'next-intl';
+import { BrandMark } from './shared';
+import { startInstall } from '@/components/pwa/install';
 
 export function Hero() {
   const t = useTranslations('landing.hero');
@@ -68,12 +70,13 @@ export function Hero() {
           >
             {t('ctaVision')}
           </a>
-          <a
-            href="#app"
-            className="btn-ghost-gold w-full rounded-full px-9 py-4 sm:w-auto text-xs font-semibold tracking-[0.3em]"
+          <button
+            type="button"
+            onClick={() => void startInstall()}
+            className="btn-ghost-gold w-full cursor-pointer rounded-full px-9 py-4 sm:w-auto text-xs font-semibold tracking-[0.3em]"
           >
             {t('ctaApp')}
-          </a>
+          </button>
         </div>
       </div>
 

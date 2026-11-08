@@ -1128,9 +1128,8 @@
       "gold": "cebinizde.",
       "text": "Uygulamamızı indirin — aracınızın fotoğrafını çekin ve saniyeler içinde yeni görünümünü görün.",
       "rating": "4,9 · 12.000+ kullanıcı",
-      "store1": "İNDİRİN",
-      "store2": "MEVCUT",
-      "alt": "CarVision mobil uygulaması"
+      "alt": "CarVision mobil uygulaması",
+      "installNote": "iPhone ve Android · ücretsiz · saniyeler içinde"
     },
     "faq": {
       "eyebrow": "06 — SORULAR",
@@ -2158,5 +2157,25 @@
     "orders": "Siparişler",
     "ordersDone": "Tamamlanan",
     "deposits": "Depozitolar"
+  },
+  "install": {
+    "cta": "Uygulamayı yükle",
+    "install": "Yükle",
+    "bannerTitle": "CarVision uygulaması",
+    "bannerText": "Telefonunuza ücretsiz yükleyin",
+    "close": "Kapat",
+    "guideTitle": "Uygulamayı yükle",
+    "guideSub": "Ücretsiz · 10 saniye · App Store gerekmez",
+    "iosSafariStep1": "Alttaki <b>Paylaş</b> düğmesine dokunun (veya <b>•••</b> içinde)",
+    "iosOtherStep1": "Adres çubuğundaki <b>Paylaş</b> düğmesine dokunun",
+    "iosStep2": "<b>Ana Ekrana Ekle</b> → <b>Ekle</b>",
+    "inAppStep1": "Bu uygulamanın içinden yüklenemez. <b>•••</b> menüsüne dokunun",
+    "inAppStep2": "<b>Safari’de Aç</b> (veya tarayıcıda aç) seçin",
+    "copyLink": "Bağlantıyı kopyala",
+    "copied": "Kopyalandı",
+    "androidStep1": "Tarayıcı menüsünü <b>⋮</b> açın",
+    "androidStep2": "<b>Uygulamayı yükle</b> seçin",
+    "desktopStep": "Adres çubuğundaki <b>yükle</b> simgesine veya tarayıcı menüsündeki <b>Uygulamayı yükle</b>ye tıklayın",
+    "gotIt": "Anladım"
   }
 }

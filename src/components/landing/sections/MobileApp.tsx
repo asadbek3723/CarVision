@@ -2,12 +2,9 @@
 
 
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';import {
-  Apple,
-  Play,
-  Star,
-} from 'lucide-react';
-import { AppStoreButton } from './shared';
+import { useTranslations } from 'next-intl';
+import { Star } from 'lucide-react';
+import { InstallAppButton } from '@/components/pwa/PwaInstallPrompt';
 
 export function MobileApp() {
   const t = useTranslations('landing.app');
@@ -38,17 +35,11 @@ export function MobileApp() {
               <span>{t('rating')}</span>
             </div>
 
-            <div className="mt-8 sm:mt-10 grid gap-3 sm:flex sm:flex-wrap sm:gap-4 w-full">
-              <AppStoreButton
-                icon={Apple}
-                top={t('store1')}
-                name="App Store"
-              />
-              <AppStoreButton
-                icon={Play}
-                top={t('store2')}
-                name="Google Play"
-              />
+            {/* One real install button (the app is a web app, not a store listing): one tap on
+                Android / desktop, a two-step guide on iPhone. */}
+            <div className="mt-8 sm:mt-10 w-full">
+              <InstallAppButton className="btn-gold sweep relative inline-flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-full px-9 py-4 text-sm font-bold tracking-[0.12em] sm:w-auto" />
+              <p className="mt-3 text-xs text-muted-foreground">{t('installNote')}</p>
             </div>
           </div>
 

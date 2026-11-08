@@ -115,28 +115,3 @@ export function SectionHeading({
     </div>
   );
 }
-
-export function AppStoreButton({
-  icon: Icon,
-  top,
-  name,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  top: string;
-  name: string;
-}) {
-  return (
-    <a
-      href="#"
-      className="btn-ghost-gold flex items-center justify-center gap-3.5 sm:gap-4 rounded-2xl px-5 py-3.5 sm:px-6 sm:py-3.5 sm:justify-start w-full sm:w-auto transition-transform active:scale-[0.98]"
-    >
-      <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-primary shrink-0" />
-      <span className="text-start leading-tight">
-        <span className="block text-[10px] tracking-[0.2em] text-muted-foreground">
-          {top}
-        </span>
-        <span className="block text-base sm:text-lg font-semibold">{name}</span>
-      </span>
-    </a>
-  );
-}
