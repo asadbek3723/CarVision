@@ -1,5 +1,6 @@
 import type { ImageModelSpec } from './image-models';
 import type { ProviderId } from './key-pool';
+import { geminiGenerateUrls } from './google-endpoint';
 
 export type FailKind =
   | 'rate_limit' // 429: this key is exhausted for this model right now
@@ -114,12 +115,17 @@ export const geminiAdapter: Adapter = async (spec, key, input, timeoutMs) => {
     const inline = parseDataUri(uri);
     if (inline) parts.push({ inlineData: inline });
   }
-  const out = await post(
-    `https://generativelanguage.googleapis.com/v1beta/models/${spec.model}:generateContent`,
-    { 'x-goog-api-key': key },
-    { contents: [{ role: 'user', parts }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } },
-    timeoutMs
-  );
+  const body = { contents: [{ role: 'user', parts }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } };
+  const started = Date.now();
+  let out: HttpOutcome = { fail: { ok: false, kind: 'auth' } };
+  // AI Studio keys and Vertex AI keys live on different APIs: try the matching one first, and the
+  // other only when this one rejects the key itself.
+  for (const url of geminiGenerateUrls(key, spec.model)) {
+    const left = timeoutMs - (Date.now() - started);
+    if (left < 2_000) break;
+    out = await post(url, { 'x-goog-api-key': key }, body, left);
+    if (!('fail' in out) || out.fail.kind !== 'auth') break;
+  }
   if ('fail' in out) return out.fail;
   try {
     const data = (await out.res.json()) as {
@@ -180,7 +186,7 @@ export const falAdapter: Adapter = async (spec, key, input, timeoutMs) => {
   const multi = input.mode === 'fitment' && (input.partDataUris.length > 0 || input.referenceDataUri);
   let body: Record<string, unknown>;
   if (spec.model === 'fal-ai/nano-banana/edit') {
-    if (!multi) return { ok: false, kind: 'bad_request' };
+    // Works with the car photo alone too (colour, polish, parts without a photo, video mastering).
     body = { prompt: input.prompt, image_urls: refs, num_images: 1, output_format: 'jpeg' };
   } else if (spec.model === 'fal-ai/flux-pro/kontext/multi') {
     if (!multi) return { ok: false, kind: 'bad_request' };

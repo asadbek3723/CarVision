@@ -423,3 +423,12 @@
 - **Decision**: Replicate the exact visual identity, typography (Cormorant Garamond + Manrope), gold luxury gradient, frosted glass cards, and multi-step flow from `https://step-up-welcome.lovable.app/`.
 - **Reason**: User requested exact 1:1 match with high visual fidelity, while preserving Next.js App Router, Supabase Auth integration, and logical CSS RTL compliance.
 - **Alternatives Rejected**: Standard shadcn form components, generic input fields.
+
+## [2026-11-08] Smart camera subject detection on device
+- **Decision**: MediaPipe ObjectDetector (EfficientDet-Lite0 int8, CPU delegate), WASM from jsdelivr pinned to the package version, model from Google storage, loaded lazily when the camera opens.
+- **Reason**: real-time car/person/other colours need per-frame inference; a server round trip per frame is too slow and costly.
+- **Rejected**: GPU delegate (returns zero detections with the int8 model, measured); TensorFlow.js coco-ssd (larger bundle); self-hosting the 13 MB WASM in the repo.
+
+## [2026-11-08] Gemini endpoint chosen by key type
+- **Decision**: `AQ.` keys go to Vertex AI (`aiplatform.googleapis.com`), `AIza` keys to AI Studio; the other API is tried on 401/403.
+- **Reason**: production GEMINI_API_KEY is a Vertex AI express key; AI Studio rejects it.

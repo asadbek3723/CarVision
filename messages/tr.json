@@ -924,7 +924,12 @@
     "downloadTitle": "Fotoğrafı telefona kaydet",
     "levelPhone": "Telefonu düz tutun",
     "aligned": "Düz — çekebilirsiniz",
-    "motionEnable": "Su terazisini aç"
+    "motionEnable": "Su terazisini aç",
+    "subject": {
+      "car": "Araç algılandı",
+      "person": "İnsan — kamerayı araca çevirin",
+      "other": "Karede araç yok"
+    }
   },
   "landing": {
     "nav": {

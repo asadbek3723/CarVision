@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requirePaidSeller } from '@/server/auth/guards';
+import { fetchGeminiGenerate } from '@/server/providers/ai/google-endpoint';
 import { categoryLabel } from '@/domain/catalog';
 
 const schema = z.object({
@@ -33,15 +34,15 @@ function localClean(text: string): string {
 }
 
 async function viaGemini(key: string, prompt: string): Promise<{ name: string; description: string } | null> {
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(process.env['GEMINI_MODEL'] || 'gemini-3.1-flash-lite')}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({
+  const res = await fetchGeminiGenerate(
+    key,
+    process.env['GEMINI_MODEL'] || 'gemini-3.1-flash-lite',
+    {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
-    }),
-    signal: AbortSignal.timeout(20_000),
-  });
+    },
+    20_000
+  );
   if (!res.ok) return null;
   const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
   return parseJson(data.candidates?.[0]?.content?.parts?.[0]?.text);

@@ -36,3 +36,11 @@
 - **Mistake**: Fetching data from Supabase inside `useEffect` while still leaving the component's `useState` initialized with a static mock array (`useState(STATIC_DATA)`), which flashed fake data on first mount or kept fake items when offline.
 - **Rule**: Initialize state with an empty array `useState<T[]>([])` and an explicit `loading` state (`useState(true)`), rendering skeleton loaders while live data loads from the API.
 
+
+## Rule: Check the Key Type, Not Just the Key Name
+- **Mistake**: Env names were correct and deployed, yet Gemini never worked: the value was a Vertex AI key (`AQ.`) sent to the AI Studio endpoint, which only accepts `AIza` keys.
+- **Rule**: When a provider "has a key but fails", check the key's prefix/type against the endpoint before anything else. Route Google keys through `google-endpoint.ts`.
+
+## Rule: Verify On-Device ML Output, Not Just That It Loads
+- **Mistake**: The MediaPipe GPU delegate loaded without error but returned zero detections for the int8 model.
+- **Rule**: Test detectors on real sample images in the browser and compare delegates before shipping.

@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
 import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 import { envKeys } from '@/server/providers/ai/key-pool';
+import { fetchGeminiGenerate } from '@/server/providers/ai/google-endpoint';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -34,15 +35,15 @@ async function askGemini(photo: string): Promise<{ isCar: boolean; make: string;
     'Use the commonly known market name (for example "Chevrolet" + "Cobalt", "Toyota" + "Camry"). If it is not a car, set isCar to false and leave make and model empty.';
 
   try {
-    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: match[1], data: match[2] } }] }],
+    const res = await fetchGeminiGenerate(
+      key,
+      'gemini-2.5-flash',
+      {
+        contents: [{ role: 'user', parts: [{ text: prompt }, { inline_data: { mime_type: match[1], data: match[2] } }] }],
         generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
-      }),
-      signal: AbortSignal.timeout(20_000),
-    });
+      },
+      20_000
+    );
     if (!res.ok) return null;
     const json = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
     const text = json.candidates?.[0]?.content?.parts?.[0]?.text;

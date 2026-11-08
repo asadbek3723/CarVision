@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-11-08] - Smart camera subject colours & Vertex AI Gemini keys
+### Added
+- **Smart camera subject detection** (`useSubjectDetector`, `subject-classify.ts`): on-device MediaPipe EfficientDet-Lite0 (CPU, ~4 checks/s). Car/truck/bus -> green outline + frame + "Car detected"; person -> red; anything else -> yellow. Most prominent object (area x score) wins, majority smoothing stops flicker. Advisory only: the shutter is never blocked; without the model the camera behaves as before. Strings in all 8 locales (`scanLive.subject`).
+### Fixed
+- **Gemini with Vertex AI keys (`AQ.` prefix)**: all Gemini calls (image generation, car detection, text improvement, translation) went only to `generativelanguage.googleapis.com`, which rejects Vertex keys with 401, so image generation never worked with such a key. `google-endpoint.ts` now routes by key type (AQ. -> `aiplatform.googleapis.com`) and falls back to the other API on 401/403. Probe script understands Vertex keys.
+- Fal `nano-banana/edit` is no longer skipped when there is no part photo.
+
 ## [2026-10-18] - Phase 20: Smart Camera 1:1 Luxury Redesign, Mandatory Landscape Gate & Program-Controlled 4-Angle Flow
 ### Added & Rebuilt
 - **1:1 Luxury Smart Camera (`src/features/camera/components/SmartCameraLandscapeView.tsx`)**:

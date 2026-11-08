@@ -11,6 +11,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCameraStream } from '../hooks/useCameraStream';
 import { useDeviceLevel } from '../hooks/useDeviceLevel';
+import { useSubjectDetector } from '../hooks/useSubjectDetector';
+import type { Subject } from '../lib/subject-classify';
 import { AngleGhostOverlay } from './AngleGhostOverlay';
 import { LevelGuide } from './LevelGuide';
 import { compressFrameToWebP, type CompressResult } from '../lib/image-compressor';
@@ -18,6 +20,29 @@ import { playShutter, playLock, vibrate } from '../lib/fx';
 import { GUIDED_SCAN_ANGLES, type GuidedScanAngle } from '@/components/camera/scan-angles';
 
 export type ScanAngle = GuidedScanAngle;
+
+/**
+ * Viewport frame + status chip colour for what the camera sees. The chip sits on a dark base:
+ * over a bright live feed a translucent tint alone is unreadable.
+ */
+const SUBJECT_FRAME: Record<Subject, { ring: string; chip: string; dot: string }> = {
+  car: {
+    ring: 'ring-emerald-400/70 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_28px_rgba(16,185,129,0.35)]',
+    chip: 'ring-emerald-500/50 text-emerald-300',
+    dot: 'bg-emerald-400',
+  },
+  person: {
+    ring: 'ring-red-500/70 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_28px_rgba(239,68,68,0.35)]',
+    chip: 'ring-red-500/50 text-red-300',
+    dot: 'bg-red-400',
+  },
+  other: {
+    ring: 'ring-amber-400/70 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_24px_rgba(251,191,36,0.3)]',
+    chip: 'ring-amber-400/50 text-amber-300',
+    dot: 'bg-amber-400',
+  },
+};
+const DEFAULT_FRAME_RING = 'ring-gold-500/65 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_24px_rgba(212,174,98,0.14)]';
 
 /**
  * The 5 mandatory angles, shared with the upload flow (see `scan-angles.ts`).
@@ -201,6 +226,9 @@ export function SmartCameraLandscapeView({
 
   // Phone-level guide (gyro). Purely advisory: the shutter is never blocked by it.
   const { level, aligned, needsPermission, requestPermission } = useDeviceLevel(!isCapturing);
+  // On-device object detection: car green, person red, anything else yellow (advisory only).
+  const subject = useSubjectDetector(videoRef, isReady && !permissionDenied);
+  const frame = subject ? SUBJECT_FRAME[subject] : null;
   const wasAligned = React.useRef(false);
   React.useEffect(() => {
     if (aligned && !wasAligned.current) vibrate(12);
@@ -502,7 +530,7 @@ export function SmartCameraLandscapeView({
 
         {/* CENTER COLUMN: Framed Camera Viewport with Golden Corner Brackets & Perspective Floor Grid */}
         <div className="relative flex-1 h-[90%] sm:h-[92%] min-w-0 flex items-center justify-center">
-          <div className="relative w-full h-full rounded-[22px] sm:rounded-[28px] md:rounded-[32px] overflow-hidden bg-[#0A0B0F] ring-[1.5px] ring-gold-500/65 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_24px_rgba(212,174,98,0.14)]">
+          <div className={`relative w-full h-full rounded-[22px] sm:rounded-[28px] md:rounded-[32px] overflow-hidden bg-[#0A0B0F] ring-[1.5px] transition-[box-shadow] duration-500 ${frame ? frame.ring : DEFAULT_FRAME_RING}`}>
             {/* Live Camera Stream Contained Strictly Inside Center Frame */}
             <video
               ref={videoRef}
@@ -552,8 +580,19 @@ export function SmartCameraLandscapeView({
             {/* Perspective-correct car outline for the current angle + horizon level guide */}
             {isReady && !permissionDenied && (
               <>
-                <AngleGhostOverlay bearing={activeAngle.coneAngle} aligned={aligned} />
+                <AngleGhostOverlay bearing={activeAngle.coneAngle} aligned={aligned} subject={subject} />
                 <LevelGuide level={level} aligned={aligned} />
+                {frame && subject && (
+                  <div className="pointer-events-none absolute inset-x-0 top-4 sm:top-5 z-20 flex justify-center px-14">
+                    <span
+                      aria-live="polite"
+                      className={`inline-flex items-center gap-1.5 rounded-full bg-[#08090C]/75 px-3 py-1 text-xs font-medium ring-1 backdrop-blur-sm transition-colors duration-300 ${frame.chip}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${frame.dot}`} />
+                      {t(`subject.${subject}`)}
+                    </span>
+                  </div>
+                )}
               </>
             )}
 

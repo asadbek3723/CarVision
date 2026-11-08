@@ -27,6 +27,11 @@ const keys = (...names) => {
   return [...out];
 };
 const GENERATE = process.argv.includes('--generate');
+/** Vertex AI express keys ("AQ.") and AI Studio keys ("AIza") are served by different APIs. */
+const geminiBase = (key) =>
+  key.startsWith('AQ.')
+    ? 'https://aiplatform.googleapis.com/v1/publishers/google/models'
+    : 'https://generativelanguage.googleapis.com/v1beta/models';
 const t = (url, init = {}, ms = 15000) => fetch(url, { ...init, signal: AbortSignal.timeout(ms) });
 const pad = (s, n) => String(s).padEnd(n);
 const report = { gemini: [], openrouter: [], fal: [], openai: [] };
@@ -34,6 +39,20 @@ const report = { gemini: [], openrouter: [], fal: [], openai: [] };
 async function geminiProbe() {
   const list = keys('GEMINI_API_KEYS', 'GEMINI_API_KEY', 'GOOGLE_API_KEY');
   for (const [i, key] of list.entries()) {
+    if (key.startsWith('AQ.')) {
+      // Vertex AI express key: no model list API, so check it with one tiny text call.
+      try {
+        const res = await t(`${geminiBase(key)}/gemini-2.5-flash:generateContent`, {
+          method: 'POST',
+          headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }] }),
+        });
+        report.gemini.push({ i, status: res.status, note: res.ok ? 'vertex key OK' : `vertex key: ${(await res.text()).slice(0, 160)}` });
+      } catch (e) {
+        report.gemini.push({ i, status: 'ERR', note: e.name });
+      }
+      continue;
+    }
     try {
       const res = await t('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {
         headers: { 'x-goog-api-key': key },
@@ -129,11 +148,11 @@ async function generateProbe(models) {
       const started = Date.now();
       try {
         const res = await t(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          `${geminiBase(gem)}/${model}:generateContent`,
           {
             method: 'POST',
             headers: { 'x-goog-api-key': gem, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } }),
+            body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } }),
           },
           60000
         );

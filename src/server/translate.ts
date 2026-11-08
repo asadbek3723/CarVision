@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ITEM_LOCALES, type ItemLocale } from '@/domain/catalog';
+import { fetchGeminiGenerate } from '@/server/providers/ai/google-endpoint';
 
 /** How each storefront language is named to the model (script matters for uz and the Cyrillic Turkic/Iranian ones). */
 const LANGUAGE_NAMES: Record<ItemLocale, string> = {
@@ -63,15 +64,15 @@ async function viaGemini(key: string, prompt: string): Promise<string | null> {
   const model = process.env['GEMINI_MODEL'] || 'gemini-3.1-flash-lite';
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({
+      const res = await fetchGeminiGenerate(
+        key,
+        model,
+        {
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
-        }),
-        signal: AbortSignal.timeout(25_000),
-      });
+        },
+        25_000
+      );
       if (res.ok) {
         const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
         return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;

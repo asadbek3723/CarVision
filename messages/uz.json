@@ -924,7 +924,12 @@
     "downloadTitle": "Rasmni telefonga yuklab olish",
     "levelPhone": "Telefonni tekis ushlang",
     "aligned": "Tayyor — suratga oling",
-    "motionEnable": "Sath yoʻriqnomasini yoqish"
+    "motionEnable": "Sath yoʻriqnomasini yoqish",
+    "subject": {
+      "car": "Mashina aniqlandi",
+      "person": "Odam — kamerani mashinaga qarating",
+      "other": "Kadrda mashina yoʻq"
+    }
   },
   "landing": {
     "nav": {

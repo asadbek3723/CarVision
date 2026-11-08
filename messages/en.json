@@ -924,7 +924,12 @@
     "downloadTitle": "Save the photo to your phone",
     "levelPhone": "Hold the phone level",
     "aligned": "Level — shoot now",
-    "motionEnable": "Enable level guide"
+    "motionEnable": "Enable level guide",
+    "subject": {
+      "car": "Car detected",
+      "person": "Person — point at the car",
+      "other": "No car in frame"
+    }
   },
   "landing": {
     "nav": {
