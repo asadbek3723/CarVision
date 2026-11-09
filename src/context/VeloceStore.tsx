@@ -78,18 +78,30 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   }, []);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  // Restore state from sessionStorage on mount
+  // Restore state from localStorage & sessionStorage on mount, keep live across tabs & components
   React.useEffect(() => {
+    const syncCart = () => {
+      try {
+        const savedCart = localStorage.getItem('veloce_cart_v2') ?? sessionStorage.getItem('veloce_cart');
+        if (savedCart) {
+          setCart(JSON.parse(savedCart));
+        }
+        const savedUnselected = localStorage.getItem('veloce_cart_unselected_v2') ?? sessionStorage.getItem('veloce_cart_unselected');
+        if (savedUnselected) {
+          const parsed: unknown = JSON.parse(savedUnselected);
+          if (Array.isArray(parsed)) setCartUnselected(parsed.filter((x): x is string => typeof x === 'string'));
+        }
+      } catch {
+        // Ignore
+      }
+    };
+
+    syncCart();
+
+    window.addEventListener('storage', syncCart);
+    window.addEventListener('veloce-cart-sync', syncCart);
+
     try {
-      const savedCart = sessionStorage.getItem('veloce_cart');
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
-      const savedUnselected = sessionStorage.getItem('veloce_cart_unselected');
-      if (savedUnselected) {
-        const parsed: unknown = JSON.parse(savedUnselected);
-        if (Array.isArray(parsed)) setCartUnselected(parsed.filter((x): x is string => typeof x === 'string'));
-      }
       setCaptureStamp(sessionStorage.getItem('carvision_captured_at') || 'none');
       const savedPhoto = sessionStorage.getItem('veloce_photo') || sessionStorage.getItem('carvision_captured_image');
       if (savedPhoto && (savedPhoto.startsWith('data:image/') || savedPhoto.startsWith('/'))) {
@@ -113,6 +125,11 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     } catch {
       // Ignore sessionStorage issues
     }
+
+    return () => {
+      window.removeEventListener('storage', syncCart);
+      window.removeEventListener('veloce-cart-sync', syncCart);
+    };
   }, []);
 
   const setPhoto = React.useCallback((p: string | null) => {
@@ -174,7 +191,10 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     setCart((prev) => {
       const next = { ...prev, [id]: (prev[id] ?? 0) + 1 };
       try {
-        sessionStorage.setItem('veloce_cart', JSON.stringify(next));
+        const json = JSON.stringify(next);
+        localStorage.setItem('veloce_cart_v2', json);
+        sessionStorage.setItem('veloce_cart', json);
+        window.dispatchEvent(new Event('veloce-cart-sync'));
       } catch {
         // Ignore
       }
@@ -192,7 +212,10 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
         delete next[id];
       }
       try {
-        sessionStorage.setItem('veloce_cart', JSON.stringify(next));
+        const json = JSON.stringify(next);
+        localStorage.setItem('veloce_cart_v2', json);
+        sessionStorage.setItem('veloce_cart', json);
+        window.dispatchEvent(new Event('veloce-cart-sync'));
       } catch {
         // Ignore
       }
@@ -202,8 +225,15 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
 
   const saveUnselected = (next: string[]) => {
     try {
-      if (next.length === 0) sessionStorage.removeItem('veloce_cart_unselected');
-      else sessionStorage.setItem('veloce_cart_unselected', JSON.stringify(next));
+      if (next.length === 0) {
+        localStorage.removeItem('veloce_cart_unselected_v2');
+        sessionStorage.removeItem('veloce_cart_unselected');
+      } else {
+        const json = JSON.stringify(next);
+        localStorage.setItem('veloce_cart_unselected_v2', json);
+        sessionStorage.setItem('veloce_cart_unselected', json);
+      }
+      window.dispatchEvent(new Event('veloce-cart-sync'));
     } catch {
       // Ignore
     }
@@ -213,8 +243,11 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     setCart({});
     setCartUnselected([]);
     try {
+      localStorage.removeItem('veloce_cart_v2');
+      localStorage.removeItem('veloce_cart_unselected_v2');
       sessionStorage.removeItem('veloce_cart');
       sessionStorage.removeItem('veloce_cart_unselected');
+      window.dispatchEvent(new Event('veloce-cart-sync'));
     } catch {
       // Ignore
     }
@@ -226,7 +259,10 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     setCart((prev) => {
       const next = Object.fromEntries(Object.entries(prev).filter(([id]) => !drop.has(id)));
       try {
-        sessionStorage.setItem('veloce_cart', JSON.stringify(next));
+        const json = JSON.stringify(next);
+        localStorage.setItem('veloce_cart_v2', json);
+        sessionStorage.setItem('veloce_cart', json);
+        window.dispatchEvent(new Event('veloce-cart-sync'));
       } catch {
         // Ignore
       }

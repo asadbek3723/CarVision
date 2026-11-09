@@ -17,22 +17,11 @@ export function AppSplash() {
   const [phase, setPhase] = React.useState<'show' | 'fade' | 'gone'>('show');
 
   React.useEffect(() => {
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem(SEEN_KEY) === '1';
-    } catch {
-      /* storage blocked: show the full launch screen */
-    }
-    // performance.now() counts from the start of the page load.
-    const wait = seen ? 0 : Math.max(0, MIN_MS - performance.now());
+    // Guarantees at least 1.0 full second (1000ms) splash screen regardless of connection speed
+    // This allows fonts, high-res car assets, and hydration to settle smoothly without any UI freeze
     const id = window.setTimeout(() => {
       setPhase('fade');
-      try {
-        sessionStorage.setItem(SEEN_KEY, '1');
-      } catch {
-        /* ignore */
-      }
-    }, wait);
+    }, 1000);
     return () => window.clearTimeout(id);
   }, []);
 

@@ -54,22 +54,18 @@ function measure(width: number, viewportH = 900): Metrics {
   return { size, slot, step, top, height: Math.round(top + size * 1.09 + (wide ? 70 : 52)) };
 }
 
-// Spring that overshoots a little: the strip "clicks" onto the next tooth like a cog.
-const STIFFNESS = 190;
-const DAMPING = 17;
+// Spring that settles smoothly: very gentle stiffness and high damping for a calm, ultra-luxurious feel.
+const STIFFNESS = 60;
+const DAMPING = 23;
 
-// Flick physics (units: cards, seconds). The wheel coasts with friction that grows as it slows,
-// while a detent force pulls it into the nearest tooth, so it visibly ticks from tooth to tooth
-// and finally clicks into one.
-// A heavy flywheel: a gentle push barely turns it, a hard flick spins it fast and it coasts down,
-// clicking over each tooth, until a detent catches it.
-const MAX_SPEED = 26; // cards / s: a hard flick really spins
-const MIN_LAUNCH = 4.5; // cards / s: a real flick always rolls over at least one tooth
-const MIN_FLICK = 1.6; // slower releases just settle into the nearest tooth
-const FLICK_GAIN = 1.35; // a flick carries a bit more energy than the finger's own speed
-const DETENT = 18; // tooth pull; crossing a tooth needs ~3.4 cards/s
-const FRICTION_BASE = 0.55; // low drag while fast: long, smooth coast
-const FRICTION_LOW_SPEED = 6.5; // drag rises as it slows, so it settles instead of crawling
+// Flick physics (units: cards, seconds). Slower, measured speed with heavy dampening.
+const MAX_SPEED = 7; // cards / s: gentle glide, never jumps
+const MIN_LAUNCH = 3.5; // cards / s: measured glide
+const MIN_FLICK = 1.0; // slower releases settle into the nearest tooth
+const FLICK_GAIN = 1.0;
+const DETENT = 12; // tooth pull
+const FRICTION_BASE = 1.4; // smooth, controlled coast
+const FRICTION_LOW_SPEED = 8.5; // drag rises as it slows, so it settles gracefully
 // Drag resistance: slow finger movement moves the wheel less than the finger (heavy feel);
 // fast movement follows the finger 1:1.
 const DRAG_GAIN_SLOW = 0.32;

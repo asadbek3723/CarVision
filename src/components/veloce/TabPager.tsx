@@ -40,22 +40,21 @@ const FLICK_PX_PER_MS = 0.35;
 const SLOP_PX = 8;
 /** iOS / Android browsers own swipes that start at the screen edge (back / forward). */
 const EDGE_PX = 22;
-// Calm, iOS-like deceleration (no snap at the start, long soft landing).
-const EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
+// Calm, luxurious deceleration: starts immediately on tap, glides smoothly with a soft landing.
+const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+export interface TabPagerHandle {
+  goTo: (targetIndex: number) => void;
+}
 
 /**
  * The bottom-dock tabs laid out side by side like a native app: swipe left / right to move between
  * them, the next tab follows the finger from the first pixel, and a tap on the dock slides there.
- *
- * - Every tab is its own vertical scroller (keeps its scroll, no rubber-band) and stays mounted, so
- *   coming back is instant; neighbours mount in idle time so the first swipe never stutters.
- * - The track moves with `transform` only and is driven outside React while dragging (no re-render
- *   per frame). Vertical scrolling stays fully native (`touch-action: pan-y`): the browser takes a
- *   vertical gesture, we take a horizontal one. Horizontal scrollers inside a tab (filter chips)
- *   keep their own swipes, and swipes from the very edge are left to the browser's back gesture
- *   (except inside the installed app, where there is none).
  */
-export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps) {
+export const TabPager = React.forwardRef<TabPagerHandle, TabPagerProps>(function TabPager(
+  { tabs, index, dir, onScrub, onSettle },
+  ref
+) {
   const router = useRouter();
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
@@ -94,6 +93,26 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
     [dir]
   );
 
+  // Expose immediate goTo to bypass router delay: starts sliding the exact millisecond the user taps
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      goTo: (targetIndex: number) => {
+        if (targetIndex < 0 || targetIndex >= tabs.length) return;
+        if (targetIndex === currentRef.current) return;
+        const distance = Math.abs(targetIndex - currentRef.current);
+        currentRef.current = targetIndex;
+        setCurrent(targetIndex);
+        mount(targetIndex);
+        // Instant response, longer luxury glide time (720ms - 900ms)
+        const ms = Math.min(720 + distance * 80, 920);
+        place(targetIndex, 0, ms);
+        onSettle?.(targetIndex);
+      },
+    }),
+    [tabs.length, mount, place, onSettle]
+  );
+
   // Width follows the viewport (rotation, sidebar on tablets).
   React.useLayoutEffect(() => {
     const vp = viewportRef.current;
@@ -108,14 +127,14 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
     return () => ro.disconnect();
   }, [place]);
 
-  // The URL changed (dock tap, back button): slide there.
+  // The URL changed (dock tap, back button): slide there smoothly.
   React.useEffect(() => {
     if (index === currentRef.current) return;
     const distance = Math.abs(index - currentRef.current);
     currentRef.current = index;
     setCurrent(index);
     mount(index);
-    place(index, 0, Math.min(480 + distance * 50, 620));
+    place(index, 0, Math.min(720 + distance * 80, 920));
   }, [index, mount, place]);
 
   // Neighbours load quietly after the first paint, so the first swipe already shows them.
@@ -129,8 +148,8 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
   const settle = (target: number, velocity: number) => {
     const from = currentRef.current;
     const clamped = Math.max(0, Math.min(tabs.length - 1, target));
-    // Faster flicks finish faster, like a native pager.
-    const ms = Math.round(Math.max(380, Math.min(560, 560 - Math.abs(velocity) * 180)));
+    // Slower, luxurious deceleration glide
+    const ms = Math.round(Math.max(650, Math.min(850, 850 - Math.abs(velocity) * 160)));
     currentRef.current = clamped;
     place(clamped, 0, ms);
     onSettle?.(clamped);
@@ -246,4 +265,4 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
       </div>
     </div>
   );
-}
+});

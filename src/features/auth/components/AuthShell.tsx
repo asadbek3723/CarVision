@@ -289,6 +289,19 @@ export function AuthShell({
 }) {
   const t = useTranslations('authShell');
   const tc = useTranslations('common');
+
+  // Exact 1.0s splash screen gate: guarantees zero UI stutter / layout freezing.
+  // The large CARVISION brand mark is displayed for at least 1s while high-res assets & fonts settle,
+  // then smoothly dissolves to unveil the login card without freezing.
+  const [splashVisible, setSplashVisible] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setSplashVisible(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="dark relative min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-ink text-foreground flex flex-col items-center justify-center">
       {/* 1:1 Porsche 911 Master Artwork Background */}
@@ -347,6 +360,54 @@ export function AuthShell({
           PREMIUM AUTO TUNING · EST. 2026
         </motion.p>
       </div>
+
+      {/* 1-Second Frozen / Loading Splash Gate with Big CARVISION Branding */}
+      <AnimatePresence>
+        {splashVisible && (
+          <motion.div
+            key="cv-auth-splash-screen"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.03 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0B0F] select-none"
+          >
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col items-center text-center px-6"
+            >
+              <svg
+                viewBox="0 0 60 44"
+                className="h-14 w-20 sm:h-16 sm:w-24 drop-shadow-[0_0_30px_rgba(212,174,98,0.55)]"
+                aria-hidden={true}
+              >
+                <defs>
+                  <linearGradient id="cv-splash-gate-gold" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#E5C77A" />
+                    <stop offset="100%" stopColor="#9C7729" />
+                  </linearGradient>
+                </defs>
+                <path d="M58 2H22L4 22l18 20h36l-6-6H25L13 22 25 8h27z" fill="url(#cv-splash-gate-gold)" />
+              </svg>
+              <h1 className="font-display mt-5 text-4xl sm:text-5xl font-light tracking-[0.38em] ps-[0.38em] text-white">
+                CARVISION
+              </h1>
+              <p className="mt-2 text-[10px] sm:text-xs tracking-[0.7em] ps-[0.7em] text-gold-500">
+                DRIVE YOUR VISION
+              </p>
+              <div className="mt-8 h-0.5 w-28 overflow-hidden rounded-full bg-white/10">
+                <motion.div
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '100%' }}
+                  transition={{ duration: 0.9, ease: 'easeInOut', repeat: Infinity }}
+                  className="h-full w-full bg-gold-gradient"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

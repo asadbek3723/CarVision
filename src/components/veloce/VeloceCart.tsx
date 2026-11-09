@@ -345,11 +345,13 @@ export function VeloceCart() {
         </aside>
       </div>
 
-      {/* Phones and tablets: checkout bar pinned to the bottom of the screen, above the dock. Sticky
-          (not fixed) so it travels with this screen when the tabs are swiped. */}
+      {/* Phones and tablets: checkout bar pinned to the bottom of the screen, replacing the dock.
+          Synchronized handoff (no delay): glides in smoothly as the dock glides down. */}
       <div
-        className={`sticky bottom-0 z-30 -mx-5 mt-auto rounded-t-3xl bg-surface-1 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.7)] transition-transform ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none md:-mx-10 lg:hidden ${
-          barUp ? 'translate-y-0 delay-[460ms] duration-[440ms]' : 'translate-y-[110%] delay-0 duration-200'
+        className={`sticky bottom-0 z-30 -mx-5 mt-auto rounded-t-3xl bg-surface-1 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.7)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:-mx-10 lg:hidden ${
+          barUp
+            ? 'translate-y-0 opacity-100 duration-[350ms]'
+            : 'translate-y-[110%] opacity-0 duration-[300ms] pointer-events-none'
         }`}
       >
         {/* While the cart has items this bar replaces the bottom menu (the shell hides the dock), so it

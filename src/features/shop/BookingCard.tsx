@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useApiError } from '@/lib/api-error';
 import { useLocale, useTranslations } from 'next-intl';
-import { Check, Clock, Loader2, MapPin, Phone, Upload, XCircle } from 'lucide-react';
+import { Check, Clock, Loader2, MapPin, Package, Phone, Upload, XCircle } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { compressForUpload, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { readJson } from '@/lib/safe-json';
@@ -74,25 +74,43 @@ export function BookingItems({ booking, large = false }: { booking: BookingView;
       <ul className={large ? 'space-y-5' : 'mt-4 space-y-3'}>
         {booking.items.map((it, i) => (
           <li key={`${it.name}-${i}`} className="flex items-center gap-4">
-            <div className={`${thumb} shrink-0 overflow-hidden bg-black`}>{it.image && <img src={it.image} alt="" className="h-full w-full object-cover" />}</div>
-            <div className="min-w-0 flex-1">
-              <p className={`truncate font-semibold text-white ${large ? 'text-base md:text-lg' : 'text-sm'}`}>{it.name}</p>
-              <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{it.brand}{it.quantity > 1 ? ` · ×${it.quantity}` : ''}</p>
+            <div className={`${thumb} flex shrink-0 items-center justify-center overflow-hidden bg-white/[0.04]`}>
+              {it.image ? (
+                <img
+                  src={it.image}
+                  alt={it.name}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                    if (e.currentTarget.parentElement) {
+                      e.currentTarget.parentElement.innerHTML = '<span class="text-white/30"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>';
+                    }
+                  }}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Package className="h-6 w-6 text-white/30" />
+              )}
             </div>
-            <p className={`font-semibold text-white/85 ${large ? 'text-base' : 'text-sm'}`}>{formatPrice(it.unitUSD * it.quantity)}</p>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <p className={`truncate font-semibold text-white ${large ? 'text-base md:text-lg' : 'text-sm'}`}>{it.name}</p>
+              <p className={`mt-0.5 truncate text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{it.brand}{it.quantity > 1 ? ` · ×${it.quantity}` : ''}</p>
+            </div>
+            <p className={`shrink-0 font-semibold text-white/85 tabular-nums ${large ? 'text-base' : 'text-sm'}`}>{formatPrice(it.unitUSD * it.quantity)}</p>
           </li>
         ))}
       </ul>
 
-      <div className={`flex items-end justify-between ${large ? 'mt-8 pt-2' : 'mt-4 pt-4'}`}>
-        <div>
-          <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{t('totalAtWorkshop')}</p>
-          <p className={`font-bold text-white ${large ? 'text-2xl md:text-3xl' : 'text-lg'}`}>{formatPrice(booking.totalUSD)}</p>
+      <div className={`flex flex-wrap items-end justify-between gap-3 ${large ? 'mt-8 pt-2' : 'mt-4 pt-4'}`}>
+        <div className="min-w-0">
+          <p className={`text-white/45 leading-tight ${large ? 'text-sm' : 'text-[11px]'}`}>{t('totalAtWorkshop')}</p>
+          <p className={`font-bold text-white tabular-nums tracking-tight ${large ? 'text-2xl md:text-3xl' : 'text-lg'}`}>{formatPrice(booking.totalUSD)}</p>
         </div>
-        <div className="text-end">
-          <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{t('deposit')}</p>
-          <p className={`font-bold text-gold-500 ${large ? 'text-2xl md:text-3xl' : 'text-lg'}`}>{new Intl.NumberFormat(locale, { style: 'currency', currency: 'UZS', maximumFractionDigits: 0 }).format(booking.depositUZS)}</p>
-          <p className="text-[11px] text-white/40">≈ {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(booking.depositUSD)}</p>
+        <div className="min-w-0 text-end">
+          <p className={`text-white/45 leading-tight ${large ? 'text-sm' : 'text-[11px]'}`}>{t('deposit')}</p>
+          <p className={`font-bold text-gold-500 tabular-nums break-words leading-tight ${large ? 'text-xl sm:text-2xl md:text-3xl' : 'text-base sm:text-lg'}`}>
+            {new Intl.NumberFormat(locale, { style: 'currency', currency: 'UZS', maximumFractionDigits: 0 }).format(booking.depositUZS)}
+          </p>
+          <p className={`text-white/40 tabular-nums ${large ? 'text-xs' : 'text-[11px]'}`}>≈ {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(booking.depositUSD)}</p>
         </div>
       </div>
     </>

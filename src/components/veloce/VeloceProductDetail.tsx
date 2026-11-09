@@ -204,11 +204,21 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pb-36 md:px-10 md:pt-10">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+      className="mx-auto max-w-6xl px-5 pb-36 md:px-10 md:pt-10"
+    >
       {topBar}
 
       <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
-        <div className="lg:col-span-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          className="lg:col-span-6"
+        >
         {/* Image Visual */}
         <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#11131A] shadow-[0_24px_60px_rgba(0,0,0,0.65)]">
           {product.swatch ? (
@@ -248,7 +258,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
             ))}
           </div>
         )}
-        </div>
+        </motion.div>
 
         {/* Clean Boxless Info */}
         <div className="space-y-7 lg:col-span-6">
@@ -424,6 +434,6 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

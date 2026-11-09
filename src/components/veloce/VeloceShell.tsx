@@ -24,7 +24,7 @@ import { isSellerUser } from '@/features/auth/roles';
 import { previousPath, rememberPath } from '@/lib/nav-history';
 import { useEdgeBack } from './useEdgeBack';
 import { LiquidIndicator, type LiquidIndicatorHandle } from './LiquidIndicator';
-import { TabPager, type PagerTab } from './TabPager';
+import { TabPager, type PagerTab, type TabPagerHandle } from './TabPager';
 import { VeloceHome } from './VeloceHome';
 import { VeloceCart } from './VeloceCart';
 import { VeloceGarage } from './VeloceGarage';
@@ -271,6 +271,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
   // Dock selection ("liquid glass").
   const routeCol = isHome ? 0 : (isSeller ? isGarage : isCart) ? 1 : isShop ? 3 : isProfile || isDashboard ? 4 : null;
   const indicatorRef = React.useRef<LiquidIndicatorHandle | null>(null);
+  const pagerRef = React.useRef<TabPagerHandle | null>(null);
   const tabPosToCol = React.useCallback((p: number) => {
     const last = TAB_COLS.length - 1;
     const i = Math.max(0, Math.min(last - 1, Math.floor(p)));
@@ -288,6 +289,36 @@ export function VeloceShell({ children }: VeloceShellProps) {
     () => (previousPath() ? router.back() : router.push(`/${locale}/seller`)),
     isRtl
   );
+
+  // Smooth slide-down / slide-up for mobile bottom navbar on scroll
+  const [scrollHidden, setScrollHidden] = React.useState(false);
+  const lastScrollY = React.useRef(0);
+
+  React.useEffect(() => {
+    let ticking = false;
+    const handleScroll = (e: Event) => {
+      const target = (e.target as HTMLElement) || document.documentElement;
+      const currentY = target.scrollTop ?? window.scrollY;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (currentY > 60 && currentY > lastScrollY.current + 8) {
+            setScrollHidden(true);
+          } else if (currentY < lastScrollY.current - 8) {
+            setScrollHidden(false);
+          }
+          lastScrollY.current = currentY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+    };
+  }, []);
+
+  const shouldHideDock = hideDock || scrollHidden;
 
   return (
     <div
@@ -485,7 +516,14 @@ export function VeloceShell({ children }: VeloceShellProps) {
         }
       >
         {pager ? (
-          <TabPager tabs={tabs} index={tabIndex} dir={isRtl ? -1 : 1} onScrub={onPagerScrub} onSettle={onPagerSettle} />
+          <TabPager
+            ref={pagerRef}
+            tabs={tabs}
+            index={tabIndex}
+            dir={isRtl ? -1 : 1}
+            onScrub={onPagerScrub}
+            onSettle={onPagerSettle}
+          />
         ) : (
           children
         )}
@@ -497,10 +535,10 @@ export function VeloceShell({ children }: VeloceShellProps) {
         <nav
           ref={dockRef}
           aria-label={t('menu')}
-          aria-hidden={hideDock || undefined}
-          {...(hideDock ? { inert: true } : {})}
-          className={`fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] transition-transform duration-[480ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:duration-150 md:hidden ${
-            hideDock ? 'pointer-events-none translate-y-[calc(100%+12px)]' : 'translate-y-0'
+          aria-hidden={shouldHideDock || undefined}
+          {...(shouldHideDock ? { inert: true } : {})}
+          className={`fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] transition-all duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-150 md:hidden ${
+            shouldHideDock ? 'pointer-events-none translate-y-[calc(100%+24px)] opacity-0' : 'translate-y-0 opacity-100'
           }`}
         >
           <span
@@ -512,11 +550,39 @@ export function VeloceShell({ children }: VeloceShellProps) {
             <div className="pointer-events-none absolute inset-y-0 inset-x-2">
               <LiquidIndicator ref={indicatorRef} col={routeCol} columns={5} rtl={isRtl} />
             </div>
-            <DockLink href={`/${locale}/seller`} icon={House} label={t('home')} active={isHome} onTap={() => indicatorRef.current?.settle(0)} />
+            <DockLink
+              href={`/${locale}/seller`}
+              icon={House}
+              label={t('home')}
+              active={isHome}
+              onTap={() => {
+                indicatorRef.current?.settle(0);
+                pagerRef.current?.goTo(0);
+              }}
+            />
             {isSeller ? (
-              <DockLink href={`/${locale}/garage`} icon={Car} label={t('garage')} active={isGarage} onTap={() => indicatorRef.current?.settle(1)} />
+              <DockLink
+                href={`/${locale}/garage`}
+                icon={Car}
+                label={t('garage')}
+                active={isGarage}
+                onTap={() => {
+                  indicatorRef.current?.settle(1);
+                  pagerRef.current?.goTo(1);
+                }}
+              />
             ) : (
-              <DockLink href={cartHref} icon={ShoppingBag} label={t('cart')} active={isCart} badge={count} onTap={() => indicatorRef.current?.settle(1)} />
+              <DockLink
+                href={cartHref}
+                icon={ShoppingBag}
+                label={t('cart')}
+                active={isCart}
+                badge={count}
+                onTap={() => {
+                  indicatorRef.current?.settle(1);
+                  pagerRef.current?.goTo(1);
+                }}
+              />
             )}
 
             <button
@@ -531,8 +597,26 @@ export function VeloceShell({ children }: VeloceShellProps) {
               <span>{isSeller ? t('showroom') : t('create')}</span>
             </button>
 
-            <DockLink href={`/${locale}/shop`} icon={ShoppingCart} label={t('shop')} active={isShop} onTap={() => indicatorRef.current?.settle(3)} />
-            <DockLink href={`/${locale}/profile`} icon={User} label={t('profile')} active={isProfile || isDashboard} onTap={() => indicatorRef.current?.settle(4)} />
+            <DockLink
+              href={`/${locale}/shop`}
+              icon={ShoppingCart}
+              label={t('shop')}
+              active={isShop}
+              onTap={() => {
+                indicatorRef.current?.settle(3);
+                pagerRef.current?.goTo(2);
+              }}
+            />
+            <DockLink
+              href={`/${locale}/profile`}
+              icon={User}
+              label={t('profile')}
+              active={isProfile || isDashboard}
+              onTap={() => {
+                indicatorRef.current?.settle(4);
+                pagerRef.current?.goTo(3);
+              }}
+            />
           </div>
         </nav>
     </div>
