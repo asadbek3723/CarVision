@@ -5,12 +5,19 @@ import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { requestMotionAccess } from '@/features/camera/hooks/useDeviceLevel';
 
-// The camera (≈800 lines + animation + QR code) is downloaded only the first time it is opened,
-// not with every page of the site.
-const VeloceSmartCameraModal = dynamic(
-  () => import('@/components/camera/VeloceSmartCameraModal').then((m) => m.VeloceSmartCameraModal),
-  { ssr: false }
-);
+// The camera (≈800 lines + animation + QR code) is its own chunk: not part of every page's first
+// download, but fetched in idle time right after the app starts (see the provider), so tapping
+// "Create" opens it at once. If it is still on its way, a black camera screen shows immediately
+// instead of nothing happening.
+const loadCameraModal = () => import('@/components/camera/VeloceSmartCameraModal').then((m) => m.VeloceSmartCameraModal);
+const VeloceSmartCameraModal = dynamic(loadCameraModal, {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-[#050507]" role="status" aria-busy="true">
+      <span className="h-9 w-9 animate-spin rounded-full border-2 border-white/10 border-t-gold-500" />
+    </div>
+  ),
+});
 
 interface VeloceStoreContextType {
   cart: Record<string, number>;
@@ -61,6 +68,14 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     if (isCameraOpen) setCameraWanted(true);
   }, [isCameraOpen]);
   const [captureStamp, setCaptureStamp] = React.useState('none');
+
+  // Warm the camera chunk once the app is idle, so the first "Create" tap opens it instantly.
+  React.useEffect(() => {
+    const ric = (window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    const warm = () => void loadCameraModal().catch(() => {});
+    if (typeof ric === 'function') ric(warm, { timeout: 4000 });
+    else window.setTimeout(warm, 2500);
+  }, []);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   // Restore state from sessionStorage on mount

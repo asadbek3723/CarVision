@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Globe,
   Check,
+  ChevronLeft,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -31,6 +32,7 @@ import { VeloceShop } from './VeloceShop';
 import { VeloceProfile } from './VeloceProfile';
 import { SupportedCurrency } from '@/domain/currency';
 import { Wordmark } from '@/components/ui/Wordmark';
+import { AppSplash } from './AppSplash';
 
 const LOCALE_OPTIONS = [
   { code: 'uz', label: 'UZ', name: "O'zbekcha" },
@@ -172,6 +174,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
     rememberPath(pathname);
   }, [pathname]);
 
+  const hideDockRef = React.useRef(false);
   // Publish the dock's real height (it varies with the font, language and safe area) as --dock-h.
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   const dockRef = React.useRef<HTMLElement | null>(null);
@@ -181,7 +184,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
     if (!root) return;
     const apply = () => {
       // md:hidden hides the dock on tablets and up; offsetParent cannot be used (it is null for fixed elements).
-      const visible = dock !== null && getComputedStyle(dock).display !== 'none';
+      const visible = dock !== null && getComputedStyle(dock).display !== 'none' && !hideDockRef.current;
       const h = visible ? `${Math.ceil(dock!.getBoundingClientRect().height)}px` : '0px';
       root.style.setProperty('--dock-h', h);
       // Also for overlays mounted outside the shell (the install banner).
@@ -233,6 +236,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
   // The cart's checkout bar takes the dock's place at the bottom while there is something to check out.
   const isCartScreen = pathname === `/${locale}/cart`;
   const hideDock = hideHeader || (isCartScreen && count > 0);
+  hideDockRef.current = hideDock;
 
   const cartHref = `/${locale}/cart`;
 
@@ -295,6 +299,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
       <React.Suspense fallback={null}>
         <QuerySync onChange={setQuery} />
       </React.Suspense>
+      <AppSplash />
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 start-0 z-40 hidden w-24 lg:w-28 flex-col items-center justify-between bg-surface-0 py-8 md:flex">
         <div className="flex flex-col items-center gap-10">
@@ -342,8 +347,19 @@ export function VeloceShell({ children }: VeloceShellProps) {
           hideHeader ? 'max-md:hidden' : ''
         }`}
       >
-        {/* Phones: no menu button (everything is in the bottom dock); keeps the logo centred. */}
-        <span aria-hidden className="block h-8 w-8" />
+        {/* Cart: a back button (one step back). Elsewhere an empty slot keeps the logo centred. */}
+        {isCartScreen ? (
+          <button
+            type="button"
+            onClick={() => (previousPath() ? router.back() : router.push(`/${locale}/seller`))}
+            aria-label={t('back')}
+            className="-ms-2 grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/90 transition hover:bg-white/[0.06] active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-500/40"
+          >
+            <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
+          </button>
+        ) : (
+          <span aria-hidden className="block h-8 w-8" />
+        )}
 
         <Link href={`/${locale}/seller`} aria-label="CarVision" className="justify-self-center text-center">
           <Wordmark />
@@ -476,11 +492,16 @@ export function VeloceShell({ children }: VeloceShellProps) {
       </main>
 
       {/* Mobile bottom dock: Home, Garage (workshop owners) or Cart (everyone else), [Create], Shop, Profile. */}
-      {!hideDock && (
+      {/* Never unmounted: on screens with their own bottom bar it slides down out of view (slowly),
+          and that bar rises only once the dock is gone; leaving, the dock slides back up. */}
         <nav
           ref={dockRef}
           aria-label={t('menu')}
-          className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] md:hidden"
+          aria-hidden={hideDock || undefined}
+          {...(hideDock ? { inert: true } : {})}
+          className={`fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] transition-transform duration-[480ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:duration-150 md:hidden ${
+            hideDock ? 'pointer-events-none translate-y-[calc(100%+12px)]' : 'translate-y-0'
+          }`}
         >
           <span
             aria-hidden
@@ -514,7 +535,6 @@ export function VeloceShell({ children }: VeloceShellProps) {
             <DockLink href={`/${locale}/profile`} icon={User} label={t('profile')} active={isProfile || isDashboard} onTap={() => indicatorRef.current?.settle(4)} />
           </div>
         </nav>
-      )}
     </div>
   );
 }
