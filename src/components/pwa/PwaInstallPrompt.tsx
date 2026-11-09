@@ -157,7 +157,7 @@ function InstallGuide({ platform, onClose }: { platform: InstallPlatform; onClos
         createPortal(
           <motion.span
             aria-hidden
-            className={`pointer-events-none fixed z-[201] grid h-12 w-12 place-items-center rounded-full bg-gold-500 text-black shadow-[0_0_30px_rgba(212,174,98,0.6)] ${
+            className={`pointer-events-none fixed z-[201] grid h-12 w-12 place-items-center rounded-full bg-gold-500 text-black shadow-[0_0_30px_rgba(232,191,116,0.6)] ${
               arrow === 'down' ? 'bottom-3 start-1/2 -translate-x-1/2 rtl:translate-x-1/2' : 'end-3 top-3'
             }`}
             animate={reduce ? { y: 0 } : { y: arrow === 'down' ? [0, 8, 0] : [0, -8, 0] }}
@@ -230,7 +230,7 @@ export function PwaInstallPrompt() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 24, opacity: 0 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-x-4 bottom-[calc(var(--dock-h,0px)+16px)] z-50 flex items-center gap-3 rounded-3xl bg-surface-1/95 p-3 pe-2 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85),0_0_35px_rgba(212,174,98,0.1)] backdrop-blur-2xl sm:inset-x-auto sm:end-6 sm:w-[400px]"
+            className="fixed inset-x-4 bottom-[calc(var(--dock-h,0px)+16px)] z-50 flex items-center gap-3 rounded-3xl bg-surface-1/95 p-3 pe-2 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85),0_0_35px_rgba(232,191,116,0.1)] backdrop-blur-2xl sm:inset-x-auto sm:end-6 sm:w-[400px]"
           >
             <img src="/icons/icon-192.png?v=2" alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1">

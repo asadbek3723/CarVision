@@ -102,7 +102,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
   return (
     <div role="dialog" aria-modal="true" aria-label={t('dialog')} className="fixed inset-0 z-[90] flex flex-col overflow-y-auto overflow-x-hidden overscroll-none bg-[#07080B]">
       {backdrop && <div className="pointer-events-none absolute inset-0 scale-110 bg-cover bg-center opacity-[0.18] blur-3xl" style={{ backgroundImage: `url(${backdrop})` }} aria-hidden />}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,174,98,0.06),transparent_60%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(232,191,116,0.06),transparent_60%)]" aria-hidden />
 
       <header className="relative z-10 flex items-center justify-between px-5 py-4 md:px-10 md:py-6">
         <span className="text-[11px] font-semibold uppercase tracking-[0.42em] text-white/70">
@@ -123,7 +123,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           {running && !reduce && (
             <motion.div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 h-px bg-[#E8CB86] shadow-[0_0_24px_6px_rgba(212,174,98,0.45)]"
+              className="pointer-events-none absolute inset-x-0 h-px bg-[#E8CB86] shadow-[0_0_24px_6px_rgba(232,191,116,0.45)]"
               initial={{ top: '4%' }}
               animate={{ top: ['4%', '96%', '4%'] }}
               transition={{ duration: 5.5, ease: 'easeInOut', repeat: Infinity }}
@@ -216,7 +216,7 @@ export function RenderProgress({ states, running, fatal, percent, backdrop, loca
           )}
 
           {!running && done > 0 && (
-            <button type="button" onClick={onContinue} className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#E2BF78] to-[#C79F4E] text-base font-bold text-black shadow-[0_10px_30px_-8px_rgba(212,174,98,0.55)] transition hover:brightness-105 active:scale-[0.98]">
+            <button type="button" onClick={onContinue} className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#E2BF78] to-[#C79F4E] text-base font-bold text-black shadow-[0_10px_30px_-8px_rgba(232,191,116,0.55)] transition hover:brightness-105 active:scale-[0.98]">
               {t('viewResult')}
               <ArrowRight className="h-5 w-5 rtl:rotate-180" />
             </button>

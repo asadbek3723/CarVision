@@ -44,7 +44,7 @@ const SUBJECT_FRAME: Record<Subject, { ring: string; chip: string; dot: string }
     dot: 'bg-amber-400',
   },
 };
-const DEFAULT_FRAME_RING = 'ring-gold-500/65 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_24px_rgba(212,174,98,0.14)]';
+const DEFAULT_FRAME_RING = 'ring-gold-500/65 shadow-[0_0_60px_rgba(0,0,0,0.95),0_0_24px_rgba(232,191,116,0.14)]';
 
 /**
  * The 5 mandatory angles, shared with the upload flow (see `scan-angles.ts`).
@@ -116,8 +116,8 @@ export function LuxuryCarCompass({
       >
         <defs>
           <radialGradient id="compass-center-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#D4AE62" stopOpacity="0.12" />
-            <stop offset="65%" stopColor="#D4AE62" stopOpacity="0.03" />
+            <stop offset="0%" stopColor="#E8BF74" stopOpacity="0.12" />
+            <stop offset="65%" stopColor="#E8BF74" stopOpacity="0.03" />
             <stop offset="100%" stopColor="#000000" stopOpacity="0" />
           </radialGradient>
         </defs>
@@ -139,7 +139,7 @@ export function LuxuryCarCompass({
           cx="120"
           cy="120"
           r="72"
-          stroke="rgba(212, 174, 98, 0.12)"
+          stroke="rgba(232, 191, 116, 0.12)"
           strokeWidth="1"
         />
       </svg>
@@ -169,7 +169,7 @@ export function LuxuryCarCompass({
             data-angle={angle.slug}
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center transition-all duration-500 pointer-events-none ${
  isActive
- ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_0_22px_rgba(229,193,117,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-gold-300/75 scale-110'
+ ? 'bg-gradient-to-b from-[#2E2310] to-[#14110A] text-[#F9E3A8] shadow-[0_0_22px_rgba(241,211,150,0.85),inset_0_1.5px_0_#F7DFA0] ring-1 ring-gold-300/75 scale-110'
                 : isDone
                 ? 'bg-[#0E221B]/95 text-emerald-400 ring-1 ring-emerald-500/45 shadow-[0_0_14px_rgba(16,185,129,0.3)]'
                 : 'bg-[#141519]/95 text-white/35 ring-1 ring-white/[0.06]'
@@ -524,7 +524,7 @@ export function SmartCameraLandscapeView({
               aria-hidden
               animate={{ rotate: [0, -90, -90, 0] }}
               transition={{ duration: 3, times: [0, 0.4, 0.8, 1], repeat: Infinity, ease: 'easeInOut' }}
-              className="relative flex h-28 w-16 items-center justify-center rounded-[18px] bg-[#111319] ring-2 ring-gold-300 shadow-[0_0_36px_rgba(212,174,98,0.4)]"
+              className="relative flex h-28 w-16 items-center justify-center rounded-[18px] bg-[#111319] ring-2 ring-gold-300 shadow-[0_0_36px_rgba(232,191,116,0.4)]"
             >
               <Camera className="h-5 w-5 text-gold-300" />
             </motion.div>
@@ -677,10 +677,10 @@ export function SmartCameraLandscapeView({
             </div>
 
             {/* 4 Inset Golden Rounded L-Shaped Corner Brackets (1:1 with Reference Image) */}
-            <div className="pointer-events-none absolute top-3.5 start-3.5 sm:top-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-s-[2.5px] border-gold-300 rounded-ss-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
-            <div className="pointer-events-none absolute top-3.5 end-3.5 sm:top-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-e-[2.5px] border-gold-300 rounded-se-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
-            <div className="pointer-events-none absolute bottom-3.5 start-3.5 sm:bottom-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-s-[2.5px] border-gold-300 rounded-es-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
-            <div className="pointer-events-none absolute bottom-3.5 end-3.5 sm:bottom-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-e-[2.5px] border-gold-300 rounded-ee-lg drop-shadow-[0_0_8px_rgba(229,193,117,0.8)] z-20" />
+            <div className="pointer-events-none absolute top-3.5 start-3.5 sm:top-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-s-[2.5px] border-gold-300 rounded-ss-lg drop-shadow-[0_0_8px_rgba(241,211,150,0.8)] z-20" />
+            <div className="pointer-events-none absolute top-3.5 end-3.5 sm:top-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-t-[2.5px] border-e-[2.5px] border-gold-300 rounded-se-lg drop-shadow-[0_0_8px_rgba(241,211,150,0.8)] z-20" />
+            <div className="pointer-events-none absolute bottom-3.5 start-3.5 sm:bottom-4 sm:start-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-s-[2.5px] border-gold-300 rounded-es-lg drop-shadow-[0_0_8px_rgba(241,211,150,0.8)] z-20" />
+            <div className="pointer-events-none absolute bottom-3.5 end-3.5 sm:bottom-4 sm:end-4 h-6 w-6 sm:h-7 sm:w-7 border-b-[2.5px] border-e-[2.5px] border-gold-300 rounded-ee-lg drop-shadow-[0_0_8px_rgba(241,211,150,0.8)] z-20" />
           </div>
         </div>
 
@@ -694,7 +694,7 @@ export function SmartCameraLandscapeView({
             className="group relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
           >
             {/* Outer Glowing Golden Ring */}
-            <span className="absolute inset-0 rounded-full ring-[2px] sm:ring-[2.5px] ring-gold-300 shadow-[0_0_28px_rgba(229,193,117,0.55),inset_0_0_12px_rgba(229,193,117,0.25)] transition-shadow duration-300 group-hover:shadow-[0_0_38px_rgba(229,193,117,0.9)]" />
+            <span className="absolute inset-0 rounded-full ring-[2px] sm:ring-[2.5px] ring-gold-300 shadow-[0_0_28px_rgba(241,211,150,0.55),inset_0_0_12px_rgba(241,211,150,0.25)] transition-shadow duration-300 group-hover:shadow-[0_0_38px_rgba(241,211,150,0.9)]" />
 
             {/* Solid Pure White Inner Disc */}
             <span className="relative z-10 h-12 w-12 sm:h-14 sm:w-14 md:h-[68px] md:w-[68px] rounded-full bg-white shadow-[0_4px_18px_rgba(255,255,255,0.4)] transition-transform duration-200 group-hover:scale-[0.98] group-active:scale-90" />

@@ -49,8 +49,8 @@ export interface ReelConfig {
 
 const W = REEL_WIDTH;
 const H = REEL_HEIGHT;
-const GOLD = '#D4AE62';
-const GOLD_A = (a: number) => `rgba(212,174,98,${clamp01(a).toFixed(3)})`;
+const GOLD = '#E8BF74';
+const GOLD_A = (a: number) => `rgba(232,191,116,${clamp01(a).toFixed(3)})`;
 const BG = '#050608';
 const SYSTEM = "'Helvetica Neue','SF Pro Display',Arial,sans-serif";
 
@@ -498,7 +498,7 @@ export function createReelRenderer(cfg: ReelConfig): ReelRenderer {
     spaced(g, 'BUILT', 0, 0, 34, 'center');
     const grad = g.createLinearGradient(-320, 0, 320, 0);
     grad.addColorStop(0, '#F3E2B4');
-    grad.addColorStop(0.55, '#D4AE62');
+    grad.addColorStop(0.55, '#E8BF74');
     grad.addColorStop(1, '#A67C3D');
     g.fillStyle = grad;
     font(g, DISPLAY, 300, 112);

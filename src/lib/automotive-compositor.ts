@@ -266,7 +266,7 @@ export async function composeCarAnglePhotorealistic(params: {
         // Specular metallic rim highlight
         const rimSpec = ctx.createLinearGradient(-rx, -ry, rx, ry);
         rimSpec.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
-        rimSpec.addColorStop(0.5, 'rgba(212, 174, 98, 0.08)');
+        rimSpec.addColorStop(0.5, 'rgba(232, 191, 116, 0.08)');
         rimSpec.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
         ctx.globalCompositeOperation = 'overlay';
         ctx.fillStyle = rimSpec;
@@ -346,7 +346,7 @@ export async function composeCarAnglePhotorealistic(params: {
     const aeroGrad = ctx.createLinearGradient(0, h * 0.68, 0, h * 0.84);
     aeroGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
     aeroGrad.addColorStop(0.65, 'rgba(12, 14, 20, 0.45)');
-    aeroGrad.addColorStop(1, 'rgba(212, 174, 98, 0.14)');
+    aeroGrad.addColorStop(1, 'rgba(232, 191, 116, 0.14)');
     ctx.fillStyle = aeroGrad;
     ctx.fillRect(w * 0.15, h * 0.68, w * 0.7, h * 0.16);
     ctx.restore();
@@ -361,7 +361,7 @@ export async function composeCarAnglePhotorealistic(params: {
     h * 0.5,
     w * 0.78
   );
-  studioGlow.addColorStop(0, 'rgba(212, 174, 98, 0.1)');
+  studioGlow.addColorStop(0, 'rgba(232, 191, 116, 0.1)');
   studioGlow.addColorStop(1, 'rgba(6, 7, 11, 0.44)');
   ctx.fillStyle = studioGlow;
   ctx.fillRect(0, 0, w, h);
@@ -403,7 +403,7 @@ export async function composeCarAnglePhotorealistic(params: {
     ctx.fillStyle = 'rgba(8, 9, 14, 0.95)';
     ctx.fillRect(bx, by + cardH - 26, cardW, 26);
 
-    ctx.fillStyle = '#D4AE62';
+    ctx.fillStyle = '#E8BF74';
     ctx.font = '700 10px sans-serif';
     ctx.textBaseline = 'middle';
     ctx.fillText(part.name.slice(0, 19), bx + 10, by + cardH - 13);

@@ -20,17 +20,19 @@
   --font-manrope: var(--nf-manrope, 'Manrope'), -apple-system, BlinkMacSystemFont, sans-serif;
   --font-noto-arabic: var(--nf-noto-arabic, 'Noto Sans Arabic'), system-ui, sans-serif;
 
-  /* ---------------------------------------------------------- gold (brand accent, 500 = #D4AE62) */
-  --c-gold-50: 251 247 238;   /* #FBF7EE */
-  --c-gold-100: 246 237 216;  /* #F6EDD8 */
-  --c-gold-200: 238 221 180;  /* #EEDDB4 */
-  --c-gold-300: 230 204 144;  /* #E6CC90 */
-  --c-gold-400: 221 189 120;  /* #DDBD78 */
-  --c-gold-500: 212 174 98;   /* #D4AE62  brand */
-  --c-gold-600: 185 146 74;   /* #B9924A */
-  --c-gold-700: 148 115 58;   /* #94733A */
-  --c-gold-800: 110 85 45;    /* #6E552D */
-  --c-gold-900: 74 58 33;     /* #4A3A21 */
+  /* ---------------------------------------------------------- gold (brand accent, 500 = #E8BF74)
+     Radiant champagne gold: warmer and more luminous than the old #E8BF74, so it glows on the
+     near-black surfaces instead of looking muddy. */
+  --c-gold-50: 253 249 240;   /* #FDF9F0 */
+  --c-gold-100: 251 240 217;  /* #FBF0D9 */
+  --c-gold-200: 246 226 184;  /* #F6E2B8 */
+  --c-gold-300: 241 211 150;  /* #F1D396 */
+  --c-gold-400: 237 201 133;  /* #EDC985 */
+  --c-gold-500: 232 191 116;  /* #E8BF74  brand */
+  --c-gold-600: 207 160 87;   /* #CFA057 */
+  --c-gold-700: 165 123 60;   /* #A57B3C */
+  --c-gold-800: 118 86 39;    /* #765627 */
+  --c-gold-900: 76 55 25;     /* #4C3719 */
 
   /* ---------------------------------------------------------- neutral (warm-tinted toward the gold hue) */
   --c-neutral-50: 250 249 247;  /* #FAF9F7 */
@@ -81,7 +83,7 @@
   --e3: 0 4px 8px rgb(var(--c-shadow) / 0.30), 0 12px 32px rgb(var(--c-shadow) / 0.34);
   --e4: 0 8px 16px rgb(var(--c-shadow) / 0.34), 0 24px 56px rgb(var(--c-shadow) / 0.48);
   --highlight: inset 0 1px 0 rgb(255 255 255 / 0.05);
-  --glow-gold: 0 8px 24px -6px rgb(var(--c-gold-500) / 0.4); /* primary CTA only */
+  --glow-gold: 0 10px 30px -8px rgb(var(--c-gold-500) / 0.55); /* primary CTA only */
 
   /* ---------------------------------------------------------- radius */
   --r-sm: 8px;   /* chips, small inputs */
@@ -99,10 +101,10 @@
 
   /* ---------------------------------------------------------- gradients & legacy effects (one definition each) */
   --gradient-gold: linear-gradient(135deg, rgb(var(--c-gold-300)), rgb(var(--c-gold-600)) 55%, rgb(var(--c-gold-700)));
-  --gradient-gold-text: linear-gradient(100deg, oklch(95% 0.05 92), oklch(82% 0.12 82) 40%, oklch(66% 0.11 66) 80%);
+  --gradient-gold-text: linear-gradient(100deg, oklch(97% 0.04 90), oklch(87% 0.11 82) 40%, oklch(72% 0.11 70) 80%);
   --gradient-card: linear-gradient(160deg, oklch(20% 0.008 70), oklch(14% 0.005 70));
   --gradient-fade: linear-gradient(to top, var(--background), transparent);
-  --shadow-gold: 0 10px 40px -10px rgb(var(--c-gold-500) / 0.45);
+  --shadow-gold: 0 12px 40px -10px rgb(var(--c-gold-500) / 0.55);
   --shadow-card: 0 20px 50px -20px rgb(0 0 0 / 0.8);
 
   /* ---------------------------------------------------------- legacy aliases (pages still read these; migrate, then delete) */

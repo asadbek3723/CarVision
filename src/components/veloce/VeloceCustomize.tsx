@@ -405,7 +405,7 @@ export function VeloceCustomize() {
       type="button"
       onClick={handleApplyChanges}
       disabled={isApplying}
-      className="relative inline-flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 overflow-hidden rounded-full border border-[#F0D79A]/55 bg-[linear-gradient(180deg,#E9CB8A_0%,#C9A257_48%,#A98337_100%)] px-6 text-[15px] font-semibold uppercase tracking-[0.1em] text-[#1A1409] shadow-[inset_0_1px_0_rgba(255,244,214,0.65),inset_0_-10px_18px_rgba(120,84,20,0.28),0_10px_30px_-10px_rgba(212,174,98,0.5)] transition hover:brightness-105 active:scale-[0.99] disabled:opacity-50"
+      className="relative inline-flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 overflow-hidden rounded-full border border-[#F4DCA6]/55 bg-[linear-gradient(180deg,#F1D396_0%,#CFA057_48%,#A98337_100%)] px-6 text-[15px] font-semibold uppercase tracking-[0.1em] text-[#1A1409] shadow-[inset_0_1px_0_rgba(255,244,214,0.65),inset_0_-10px_18px_rgba(120,84,20,0.28),0_10px_30px_-10px_rgba(232,191,116,0.5)] transition hover:brightness-105 active:scale-[0.99] disabled:opacity-50"
     >
       <span aria-hidden className="pointer-events-none absolute inset-x-6 top-0 h-1/2 rounded-b-[50%] bg-gradient-to-b from-white/25 to-transparent" />
       <Layers className="relative h-[22px] w-[22px]" strokeWidth={2} />
@@ -481,7 +481,7 @@ export function VeloceCustomize() {
       <div className="mt-2 min-h-[130px] flex-1 lg:mt-3 lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
       {/* Car viewport */}
       <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] lg:mt-0 bg-surface-1 shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
-        <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(212,174,98,0.10),transparent_70%)] lg:hidden" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(232,191,116,0.10),transparent_70%)] lg:hidden" />
         <div
           ref={sliderRef}
           onPointerDown={(e) => {
@@ -513,10 +513,10 @@ export function VeloceCustomize() {
               />
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-y-0 z-[2] w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(212,174,98,0.9)]"
+                className="pointer-events-none absolute inset-y-0 z-[2] w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(232,191,116,0.9)]"
                 style={{ insetInlineStart: `${sliderPos}%`, transform: 'translateX(-50%)' }}
               >
-                <div className="absolute start-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_24px_rgba(212,174,98,0.9)]">‹ ›</div>
+                <div className="absolute start-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_24px_rgba(232,191,116,0.9)]">‹ ›</div>
               </div>
               <span className="pointer-events-none absolute start-3 top-3 z-[3] rounded-full bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/85 backdrop-blur-md">{t('before')}</span>
               <span className="pointer-events-none absolute end-3 top-3 z-[3] rounded-full bg-gold-500 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-black">{t('after')}</span>

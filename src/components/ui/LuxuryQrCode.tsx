@@ -274,7 +274,7 @@ export function LuxuryQrCode({
             rx={qrData.brandBadge.inner.rx}
             ry={qrData.brandBadge.inner.rx}
             fill="none"
-            stroke="#D4AE62"
+            stroke="#E8BF74"
             strokeWidth="1.25"
             strokeOpacity="0.75"
           />
@@ -286,12 +286,12 @@ export function LuxuryQrCode({
             })`}
           >
             {/* Aerodynamic Speed Apex */}
-            <circle cx="0" cy="-10.5" r="2.2" fill="#D4AE62" />
+            <circle cx="0" cy="-10.5" r="2.2" fill="#E8BF74" />
 
             {/* Stylized Veloce Wings / Chevron */}
             <path
               d="M -13 -4.5 L 0 13.5 L 13 -4.5 L 8 -4.5 L 0 6.5 L -8 -4.5 Z"
-              fill="#D4AE62"
+              fill="#E8BF74"
             />
 
             {/* Subtle Horizon Line */}
@@ -300,7 +300,7 @@ export function LuxuryQrCode({
               y1="-8"
               x2="9"
               y2="-8"
-              stroke="#D4AE62"
+              stroke="#E8BF74"
               strokeWidth="1.2"
               strokeLinecap="round"
               strokeOpacity="0.6"

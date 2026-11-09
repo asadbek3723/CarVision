@@ -40,7 +40,8 @@ const FLICK_PX_PER_MS = 0.35;
 const SLOP_PX = 8;
 /** iOS / Android browsers own swipes that start at the screen edge (back / forward). */
 const EDGE_PX = 22;
-const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+// Calm, iOS-like deceleration (no snap at the start, long soft landing).
+const EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
 
 /**
  * The bottom-dock tabs laid out side by side like a native app: swipe left / right to move between
@@ -114,7 +115,7 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
     currentRef.current = index;
     setCurrent(index);
     mount(index);
-    place(index, 0, Math.min(260 + distance * 60, 420));
+    place(index, 0, Math.min(480 + distance * 50, 620));
   }, [index, mount, place]);
 
   // Neighbours load quietly after the first paint, so the first swipe already shows them.
@@ -129,7 +130,7 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
     const from = currentRef.current;
     const clamped = Math.max(0, Math.min(tabs.length - 1, target));
     // Faster flicks finish faster, like a native pager.
-    const ms = Math.round(Math.max(180, Math.min(380, 380 - Math.abs(velocity) * 260)));
+    const ms = Math.round(Math.max(380, Math.min(560, 560 - Math.abs(velocity) * 180)));
     currentRef.current = clamped;
     place(clamped, 0, ms);
     onSettle?.(clamped);
@@ -235,7 +236,7 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
               aria-hidden={!active}
               // Off-screen tabs are not focusable or read out.
               {...(!active ? { inert: true } : {})}
-              className="h-full shrink-0 overflow-y-auto overflow-x-hidden overscroll-y-none [contain:content] [touch-action:pan-y] pb-[var(--dock-h,72px)] md:pb-12"
+              className="h-full shrink-0 overflow-y-auto overflow-x-hidden overscroll-y-none bg-surface-0 [contain:content] [touch-action:pan-y] pb-[var(--dock-h,72px)] md:pb-12"
               style={{ width: `${100 / tabs.length}%` }}
             >
               <TabActiveContext.Provider value={active}>{mounted.has(i) ? tab.render() : null}</TabActiveContext.Provider>

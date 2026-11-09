@@ -120,11 +120,59 @@ async function gateAdminPage(request: NextRequest): Promise<NextResponse> {
   return hardenAdminResponse(response);
 }
 
+/** Supabase SSR keeps the session in `sb-<project>-auth-token` (split into `.0`, `.1`... when long). */
+const AUTH_COOKIE = /^sb-[a-z0-9]+-auth-token(?:\.\d+)?$/;
+const LANDING = new RegExp(`^/(?:(${locales.join('|')})/?)?$`);
+
+/** Reads the role from the session cookie without a network call (routing only, never trusted for access). */
+function sessionRole(request: NextRequest): string | null | undefined {
+  const parts = request.cookies
+    .getAll()
+    .filter((c) => AUTH_COOKIE.test(c.name) && c.value)
+    .sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }));
+  if (parts.length === 0) return undefined; // signed out
+  try {
+    let raw = parts.map((c) => c.value).join('');
+    if (raw.startsWith('base64-')) raw = atob(raw.slice(7).replace(/-/g, '+').replace(/_/g, '/'));
+    const session = JSON.parse(raw) as { access_token?: string; refresh_token?: string };
+    if (!session.refresh_token && !session.access_token) return undefined;
+    const payload = session.access_token?.split('.')[1];
+    if (!payload) return null;
+    const claims = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { app_metadata?: { role?: string } };
+    return claims.app_metadata?.role ?? null;
+  } catch {
+    return null; // a session cookie we cannot read: still signed in as far as routing goes
+  }
+}
+
+/**
+ * Signed-in visitors never see the landing page: opening the site's link takes them straight into
+ * the app, decided here on the server before any HTML is sent (no flash, one redirect). Visitors
+ * without a session (and search engines) get the landing page as before.
+ */
+function skipLandingForSignedIn(request: NextRequest): NextResponse | null {
+  const match = LANDING.exec(request.nextUrl.pathname);
+  if (!match || request.method !== 'GET') return null;
+  const role = sessionRole(request);
+  if (role === undefined) return null;
+  const preferred = request.cookies.get('NEXT_LOCALE')?.value;
+  const locale = match[1] ?? (preferred && (locales as readonly string[]).includes(preferred) ? preferred : routing.defaultLocale);
+  const url = request.nextUrl.clone();
+  url.pathname = role === 'super_admin' ? `/${locale}/admin` : `/${locale}/seller`;
+  const response = NextResponse.redirect(url, 307);
+  // Per-visitor answer: never let a CDN keep it for everyone.
+  response.headers.set('Cache-Control', 'private, no-store');
+  return response;
+}
+
 export default async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/api/v1/admin/')) return gateAdminApi(request);
   if (isAdminPage(pathname)) return gateAdminPage(request);
+
+  const intoApp = skipLandingForSignedIn(request);
+  if (intoApp) return intoApp;
 
   return intlMiddleware(request);
 }

@@ -101,7 +101,7 @@ function DockLink({ href, icon: Icon, label, active, badge = 0, onTap }: DockLin
       onClick={() => onTap?.()}
       aria-current={active ? 'page' : undefined}
       className={`relative flex min-w-0 flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] transition-[color,transform] duration-150 active:scale-90 ${
-        active ? 'text-gold-500' : 'text-white/45 hover:text-[#E8CF94]'
+        active ? 'text-gold-500' : 'text-white/45 hover:text-[#F1D396]'
       }`}
     >
       <span className="relative">
@@ -418,7 +418,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
                             }}
                             className={`rounded-xl py-1.5 text-[10px] font-semibold tracking-wider uppercase transition cursor-pointer ${
  active
- ? 'bg-gold-500 text-black shadow-[0_4px_14px_rgba(212,174,98,0.3)]'
+ ? 'bg-gold-500 text-black shadow-[0_4px_14px_rgba(232,191,116,0.3)]'
                                 : 'bg-white/[0.03] text-white/65 hover:bg-white/[0.08] hover:text-white'
                             }`}
                           >

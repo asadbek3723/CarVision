@@ -273,7 +273,7 @@ export function useToast() {
 }
 
 /** Tiny dependency-free bar chart (7 days). */
-export function BarChart({ points, color = '#D4AE62', label }: { points: Array<{ day: string; value: number }>; color?: string; label: string }) {
+export function BarChart({ points, color = '#E8BF74', label }: { points: Array<{ day: string; value: number }>; color?: string; label: string }) {
   const locale = useLocale();
   const weekday = new Intl.DateTimeFormat(locale === 'ar' ? 'ar-AE' : locale, { weekday: 'short', timeZone: 'UTC' });
   const max = Math.max(1, ...points.map((p) => p.value));

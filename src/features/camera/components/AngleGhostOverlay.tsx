@@ -60,7 +60,7 @@ export function AngleGhostOverlay({ bearing, aligned, subject = null }: AngleGho
     ? SUBJECT_TONE[subject]
     : aligned
       ? { text: 'text-emerald-300', glow: 'drop-shadow(0 0 4px rgba(110,231,183,0.45))' }
-      : { text: 'text-gold-300', glow: 'drop-shadow(0 0 3px rgba(229,193,117,0.3))' };
+      : { text: 'text-gold-300', glow: 'drop-shadow(0 0 3px rgba(241,211,150,0.3))' };
   const steady = aligned || subject === 'car';
 
   return (

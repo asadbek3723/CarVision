@@ -22,8 +22,8 @@ export default async function OpengraphImage() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 14, height: 14, borderRadius: 14, background: '#D4AE62' }} />
-          <div style={{ fontSize: 30, letterSpacing: 8, color: '#D4AE62', textTransform: 'uppercase' }}>AI Tuning</div>
+          <div style={{ width: 14, height: 14, borderRadius: 14, background: '#E8BF74' }} />
+          <div style={{ fontSize: 30, letterSpacing: 8, color: '#E8BF74', textTransform: 'uppercase' }}>AI Tuning</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontSize: 132, fontWeight: 700, letterSpacing: -3, color: '#E6C687' }}>CarVision</div>
@@ -32,7 +32,7 @@ export default async function OpengraphImage() {
             Wheels · Body kits · Wraps — preview before you buy
           </div>
         </div>
-        <div style={{ height: 6, width: 220, background: '#D4AE62', borderRadius: 6 }} />
+        <div style={{ height: 6, width: 220, background: '#E8BF74', borderRadius: 6 }} />
       </div>
     ),
     size

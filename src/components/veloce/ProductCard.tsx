@@ -43,7 +43,7 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
         rememberProducts(locale, [p]);
         warmImage(p.images?.[0] ?? p.image);
       }}
-      className="rise group relative flex flex-col overflow-hidden rounded-2xl bg-surface-1 outline-none focus-visible:ring-2 focus-visible:ring-gold-500/60 transition duration-500 md:shadow-[0_12px_32px_rgba(0,0,0,0.6)] md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(212,174,98,0.18)]"
+      className="rise group relative flex flex-col overflow-hidden rounded-2xl bg-surface-1 outline-none focus-visible:ring-2 focus-visible:ring-gold-500/60 transition duration-500 md:shadow-[0_12px_32px_rgba(0,0,0,0.6)] md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(232,191,116,0.18)]"
       style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
     >
       <div className="block">

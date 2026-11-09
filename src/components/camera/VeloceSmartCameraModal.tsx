@@ -561,7 +561,7 @@ export function VeloceSmartCameraModal({
  isUploaded
  ? 'bg-emerald-500/20 text-emerald-400'
                               : isActive
-                              ? 'bg-gold-500 text-black font-extrabold shadow-[0_0_16px_rgba(212,174,98,0.5)]'
+                              ? 'bg-gold-500 text-black font-extrabold shadow-[0_0_16px_rgba(232,191,116,0.5)]'
                               : 'bg-white/5 text-white/30'
                           }`}
                         >
@@ -588,7 +588,7 @@ export function VeloceSmartCameraModal({
                         {isActive && (
                           <motion.div
                             layoutId="activeAngleTabUnderline"
-                            className="absolute -bottom-1 inset-x-3 h-0.5 bg-gold-500 shadow-[0_0_8px_#D4AE62]"
+                            className="absolute -bottom-1 inset-x-3 h-0.5 bg-gold-500 shadow-[0_0_8px_#E8BF74]"
                           />
                         )}
                       </button>

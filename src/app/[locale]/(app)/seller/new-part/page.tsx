@@ -101,7 +101,7 @@ function SellerNewPartPageInner() {
   const [description, setDescription] = React.useState('');
   const [stock, setStock] = React.useState('1');
   const [diameter, setDiameter] = React.useState('');
-  const [swatch, setSwatch] = React.useState('#D4AE62');
+  const [swatch, setSwatch] = React.useState('#E8BF74');
 
   const [suggestion, setSuggestion] = React.useState<{ name: string; description: string } | null>(null);
   const [improvingText, setImprovingText] = React.useState(false);

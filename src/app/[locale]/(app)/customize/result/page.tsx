@@ -323,10 +323,10 @@ export default function CustomizeResultPage() {
 
                 {/* Slider handle */}
                 <div
-                  className="pointer-events-none absolute inset-y-0 w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(212,174,98,0.9)]"
+                  className="pointer-events-none absolute inset-y-0 w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(232,191,116,0.9)]"
                   style={{ insetInlineStart: `${sliderPos}%`, transform: 'translateX(-50%)' }}
                 >
-                  <div className="absolute start-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_28px_rgba(212,174,98,0.9)]">
+                  <div className="absolute start-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_28px_rgba(232,191,116,0.9)]">
                     ‹ ›
                   </div>
                 </div>

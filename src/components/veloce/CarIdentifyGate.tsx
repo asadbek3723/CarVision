@@ -198,7 +198,7 @@ export function CarIdentifyGate({ photo, angles, onRetake, onClose, onDone }: Ca
       {/* Ambient backdrop: blurred photo + gold glow */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <img src={photo} alt="" className="h-full w-full scale-110 object-cover opacity-[0.18] blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_30%,rgba(212,174,98,0.14),transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_30%,rgba(232,191,116,0.14),transparent_70%)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#07080C]/40 via-[#07080C]/80 to-[#07080C]" />
       </div>
 
@@ -237,7 +237,7 @@ export function CarIdentifyGate({ photo, angles, onRetake, onClose, onDone }: Ca
               />
               <motion.div
                 aria-hidden
-                className="absolute inset-x-0 h-px bg-gold-500 shadow-[0_0_18px_3px_rgba(212,174,98,0.8)]"
+                className="absolute inset-x-0 h-px bg-gold-500 shadow-[0_0_18px_3px_rgba(232,191,116,0.8)]"
                 initial={{ top: '-5%' }}
                 animate={{ top: '100%' }}
                 transition={{ duration: 1.7, ease: 'easeInOut', repeat: Infinity }}
@@ -251,7 +251,7 @@ export function CarIdentifyGate({ photo, angles, onRetake, onClose, onDone }: Ca
                 initial={reduce ? false : { scale: 0.4, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-                className="grid h-20 w-20 place-items-center rounded-full bg-gold-gradient text-black shadow-[0_0_60px_rgba(212,174,98,0.55)]"
+                className="grid h-20 w-20 place-items-center rounded-full bg-gold-gradient text-black shadow-[0_0_60px_rgba(232,191,116,0.55)]"
               >
                 <Check className="h-10 w-10" strokeWidth={3} />
               </motion.div>

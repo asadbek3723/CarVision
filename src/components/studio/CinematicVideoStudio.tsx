@@ -399,7 +399,7 @@ export function CinematicVideoStudio({
 
           {(phase === 'mastering' || phase === 'idle') && (
             <div className="absolute inset-0 flex flex-col">
-              <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_50%_at_50%_40%,rgba(212,174,98,0.14),transparent_70%)]" />
+              <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_50%_at_50%_40%,rgba(232,191,116,0.14),transparent_70%)]" />
               <div className="relative grid min-h-0 flex-1 grid-cols-2 content-center gap-2 overflow-hidden p-4">
                 {frames.map((f, i) => (
                   <div

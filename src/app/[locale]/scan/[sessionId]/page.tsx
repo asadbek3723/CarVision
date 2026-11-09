@@ -269,7 +269,7 @@ export default function MobileScanSessionPage() {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#07080B] p-6 text-center text-white">
         <div className="relative mb-6">
-          <div className="grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-[#242735] to-[#12141A] ring-2 ring-gold-500 shadow-[0_0_36px_rgba(212,174,98,0.5)]">
+          <div className="grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-[#242735] to-[#12141A] ring-2 ring-gold-500 shadow-[0_0_36px_rgba(232,191,116,0.5)]">
             <CheckCircle2 className="h-12 w-12 text-gold-500" />
           </div>
           <span className="absolute -top-1 -end-1">
@@ -359,7 +359,7 @@ export default function MobileScanSessionPage() {
                 type="button"
                 onClick={handleManualRetry}
                 disabled={isManualRetrying}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-gold-500 to-[#B38C3F] text-black font-semibold text-xs py-3 px-4 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-[0_4px_20px_rgba(212,174,98,0.3)]"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-gold-500 to-[#B38C3F] text-black font-semibold text-xs py-3 px-4 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-[0_4px_20px_rgba(232,191,116,0.3)]"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isManualRetrying ? 'animate-spin' : ''}`} />
                 <span>{t('retry')}</span>

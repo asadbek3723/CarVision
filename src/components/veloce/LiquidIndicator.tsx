@@ -17,18 +17,18 @@ interface LiquidIndicatorProps {
   rtl: boolean;
 }
 
-// Slightly under-damped spring: a quick glide that settles with one soft wobble.
-const STIFFNESS = 420;
-const DAMPING = 28;
-/** How much the glass stretches along the motion per (column / second) of speed, and its cap. */
-const STRETCH_PER_SPEED = 0.085;
-const MAX_STRETCH = 0.45;
+// Soft, almost critically damped spring: a calm glide that lands without bouncing.
+const STIFFNESS = 190;
+const DAMPING = 26;
+/** How much the drop stretches along the motion per (column / second) of speed, and its cap. */
+const STRETCH_PER_SPEED = 0.22;
+const MAX_STRETCH = 1.6;
 
 /**
- * The dock's "liquid glass" selection: one frosted, gold-tinted capsule (with a glowing line on
- * top) shared by all tabs. It follows the finger while the pages are swiped, stretching like a
- * drop of liquid with the speed, and glides to the new tab on a spring when the finger lifts or a
- * tab is tapped. Driven with transforms outside React, so it never costs a re-render per frame.
+ * The dock's "liquid glass" selection: one glowing drop of gold light on the dock's top edge,
+ * shared by all tabs (the icons themselves are not boxed in). It follows the finger while the
+ * pages are swiped, stretching like a drop of liquid with the speed, and glides to the new tab on
+ * a soft spring when the finger lifts or a tab is tapped. Driven with transforms outside React, so it never costs a re-render per frame.
  */
 export const LiquidIndicator = React.forwardRef<LiquidIndicatorHandle, LiquidIndicatorProps>(function LiquidIndicator(
   { col, columns, rtl },
@@ -52,9 +52,10 @@ export const LiquidIndicator = React.forwardRef<LiquidIndicatorHandle, LiquidInd
       if (!rail || !glass || !line) return;
       const stretch = reduce.current ? 0 : Math.min(Math.abs(vel) * STRETCH_PER_SPEED, MAX_STRETCH);
       rail.style.transform = `translate3d(${(rtl ? -pos : pos) * 100}%,0,0)`;
-      // Stretches along the motion and thins a little, like a moving drop.
-      glass.style.transform = `scale(${1 + stretch}, ${1 - stretch * 0.32})`;
-      line.style.transform = `scaleX(${1 + stretch * 1.6})`;
+      // A drop of liquid light: it stretches along the motion and thins as it speeds up.
+      line.style.transform = `scale(${1 + stretch}, ${1 - Math.min(stretch, 1) * 0.35})`;
+      glass.style.transform = `scaleX(${1 + stretch * 0.8})`;
+      glass.style.opacity = String(0.55 + Math.min(stretch, 1) * 0.35);
     },
     [rtl]
   );
@@ -167,18 +168,18 @@ export const LiquidIndicator = React.forwardRef<LiquidIndicatorHandle, LiquidInd
       className="pointer-events-none absolute inset-y-0 start-0 transition-opacity duration-300 will-change-transform"
       style={{ width: `${100 / columns}%`, opacity: col === null ? 0 : 1 }}
     >
-      {/* Glowing line on the dock's top edge */}
-      <div
-        ref={lineRef}
-        className="absolute inset-x-0 top-0 mx-auto h-[2px] w-7 rounded-full bg-gradient-to-r from-gold-300 via-gold-500 to-gold-300 shadow-[0_0_10px_rgba(212,174,98,0.85),0_0_2px_rgba(255,236,190,0.9)]"
-      />
-      {/* Frosted, gold-tinted glass capsule behind the icon */}
+      {/* Light the drop spills onto the dock (soft, blurred) */}
       <div
         ref={glassRef}
-        className="absolute inset-x-0 top-[6px] mx-auto h-[36px] w-[56px] overflow-hidden rounded-[18px] border border-[rgba(240,215,154,0.28)] bg-[linear-gradient(180deg,rgba(240,212,150,0.30)_0%,rgba(212,174,98,0.14)_55%,rgba(170,130,60,0.10)_100%)] shadow-[inset_0_1px_0_rgba(255,244,214,0.35),inset_0_-1px_0_rgba(90,60,10,0.35),0_8px_22px_-8px_rgba(212,174,98,0.6)] backdrop-blur-[10px] backdrop-saturate-[1.8]"
+        className="absolute inset-x-0 top-0 mx-auto h-5 w-14 rounded-full bg-[radial-gradient(ellipse_at_top,rgb(var(--c-gold-400)/0.55),transparent_70%)] blur-[6px]"
+      />
+      {/* The liquid-glass drop on the dock's top edge, gliding over the icons */}
+      <div
+        ref={lineRef}
+        className="absolute inset-x-0 -top-[1px] mx-auto h-[4px] w-8 overflow-hidden rounded-full border border-white/25 bg-[linear-gradient(90deg,rgb(var(--c-gold-600))_0%,rgb(var(--c-gold-300))_45%,rgb(var(--c-gold-100))_55%,rgb(var(--c-gold-500))_100%)] shadow-[0_0_12px_rgb(var(--c-gold-400)/0.9),0_0_3px_rgb(var(--c-gold-100)/0.9)]"
       >
-        {/* Specular highlight across the top half, like real glass */}
-        <span className="absolute inset-x-1 top-[1px] h-1/2 rounded-t-[16px] bg-gradient-to-b from-white/25 to-transparent" />
+        {/* glassy highlight along the top */}
+        <span className="absolute inset-x-1 top-0 h-px bg-white/70" />
       </div>
     </div>
   );

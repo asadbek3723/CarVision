@@ -439,7 +439,7 @@ export function PartReel({
               >
                 <div
                   data-active="0"
-                  className="relative h-full w-full overflow-hidden rounded-[22px] bg-surface-1 transition-[box-shadow,border-color] duration-300 data-[active=1]:border-gold-500 data-[active=1]:shadow-[0_0_0_4px_rgba(212,174,98,0.08),0_18px_44px_-10px_rgba(212,174,98,0.4)] lg:rounded-[28px]"
+                  className="relative h-full w-full overflow-hidden rounded-[22px] bg-surface-1 transition-[box-shadow,border-color] duration-300 data-[active=1]:border-gold-500 data-[active=1]:shadow-[0_0_0_4px_rgba(232,191,116,0.08),0_18px_44px_-10px_rgba(232,191,116,0.4)] lg:rounded-[28px]"
                 >
                   {part.swatch ? (
                     <div className="h-full w-full" style={{ background: part.swatch }} />

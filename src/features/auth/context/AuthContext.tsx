@@ -72,6 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (again?.status === 401) {
           setUser(null);
           localStorage.removeItem(STORAGE_KEY);
+          // Drop the dead session cookies too, so the server no longer treats this browser as
+          // signed in (it skips the landing page for signed-in visitors).
+          void fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
         }
       }
     } catch {

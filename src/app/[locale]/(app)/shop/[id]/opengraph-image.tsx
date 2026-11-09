@@ -24,7 +24,7 @@ export default async function ProductOpengraphImage({ params }: { params: Promis
             padding: 64,
           }}
         >
-          <div style={{ fontSize: 30, letterSpacing: 6, color: '#D4AE62', textTransform: 'uppercase' }}>CarVision</div>
+          <div style={{ fontSize: 30, letterSpacing: 6, color: '#E8BF74', textTransform: 'uppercase' }}>CarVision</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: name.length > 40 ? 52 : 68, fontWeight: 700, lineHeight: 1.1 }}>{name.slice(0, 70)}</div>
             {item ? (
