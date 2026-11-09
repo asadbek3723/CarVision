@@ -39,7 +39,7 @@ function CheckoutPageInner() {
   const [bookings, setBookings] = React.useState<BookingView[]>([]);
   const [payment, setPayment] = React.useState<PaymentInfo>({ configured: false });
 
-  // Only the lines ticked in the cart are booked (`?ids=` from the cart page; otherwise the current ticks).
+  // Only the lines ticked in the cart are ordered (`?ids=` from the cart page; otherwise the current ticks).
   const idsParam = search?.get('ids') ?? null;
   const cartIds = React.useMemo(() => {
     const inCart = Object.keys(cart);
@@ -107,7 +107,6 @@ function CheckoutPageInner() {
 
   const lines = products.map((p) => ({ p, qty: cart[p.id] ?? 1 }));
   const total = lines.reduce((s, l) => s + l.p.price * l.qty, 0);
-  const deposit = Math.max(1, Math.round(total * 0.03));
   const hasUnavailable = lines.some((l) => l.p.stock <= 0);
   const missing = cartIds.length - products.length;
 
@@ -132,7 +131,7 @@ function CheckoutPageInner() {
       if (!res.ok || !data.success) throw new Error(apiError(data, t('errCreate')));
       setPayment(data.payment);
       setBookings(data.bookings);
-      // Booked lines leave the cart; anything left unticked stays for later.
+      // Ordered lines leave the cart; anything left unticked stays for later.
       removeLines(lines.map((l) => l.p.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errCreate'));
@@ -166,7 +165,7 @@ function CheckoutPageInner() {
     );
   }
 
-  // After the booking exists: payment + status
+  // After the order exists: payment + status
   if (bookings.length > 0) {
     return shell(
       <>
@@ -219,15 +218,9 @@ function CheckoutPageInner() {
           ))}
         </ul>
         {missing > 0 && <p className="mt-3 text-xs text-amber-300">{t('missing', { count: missing })}</p>}
-        <div className="mt-4 flex items-end justify-between pt-4">
-          <div>
-            <p className="text-[11px] text-white/45">{t('totalAtWorkshop')}</p>
-            <p className="text-lg font-bold text-white">{formatPrice(total)}</p>
-          </div>
-          <div className="text-end">
-            <p className="text-[11px] text-white/45">{t('depositNow')}</p>
-            <p className="text-lg font-bold text-gold-500">{formatPrice(deposit)}</p>
-          </div>
+        <div className="mt-4 flex items-end justify-between gap-4 pt-4">
+          <p className="text-sm text-white/55">{t('total')}</p>
+          <p className="text-xl font-bold tabular-nums text-gold-500">{formatPrice(total)}</p>
         </div>
       </section>
 

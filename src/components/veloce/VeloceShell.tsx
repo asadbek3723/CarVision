@@ -67,6 +67,9 @@ function QuerySync({ onChange }: { onChange: (q: QueryState) => void }) {
   return null;
 }
 
+/** How long the dock takes to sink out of sight (globals.css `.cv-dock[data-hidden]`); the page's own bar rises after it. */
+const DOCK_OUT_MS = 520;
+
 /** Dock column of each swipeable tab: Home 0, Garage/Cart 1, [Create 2], Shop 3, Profile 4. */
 const TAB_COLS = [0, 1, 3, 4] as const;
 
@@ -175,13 +178,15 @@ export function VeloceShell({ children }: VeloceShellProps) {
   // Publish the dock's real height (it varies with the font, language and safe area) as --dock-h.
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   const dockRef = React.useRef<HTMLElement | null>(null);
+  const dockHiddenRef = React.useRef(false);
   React.useLayoutEffect(() => {
     const root = rootRef.current;
     const dock = dockRef.current;
     if (!root) return;
     const apply = () => {
       // md:hidden hides the dock on tablets and up; offsetParent cannot be used (it is null for fixed elements).
-      const visible = dock !== null && getComputedStyle(dock).display !== 'none';
+      // A dock sliding away (a part's page, the cart's checkout) leaves no room behind it.
+      const visible = dock !== null && !dockHiddenRef.current && getComputedStyle(dock).display !== 'none';
       const h = visible ? `${Math.ceil(dock!.getBoundingClientRect().height)}px` : '0px';
       root.style.setProperty('--dock-h', h);
       // Also for overlays mounted outside the shell (the install banner).
@@ -275,7 +280,49 @@ export function VeloceShell({ children }: VeloceShellProps) {
     return a + (p - i) * (b - a); // also extends past the ends, so the rubber-band shows on the glass too
   }, []);
   const onPagerScrub = React.useCallback((p: number) => indicatorRef.current?.scrub(tabPosToCol(p)), [tabPosToCol]);
-  const onPagerSettle = React.useCallback((i: number) => indicatorRef.current?.settle(TAB_COLS[i] ?? 0), []);
+
+  // The dock and the bar that replaces it never swap in one frame. While a swipe heads for the cart
+  // (with something in it) the dock starts sinking from the first pixel of the drag; once it is
+  // fully gone the checkout bar rises. Turning back, or swiping away again, reverses it.
+  const [aimTab, setAimTab] = React.useState<number | null>(null);
+  const tabIndexRef = React.useRef(tabIndex);
+  tabIndexRef.current = tabIndex;
+  // A tap on a part's card: the dock starts sinking at once, not when the part's page arrives.
+  const [leaving, setLeaving] = React.useState(false);
+  React.useEffect(() => {
+    setAimTab(null);
+    setLeaving(false);
+  }, [pathname]);
+  React.useEffect(() => {
+    if (!leaving) return;
+    const id = window.setTimeout(() => setLeaving(false), 4000); // the navigation never happened
+    return () => window.clearTimeout(id);
+  }, [leaving]);
+  // Bubble phase (not capture): the pager swallows the click that ends a swipe before it gets here.
+  // Next's <Link> has already called preventDefault by then, so that is not a sign to skip.
+  const onShellClick = React.useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = (e.target as HTMLElement | null)?.closest?.('a[href]');
+    const href = a?.getAttribute('href') ?? '';
+    if (a?.getAttribute('target') !== '_blank' && /^\/[a-z]{2}\/shop\/[^/?#]+/.test(href)) setLeaving(true);
+  }, []);
+  const onPagerAim = React.useCallback((i: number) => setAimTab(i === tabIndexRef.current ? null : i), []);
+  const onPagerSettle = React.useCallback((i: number) => {
+    indicatorRef.current?.settle(TAB_COLS[i] ?? 0);
+    setAimTab(i === tabIndexRef.current ? null : i);
+  }, []);
+  const aimed = aimTab !== null ? tabs[aimTab] : undefined;
+  const dockHidden = aimed ? aimed.key === 'cart' && count > 0 : hideDock || leaving;
+  dockHiddenRef.current = dockHidden;
+  const [barReady, setBarReady] = React.useState(dockHidden);
+  React.useEffect(() => {
+    if (!dockHidden) {
+      setBarReady(false);
+      return;
+    }
+    const id = window.setTimeout(() => setBarReady(true), DOCK_OUT_MS);
+    return () => window.clearTimeout(id);
+  }, [dockHidden]);
 
   // Installed app: swipe from the edge to leave a screen opened on top of the tabs.
   useEdgeBack(
@@ -289,6 +336,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
     <div
       className="flex h-[100dvh] flex-col overflow-hidden md:ps-24 lg:ps-28 bg-surface-0 text-foreground"
       ref={rootRef}
+      data-bar-ready={barReady ? 'true' : 'false'}
+      onClick={onShellClick}
       // Height of the phone dock (measured), for pages with their own fixed bar above it (the cart's checkout bar).
       style={{ '--dock-h': '0px' } as React.CSSProperties}
     >
@@ -469,52 +518,60 @@ export function VeloceShell({ children }: VeloceShellProps) {
         }
       >
         {pager ? (
-          <TabPager tabs={tabs} index={tabIndex} dir={isRtl ? -1 : 1} onScrub={onPagerScrub} onSettle={onPagerSettle} />
+          <TabPager
+            tabs={tabs}
+            index={tabIndex}
+            dir={isRtl ? -1 : 1}
+            onScrub={onPagerScrub}
+            onSettle={onPagerSettle}
+            onAim={onPagerAim}
+          />
         ) : (
           children
         )}
       </main>
 
       {/* Mobile bottom dock: Home, Garage (workshop owners) or Cart (everyone else), [Create], Shop, Profile. */}
-      {!hideDock && (
-        <nav
-          ref={dockRef}
-          aria-label={t('menu')}
-          className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] md:hidden"
-        >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent"
-          />
-          <div className="relative mx-auto grid max-w-md grid-cols-5 items-end px-2 pt-2 pb-[max(env(safe-area-inset-bottom),10px)]">
-            {/* The grid's padding is excluded so the glass lines up with the five columns. */}
-            <div className="pointer-events-none absolute inset-y-0 inset-x-2">
-              <LiquidIndicator ref={indicatorRef} col={routeCol} columns={5} rtl={isRtl} />
-            </div>
-            <DockLink href={`/${locale}/seller`} icon={House} label={t('home')} active={isHome} onTap={() => indicatorRef.current?.settle(0)} />
-            {isSeller ? (
-              <DockLink href={`/${locale}/garage`} icon={Car} label={t('garage')} active={isGarage} onTap={() => indicatorRef.current?.settle(1)} />
-            ) : (
-              <DockLink href={cartHref} icon={ShoppingBag} label={t('cart')} active={isCart} badge={count} onTap={() => indicatorRef.current?.settle(1)} />
-            )}
-
-            <button
-              type="button"
-              onClick={openCamera}
-              aria-label={isSeller ? t('showroom') : t('create')}
-              className="group relative flex cursor-pointer flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] text-gold-500 outline-none"
-            >
-              <span className="grid h-8 w-11 place-items-center rounded-xl bg-gradient-to-b from-gold-500/20 to-gold-500/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-200 group-hover:from-gold-500/28 group-active:scale-95 group-focus-visible:ring-2 group-focus-visible:ring-gold-500/60 motion-reduce:transition-none">
-                <Plus className="h-[18px] w-[18px]" strokeWidth={2} />
-              </span>
-              <span>{isSeller ? t('showroom') : t('create')}</span>
-            </button>
-
-            <DockLink href={`/${locale}/shop`} icon={ShoppingCart} label={t('shop')} active={isShop} onTap={() => indicatorRef.current?.settle(3)} />
-            <DockLink href={`/${locale}/profile`} icon={User} label={t('profile')} active={isProfile || isDashboard} onTap={() => indicatorRef.current?.settle(4)} />
+      {/* Always mounted: on a part's page or the cart's checkout it sinks out of sight instead of vanishing. */}
+      <nav
+        ref={dockRef}
+        aria-label={t('menu')}
+        data-hidden={dockHidden ? 'true' : 'false'}
+        {...(dockHidden ? { inert: true } : {})}
+        className="cv-dock fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] md:hidden"
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent"
+        />
+        <div className="relative mx-auto grid max-w-md grid-cols-5 items-end px-2 pt-2 pb-[max(env(safe-area-inset-bottom),10px)]">
+          {/* The grid's padding is excluded so the glass lines up with the five columns. */}
+          <div className="pointer-events-none absolute inset-y-0 inset-x-2">
+            <LiquidIndicator ref={indicatorRef} col={routeCol} columns={5} rtl={isRtl} />
           </div>
-        </nav>
-      )}
+          <DockLink href={`/${locale}/seller`} icon={House} label={t('home')} active={isHome} onTap={() => indicatorRef.current?.settle(0)} />
+          {isSeller ? (
+            <DockLink href={`/${locale}/garage`} icon={Car} label={t('garage')} active={isGarage} onTap={() => indicatorRef.current?.settle(1)} />
+          ) : (
+            <DockLink href={cartHref} icon={ShoppingBag} label={t('cart')} active={isCart} badge={count} onTap={() => indicatorRef.current?.settle(1)} />
+          )}
+
+          <button
+            type="button"
+            onClick={openCamera}
+            aria-label={isSeller ? t('showroom') : t('create')}
+            className="group relative flex cursor-pointer flex-col items-center gap-1 pb-0.5 pt-1 text-[9px] font-medium uppercase tracking-[0.14em] text-gold-500 outline-none"
+          >
+            <span className="grid h-8 w-11 place-items-center rounded-xl bg-gradient-to-b from-gold-500/20 to-gold-500/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-200 group-hover:from-gold-500/28 group-active:scale-95 group-focus-visible:ring-2 group-focus-visible:ring-gold-500/60 motion-reduce:transition-none">
+              <Plus className="h-[18px] w-[18px]" strokeWidth={2} />
+            </span>
+            <span>{isSeller ? t('showroom') : t('create')}</span>
+          </button>
+
+          <DockLink href={`/${locale}/shop`} icon={ShoppingCart} label={t('shop')} active={isShop} onTap={() => indicatorRef.current?.settle(3)} />
+          <DockLink href={`/${locale}/profile`} icon={User} label={t('profile')} active={isProfile || isDashboard} onTap={() => indicatorRef.current?.settle(4)} />
+        </div>
+      </nav>
     </div>
   );
 }

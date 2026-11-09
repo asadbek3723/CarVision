@@ -14,9 +14,13 @@ export interface BookingView {
   bookingNumber: string;
   status: 'AWAITING_PAYMENT' | 'PENDING_ADMIN_APPROVAL' | 'UNLOCKED' | 'REDEEMED' | 'REJECTED' | 'CANCELLED';
   totalUSD: number;
-  depositUSD: number;
-  depositUZS: number;
+  /** Amount to transfer (the full price) in USD and so'm. */
+  payUSD: number;
+  payUZS: number;
   rejectedReason: string | null;
+  cancellableUntil: string | null;
+  refundUSD: number | null;
+  refundDone: boolean;
   items: Array<{ name: string; brand: string; image: string | null; unitUSD: number; quantity: number }>;
   workshop: { label: string; unlocked: boolean; name?: string; phone?: string; address?: string; lat?: number; lng?: number };
   redemptionCode: string | null;
@@ -63,45 +67,39 @@ export function BookingCard({ booking, payment, onChanged, flat = false }: Props
   );
 }
 
-/** The booked items with the total due at the workshop and the 3% deposit. */
+/** The ordered items with the order total. */
 export function BookingItems({ booking, large = false }: { booking: BookingView; large?: boolean }) {
   const t = useTranslations('checkout.booking');
-  const locale = useLocale();
   const { formatPrice } = useCurrency();
-  const thumb = large ? 'h-20 w-20 md:h-24 md:w-24 rounded-2xl' : 'h-12 w-12 rounded-xl';
+  const thumb = large ? 'h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-xl sm:rounded-2xl' : 'h-12 w-12 rounded-xl';
   return (
     <>
-      <ul className={large ? 'space-y-5' : 'mt-4 space-y-3'}>
+      <ul className={large ? 'divide-y divide-white/[0.06] sm:divide-y-0 sm:space-y-5' : 'mt-4 space-y-3'}>
         {booking.items.map((it, i) => (
-          <li key={`${it.name}-${i}`} className="flex items-center gap-4">
+          <li key={`${it.name}-${i}`} className={`flex items-center gap-3 sm:gap-4 ${large ? 'py-3 first:pt-0 last:pb-0 sm:py-0' : ''}`}>
             <div className={`${thumb} shrink-0 overflow-hidden bg-black`}>{it.image && <img src={it.image} alt="" className="h-full w-full object-cover" />}</div>
             <div className="min-w-0 flex-1">
-              <p className={`truncate font-semibold text-white ${large ? 'text-base md:text-lg' : 'text-sm'}`}>{it.name}</p>
+              <p className={`font-semibold text-white ${large ? 'line-clamp-2 text-[15px] leading-snug sm:truncate sm:text-base md:text-lg' : 'truncate text-sm'}`}>{it.name}</p>
               <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{it.brand}{it.quantity > 1 ? ` · ×${it.quantity}` : ''}</p>
             </div>
-            <p className={`font-semibold text-white/85 ${large ? 'text-base' : 'text-sm'}`}>{formatPrice(it.unitUSD * it.quantity)}</p>
+            <p className={`shrink-0 whitespace-nowrap font-semibold tabular-nums text-white/85 ${large ? 'text-sm sm:text-base' : 'text-sm'}`}>{formatPrice(it.unitUSD * it.quantity)}</p>
           </li>
         ))}
       </ul>
 
-      <div className={`flex items-end justify-between ${large ? 'mt-8 pt-2' : 'mt-4 pt-4'}`}>
-        <div>
-          <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{t('totalAtWorkshop')}</p>
-          <p className={`font-bold text-white ${large ? 'text-2xl md:text-3xl' : 'text-lg'}`}>{formatPrice(booking.totalUSD)}</p>
-        </div>
-        <div className="text-end">
-          <p className={`text-white/45 ${large ? 'text-sm' : 'text-[11px]'}`}>{t('deposit')}</p>
-          <p className={`font-bold text-gold-500 ${large ? 'text-2xl md:text-3xl' : 'text-lg'}`}>{new Intl.NumberFormat(locale, { style: 'currency', currency: 'UZS', maximumFractionDigits: 0 }).format(booking.depositUZS)}</p>
-          <p className="text-[11px] text-white/40">≈ {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(booking.depositUSD)}</p>
-        </div>
+      <div className={`flex items-end justify-between gap-4 ${large ? 'mt-5 rounded-2xl bg-white/[0.04] p-4 sm:mt-8 sm:rounded-none sm:bg-transparent sm:p-0 sm:pt-2' : 'mt-4 pt-4'}`}>
+        <p className={`text-white/55 ${large ? 'text-sm sm:text-base' : 'text-sm'}`}>{t('total')}</p>
+        <p className={`font-bold tabular-nums text-gold-500 ${large ? 'text-xl sm:text-2xl md:text-3xl' : 'text-lg'}`}>{formatPrice(booking.totalUSD)}</p>
       </div>
     </>
   );
 }
 
-/** Payment instructions, receipt upload, approval status and (after approval) the workshop. */
+/** Payment instructions, receipt upload, approval status and (after approval) the pickup place. */
 export function BookingActions({ booking, payment, onChanged, flat = false }: Props) {
   const t = useTranslations('checkout.booking');
+  const locale = useLocale();
+  const { formatPrice } = useCurrency();
   const apiError = useApiError();
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -137,17 +135,35 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
     }
   };
 
-  const cancel = async () => {
-    if (!window.confirm(t('confirmCancel'))) return;
+  const cancel = async (paid: boolean) => {
+    const question = paid && booking.refundUSD !== null ? t('confirmCancelPaid', { amount: formatPrice(booking.refundUSD) }) : t('confirmCancel');
+    if (!window.confirm(question)) return;
+    setError(null);
     const res = await fetch(`/api/v1/bookings/${booking.id}`, { method: 'DELETE' });
     if (res.ok) onChanged();
-    else setError(t('errCancel'));
+    else setError(apiError((await readJson(res)).data, t('errCancel')));
   };
+
+  // A paid order can be cancelled only for a short while; hide the link once that time is over.
+  const [canCancelPaid, setCanCancelPaid] = React.useState(false);
+  React.useEffect(() => {
+    if (!booking.cancellableUntil) {
+      setCanCancelPaid(false);
+      return;
+    }
+    const left = new Date(booking.cancellableUntil).getTime() - Date.now();
+    setCanCancelPaid(left > 0);
+    if (left <= 0) return;
+    const timer = setTimeout(() => setCanCancelPaid(false), Math.min(left, 2_147_000_000));
+    return () => clearTimeout(timer);
+  }, [booking.cancellableUntil]);
+
+  const uzs = new Intl.NumberFormat(locale, { style: 'currency', currency: 'UZS', maximumFractionDigits: 0 }).format(booking.payUZS);
 
   return (
     <>
       {needsPayment && (
-        <div className={`mt-5 space-y-4 ${flat ? '' : 'rounded-2xl bg-white/[0.03] p-4'}`}>
+        <div className={`mt-5 space-y-4 ${flat ? 'rounded-2xl bg-white/[0.03] p-4 sm:rounded-none sm:bg-transparent sm:p-0' : 'rounded-2xl bg-white/[0.03] p-4'}`}>
           {booking.status === 'REJECTED' && (
             <p className="flex items-start gap-2 text-xs text-red-300">
               <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -155,9 +171,14 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
             </p>
           )}
           <p className="text-sm font-semibold text-white">{t('step1')}</p>
+          <div>
+            <p className="text-[11px] text-white/45">{t('amountToPay')}</p>
+            <p className="select-all font-display text-2xl font-semibold tabular-nums text-gold-500">{uzs}</p>
+            <p className="text-[11px] text-white/40">≈ {new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(booking.payUSD)}</p>
+          </div>
           {payment.configured ? (
             <div className={flat ? '' : 'rounded-xl bg-black/40 p-4'}>
-              <p className="select-all font-mono text-lg tracking-wider text-white">{payment.cardNumber}</p>
+              <p className="select-all break-all font-mono text-base tracking-wider text-white sm:text-lg">{payment.cardNumber}</p>
               <p className="mt-1 text-xs text-white/60">{payment.holder}{payment.bank ? ` · ${payment.bank}` : ''}</p>
               <p className="mt-3 text-xs text-amber-300">{t.rich('commentHint', { number: booking.bookingNumber, b: (c) => <span className="font-mono font-bold">{c}</span> })}</p>
             </div>
@@ -178,7 +199,7 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
           </button>
           {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
           {booking.status === 'AWAITING_PAYMENT' && (
-            <button type="button" onClick={() => void cancel()} className="text-xs text-white/40 underline hover:text-white/70">
+            <button type="button" onClick={() => void cancel(false)} className="min-h-11 text-xs text-white/40 underline hover:text-white/70 sm:min-h-0">
               {t('cancelLink')}
             </button>
           )}
@@ -193,7 +214,7 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
       )}
 
       {booking.workshop.unlocked && (
-        <div className={`mt-5 space-y-3 ${flat ? '' : 'rounded-2xl bg-emerald-500/[0.06] p-4'}`}>
+        <div className={`mt-5 space-y-3 ${flat ? 'rounded-2xl bg-emerald-500/[0.06] p-4 sm:rounded-none sm:bg-transparent sm:p-0' : 'rounded-2xl bg-emerald-500/[0.06] p-4'}`}>
           <p className="flex items-center gap-2 text-sm font-bold text-emerald-300">
             <Check className="h-4 w-4" />
             {t('unlockedTitle')}
@@ -206,13 +227,13 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
             </p>
           )}
           {booking.workshop.phone && (
-            <a href={`tel:${booking.workshop.phone}`} className="flex items-center gap-2 text-sm text-white/85 hover:text-white">
+            <a href={`tel:${booking.workshop.phone}`} className="flex min-h-11 items-center gap-2 text-sm text-white/85 hover:text-white sm:min-h-0">
               <Phone className="h-4 w-4 text-gold-500" />
               {booking.workshop.phone}
             </a>
           )}
           {booking.workshop.lat !== undefined && booking.workshop.lat !== 0 && (
-            <a href={`https://www.google.com/maps?q=${booking.workshop.lat},${booking.workshop.lng}`} target="_blank" rel="noreferrer" className="inline-block text-xs font-semibold text-gold-500 underline">
+            <a href={`https://www.google.com/maps?q=${booking.workshop.lat},${booking.workshop.lng}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-xs font-semibold text-gold-500 underline sm:min-h-0">
               {t('openMap')}
             </a>
           )}
@@ -222,8 +243,22 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
               <p className="mt-1 font-mono text-2xl font-bold tracking-widest text-white">{booking.redemptionCode}</p>
             </div>
           )}
+          {canCancelPaid && booking.status === 'UNLOCKED' && (
+            <button type="button" onClick={() => void cancel(true)} className="min-h-11 text-xs text-white/35 underline hover:text-white/60 sm:min-h-0">
+              {t('cancelOrder')}
+            </button>
+          )}
         </div>
       )}
+
+      {booking.status === 'CANCELLED' && booking.refundUSD !== null && booking.refundUSD > 0 && (
+        <p className={`mt-5 flex items-start gap-2 text-xs ${booking.refundDone ? 'text-emerald-300' : 'text-white/60'} ${flat ? '' : 'rounded-2xl bg-white/[0.04] p-4'}`}>
+          {booking.refundDone ? <Check className="mt-0.5 h-4 w-4 shrink-0" /> : <Clock className="mt-0.5 h-4 w-4 shrink-0" />}
+          {booking.refundDone ? t('refundDone', { amount: formatPrice(booking.refundUSD) }) : t('refundPending', { amount: formatPrice(booking.refundUSD) })}
+        </p>
+      )}
+
+      {error && !needsPayment && <p role="alert" className="mt-3 text-xs text-red-300">{error}</p>}
     </>
   );
 }

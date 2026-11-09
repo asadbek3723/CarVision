@@ -21,6 +21,11 @@ interface TabPagerProps {
   onScrub?: ((pos: number) => void) | undefined;
   /** The finger lifted: the tab the pager is settling on. */
   onSettle?: ((index: number) => void) | undefined;
+  /**
+   * The tab a drag is heading for, from its first sideways pixel (and again whenever the finger
+   * turns round), so the shell can start changing the bottom bar before the swipe is finished.
+   */
+  onAim?: ((index: number) => void) | undefined;
 }
 
 function insideHorizontalScroller(el: HTMLElement, stop: HTMLElement): boolean {
@@ -55,7 +60,7 @@ const EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
  *   keep their own swipes, and swipes from the very edge are left to the browser's back gesture
  *   (except inside the installed app, where there is none).
  */
-export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps) {
+export function TabPager({ tabs, index, dir, onScrub, onSettle, onAim }: TabPagerProps) {
   const router = useRouter();
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
@@ -71,6 +76,7 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
     dx: 0,
     samples: [] as Array<{ x: number; t: number }>,
     moved: false,
+    aim: -1,
   });
 
   const mount = React.useCallback((...ids: number[]) => {
@@ -115,7 +121,8 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
     currentRef.current = index;
     setCurrent(index);
     mount(index);
-    place(index, 0, Math.min(480 + distance * 50, 620));
+    // Slow and smooth like iOS, so the eye can follow the screens sliding past (a longer trip takes a little longer).
+    place(index, 0, Math.min(950 + distance * 110, 1250));
   }, [index, mount, place]);
 
   // Neighbours load quietly after the first paint, so the first swipe already shows them.
@@ -129,8 +136,8 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
   const settle = (target: number, velocity: number) => {
     const from = currentRef.current;
     const clamped = Math.max(0, Math.min(tabs.length - 1, target));
-    // Faster flicks finish faster, like a native pager.
-    const ms = Math.round(Math.max(380, Math.min(560, 560 - Math.abs(velocity) * 180)));
+    // Faster flicks finish a little faster, like a native pager, but never in a blink.
+    const ms = Math.round(Math.max(780, Math.min(1000, 1000 - Math.abs(velocity) * 160)));
     currentRef.current = clamped;
     place(clamped, 0, ms);
     onSettle?.(clamped);
@@ -158,6 +165,7 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
     g.y0 = e.clientY;
     g.dx = 0;
     g.moved = false;
+    g.aim = -1;
     g.samples = [{ x: e.clientX, t: e.timeStamp }];
   };
 
@@ -185,6 +193,11 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle }: TabPagerProps)
     const step = -Math.sign(dx) * dir; // +1 = towards the next tab
     const hasNeighbour = currentRef.current + step >= 0 && currentRef.current + step < tabs.length;
     const offset = hasNeighbour ? dx : dx * 0.28;
+    const aim = hasNeighbour && dx !== 0 ? currentRef.current + step : currentRef.current;
+    if (aim !== g.aim) {
+      g.aim = aim;
+      onAim?.(aim);
+    }
     g.dx = dx;
     g.samples.push({ x: e.clientX, t: e.timeStamp });
     if (g.samples.length > 6) g.samples.shift();

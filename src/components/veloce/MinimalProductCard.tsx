@@ -12,7 +12,7 @@ import { md, mdFocus } from '@/features/minimal/theme';
 
 /**
  * Figma "Minimal/Product card": square photo (radius 18), brand label, two-line name,
- * price and a round yellow arrow. The workshop stays hidden until the 3% deposit, so the
+ * price and a round yellow arrow. The workshop stays hidden until the purchase, so the
  * label slot shows the part's brand.
  */
 export function MinimalProductCard({ p, i = 0 }: { p: VeloceProduct; i?: number }) {

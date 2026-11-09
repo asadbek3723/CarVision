@@ -97,8 +97,6 @@ export default function CustomizeResultPage() {
     [selectedParts]
   );
 
-  const deposit3PercentUSD = Math.max(1, Math.round(totalPriceUSD * 0.03));
-
   // Only sides that were really rendered are shown (no placeholder or copied images)
   const renderedAngles = React.useMemo(
     () => FIVE_CAR_ANGLES.filter((a) => Boolean(generatedAngles[a.id])),
@@ -177,7 +175,7 @@ export default function CustomizeResultPage() {
       return;
     }
 
-    // B2C User mode: Add selected parts to cart and navigate to 3% address unlock checkout
+    // B2C User mode: add the selected parts to the cart and go to checkout
     selectedParts.forEach((p) => add(p.id));
     router.push(`/${locale}/cart/checkout`);
   };
@@ -383,7 +381,7 @@ export default function CustomizeResultPage() {
                       <p className="mt-1.5 text-4xl font-extrabold tabular-nums tracking-tight text-white md:text-5xl">{formatPrice(totalPriceUSD)}</p>
                     </div>
                   </div>
-                  {!isSeller && <p className="mt-2 text-xs font-semibold text-gold-500">{t('unlockHint', { amount: formatPrice(deposit3PercentUSD) })}</p>}
+                  {!isSeller && <p className="mt-2 text-xs font-semibold text-gold-500">{t('unlockHint')}</p>}
 
                   <button
                     type="button"
@@ -398,7 +396,7 @@ export default function CustomizeResultPage() {
                     ) : (
                       <>
                         <ShoppingBag className="h-5 w-5" />
-                        <span>{t('buy', { amount: formatPrice(deposit3PercentUSD) })}</span>
+                        <span>{t('buy')}</span>
                       </>
                     )}
                   </button>

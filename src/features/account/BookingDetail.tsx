@@ -78,7 +78,7 @@ export function BookingDetail({ id }: { id: string }) {
         }
       />
 
-      <div className="grid gap-12 pt-4 lg:grid-cols-[1.25fr_1fr] lg:gap-20">
+      <div className="grid gap-8 pt-2 sm:gap-12 sm:pt-4 lg:grid-cols-[1.25fr_1fr] lg:gap-20">
         <section aria-label={t('itemsCount', { count: booking.items.length })}>
           <BookingItems booking={booking} large />
         </section>

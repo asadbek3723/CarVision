@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString();
     const head = { count: 'exact' as const, head: true };
 
-    const [users, sellers, shops, paidShops, items, pending, unlocked, redeemed, gensOk, gensFailed, auditRows, signups, gens, books, deposits, committed] = await Promise.all([
+    const [users, sellers, shops, paidShops, items, pending, unlocked, redeemed, gensOk, gensFailed, auditRows, signups, gens, books, sales, committed] = await Promise.all([
       count(db.from('profiles').select('id', head)),
       count(db.from('profiles').select('id', head).eq('role', 'b2b_seller')),
       count(db.from('shops').select('id', head)),
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       db.from('profiles').select('created_at').gte('created_at', since7).limit(5000),
       db.from('generations').select('created_at, status').gte('created_at', since7).limit(5000),
       db.from('bookings').select('created_at').gte('created_at', since7).limit(5000),
-      db.from('bookings').select('deposit_cents, total_cents').in('status', ['UNLOCKED', 'REDEEMED']).limit(5000),
+      db.from('bookings').select('total_cents, commission_cents, payout_cents, payout_status').in('status', ['UNLOCKED', 'REDEEMED']).limit(5000),
       db.from('generations').select('credits_charged').eq('credit_state', 'COMMITTED').gte('created_at', since30).limit(10000),
     ]);
 
@@ -45,8 +45,10 @@ export async function GET(request: NextRequest) {
       return days.map((d) => ({ day: d, value: m.get(d) ?? 0 }));
     };
 
-    const depositCents = (deposits.data ?? []).reduce((s, b) => s + (b.deposit_cents as number), 0);
-    const dealCents = (deposits.data ?? []).reduce((s, b) => s + (b.total_cents as number), 0);
+    const saleRows = sales.data ?? [];
+    const commissionCents = saleRows.reduce((s, b) => s + ((b.commission_cents as number | null) ?? 0), 0);
+    const dealCents = saleRows.reduce((s, b) => s + (b.total_cents as number), 0);
+    const payoutsOwedCents = saleRows.filter((b) => b.payout_status === 'PENDING').reduce((s, b) => s + ((b.payout_cents as number | null) ?? 0), 0);
     const creditsUsed = (committed.data ?? []).reduce((s, g) => s + (g.credits_charged as number), 0);
 
     // Recent admin actions with admin phone
@@ -59,7 +61,8 @@ export async function GET(request: NextRequest) {
       metrics: {
         users, sellers, shops, paidShops, freeShops: shops - paidShops, publishedItems: items,
         bookings: { pending, unlocked, redeemed },
-        depositUSD: depositCents / 100,
+        commissionUSD: commissionCents / 100,
+        payoutsOwedUSD: payoutsOwedCents / 100,
         dealUSD: dealCents / 100,
         renders30d: { completed: gensOk, failed: gensFailed, creditsUsed },
       },

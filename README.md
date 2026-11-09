@@ -25,16 +25,17 @@ CarVision is an enterprise-grade AI operating platform designed for automotive t
 
 3. **Tuning Studio Workspace (`src/features/studio`)**
    - Car Viewport commands 85% of screen dominance.
-   - Itemized cashier summary breakdown (Retail parts + workshop labor + 3% escrow deposit).
+   - Itemized cashier summary breakdown (retail parts + workshop labor).
    - Customer-View PIN Lock mode (`CustomerViewLockModal.tsx`): hides wholesale prices and sensitive tabs when handing the tablet to customers in the bay.
 
 4. **B2B Workshop Console & Inventory (`src/features/seller`)**
    - 1-Click Master Catalog importer for Vossen, BBS, Brembo, Akrapovic, SunTek, and XPEL.
    - Custom inventory part uploader with OEM bolt pattern, width, and offset fitment validation.
-   - Voucher redemption terminal: instantly validates 3% customer booking vouchers and transfers escrow deposits.
+   - Hand-over terminal: the workshop enters the customer's pickup code when the item is handed over.
 
-5. **B2C Marketplace & 3% Escrow Engine (`src/features/marketplace`)**
-   - Anti-disintermediation masking: Workshop identities remain masked (`Verified Partner #ID`) until customer pays 3% deposit.
+5. **B2C Marketplace (`src/features/shop`)**
+   - Full-price purchase: the customer pays the whole price; the platform keeps its commission and pays the rest to the workshop (admin panel → Payments).
+   - Anti-disintermediation masking: workshop identities remain masked (`Verified Partner #ID`) until the payment is approved.
    - Receipt upload and automated verification workflow.
    - Permanent cryptographic CarVision Tuning Passport for vehicle resale equity.
 
@@ -137,9 +138,9 @@ pnpm build
 ---
 
 ## 🔒 Security & Money Principles
-- **Money Minor Units:** All monetary values (`price_cents`, `deposit_amount_cents`) are strictly stored as integer cents to eliminate floating-point rounding errors.
+- **Money Minor Units:** All monetary values (`price_cents`, `amount_cents`, `commission_cents`, `payout_cents`) are strictly stored as integer cents to eliminate floating-point rounding errors.
 - **Atomic Credit Operations:** Credits are reserved with PostgreSQL `FOR UPDATE` row locks, ensuring zero race conditions or double-spending.
-- **Anti-Disintermediation:** Workshop phone numbers, addresses, and GPS coordinates are masked behind a PostgreSQL view (`shops_public_masked`) until a 3% escrow deposit receipt is verified.
+- **Anti-Disintermediation:** Workshop phone numbers, addresses, and GPS coordinates are masked behind a PostgreSQL view (`shops_public_masked`) until the customer's payment receipt is approved.
 - **Zero Physical CSS:** Every UI component utilizes CSS logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`) to support Arabic RTL without mirrored visual defects.
 
 ---

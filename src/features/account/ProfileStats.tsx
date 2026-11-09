@@ -25,7 +25,7 @@ interface Inventory {
 }
 interface Orders {
   count: number;
-  totalDepositUSD: number;
+  totalPayoutUSD: number;
   orders: Array<{ status: string }>;
 }
 
@@ -151,7 +151,7 @@ export function ProfileStats() {
                 <>
                   <Tile label={t('orders')} value={n(orders.count)} />
                   <Tile label={t('ordersDone')} value={n(orders.orders.filter((o) => o.status === 'completed').length)} />
-                  <Tile label={t('deposits')} value={formatPrice(orders.totalDepositUSD)} />
+                  <Tile label={t('deposits')} value={formatPrice(orders.totalPayoutUSD ?? 0)} />
                 </>
               )}
             </Section>

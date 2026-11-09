@@ -1,5 +1,11 @@
 # Architecture & Product Decisions
 
+## 2026-11-10: Full-price purchase with a hidden platform commission
+- **Decision**: the customer pays the full price to the platform card (receipt + manual admin approval, unchanged). The server splits each order into `commission_cents` (3%, `PLATFORM_COMMISSION_BPS`) and `payout_cents`, rounding the commission down. The admin transfers the payout to the workshop by hand and marks it (`admin_mark_payout`). The customer may cancel for `CANCEL_WINDOW_HOURS` = 6 after approval, before hand-over and payout; `CANCEL_REFUND_BPS` = 80% is refunded by hand (`customer_cancel_purchase`, `admin_mark_refund`). All rules are re-checked in Postgres functions under row locks.
+- **Visibility**: customers see only the price and never the commission or the word "deposit"; the cancel/refund rule is shown only at the moment of cancelling (the refund amount sits in the confirm dialog, so nobody cancels without knowing what comes back). Workshops see the sale price and their payout. The admin sees the full split.
+- **Reason**: the owner wants buyers to feel they are simply buying the part, while the platform keeps its share and forwards the rest to the workshop.
+- **Rejected**: keeping `deposit_cents` under its old name (misleading for the new meaning); computing the split in the browser (the server is the only source of money values); paying the workshop automatically on approval (the cancel window would make refunds lose money).
+
 ## 2026-11-09: Shop advertising banner is a server-managed single slot
 - **Decision**: one table `app_banners` (primary key `slot`, only `shop` for now), written and read only by the server with the service role (RLS on, no policies). Pictures live in the public `catalog` bucket under `banners/`. The public API caches for 60 s and never errors to the shop; the admin API uses `adminLiveOr401` and writes the audit log. Links may only be `https://…` or an in-app path starting with `/` (never `javascript:`, `data:` or `//host`).
 - **Reason**: the owner wants to change the shop advertisement from the admin console without a deploy. One slot is the smallest thing that does it; the `slot` key leaves room for more places later.

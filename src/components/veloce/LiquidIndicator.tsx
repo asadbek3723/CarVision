@@ -18,8 +18,9 @@ interface LiquidIndicatorProps {
 }
 
 // Soft, almost critically damped spring: a calm glide that lands without bouncing.
-const STIFFNESS = 190;
-const DAMPING = 26;
+// Tuned to the slower page slides, so the glass and the screens arrive together.
+const STIFFNESS = 70;
+const DAMPING = 17;
 /** How much the drop stretches along the motion per (column / second) of speed, and its cap. */
 const STRETCH_PER_SPEED = 0.22;
 const MAX_STRETCH = 1.6;

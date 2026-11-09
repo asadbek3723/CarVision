@@ -92,7 +92,6 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
             <div className="truncate whitespace-nowrap font-display text-[15px] font-bold tabular-nums tracking-tight text-gold-gradient md:text-base">
               {formatPrice(p.price)}
             </div>
-            <div className="hidden text-[10px] text-white/40 md:block">{t('depositHint')}</div>
           </div>
         </div>
       )}

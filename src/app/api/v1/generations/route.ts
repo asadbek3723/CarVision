@@ -104,7 +104,6 @@ interface GenerationPayload {
     category: string;
     spec: string;
     price: number;
-    depositUSD: number;
     swatch: string | null;
   };
   creditsCharged: number;
@@ -175,7 +174,6 @@ export async function POST(request: NextRequest) {
       category: input.partCategory,
       spec: input.partSpec || '',
       price: priceUSD,
-      depositUSD: Math.round(priceUSD * 0.03),
       swatch: input.swatchColor ?? null,
     };
     const currentBalance = session.shop ? session.shop.credits_balance : session.profile.credits_balance;

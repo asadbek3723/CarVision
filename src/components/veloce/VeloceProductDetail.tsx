@@ -10,7 +10,7 @@ import {
   ChevronLeft,
   Car,
   Sparkles,
-  Lock,
+  MapPin,
   ShieldCheck,
   Package,
   ShoppingBag,
@@ -172,7 +172,6 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
   }
 
   const normalizedUSD = product.price;
-  const deposit3PercentUSD = Math.max(1, Math.round(normalizedUSD * 0.03));
   const gallery = product.images && product.images.length > 0 ? product.images : product.image ? [product.image] : [];
   const attrs = product.attributes ?? {};
   const specChips: string[] = [
@@ -264,18 +263,13 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
             )}
           </div>
 
-          {/* Full price (never cut off), the automatic 3% deposit, and stock */}
+          {/* Price (never cut off) and stock */}
           <div className="space-y-3">
-            <div>
-              <p className="break-words font-display text-[28px] font-semibold leading-tight tabular-nums text-white sm:text-4xl">{formatPrice(normalizedUSD)}</p>
-              <p className="mt-1 text-xs text-white/50">{t('workshopFullPrice')}</p>
-            </div>
+            <p className="break-words font-display text-[28px] font-semibold leading-tight tabular-nums text-white sm:text-4xl">{formatPrice(normalizedUSD)}</p>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
               <span className="inline-flex items-center gap-2 text-white/75">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-gold-500" />
-                <span>
-                  <span className="font-semibold text-gold-500">3%</span> {t('depositShort', { amount: formatPrice(deposit3PercentUSD) })}
-                </span>
+                {t('securePurchase')}
               </span>
               <span className={`inline-flex items-center gap-2 ${outOfStock ? 'text-red-300' : 'text-white/75'}`}>
                 <Package className={`h-4 w-4 shrink-0 ${outOfStock ? 'text-red-300' : 'text-gold-500'}`} />
@@ -319,12 +313,12 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
             )}
           </div>
 
-          {/* Why the workshop stays hidden */}
+          {/* Where to pick it up: shown after the purchase */}
           <div className="flex items-start gap-3">
-            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
             <p className="text-xs leading-relaxed text-white/55">
               <span className="font-semibold text-white">{t('lockedTitle')}</span>{' '}
-              {t('lockedBody', { amount: formatPrice(deposit3PercentUSD) })}
+              {t('lockedBody')}
             </p>
           </div>
         </div>
@@ -345,7 +339,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
       )}
 
       {/* Fixed bottom bar in place of the dock: one full-width button. Add to cart, then Go to cart. */}
-      <div className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md md:start-24 lg:start-28">
+      <div className="cv-bottom-bar fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md md:start-24 lg:start-28">
         <span aria-hidden className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent" />
         <div className="mx-auto max-w-6xl px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] sm:px-5 md:px-10">
           {outOfStock ? (

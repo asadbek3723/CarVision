@@ -23,7 +23,8 @@ interface SellerLead {
   customerPhone: string;
   partName: string;
   totalPriceUSD: number;
-  depositUSD: number;
+  payoutUSD: number | null;
+  payoutStatus: 'pending' | 'paid' | 'none';
   status: 'pending' | 'verified' | 'completed' | 'cancelled';
   createdAt: string;
 }
@@ -324,15 +325,25 @@ export function SellerDashboardView() {
                   <Link href={`/${locale}/seller/orders/${lead.id}`} className="min-w-0 flex-1 hover:opacity-80">
                     <p className="truncate text-sm font-semibold text-white">{lead.customerName}</p>
                     <p className="truncate text-xs text-white/50">{lead.partName}</p>
-                    <p className="mt-0.5 font-mono text-[11px] text-white/35">{t('code', { code: lead.voucherCode })}</p>
+                    {lead.voucherCode && <p className="mt-0.5 font-mono text-[11px] text-white/35">{t('code', { code: lead.voucherCode })}</p>}
                   </Link>
                   <div className="shrink-0 text-end">
                     <p className="text-sm font-semibold tabular-nums text-gold-500">{formatPrice(lead.totalPriceUSD, 'USD')}</p>
-                    <p className="text-[11px] text-white/40">{t('deposit', { amount: formatPrice(lead.depositUSD, 'USD') })}</p>
+                    {lead.status === 'cancelled' ? (
+                      <p className="text-[11px] text-red-300">{t('cancelled')}</p>
+                    ) : lead.payoutUSD !== null ? (
+                      <p className={`text-[11px] ${lead.payoutStatus === 'paid' ? 'text-emerald-300' : 'text-white/40'}`}>
+                        {t(lead.payoutStatus === 'paid' ? 'payoutDone' : 'payoutPending', { amount: formatPrice(lead.payoutUSD, 'USD') })}
+                      </p>
+                    ) : null}
                   </div>
-                  <a href={`tel:${lead.customerPhone}`} aria-label={t('call')} className={roundBtn}>
-                    <Phone className="h-4 w-4" />
-                  </a>
+                  {lead.customerPhone ? (
+                    <a href={`tel:${lead.customerPhone}`} aria-label={t('call')} className={roundBtn}>
+                      <Phone className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <span aria-hidden className="w-10 shrink-0" />
+                  )}
                 </li>
               ))}
             </ul>

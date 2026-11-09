@@ -1,6 +1,6 @@
 /**
  * CarVision Pure Domain Module: Money
- * Integer minor units math, rounding, and escrow calculations.
+ * Integer minor units math, rounding, and the purchase split.
  */
 
 export type Cents = number; // Integer minor units (e.g. $29.00 -> 2900)
@@ -39,16 +39,41 @@ export function multiplyBps(amount: Cents, bps: BasisPoints): Cents {
   return Math.round((amount * bps) / 10000);
 }
 
+/** Platform commission kept from every purchase. Internal: never sent to customers. */
+export const PLATFORM_COMMISSION_BPS: BasisPoints = 300;
+
+/** Share of the paid amount returned when a customer cancels inside the cancel window. */
+export const CANCEL_REFUND_BPS: BasisPoints = 8000;
+
+/** Hours after the payment is approved during which the customer may still cancel. */
+export const CANCEL_WINDOW_HOURS = 6;
+
+export interface PurchaseSplit {
+  /** What the customer pays: always the full price. */
+  amountCents: Cents;
+  /** What the platform keeps. */
+  commissionCents: Cents;
+  /** What the workshop receives. */
+  payoutCents: Cents;
+}
+
 /**
- * Calculates the mandatory 3% escrow deposit with a minimum floor.
- * Default floor is 1000 cents ($10.00 / ~130,000 UZS).
+ * Splits a purchase between the platform and the workshop. The customer always pays the full
+ * price; commission is rounded down so the workshop never gets less than its share.
  */
-export function calculateDepositCents(totalPriceCents: Cents, minFloorCents: Cents = 1000): Cents {
+export function splitPurchase(totalPriceCents: Cents, commissionBps: BasisPoints = PLATFORM_COMMISSION_BPS): PurchaseSplit {
   if (!Number.isInteger(totalPriceCents) || totalPriceCents < 0) {
     throw new TypeError('Total price must be a non-negative integer');
   }
-  if (totalPriceCents === 0) return 0;
+  if (!Number.isInteger(commissionBps) || commissionBps < 0 || commissionBps > 10000) {
+    throw new TypeError('Commission must be between 0 and 10000 basis points');
+  }
+  const commissionCents = Math.floor((totalPriceCents * commissionBps) / 10000);
+  return { amountCents: totalPriceCents, commissionCents, payoutCents: totalPriceCents - commissionCents };
+}
 
-  const rawDeposit = multiplyBps(totalPriceCents, 300); // 300 bps = 3%
-  return Math.max(rawDeposit, minFloorCents);
+/** Refund for a purchase cancelled inside the window (rounded down, same as the database). */
+export function cancelRefundCents(paidCents: Cents, refundBps: BasisPoints = CANCEL_REFUND_BPS): Cents {
+  if (!Number.isInteger(paidCents) || paidCents < 0) throw new TypeError('Paid amount must be a non-negative integer');
+  return Math.floor((paidCents * refundBps) / 10000);
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addCents, subtractCents, multiplyBps, calculateDepositCents } from './money';
+import { addCents, subtractCents, multiplyBps, splitPurchase, cancelRefundCents } from './money';
 
 describe('domain/money', () => {
   it('adds integer cents correctly', () => {
@@ -26,14 +26,20 @@ describe('domain/money', () => {
     expect(multiplyBps(10005, 300)).toBe(300);
   });
 
-  it('calculates 3% escrow deposit with floor protection', () => {
-    // Zero build costs zero deposit
-    expect(calculateDepositCents(0)).toBe(0);
+  it('splits a purchase: customer pays the full price, workshop gets the rest', () => {
+    expect(splitPurchase(0)).toEqual({ amountCents: 0, commissionCents: 0, payoutCents: 0 });
+    expect(splitPurchase(150000)).toEqual({ amountCents: 150000, commissionCents: 4500, payoutCents: 145500 });
+    // 3% of 5033 = 150.99 -> 150 (rounded down in the workshop's favour)
+    expect(splitPurchase(5033)).toEqual({ amountCents: 5033, commissionCents: 150, payoutCents: 4883 });
+    const s = splitPurchase(98765);
+    expect(s.commissionCents + s.payoutCents).toBe(s.amountCents);
+    expect(() => splitPurchase(10.5)).toThrow(TypeError);
+    expect(() => splitPurchase(100, 20000)).toThrow(TypeError);
+  });
 
-    // Cheap item ($50.00 / 5000 cents): 3% is $1.50 (150 cents), but floor is $10.00 (1000 cents)
-    expect(calculateDepositCents(5000)).toBe(1000);
-
-    // Large build ($1500.00 / 150000 cents): 3% is $45.00 (4500 cents), exceeding floor
-    expect(calculateDepositCents(150000)).toBe(4500);
+  it('computes the cancel refund', () => {
+    expect(cancelRefundCents(10000)).toBe(8000);
+    expect(cancelRefundCents(12345)).toBe(9876);
+    expect(cancelRefundCents(0)).toBe(0);
   });
 });

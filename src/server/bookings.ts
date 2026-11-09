@@ -1,25 +1,25 @@
 import crypto from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/server';
 import { centsToUsd } from '@/domain/catalog';
-import { calculateDepositCents } from '@/domain/money';
+import { CANCEL_REFUND_BPS, CANCEL_WINDOW_HOURS, cancelRefundCents } from '@/domain/money';
 
 type Db = ReturnType<typeof createAdminClient>;
 
-/** Minimum deposit: $1 (the old $10 floor made small parts impossible to book). */
-export function depositFor(totalCents: number): number {
-  return calculateDepositCents(totalCents, 100);
-}
-
 export function newBookingNumber(): string {
   return `CV-${crypto.randomBytes(4).toString('hex').slice(0, 6).toUpperCase()}`;
+}
+
+/** Adds the UZS amount to pay (cards in Uzbekistan are paid in so'm). */
+export function withUzs<T extends { payUSD: number }>(dtos: T[], uzsRate: number): Array<T & { payUZS: number }> {
+  return dtos.map((b) => ({ ...b, payUZS: Math.round(b.payUSD * uzsRate) }));
 }
 
 export function newRedemptionCode(): string {
   return `${crypto.randomInt(100, 1000)}-${crypto.randomInt(100, 1000)}`;
 }
 
-/** Where customers send the 3% deposit. Configured in env; never hard-coded or invented. */
-export function escrowDetails(): { cardNumber: string; holder: string; bank: string } | null {
+/** Where customers send the payment. Configured in env; never hard-coded or invented. */
+export function paymentDetails(): { cardNumber: string; holder: string; bank: string } | null {
   const cardNumber = process.env.ESCROW_CARD_NUMBER?.trim();
   const holder = process.env.ESCROW_CARD_HOLDER?.trim();
   if (!cardNumber || !holder) return null;
@@ -28,7 +28,7 @@ export function escrowDetails(): { cardNumber: string; holder: string; bank: str
 
 export type ReviewResult = { ok: true; status: string } | { ok: false; error: 'NOT_FOUND' | 'INVALID_STATE' | 'FAILED' };
 
-/** Single confirmation point for deposits: used by the website admin panel and the Telegram bot. */
+/** Single confirmation point for payments: used by the website admin panel and the Telegram bot. */
 export async function reviewBooking(
   db: Db,
   args: { adminId: string; bookingId: string; approve: boolean; reason?: string | null | undefined; ip: string }
@@ -52,12 +52,19 @@ export interface BookingDTO {
   id: string;
   bookingNumber: string;
   status: BookingStatus;
+  /** The full price; this is also exactly what the customer pays. */
   totalUSD: number;
-  depositUSD: number;
+  /** The amount to transfer to the payment card (equals totalUSD). */
+  payUSD: number;
   createdAt: string;
   rejectedReason: string | null;
+  /** Until when a paid purchase can still be cancelled (null when it cannot). */
+  cancellableUntil: string | null;
+  /** Amount returned if cancelled now; only present while cancellable or once cancelled after payment. */
+  refundUSD: number | null;
+  refundDone: boolean;
   items: Array<{ name: string; brand: string; image: string | null; unitUSD: number; quantity: number }>;
-  /** Contact details appear only after the deposit is approved. */
+  /** Contact details appear only after the payment is approved. */
   workshop: {
     label: string;
     unlocked: boolean;
@@ -71,7 +78,10 @@ export interface BookingDTO {
 }
 
 const BOOKING_COLUMNS =
-  'id, booking_number, user_id, shop_id, status, total_cents, deposit_cents, redemption_code, customer_name, customer_phone, customer_note, rejected_reason, created_at, unlocked_at, redeemed_at, receipt_path, receipt_hash, receipt_submitted_at';
+  'id, booking_number, user_id, shop_id, status, total_cents, amount_cents, commission_cents, payout_cents, payout_status, payout_paid_at, cancelled_at, refund_cents, refund_status, refunded_at, redemption_code, customer_name, customer_phone, customer_note, rejected_reason, created_at, unlocked_at, redeemed_at, receipt_path, receipt_hash, receipt_submitted_at';
+
+export type PayoutStatus = 'NONE' | 'PENDING' | 'PAID' | 'VOID';
+export type RefundStatus = 'NONE' | 'PENDING' | 'DONE';
 
 export interface BookingRow {
   id: string;
@@ -80,7 +90,17 @@ export interface BookingRow {
   shop_id: string;
   status: BookingStatus;
   total_cents: number;
-  deposit_cents: number;
+  /** What the customer transfers (full price; 3% on bookings from the old deposit model). */
+  amount_cents: number;
+  /** Internal split. NULL on bookings from the old deposit model. Never sent to customers. */
+  commission_cents: number | null;
+  payout_cents: number | null;
+  payout_status: PayoutStatus;
+  payout_paid_at: string | null;
+  cancelled_at: string | null;
+  refund_cents: number | null;
+  refund_status: RefundStatus;
+  refunded_at: string | null;
   redemption_code: string;
   customer_name: string;
   customer_phone: string;
@@ -112,7 +132,30 @@ export async function fetchBookingItems(db: Db, bookingIds: string[]) {
   return (data ?? []) as Array<{ booking_id: string; name: string; brand: string | null; image_url: string | null; unit_cents: number; quantity: number }>;
 }
 
-/** Customer-facing view of bookings (contact details only after approval). */
+/** End of the customer's cancel window for a paid purchase, or null when it cannot be cancelled. */
+export function cancellableUntil(r: BookingRow, now = Date.now()): string | null {
+  if (r.status !== 'UNLOCKED' || r.payout_cents === null || r.payout_status !== 'PENDING' || !r.unlocked_at) return null;
+  const until = new Date(r.unlocked_at).getTime() + CANCEL_WINDOW_HOURS * 3600_000;
+  return until > now ? new Date(until).toISOString() : null;
+}
+
+export type CancelResult = { ok: true; refundCents: number } | { ok: false; error: 'NOT_FOUND' | 'CANNOT_CANCEL' | 'FAILED' };
+
+/** Customer cancels a paid purchase inside the window; the database re-checks every rule. */
+export async function cancelPurchase(db: Db, userId: string, bookingId: string): Promise<CancelResult> {
+  const { data, error } = await db.rpc('customer_cancel_purchase', {
+    p_user_id: userId,
+    p_booking_id: bookingId,
+    p_window_hours: CANCEL_WINDOW_HOURS,
+    p_refund_bps: CANCEL_REFUND_BPS,
+  });
+  const r = data as { success?: boolean; error?: string; refundCents?: number } | null;
+  if (error || !r) return { ok: false, error: 'FAILED' };
+  if (r.success) return { ok: true, refundCents: r.refundCents ?? 0 };
+  return { ok: false, error: r.error === 'NOT_FOUND' ? 'NOT_FOUND' : 'CANNOT_CANCEL' };
+}
+
+/** Customer-facing view of bookings (contact details only after approval, no internal split). */
 export async function toCustomerDTOs(db: Db, rows: BookingRow[]): Promise<BookingDTO[]> {
   if (rows.length === 0) return [];
   const items = await fetchBookingItems(db, rows.map((r) => r.id));
@@ -124,14 +167,18 @@ export async function toCustomerDTOs(db: Db, rows: BookingRow[]): Promise<Bookin
     const unlocked = r.status === 'UNLOCKED' || r.status === 'REDEEMED';
     const shop = shopById.get(r.shop_id);
     const label = `Verified Partner #${r.shop_id.slice(0, 4).toUpperCase()}`;
+    const until = cancellableUntil(r);
     return {
       id: r.id,
       bookingNumber: r.booking_number,
       status: r.status,
       totalUSD: centsToUsd(r.total_cents),
-      depositUSD: centsToUsd(r.deposit_cents),
+      payUSD: centsToUsd(r.amount_cents),
       createdAt: r.created_at,
       rejectedReason: r.rejected_reason,
+      cancellableUntil: until,
+      refundUSD: until ? centsToUsd(cancelRefundCents(r.amount_cents)) : r.refund_cents !== null ? centsToUsd(r.refund_cents) : null,
+      refundDone: r.refund_status === 'DONE',
       items: items
         .filter((i) => i.booking_id === r.id)
         .map((i) => ({ name: i.name, brand: i.brand ?? '', image: i.image_url, unitUSD: centsToUsd(i.unit_cents), quantity: i.quantity })),

@@ -8,6 +8,7 @@ import { CurrencyProvider } from '@/context/CurrencyContext';
 import { VeloceStoreProvider } from '@/context/VeloceStore';
 import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt';
 import { TouchGuard } from '@/components/pwa/TouchGuard';
+import { LaunchSplash } from '@/components/pwa/LaunchSplash';
 import { JsonLd, organizationLd, websiteLd } from '@/lib/seo/jsonld';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { DEFAULT_LOCALE, SITE_NAME, SITE_URL, isLocale } from '@/lib/seo/site';
@@ -106,6 +107,7 @@ export default async function LocaleLayout({
                 {children}
                 <PwaInstallPrompt />
                 <TouchGuard />
+                <LaunchSplash />
               </VeloceStoreProvider>
             </CurrencyProvider>
           </AuthProvider>

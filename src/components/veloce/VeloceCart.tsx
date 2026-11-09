@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { Check, Minus, Plus, ShoppingBag, Trash2, Car, ArrowRight, MapPin, Phone, ShieldCheck } from 'lucide-react';
+import { Check, Minus, Plus, ShoppingBag, Trash2, Car, ArrowRight, MapPin, CreditCard, KeyRound } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -15,7 +15,6 @@ import { useLiveTick } from '@/lib/live';
 
 /** Parts left at or below this count show an "N left" warning, as marketplaces do. */
 const LOW_STOCK = 5;
-const depositOf = (usd: number) => Math.max(1, Math.round(usd * 0.03));
 
 /** Square tick box; the cart's only selection control. */
 function Tick({ checked, disabled, onChange, label, className }: { checked: boolean; disabled?: boolean; onChange: () => void; label: string; className?: string }) {
@@ -39,8 +38,8 @@ function Tick({ checked, disabled, onChange, label, className }: { checked: bool
 }
 
 /**
- * The cart, laid out like a marketplace cart: tick lines, change quantities, and pay the 3% deposit
- * for the ticked ones. The deposit unlocks the workshop address; the rest is paid at the workshop.
+ * The cart, laid out like a marketplace cart: tick lines, change quantities, and buy the ticked
+ * ones at their full price. After payment the pickup address opens.
  */
 export function VeloceCart() {
   const params = useParams();
@@ -116,8 +115,6 @@ export function VeloceCart() {
   const selectedUnits = selected.reduce((n, { quantity }) => n + quantity, 0);
   const totalUnits = items.reduce((n, { quantity }) => n + quantity, 0);
   const totalUSD = selected.reduce((sum, { product, quantity }) => sum + product.price * quantity, 0);
-  const depositUSD = selected.length > 0 ? depositOf(totalUSD) : 0;
-  const atWorkshopUSD = Math.max(0, totalUSD - depositUSD);
 
   const toggleAll = () => setAllCartSelected(available.map(({ product }) => product.id), !allSelected);
   const deleteSelected = () => {
@@ -163,7 +160,7 @@ export function VeloceCart() {
   }
 
   // --- Summary (shared by the phone bar and the desktop card) ------------------------------------
-  // Checkout first explains the 3% booking in three lines, then goes on.
+  // Checkout first explains how the purchase works in three lines, then goes on.
   const checkoutButton = (className?: string) => (
     <button
       type="button"
@@ -244,9 +241,9 @@ export function VeloceCart() {
                       <p className={cn('font-display text-[20px] font-semibold leading-tight tabular-nums', sel ? 'text-gold-500' : 'text-white')}>
                         {formatPrice(lineUSD)}
                       </p>
-                      <p className="mt-0.5 text-[13px] text-white/60">
-                        {t('depositLine', { amount: formatPrice(depositOf(lineUSD)) })}
-                      </p>
+                      {q > 1 && (
+                        <p className="mt-0.5 text-[13px] text-white/60">{t('unitPrice', { amount: formatPrice(p.price), count: q })}</p>
+                      )}
                       {soldOut && (
                         <span className="mt-2 inline-flex rounded-md bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-300">
                           {t('outOfStock')}
@@ -319,14 +316,10 @@ export function VeloceCart() {
               <dt className="text-white/55">{t('itemsTotal', { count: selectedUnits })}</dt>
               <dd className="tabular-nums text-white">{formatPrice(totalUSD)}</dd>
             </div>
-            <div className="flex justify-between gap-3">
-              <dt className="text-white/55">{t('payAtWorkshop')}</dt>
-              <dd className="tabular-nums text-white">{formatPrice(atWorkshopUSD)}</dd>
-            </div>
           </dl>
           <div className="mt-4 flex items-end justify-between gap-3 border-t border-white/[0.08] pt-4">
             <span className="text-sm text-white/70">{t('payNow')}</span>
-            <span className="font-display text-2xl font-semibold tabular-nums text-gold-500">{formatPrice(depositUSD)}</span>
+            <span className="font-display text-2xl font-semibold tabular-nums text-gold-500">{formatPrice(totalUSD)}</span>
           </div>
           {checkoutButton('mt-5 w-full')}
           <p className="mt-3 text-xs leading-relaxed text-white/45">{t('unlockNote')}</p>
@@ -335,18 +328,16 @@ export function VeloceCart() {
 
       {/* Phones and tablets: checkout bar pinned to the bottom of the screen, above the dock. Sticky
           (not fixed) so it travels with this screen when the tabs are swiped. */}
-      <div className="sticky bottom-0 z-30 -mx-5 mt-auto rounded-t-3xl bg-surface-1 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.7)] md:-mx-10 lg:hidden">
+      <div className="cv-bottom-bar sticky bottom-0 z-30 -mx-5 mt-auto rounded-t-3xl bg-surface-1 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.7)] md:-mx-10 lg:hidden">
         {/* While the cart has items this bar replaces the bottom menu (the shell hides the dock), so it
             sits at the very bottom of the screen and keeps clear of the iPhone home indicator. */}
         <div className="px-5 pb-[env(safe-area-inset-bottom)] md:px-10">
           <p className="border-b border-white/[0.06] py-2.5 text-center text-[12px] leading-snug text-white/65 sm:text-[13px]">
-            {selected.length > 0
-              ? t('barInfo', { total: formatPrice(totalUSD), rest: formatPrice(atWorkshopUSD) })
-              : t('nothingSelected')}
+            {selected.length > 0 ? t('unlockNote') : t('nothingSelected')}
           </p>
           <div className="flex items-center justify-between gap-3 py-3">
             <div className="min-w-0">
-              <p className="truncate font-display text-[20px] font-semibold leading-tight tabular-nums text-gold-500 min-[400px]:text-[24px]">{formatPrice(depositUSD)}</p>
+              <p className="truncate font-display text-[20px] font-semibold leading-tight tabular-nums text-gold-500 min-[400px]:text-[24px]">{formatPrice(totalUSD)}</p>
               <p className="truncate text-[13px] text-white/55">{t('barCount', { count: selectedUnits })}</p>
             </div>
             {checkoutButton('shrink-0')}
@@ -375,9 +366,9 @@ export function VeloceCart() {
       >
         <ul className="space-y-4">
           {[
-            { icon: ShieldCheck, text: t('explainPay', { amount: formatPrice(depositUSD) }) },
+            { icon: CreditCard, text: t('explainPay', { amount: formatPrice(totalUSD) }) },
             { icon: MapPin, text: t('explainAddress') },
-            { icon: Phone, text: t('explainPhone') },
+            { icon: KeyRound, text: t('explainPhone') },
           ].map(({ icon: Icon, text }) => (
             <li key={text} className="flex items-start gap-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gold-500/15 text-gold-500">
@@ -387,7 +378,6 @@ export function VeloceCart() {
             </li>
           ))}
         </ul>
-        <p className="mt-5 text-[13px] text-white/50">{t('explainRest', { amount: formatPrice(atWorkshopUSD) })}</p>
       </Sheet>
 
       <Modal

@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { centsToUsd } from '@/domain/catalog';
 
 /**
- * Telegram review of booking deposits. Every function here is best-effort: a Telegram outage or a
+ * Telegram review of payment receipts. Every function here is best-effort: a Telegram outage or a
  * missing configuration must never break the customer's receipt upload or the website admin panel.
  */
 
@@ -104,7 +104,9 @@ interface BookingForMessage {
   booking_number: string;
   shop_id: string;
   total_cents: number;
-  deposit_cents: number;
+  amount_cents: number;
+  commission_cents: number | null;
+  payout_cents: number | null;
   customer_name: string;
   customer_phone: string;
   receipt_path: string | null;
@@ -116,7 +118,7 @@ async function loadBooking(bookingId: string) {
   const db = createAdminClient();
   const { data } = await db
     .from('bookings')
-    .select('id, booking_number, shop_id, total_cents, deposit_cents, customer_name, customer_phone, receipt_path, telegram_chat_id, telegram_message_id')
+    .select('id, booking_number, shop_id, total_cents, amount_cents, commission_cents, payout_cents, customer_name, customer_phone, receipt_path, telegram_chat_id, telegram_message_id')
     .eq('id', bookingId)
     .maybeSingle();
   return { db, booking: (data as BookingForMessage | null) ?? null };
@@ -128,7 +130,10 @@ export async function reviewCaption(db: ReturnType<typeof createAdminClient>, b:
     `🧾 Yangi chek: ${b.booking_number}`,
     `Mijoz: ${b.customer_name} (${b.customer_phone})`,
     `Ustaxona: ${(shop?.shop_name as string | undefined) ?? '—'}`,
-    `Depozit: ${usd(b.deposit_cents)}  |  Jami: ${usd(b.total_cents)}`,
+    `To‘lov: ${usd(b.amount_cents)}`,
+    ...(b.payout_cents !== null && b.commission_cents !== null
+      ? [`Sotuvchiga: ${usd(b.payout_cents)}  |  Komissiya: ${usd(b.commission_cents)}`]
+      : []),
   ].join('\n');
 }
 

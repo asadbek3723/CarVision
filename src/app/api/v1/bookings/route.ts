@@ -4,7 +4,8 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
 import { getServerRates } from '@/server/rates';
 import { normalizePhone } from '@/server/auth/phone';
-import { depositFor, escrowDetails, fetchBookingRows, newBookingNumber, newRedemptionCode, toCustomerDTOs } from '@/server/bookings';
+import { fetchBookingRows, newBookingNumber, newRedemptionCode, paymentDetails, toCustomerDTOs, withUzs } from '@/server/bookings';
+import { splitPurchase } from '@/domain/money';
 
 
 const MAX_OPEN_UNPAID = 10;
@@ -21,8 +22,9 @@ const bodySchema = z
 const fail = (status: number, code: string, error: string) => NextResponse.json({ success: false, code, error }, { status });
 
 /**
- * Creates one booking per workshop from the cart. Prices come from the database only.
- * The customer then pays the 3% deposit and uploads the receipt.
+ * Creates one order per workshop from the cart. Prices come from the database only.
+ * The customer then pays the full price to the platform card and uploads the receipt.
+ * The platform's commission is recorded here and never returned to the customer.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .eq('user_id', session.userId)
       .eq('status', 'AWAITING_PAYMENT');
-    if ((unpaid ?? 0) >= MAX_OPEN_UNPAID) return fail(429, 'TOO_MANY_OPEN', 'To‘lanmagan bronlaringiz ko‘p. Avval ularni yakunlang');
+    if ((unpaid ?? 0) >= MAX_OPEN_UNPAID) return fail(429, 'TOO_MANY_OPEN', 'To‘lanmagan buyurtmalaringiz ko‘p. Avval ularni yakunlang');
 
     // Merge duplicate ids, then load real items
     const qtyById = new Map<string, number>();
@@ -59,20 +61,20 @@ export async function POST(request: NextRequest) {
 
     // A user cannot book from their own workshop
     if (session.shop && found.some((r) => r.shop_id === session.shop!.id)) {
-      return fail(400, 'OWN_SHOP', 'O‘z ustaxonangiz detalini bron qila olmaysiz');
+      return fail(400, 'OWN_SHOP', 'O‘z ustaxonangiz detalini sotib ololmaysiz');
     }
 
     const byShop = new Map<string, typeof found>();
     for (const r of found) byShop.set(r.shop_id as string, [...(byShop.get(r.shop_id as string) ?? []), r]);
 
     const rates = await getServerRates();
-    const escrow = escrowDetails();
+    const payment = paymentDetails();
     const created: Array<{ id: string }> = [];
 
     for (const [shopId, list] of byShop) {
       const total = list.reduce((sum, r) => sum + (r.price_cents as number) * (qtyById.get(r.id as string) ?? 1), 0);
-      const deposit = depositFor(total);
-      if (deposit <= 0) return fail(400, 'FREE_ITEMS', 'Narxi 0 bo‘lgan detalni bron qilib bo‘lmaydi');
+      if (total <= 0) return fail(400, 'FREE_ITEMS', 'Narxi 0 bo‘lgan detalni sotib olib bo‘lmaydi');
+      const split = splitPurchase(total);
 
       // Retry on the (very unlikely) unique collision of booking number / voucher code
       let bookingId: string | null = null;
@@ -85,7 +87,9 @@ export async function POST(request: NextRequest) {
             shop_id: shopId,
             status: 'AWAITING_PAYMENT',
             total_cents: total,
-            deposit_cents: deposit,
+            amount_cents: split.amountCents,
+            commission_cents: split.commissionCents,
+            payout_cents: split.payoutCents,
             redemption_code: newRedemptionCode(),
             customer_name: parsed.data.customerName,
             customer_phone: phone,
@@ -96,10 +100,10 @@ export async function POST(request: NextRequest) {
         if (!error && booking) bookingId = booking.id as string;
         else if (error && !/duplicate|unique/i.test(error.message)) {
           console.error('booking insert failed:', error.message);
-          return fail(500, 'INTERNAL', 'Bron yaratib bo‘lmadi');
+          return fail(500, 'INTERNAL', 'Buyurtma yaratib bo‘lmadi');
         }
       }
-      if (!bookingId) return fail(500, 'INTERNAL', 'Bron yaratib bo‘lmadi');
+      if (!bookingId) return fail(500, 'INTERNAL', 'Buyurtma yaratib bo‘lmadi');
 
       const { error: itemsErr } = await db.from('booking_items').insert(
         list.map((r) => ({
@@ -114,7 +118,7 @@ export async function POST(request: NextRequest) {
       );
       if (itemsErr) {
         await db.from('bookings').delete().eq('id', bookingId);
-        return fail(500, 'INTERNAL', 'Bron yaratib bo‘lmadi');
+        return fail(500, 'INTERNAL', 'Buyurtma yaratib bo‘lmadi');
       }
       created.push({ id: bookingId });
     }
@@ -125,10 +129,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        bookings: dtos.map((b) => ({ ...b, depositUZS: Math.round(b.depositUSD * uzsRate) })),
-        payment: escrow
-          ? { configured: true, ...escrow }
-          : { configured: false },
+        bookings: withUzs(dtos, uzsRate),
+        payment: payment ? { configured: true, ...payment } : { configured: false },
         uzsRate,
       },
       { status: 201 }
@@ -149,10 +151,11 @@ export async function GET() {
     const rates = await getServerRates();
     const uzsRate = rates['UZS'] ?? 13000;
     const dtos = await toCustomerDTOs(db, rows);
+    const payment = paymentDetails();
     return NextResponse.json({
       success: true,
-      bookings: dtos.map((b) => ({ ...b, depositUZS: Math.round(b.depositUSD * uzsRate) })),
-      payment: escrowDetails() ? { configured: true, ...escrowDetails() } : { configured: false },
+      bookings: withUzs(dtos, uzsRate),
+      payment: payment ? { configured: true, ...payment } : { configured: false },
     });
   } catch (err) {
     console.error('bookings GET error:', err);

@@ -15,7 +15,8 @@ interface Overview {
     freeShops: number;
     publishedItems: number;
     bookings: { pending: number; unlocked: number; redeemed: number };
-    depositUSD: number;
+    commissionUSD: number;
+    payoutsOwedUSD: number;
     dealUSD: number;
     renders30d: { completed: number; failed: number; creditsUsed: number };
   };
@@ -48,11 +49,18 @@ export function AdminOverviewView({ onNavigate }: { onNavigate: (tab: AdminTab) 
         </button>
       )}
 
+      {m.payoutsOwedUSD > 0 && (
+        <button type="button" onClick={() => onNavigate('escrow')} className="mb-5 flex w-full items-center justify-between gap-3 rounded-3xl bg-white/[0.05] px-5 py-4 text-start transition hover:bg-white/[0.08]">
+          <span className="text-sm font-semibold text-white/85">{t('payoutsOwed', { amount: usd(m.payoutsOwedUSD) })}</span>
+          <span className="shrink-0 whitespace-nowrap text-xs font-bold text-gold-500">{t('view')}</span>
+        </button>
+      )}
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label={t('users')} value={nf.format(m.users)} hint={t('usersHint', { count: nf.format(m.sellers) })} />
         <StatTile label={t('shops')} value={nf.format(m.shops)} hint={t('shopsHint', { paid: m.paidShops, free: m.freeShops })} accent="gold" />
         <StatTile label={t('items')} value={nf.format(m.publishedItems)} />
-        <StatTile label={t('deposit')} value={usd(m.depositUSD)} hint={t('dealHint', { amount: usd(m.dealUSD) })} accent="green" />
+        <StatTile label={t('deposit')} value={usd(m.commissionUSD)} hint={t('dealHint', { amount: usd(m.dealUSD) })} accent="green" />
         <StatTile label={t('bookings')} value={`${m.bookings.unlocked + m.bookings.redeemed}`} hint={t('bookingsHint', { count: m.bookings.redeemed })} />
         <StatTile label={t('renders')} value={nf.format(m.renders30d.completed)} hint={rendersTotal ? t('successHint', { percent: Math.round((m.renders30d.completed / rendersTotal) * 100) }) : t('none')} />
         <StatTile label={t('failed')} value={nf.format(m.renders30d.failed)} accent={m.renders30d.failed ? 'red' : undefined} hint={t('refunded')} />

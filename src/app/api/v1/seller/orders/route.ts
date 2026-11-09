@@ -9,11 +9,18 @@ import { centsToUsd } from '@/domain/catalog';
 const fail = (status: number, error: string, code?: string) => NextResponse.json({ success: false, code, error }, { status });
 
 type SellerStatus = 'pending' | 'verified' | 'completed' | 'cancelled';
-const STATUS_MAP: Record<string, SellerStatus> = { UNLOCKED: 'verified', REDEEMED: 'completed' };
+const STATUS_MAP: Record<string, SellerStatus> = { UNLOCKED: 'verified', REDEEMED: 'completed', CANCELLED: 'cancelled' };
+type SellerPayout = 'pending' | 'paid' | 'none';
+const PAYOUT_MAP: Record<string, SellerPayout> = { PENDING: 'pending', PAID: 'paid' };
+
+/** Orders a workshop may see: paid ones, and paid ones the customer later cancelled. */
+const SELLER_STATUSES = ['UNLOCKED', 'REDEEMED', 'CANCELLED'] as const;
+const visibleToSeller = (r: BookingRow) => r.status !== 'CANCELLED' || r.unlocked_at !== null;
 
 /**
- * Workshop leads. A workshop only sees a booking once the customer's deposit was approved
- * (UNLOCKED) or the voucher was already redeemed: customer contact is never shown earlier.
+ * Workshop orders. A workshop only sees an order once the customer's payment was approved:
+ * customer contact is never shown earlier, nor after the customer cancelled. The workshop sees
+ * what it will receive (payout) and whether the platform already transferred it.
  */
 async function toSellerOrders(rows: BookingRow[], shopName: string, shopAddress: string, shopPhone: string) {
   const db = createAdminClient();
@@ -22,19 +29,21 @@ async function toSellerOrders(rows: BookingRow[], shopName: string, shopAddress:
   return rows.map((r) => {
     const its = items.filter((i) => i.booking_id === r.id);
     const total = centsToUsd(r.total_cents);
-    const deposit = centsToUsd(r.deposit_cents);
+    // Old deposit-era orders have no payout: the customer paid the workshop directly.
+    const payout = r.payout_cents !== null ? centsToUsd(r.payout_cents) : null;
+    const cancelled = r.status === 'CANCELLED';
     return {
       id: r.id,
       orderNumber: r.booking_number,
-      voucherCode: r.redemption_code,
+      voucherCode: cancelled ? '' : r.redemption_code,
       customerName: r.customer_name,
-      customerPhone: r.customer_phone,
+      customerPhone: cancelled ? '' : r.customer_phone,
       totalPriceUSD: total,
       totalPriceUZS: Math.round(total * uzs),
-      depositUSD: deposit,
-      depositUZS: Math.round(deposit * uzs),
-      remainingUSD: Math.max(0, total - deposit),
-      remainingUZS: Math.round(Math.max(0, total - deposit) * uzs),
+      payoutUSD: payout,
+      payoutUZS: payout !== null ? Math.round(payout * uzs) : null,
+      payoutStatus: PAYOUT_MAP[r.payout_status] ?? ('none' as SellerPayout),
+      payoutPaidAt: r.payout_paid_at,
       paymentMethod: 'Bank',
       status: STATUS_MAP[r.status] ?? ('cancelled' as SellerStatus),
       appointmentDate: r.unlocked_at ?? r.created_at,
@@ -45,7 +54,7 @@ async function toSellerOrders(rows: BookingRow[], shopName: string, shopAddress:
       studioName: shopName,
       studioAddress: shopAddress,
       studioPhone: shopPhone,
-      note: r.customer_note ?? '',
+      note: cancelled ? '' : r.customer_note ?? '',
       createdAt: r.created_at,
       items: its.map((i, idx) => ({ id: `${r.id}-${idx}`, product_name: i.name, price: centsToUsd(i.unit_cents), quantity: i.quantity, product_image_url: i.image_url })),
     };
@@ -60,7 +69,7 @@ export async function GET(request: NextRequest) {
     const orderId = new URL(request.url).searchParams.get('orderId');
     if (orderId && !z.string().uuid().safeParse(orderId).success) return fail(404, 'Topilmadi');
 
-    const rows = await fetchBookingRows(createAdminClient(), { shopId, id: orderId ?? undefined, statuses: ['UNLOCKED', 'REDEEMED'], limit: 100 });
+    const rows = (await fetchBookingRows(createAdminClient(), { shopId, id: orderId ?? undefined, statuses: [...SELLER_STATUSES], limit: 100 })).filter(visibleToSeller);
     const shop = session.shop!;
     const orders = await toSellerOrders(rows, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
     return NextResponse.json({
@@ -68,7 +77,8 @@ export async function GET(request: NextRequest) {
       orders,
       order: orderId ? orders[0] ?? null : undefined,
       count: orders.length,
-      totalDepositUSD: orders.reduce((s, o) => s + o.depositUSD, 0),
+      totalPayoutUSD: orders.reduce((s, o) => s + (o.status !== 'cancelled' && o.payoutUSD !== null ? o.payoutUSD : 0), 0),
+      paidOutUSD: orders.reduce((s, o) => s + (o.payoutStatus === 'paid' && o.payoutUSD !== null ? o.payoutUSD : 0), 0),
     });
   } catch (err) {
     console.error('seller orders GET error:', err);
@@ -78,14 +88,14 @@ export async function GET(request: NextRequest) {
 
 const redeemSchema = z.object({ code: z.string().trim().min(3).max(20), action: z.enum(['lookup', 'redeem']).default('lookup') });
 
-/** Look up or redeem a customer's voucher code (booking number or 123-456 code). */
+/** Look up an order by the customer's pickup code (order number or 123-456 code), or hand it over. */
 export async function POST(request: NextRequest) {
   try {
     const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const { session, shopId } = guard.value;
     const parsed = redeemSchema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) return fail(400, 'Vaucher kodini kiriting');
+    if (!parsed.success) return fail(400, 'Kodni kiriting');
     const code = parsed.data.code.replace(/^#/, '');
 
     const db = createAdminClient();
@@ -95,10 +105,10 @@ export async function POST(request: NextRequest) {
       if (!r?.success) {
         const [msg, code] =
           r?.error === 'ALREADY_REDEEMED'
-            ? ['Bu vaucher avval qabul qilingan', 'ALREADY_REDEEMED']
+            ? ['Bu buyurtma avval topshirilgan', 'ALREADY_REDEEMED']
             : r?.error === 'NOT_PAID'
-            ? ['Zakalat hali tasdiqlanmagan', 'NOT_PAID']
-            : ['Bunday vaucher kodi topilmadi', 'VOUCHER_NOT_FOUND'];
+            ? ['To‘lov hali tasdiqlanmagan', 'NOT_PAID']
+            : ['Bunday kod topilmadi', 'VOUCHER_NOT_FOUND'];
         return fail(r?.error === 'NOT_FOUND' || !r ? 404 : 409, msg as string, code as string);
       }
       const rows = await fetchBookingRows(db, { shopId, id: r.bookingId, limit: 1 });
@@ -116,7 +126,7 @@ export async function POST(request: NextRequest) {
       .or(`booking_number.ilike.${code.replace(/[%,()]/g, '')},redemption_code.eq.${code.replace(/[%,()]/g, '')}`)
       .limit(1)
       .maybeSingle();
-    if (!hit) return fail(404, 'Bunday vaucher kodi topilmadi');
+    if (!hit) return fail(404, 'Bunday kod topilmadi');
     const rows = await fetchBookingRows(db, { shopId, id: hit.id as string, limit: 1 });
     const shop = session.shop!;
     const [order] = await toSellerOrders(rows, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
@@ -127,7 +137,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/** Order detail page "mark completed" = redeem the voucher. */
+/** Order detail page "mark completed" = the item was handed over to the customer. */
 export async function PATCH(request: NextRequest) {
   try {
     const guard = await requirePaidSeller();
@@ -140,7 +150,7 @@ export async function PATCH(request: NextRequest) {
     const db = createAdminClient();
     const rows = await fetchBookingRows(db, { shopId, id: parsed.data.orderId, limit: 1 });
     const row = rows[0];
-    if (!row) return fail(404, 'Bron topilmadi');
+    if (!row) return fail(404, 'Buyurtma topilmadi');
     const { data } = await db.rpc('redeem_booking', { p_shop_id: shopId, p_code: row.redemption_code });
     const r = data as { success?: boolean; error?: string } | null;
     if (!r?.success && r?.error !== 'ALREADY_REDEEMED') return fail(409, 'Holatni o‘zgartirib bo‘lmadi');

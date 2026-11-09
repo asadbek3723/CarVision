@@ -19,21 +19,21 @@ const fail = (status: number, code: string, error: string) => NextResponse.json(
 
 /**
  * Receipt upload. The server stores the file itself (private bucket) and hashes it to
- * catch the same receipt being reused. It only moves the booking to the admin queue:
- * the workshop's contact details are released after the admin approves the deposit.
+ * catch the same receipt being reused. It only moves the order to the admin queue:
+ * the workshop's contact details are released after the admin approves the payment.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const guard = await requireUser();
     if (!guard.ok) return guard.response;
     const { id } = await params;
-    if (!z.string().uuid().safeParse(id).success) return fail(404, 'NOT_FOUND', 'Bron topilmadi');
+    if (!z.string().uuid().safeParse(id).success) return fail(404, 'NOT_FOUND', 'Buyurtma topilmadi');
 
     const db = createAdminClient();
     const { data: booking } = await db.from('bookings').select('id, status').eq('id', id).eq('user_id', guard.value.userId).maybeSingle();
-    if (!booking) return fail(404, 'NOT_FOUND', 'Bron topilmadi');
+    if (!booking) return fail(404, 'NOT_FOUND', 'Buyurtma topilmadi');
     if (booking.status !== 'AWAITING_PAYMENT' && booking.status !== 'REJECTED') {
-      return fail(409, 'INVALID_STATE', 'Bu bron uchun chek yuborib bo‘lmaydi');
+      return fail(409, 'INVALID_STATE', 'Bu buyurtma uchun chek yuborib bo‘lmaydi');
     }
 
     const form = await request.formData();
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const hash = crypto.createHash('sha256').update(buffer).digest('hex');
     const { data: dup } = await db.from('bookings').select('id').eq('receipt_hash', hash).neq('id', id).maybeSingle();
-    if (dup) return fail(409, 'DUPLICATE_RECEIPT', 'Bu chek avval boshqa bronda ishlatilgan');
+    if (dup) return fail(409, 'DUPLICATE_RECEIPT', 'Bu chek avval boshqa buyurtmada ishlatilgan');
 
     const path = `${id}/${crypto.randomUUID()}.${kind.ext}`;
     const { error: upErr } = await db.storage.from('receipts').upload(path, buffer, { contentType: kind.type });

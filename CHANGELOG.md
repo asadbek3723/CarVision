@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-11-10] - Full-price purchases instead of the 3% deposit
+### Changed
+- **Customers now buy at the full price.** The shop, product page, cart, checkout, try-on result, profile, home and landing show only the full price; every "3%", "97%", "zakalat/zaklad", "deposit" and "bron" text is gone in all 8 languages. Checkout: the customer transfers the whole amount to the payment card and uploads the receipt (same flow as before). After the admin approves it the order is "Purchased" and the pickup address, map, phone and pickup code appear.
+- **Platform commission is internal.** On every new order the server stores `commission_cents` (3%) and `payout_cents` (the rest). Only the admin panel and the Telegram review message show the split; the customer API never returns it, and signed-in users lost direct `SELECT` on `bookings` / `booking_items` (all reads go through the server).
+- **Seller side**: an order shows the sale price and "To be paid to you: X"; it switches to "Paid to you" when the admin marks the transfer. "Voucher" wording became "hand over the item".
+- **Admin → Payments** (was "Zakalat (3%)"): receipts to check, **Payouts** (mark "paid X to seller" by hand) and **Refunds** (mark "refunded X to customer"), with commission and amount owed to sellers. The overview shows commission earned and a banner for unpaid seller payouts. New audit actions: `APPROVE_PAYMENT`, `REJECT_PAYMENT`, `MARK_PAYOUT_PAID`, `MARK_REFUND_DONE`.
+- Approving a payment takes the items out of stock; a cancelled purchase puts them back.
+### Added
+- **Cancel within 6 hours**: a purchase can be cancelled for 6 hours after the payment is approved, while it was not handed over or paid out. 80% of the paid amount is recorded for a refund the admin sends by hand. The customer sees only a small "Cancel order" link and the refund amount in the confirmation; the rule is not advertised anywhere else.
+- **Migration `20261117000000_full_payment_purchases.sql` must be run before deploying this code** (renames `deposit_cents` to `amount_cents`, adds the payout/refund columns and functions). Old paid deposit orders keep their old terms; unpaid ones switch to the full price.
+
 ## [2026-11-09] - Shop banner from the admin console, two-step car dialog, settings dropdowns, sign-out on Profile
 ### Added
 - **Advertising banner in the shop.** On phones it sits after the first two cards, on desktop above the grid; the static "3% zakalat" note is gone. The admin sets it in the new **Reklama** section of the admin console (picture, optional link `https://…` or an in-app path like `/shop`, picture description, show/hide, remove). The picture is shrunk in the browser (JPEG, max 1600px wide), checked by its bytes on the server and stored in the `catalog` bucket under `banners/`; every change is written to the audit log (`SET_BANNER`, `REMOVE_BANNER`). Public `GET /api/v1/banners?slot=shop` answers `banner: null` for any problem, so the shop never shows an error.
