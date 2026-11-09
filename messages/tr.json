@@ -420,7 +420,8 @@
     "menu": "Menü",
     "languageAndCurrency": "Dil ve para birimi",
     "language": "Dil",
-    "currency": "Para birimi"
+    "currency": "Para birimi",
+    "back": "Geri"
   },
   "register": {
     "stepLabel": "ADIM {current} / {total}",

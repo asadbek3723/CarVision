@@ -420,7 +420,8 @@
     "menu": "Меню",
     "languageAndCurrency": "Язык и валюта",
     "language": "Язык",
-    "currency": "Валюта"
+    "currency": "Валюта",
+    "back": "Назад"
   },
   "register": {
     "stepLabel": "ШАГ {current} / {total}",

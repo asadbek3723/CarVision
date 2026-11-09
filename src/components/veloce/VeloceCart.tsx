@@ -11,7 +11,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { Modal, ProductImage, Sheet, buttonClasses } from '@/components/ui';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { cn } from '@/lib/utils';
-import { useLiveTick } from '@/lib/live';
+import { useLiveTick, useTabActive } from '@/lib/live';
 
 /** Parts left at or below this count show an "N left" warning, as marketplaces do. */
 const LOW_STOCK = 5;
@@ -59,6 +59,18 @@ export function VeloceCart() {
 
   const cartIdsKey = Object.keys(cart).sort().join(',');
   const live = useLiveTick();
+  // The checkout bar takes the dock's place: it rises once this screen is shown and the dock has
+  // slid down (see the shell), and drops away when the screen is left.
+  const tabActive = useTabActive();
+  const [barUp, setBarUp] = React.useState(false);
+  React.useEffect(() => {
+    if (!tabActive) {
+      setBarUp(false);
+      return;
+    }
+    const id = requestAnimationFrame(() => setBarUp(true));
+    return () => cancelAnimationFrame(id);
+  }, [tabActive]);
 
   React.useEffect(() => {
     if (!cartIdsKey) {
@@ -335,7 +347,11 @@ export function VeloceCart() {
 
       {/* Phones and tablets: checkout bar pinned to the bottom of the screen, above the dock. Sticky
           (not fixed) so it travels with this screen when the tabs are swiped. */}
-      <div className="sticky bottom-0 z-30 -mx-5 mt-auto rounded-t-3xl bg-surface-1 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.7)] md:-mx-10 lg:hidden">
+      <div
+        className={`sticky bottom-0 z-30 -mx-5 mt-auto rounded-t-3xl bg-surface-1 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.7)] transition-transform ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none md:-mx-10 lg:hidden ${
+          barUp ? 'translate-y-0 delay-[460ms] duration-[440ms]' : 'translate-y-[110%] delay-0 duration-200'
+        }`}
+      >
         {/* While the cart has items this bar replaces the bottom menu (the shell hides the dock), so it
             sits at the very bottom of the screen and keeps clear of the iPhone home indicator. */}
         <div className="px-5 pb-[env(safe-area-inset-bottom)] md:px-10">

@@ -345,7 +345,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
       )}
 
       {/* Fixed bottom bar in place of the dock: one full-width button. Add to cart, then Go to cart. */}
-      <div className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md md:start-24 lg:start-28">
+      <div className="fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md motion-safe:animate-[bar-rise_440ms_cubic-bezier(0.32,0.72,0,1)_460ms_both] md:start-24 md:animate-none lg:start-28">
         <span aria-hidden className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent" />
         <div className="mx-auto max-w-6xl px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] sm:px-5 md:px-10">
           {outOfStock ? (

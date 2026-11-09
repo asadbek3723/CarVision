@@ -420,7 +420,8 @@
     "menu": "Меню",
     "languageAndCurrency": "Тил жана валюта",
     "language": "Тил",
-    "currency": "Валюта"
+    "currency": "Валюта",
+    "back": "Артка"
   },
   "register": {
     "stepLabel": "{current} / {total}-КАДАМ",

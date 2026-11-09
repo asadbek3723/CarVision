@@ -420,7 +420,8 @@
     "menu": "Menu",
     "languageAndCurrency": "Language and currency",
     "language": "Language",
-    "currency": "Currency"
+    "currency": "Currency",
+    "back": "Back"
   },
   "register": {
     "stepLabel": "STEP {current} / {total}",

@@ -420,7 +420,8 @@
     "menu": "Menyu",
     "languageAndCurrency": "Til va valyuta",
     "language": "Til",
-    "currency": "Valyuta"
+    "currency": "Valyuta",
+    "back": "Orqaga"
   },
   "register": {
     "stepLabel": "{current} / {total}-QADAM",

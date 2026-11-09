@@ -876,3 +876,9 @@ html.app-locked body {
   overflow: hidden;
   overscroll-behavior: none;
 }
+
+/* A screen's own bottom bar (part page, cart) rises only after the dock has slid away (480 ms). */
+@keyframes bar-rise {
+  from { transform: translateY(110%); }
+  to { transform: translateY(0); }
+}

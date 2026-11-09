@@ -420,7 +420,8 @@
     "menu": "القائمة",
     "languageAndCurrency": "اللغة والعملة",
     "language": "اللغة",
-    "currency": "العملة"
+    "currency": "العملة",
+    "back": "رجوع"
   },
   "register": {
     "stepLabel": "الخطوة {current} / {total}",

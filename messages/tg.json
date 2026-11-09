@@ -420,7 +420,8 @@
     "menu": "Меню",
     "languageAndCurrency": "Забон ва асъор",
     "language": "Забон",
-    "currency": "Асъор"
+    "currency": "Асъор",
+    "back": "Бозгашт"
   },
   "register": {
     "stepLabel": "ҚАДАМИ {current} / {total}",

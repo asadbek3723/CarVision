@@ -420,7 +420,8 @@
     "menu": "Мәзір",
     "languageAndCurrency": "Тіл және валюта",
     "language": "Тіл",
-    "currency": "Валюта"
+    "currency": "Валюта",
+    "back": "Артқа"
   },
   "register": {
     "stepLabel": "{current} / {total}-ҚАДАМ",
