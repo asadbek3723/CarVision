@@ -57,8 +57,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       if (res.status === 401) {
-        setUser(null);
-        localStorage.removeItem(STORAGE_KEY);
+        // One 401 is not proof of a sign-out (a token refresh can race another request): ask once
+        // more before dropping the user. Anything else (503, offline) keeps them signed in.
+        await new Promise((r) => setTimeout(r, 1200));
+        const again = await fetch('/api/v1/auth/me', { cache: 'no-store' }).catch(() => null);
+        if (again?.ok) {
+          const data = await again.json().catch(() => null);
+          if (data?.success && data.user) {
+            setUser(data.user);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+          }
+          return;
+        }
+        if (again?.status === 401) {
+          setUser(null);
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
     } catch {
       // Offline: keep the cached profile

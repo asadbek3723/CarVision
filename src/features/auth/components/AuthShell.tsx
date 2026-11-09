@@ -58,32 +58,24 @@ export function GlassCard({
   shake?: number | undefined;
 }) {
   const controls = useAnimationControls();
-  const mounted = React.useRef(false);
 
-  // Intro animation once; every later "shake" only wiggles the card. The card is never re-mounted,
-  // so typed text, focus and the on-screen keyboard survive an error.
+  // Only the shake is driven by hand. The intro is declarative (initial -> animate) so it can never
+  // be skipped: a ref-guarded imperative intro was lost when React re-ran the effect (Strict Mode,
+  // a Suspense boundary re-showing the page), leaving the form stuck invisible at opacity 0.
   React.useEffect(() => {
-    if (!mounted.current) {
-      mounted.current = true;
-      void controls.start({
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        x: 0,
-        transition: { duration: 0.4, delay: 0, ease: [0.22, 1, 0.36, 1] },
-      });
-      return;
-    }
     if (shake) void controls.start({ x: [0, -10, 10, -6, 6, 0], transition: { duration: 0.45 } });
   }, [shake, controls]);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.97 }}
-      animate={controls}
-      className="glass-card w-full max-w-[390px] sm:max-w-[410px] rounded-[24px] px-6 py-6 sm:px-8 sm:py-7"
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="w-full max-w-[390px] sm:max-w-[410px]"
     >
-      {children}
+      <motion.div animate={controls} className="glass-card w-full rounded-[24px] px-6 py-6 sm:px-8 sm:py-7">
+        {children}
+      </motion.div>
     </motion.div>
   );
 }

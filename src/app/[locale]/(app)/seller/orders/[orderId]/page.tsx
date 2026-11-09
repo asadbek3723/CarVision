@@ -70,7 +70,7 @@ export default function SellerOrderDetailPage() {
   return shell(
     <>
       <div className="mb-5 flex items-center gap-3">
-        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
+        <Link href={`/${locale}/dashboard`} aria-label={t('back')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
           <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Link>
         <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{t('orderTitle')}</h1>

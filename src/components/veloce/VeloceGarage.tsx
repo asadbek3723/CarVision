@@ -14,6 +14,7 @@ import type { CatalogItemDTO } from '@/domain/catalog';
 import { SellerOnly } from '@/features/seller/components/SellerOnly';
 import { isSellerUser } from '@/features/auth/roles';
 import { buttonClasses } from '@/components/ui';
+import { useLiveTick } from '@/lib/live';
 
 /** Workshop garage: the studio's own published parts, ready to try on a customer's car. */
 /** Internal sentinel for the "all categories" chip; never shown to the user. */
@@ -36,6 +37,7 @@ export function VeloceGarage() {
   const [activeCategory, setActiveCategory] = React.useState(ALL);
 
   const isSeller = isSellerUser(user);
+  const live = useLiveTick();
 
   React.useEffect(() => {
     if (waitingForUser) return;
@@ -60,7 +62,7 @@ export function VeloceGarage() {
     return () => {
       cancelled = true;
     };
-  }, [waitingForUser, isSeller, user?.id]);
+  }, [waitingForUser, isSeller, user?.id, live]);
 
   const categories = React.useMemo(() => [ALL, ...new Set(items.map((i) => i.category))], [items]);
   const visible = items.filter((i) => activeCategory === ALL || i.category === activeCategory);

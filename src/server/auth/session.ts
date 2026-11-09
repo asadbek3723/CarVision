@@ -100,21 +100,40 @@ export async function loadSession(userId: string): Promise<Session | null> {
   return { userId, role, isBanned: Boolean(p.is_banned), shop, plan: planStateOf(shop), profile };
 }
 
-/** Returns the signed-in user's session, validated against Supabase Auth, or null. */
-export async function getSession(): Promise<Session | null> {
+export type SessionLookup = { status: 'ok'; session: Session } | { status: 'none' } | { status: 'unavailable' };
+
+/**
+ * Like getSession(), but tells "nobody is signed in" apart from "could not check right now"
+ * (Supabase slow / unreachable, a token refresh racing another request). Only the first may sign
+ * the user out; the second must keep them signed in and simply be retried later.
+ */
+export async function lookupSession(): Promise<SessionLookup> {
   try {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
       error,
     } = await supabase.auth.getUser();
-    if (error || !user) return null;
+    if (error) {
+      // Network failures and 5xx from Supabase Auth are temporary; missing / invalid sessions are not.
+      const status = (error as { status?: number }).status ?? 0;
+      const temporary = error.name === 'AuthRetryableFetchError' || status === 0 || status >= 500 || status === 429;
+      return temporary && error.name !== 'AuthSessionMissingError' ? { status: 'unavailable' } : { status: 'none' };
+    }
+    if (!user) return { status: 'none' };
     const session = await loadSession(user.id);
-    if (!session || session.isBanned) return null;
-    return session;
+    if (!session) return { status: 'unavailable' };
+    if (session.isBanned) return { status: 'none' };
+    return { status: 'ok', session };
   } catch {
-    return null;
+    return { status: 'unavailable' };
   }
+}
+
+/** Returns the signed-in user's session, validated against Supabase Auth, or null. */
+export async function getSession(): Promise<Session | null> {
+  const r = await lookupSession();
+  return r.status === 'ok' ? r.session : null;
 }
 
 /** True when the Supabase auth user carries the server-set super_admin role. */

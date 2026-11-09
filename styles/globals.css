@@ -866,3 +866,13 @@ main > section:not(#top) {
   55% { transform: scale(1.25); }
   100% { transform: scale(1); }
 }
+
+/* In-app screens: the document never scrolls (iOS cannot rubber-band it); the shell's <main> or
+   each swipeable tab scrolls on its own with overscroll off. Added by VeloceShell only, so the
+   landing and auth pages keep normal page scrolling. */
+html.app-locked,
+html.app-locked body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}

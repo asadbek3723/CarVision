@@ -45,7 +45,7 @@ export function MobileApp() {
 
           <div className="relative flex justify-center w-full min-w-0 mt-4 sm:mt-0">
             <Image
-              src="/images/golden/app-phones.jpg"
+              src="/images/golden/app-phones-v2.jpg"
               alt={t('alt')}
               sizes="(max-width: 640px) 280px, 448px"
               width={1200}

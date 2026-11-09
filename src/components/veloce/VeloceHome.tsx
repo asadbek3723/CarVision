@@ -10,6 +10,7 @@ import { useVeloceStore } from '@/context/VeloceStore';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { buttonClasses } from '@/components/ui';
+import { useLiveTick } from '@/lib/live';
 
 const FEATURES = [
   { icon: Camera, key: 'f1', items: ['f1a', 'f1b'] },
@@ -34,10 +35,11 @@ export function VeloceHome() {
   const [trendingProducts, setTrendingProducts] = React.useState<VeloceProduct[]>([]);
   const [isLoadingTrending, setIsLoadingTrending] = React.useState(true);
   const [stats, setStats] = React.useState<StoreStats | null>(null);
+  const live = useLiveTick();
 
   React.useEffect(() => {
     let isMounted = true;
-    fetch(`/api/v1/products?limit=4&locale=${locale}`)
+    fetch(`/api/v1/products?limit=4&locale=${locale}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
         if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
@@ -52,11 +54,11 @@ export function VeloceHome() {
     return () => {
       isMounted = false;
     };
-  }, [locale]);
+  }, [locale, live]);
 
   React.useEffect(() => {
     let isMounted = true;
-    fetch('/api/v1/catalog/stats')
+    fetch('/api/v1/catalog/stats', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
         if (isMounted && d.success) setStats(d.stats);
@@ -65,7 +67,7 @@ export function VeloceHome() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [live]);
 
   const statItems = stats
     ? [

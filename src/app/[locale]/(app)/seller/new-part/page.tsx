@@ -338,7 +338,7 @@ function SellerNewPartPageInner() {
               {t('addAnother')}
             </button>
           )}
-          <Link href={`/${locale}/seller?tab=dashboard`} className="rounded-full bg-white/10 px-6 py-3.5 text-sm font-semibold text-white">
+          <Link href={`/${locale}/dashboard`} className="rounded-full bg-white/10 px-6 py-3.5 text-sm font-semibold text-white">
             {t('dashboard')}
           </Link>
         </div>
@@ -352,13 +352,13 @@ function SellerNewPartPageInner() {
         isOpen={photoModal}
         onClose={() => {
           setPhotoModal(false);
-          if (photos.length === 0 && !editId) router.push(`/${locale}/seller?tab=dashboard`);
+          if (photos.length === 0 && !editId) router.push(`/${locale}/dashboard`);
         }}
         onPhoto={(d) => void addPhoto(d)}
       />
 
       <div className="mb-4 flex items-center justify-between">
-        <Link href={`/${locale}/seller?tab=dashboard`} aria-label={t('back')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
+        <Link href={`/${locale}/dashboard`} aria-label={t('back')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] text-white/80 hover:bg-white/10">
           <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
         </Link>
         <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{editId ? t('titleEdit') : t('titleNew')}</h1>

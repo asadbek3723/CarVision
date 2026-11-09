@@ -14,6 +14,7 @@ import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
 import { rememberProducts } from '@/features/shop/product-cache';
+import { useLiveTick } from '@/lib/live';
 
 interface Facets {
   brands: string[];
@@ -46,6 +47,7 @@ export function VeloceShop() {
   const [query, setQuery] = React.useState('');
   const [visible, setVisible] = React.useState(PAGE);
   const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const live = useLiveTick();
 
   React.useEffect(() => {
     let cancelled = false;
@@ -61,7 +63,7 @@ export function VeloceShop() {
     setError(false);
     (async () => {
       try {
-        const res = await fetch(`/api/v1/products?${qs}`);
+        const res = await fetch(`/api/v1/products?${qs}`, { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error('load failed');
         const next = { products: (data.products ?? []) as VeloceProduct[], facets: (data.facets ?? { brands: [], categories: [] }) as Facets };
@@ -80,7 +82,7 @@ export function VeloceShop() {
     return () => {
       cancelled = true;
     };
-  }, [filterQuery, locale]);
+  }, [filterQuery, locale, live]);
 
   // A new filter or search starts again from the first screenful.
   React.useEffect(() => setVisible(PAGE), [category, brand, query]);

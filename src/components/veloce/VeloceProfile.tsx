@@ -12,6 +12,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { BOOKING_STATUS_STYLE, type BookingView } from '@/features/shop/BookingCard';
 import { initialsOf, LANGUAGES } from '@/features/account/preferences';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
+import { useLiveTick } from '@/lib/live';
 
 /** Figma "Icon tile": 40px, radius 12, on the #222222 inner surface. */
 const tile = `grid h-10 w-10 shrink-0 place-items-center rounded-xl ${md.tile} text-white`;
@@ -76,12 +77,17 @@ export function VeloceProfile() {
   const t = useTranslations('profilePage');
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
   const { count: cartCount } = useVeloceStore();
 
   const [bookings, setBookings] = React.useState<BookingView[]>([]);
   const [bookingsLoading, setBookingsLoading] = React.useState(true);
   const [rendersUsed, setRendersUsed] = React.useState<number | null>(null);
+  const live = useLiveTick();
+  // Credits and plan come from the session: re-read them with the rest.
+  React.useEffect(() => {
+    if (live > 0) void refreshProfile();
+  }, [live, refreshProfile]);
 
   React.useEffect(() => {
     if (!user) {
@@ -114,7 +120,7 @@ export function VeloceProfile() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, live]);
 
   // Signed-out visitors are redirected by the shell; render nothing meanwhile.
   if (!user) return null;
@@ -231,7 +237,7 @@ export function VeloceProfile() {
           {isSeller && (
             <>
               <SettingsRow href={`/${locale}/cart`} icon={ShoppingBag} title={t('cartRow')} value={cartCount > 0 ? String(cartCount) : undefined} />
-              <SettingsRow href={`/${locale}/seller?tab=dashboard`} icon={LayoutDashboard} title={t('dashboard')} sub={t('manage')} />
+              <SettingsRow href={`/${locale}/dashboard`} icon={LayoutDashboard} title={t('dashboard')} sub={t('manage')} />
             </>
           )}
           <SettingsRow href={`${base}/settings`} icon={Globe} title={t('language')} value={languageName} />

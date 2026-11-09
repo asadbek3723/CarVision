@@ -11,6 +11,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { Modal, ProductImage, Sheet, buttonClasses } from '@/components/ui';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { cn } from '@/lib/utils';
+import { useLiveTick } from '@/lib/live';
 
 /** Parts left at or below this count show an "N left" warning, as marketplaces do. */
 const LOW_STOCK = 5;
@@ -57,6 +58,7 @@ export function VeloceCart() {
   const router = useRouter();
 
   const cartIdsKey = Object.keys(cart).sort().join(',');
+  const live = useLiveTick();
 
   React.useEffect(() => {
     if (!cartIdsKey) {
@@ -89,7 +91,7 @@ export function VeloceCart() {
     };
     // `loaded` only decides whether to show the skeleton; it must not refetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartIdsKey, locale]);
+  }, [cartIdsKey, locale, live]);
 
   // Lines that are no longer sold (unpublished / deleted): tell the customer and let them clear them.
   const missingIds = loaded && !isLoading ? Object.keys(cart).filter((id) => !productsMap[id]) : [];
@@ -174,12 +176,12 @@ export function VeloceCart() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-5 pb-[170px] pt-2 md:px-10 md:pt-8 lg:pb-16">
+    <div className="mx-auto flex min-h-full max-w-5xl flex-col px-5 pt-2 md:px-10 md:pt-8 lg:pb-16">
       <h1 className="pb-4 text-center font-heading text-[22px] font-semibold tracking-[-0.02em] text-white md:pb-6 md:text-3xl">
         {t('itemsCount', { count: totalUnits })}
       </h1>
 
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10">
+      <div className="pb-6 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10 lg:pb-0">
         <div className="min-w-0">
           {/* Select all | delete selected */}
           <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
@@ -331,15 +333,18 @@ export function VeloceCart() {
         </aside>
       </div>
 
-      {/* Phones and tablets: fixed checkout bar above the dock */}
-      <div className="fixed inset-x-0 bottom-[var(--dock-h,0px)] z-30 rounded-t-3xl bg-surface-1 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.7)] md:start-24 md:bottom-0 lg:hidden">
-        <div className="mx-auto max-w-5xl px-5 md:px-10">
+      {/* Phones and tablets: checkout bar pinned to the bottom of the screen, above the dock. Sticky
+          (not fixed) so it travels with this screen when the tabs are swiped. */}
+      <div className="sticky bottom-0 z-30 -mx-5 mt-auto rounded-t-3xl bg-surface-1 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.7)] md:-mx-10 lg:hidden">
+        {/* While the cart has items this bar replaces the bottom menu (the shell hides the dock), so it
+            sits at the very bottom of the screen and keeps clear of the iPhone home indicator. */}
+        <div className="px-5 pb-[env(safe-area-inset-bottom)] md:px-10">
           <p className="border-b border-white/[0.06] py-2.5 text-center text-[12px] leading-snug text-white/65 sm:text-[13px]">
             {selected.length > 0
               ? t('barInfo', { total: formatPrice(totalUSD), rest: formatPrice(atWorkshopUSD) })
               : t('nothingSelected')}
           </p>
-          <div className="flex items-center justify-between gap-3 py-3 md:pb-[max(env(safe-area-inset-bottom),14px)]">
+          <div className="flex items-center justify-between gap-3 py-3">
             <div className="min-w-0">
               <p className="truncate font-display text-[20px] font-semibold leading-tight tabular-nums text-gold-500 min-[400px]:text-[24px]">{formatPrice(depositUSD)}</p>
               <p className="truncate text-[13px] text-white/55">{t('barCount', { count: selectedUnits })}</p>

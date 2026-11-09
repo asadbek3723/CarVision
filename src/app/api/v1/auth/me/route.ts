@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { getSession, loadSession } from '@/server/auth/session';
+import { getSession, loadSession, lookupSession } from '@/server/auth/session';
 import { phoneToEmail } from '@/server/auth/phone';
 import { emailTaken, parseEmail, parsePhone, phoneTaken } from '@/server/auth/contacts';
 import { isSmsConfigured, verifyOtp } from '@/server/sms';
@@ -22,10 +22,15 @@ function shouldClaim(userId: string): boolean {
 }
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) {
+  const lookup = await lookupSession();
+  if (lookup.status === 'unavailable') {
+    // Could not check right now: the app keeps the user signed in and asks again later.
+    return NextResponse.json({ success: false, code: 'AUTH_UNAVAILABLE', error: 'Vaqtincha tekshirib bo‘lmadi' }, { status: 503 });
+  }
+  if (lookup.status === 'none') {
     return NextResponse.json({ success: false, code: 'UNAUTHENTICATED', error: 'Kirish talab qilinadi' }, { status: 401 });
   }
+  const session = lookup.session;
   if (!shouldClaim(session.userId)) return NextResponse.json({ success: true, user: session.profile });
   await createAdminClient().rpc('claim_monthly_credits', { p_user_id: session.userId });
   const fresh = (await loadSession(session.userId)) ?? session;

@@ -396,12 +396,8 @@ export function VeloceCustomize() {
     >
       {/* Always one line: the label shrinks with an ellipsis before anything wraps. */}
       <Layers className="h-[18px] w-[18px] shrink-0" />
+      {/* Just the label: an "N angles · N credits" chip here read like a price tag. */}
       <span className="min-w-0 truncate whitespace-nowrap">{t('viewResult')}</span>
-      {renderPlan.creditsNeeded > 0 && (
-        <span className="shrink-0 whitespace-nowrap rounded-full bg-black/15 px-2.5 py-1 text-[11px] font-semibold tabular-nums">
-          {t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}
-        </span>
-      )}
     </button>
   );
   const applyButtonDesktop = (
@@ -458,7 +454,7 @@ export function VeloceCustomize() {
           photo={multiAngles['front'] || photo || ''}
           angles={FIVE_CAR_ANGLES.filter((a) => a.id !== 'front' && multiAngles[a.id]).map((a) => ({ id: a.id, label: t(`angles.${a.key}`), photo: multiAngles[a.id] as string }))}
           onRetake={openCamera}
-          onClose={() => router.push(isSeller ? `/${locale}/seller?tab=dashboard` : `/${locale}/shop`)}
+          onClose={() => router.push(isSeller ? `/${locale}/dashboard` : `/${locale}/shop`)}
           onDone={confirmCar}
         />
       )}
@@ -466,7 +462,7 @@ export function VeloceCustomize() {
       {/* Top bar: back, title, photo counter */}
       <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2 lg:grid-cols-[44px_1fr] lg:gap-10 lg:pt-1">
         <Link
-          href={isSeller ? `/${locale}/seller?tab=dashboard` : `/${locale}/shop`}
+          href={isSeller ? `/${locale}/dashboard` : `/${locale}/shop`}
           aria-label={t('back')}
           className="grid h-11 w-11 place-items-center rounded-full text-white/80 transition hover:bg-white/[0.07] hover:text-white lg:bg-white/[0.02]"
         >
