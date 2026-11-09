@@ -1,7 +1,7 @@
 import type { ImageModelSpec } from './image-models';
-import type { ProviderId } from './key-pool';
+import { splitCloudflareKey, type ProviderId } from './key-pool';
 import { geminiGenerateUrls } from './google-endpoint';
-import { dataUriBytes, nearestAspectRatio, readImageDims } from './image-info';
+import { dataUriBytes, nearestAspectRatio, readImageDims, sniffImage } from './image-info';
 
 export type FailKind =
   | 'rate_limit' // 429: this key is exhausted for this model right now
@@ -57,18 +57,25 @@ type HttpOutcome = { res: Response } | { fail: AttemptResult & { ok: false } };
 
 const QUOTA_HINT = /limit:\s*0\b|free[_ ]tier|exceeded your current quota|billing|insufficient[_ ](credits|balance|quota)|payment required/i;
 
+/**
+ * Turns a provider's own error text into a sharper failure kind than the HTTP status alone gives
+ * (for example a 400 that is really a safety refusal). Returns undefined to keep the status kind.
+ */
+type RefineFail = (status: number, detail: string, kind: FailKind) => FailKind | undefined;
+
 /** POST with timeout. Turns transport errors into typed failures and non-2xx into classified ones. */
-async function post(
+async function send(
   url: string,
   headers: Record<string, string>,
-  body: unknown,
-  timeoutMs: number
+  body: BodyInit,
+  timeoutMs: number,
+  refine?: RefineFail
 ): Promise<HttpOutcome> {
   try {
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify(body),
+      headers,
+      body,
       signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) {
@@ -78,6 +85,7 @@ async function post(
       // A 429 that says the key has no allowance at all (free tier "limit: 0", no billing, no
       // credits) will never clear by waiting: treat it as out of quota, not as "busy".
       if (kind === 'rate_limit' && QUOTA_HINT.test(detail)) kind = 'quota';
+      kind = refine?.(res.status, detail, kind) ?? kind;
       // Operators need the provider's own reason in the logs (no keys or images are in it).
       console.warn(`image provider ${new URL(url).host} ${res.status} (${kind}):`, detail.replace(/\s+/g, ' ').slice(0, 300));
       return {
@@ -93,6 +101,11 @@ async function post(
     const name = (err as { name?: string } | null)?.name;
     return { fail: { ok: false, kind: name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'server' } };
   }
+}
+
+/** JSON POST (every provider except Cloudflare's multipart image models). */
+function post(url: string, headers: Record<string, string>, body: unknown, timeoutMs: number): Promise<HttpOutcome> {
+  return send(url, { 'Content-Type': 'application/json', ...headers }, JSON.stringify(body), timeoutMs);
 }
 
 const EMPTY: AttemptResult = { ok: false, kind: 'empty' };
@@ -317,9 +330,135 @@ export const openAiAdapter: Adapter = async (spec, key, input, timeoutMs) => {
   return EMPTY;
 };
 
+// ---------------------------------------------------------------------------------------------
+// Cloudflare Workers AI (FLUX.2 [dev])
+// ---------------------------------------------------------------------------------------------
+
+/** FLUX.2 on Workers AI takes at most 4 input images (`input_image_0` .. `input_image_3`). */
+const CF_MAX_INPUT_IMAGES = 4;
+/** Output size bounds: below 256 px the model refuses, above ~2 MP a render no longer fits the 44s budget. */
+const CF_MIN_EDGE = 256;
+const CF_MAX_EDGE = 2048;
+/** 1536 px long edge renders in ~18-22s and is sharp on a phone and on desktop. */
+const CF_DEFAULT_EDGE = 1536;
+
+/** Long edge of the Cloudflare output (CLOUDFLARE_IMAGE_SIZE, 512-2048, default 1536). */
+export function cloudflareLongEdge(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = Number((env['CLOUDFLARE_IMAGE_SIZE'] ?? '').trim());
+  if (!Number.isFinite(raw) || raw <= 0) return CF_DEFAULT_EDGE;
+  return Math.min(CF_MAX_EDGE, Math.max(512, Math.round(raw / 16) * 16));
+}
+
+/**
+ * Output width/height with the same aspect ratio as the customer's photo (multiples of 16, as the
+ * model needs), so the before/after slider overlays both pictures exactly.
+ */
+export function cloudflareOutputSize(dims: { width: number; height: number } | null, longEdge: number): { width: number; height: number } {
+  const ratio = dims && dims.width > 0 && dims.height > 0 ? dims.width / dims.height : 4 / 3;
+  // Extreme panoramas / slivers are clamped: the model cannot render them anyway.
+  const r = Math.min(3, Math.max(1 / 3, ratio));
+  const round16 = (v: number) => Math.min(CF_MAX_EDGE, Math.max(CF_MIN_EDGE, Math.round(v / 16) * 16));
+  return r >= 1
+    ? { width: round16(longEdge), height: round16(longEdge / r) }
+    : { width: round16(longEdge * r), height: round16(longEdge) };
+}
+
+/**
+ * FLUX.2 has no per-image captions like Gemini: the prompt itself says which input image is what,
+ * so the model never takes a part photo for the car or copies the reference render's angle.
+ */
+export function buildCloudflarePrompt(input: ChainInput, partCount: number, hasReference: boolean): string {
+  const lines: string[] = [
+    "Image 1 is the customer's real car photo: it is the photo to edit. The output must keep its exact camera angle, framing, crop, background and lighting.",
+  ];
+  for (let i = 0; i < partCount; i += 1) {
+    const name = input.partLabels?.[i]?.trim() || 'the part';
+    lines.push(`Image ${i + 2} is a reference photo of ${name}: reproduce exactly this part (shape, design, finish) on the car of image 1.`);
+  }
+  if (hasReference) {
+    lines.push(
+      `Image ${partCount + 2} is the same car already finished from another angle: use it only as a reference for how the new parts and paint look; never copy its angle or background.`
+    );
+  }
+  return `${lines.join(' ')}\n\n${input.prompt}`;
+}
+
+/** Workers AI error codes: 3030 = output flagged by the safety filter, 4006 / 3036 / "neurons" = daily free allocation used up (resets 00:00 UTC), 3040 = out of capacity. */
+export const refineCloudflareFail: RefineFail = (status, detail, kind) => {
+  if (/\b3030\b|flagged|nsfw/i.test(detail)) return 'blocked';
+  if (/\b(3036|4006)\b|neurons|daily free allocation|allocation.*exceeded|account limit/i.test(detail)) return 'quota';
+  if (/\b3040\b|capacity/i.test(detail)) return 'rate_limit';
+  if (status === 400 && /\b10000\b|authentication error|invalid api token/i.test(detail)) return 'auth';
+  if (/\b5007\b|no such model|model not found/i.test(detail)) return 'not_found';
+  return kind;
+};
+
+/** Formats FLUX.2 on Workers AI is confirmed to read. A WebP part photo is left out rather than failing the whole render. */
+const CF_INPUT_MIME = new Set(['image/jpeg', 'image/png']);
+
+function dataUriToBlob(uri: string): Blob | null {
+  const parsed = parseDataUri(uri);
+  if (!parsed) return null;
+  if (!CF_INPUT_MIME.has(parsed.mimeType.toLowerCase().replace('image/jpg', 'image/jpeg'))) return null;
+  const bytes = Buffer.from(parsed.data, 'base64');
+  return bytes.length > 0 ? new Blob([bytes], { type: parsed.mimeType }) : null;
+}
+
+/**
+ * Cloudflare Workers AI REST API. The key is `accountId:token` (see `cloudflareKeys`). FLUX.2 takes
+ * multipart form data: the prompt, up to 4 input images and the output size; it answers with
+ * `{ result: { image: <base64 JPEG> } }`.
+ */
+export const cloudflareAdapter: Adapter = async (spec, key, input, timeoutMs) => {
+  const creds = splitCloudflareKey(key);
+  if (!creds) return { ok: false, kind: 'auth' };
+
+  const car = dataUriToBlob(input.carDataUri);
+  if (!car) return { ok: false, kind: 'bad_request' };
+
+  // Car first, then as many part photos as fit, the finished other-angle render last.
+  const reference = input.referenceDataUri ? dataUriToBlob(input.referenceDataUri) : null;
+  const partSlots = CF_MAX_INPUT_IMAGES - 1 - (reference ? 1 : 0);
+  const parts: Array<{ blob: Blob; label: string | undefined }> = [];
+  input.partDataUris.slice(0, 3).forEach((uri, i) => {
+    const blob = dataUriToBlob(uri);
+    if (blob && parts.length < partSlots) parts.push({ blob, label: input.partLabels?.[i] });
+  });
+
+  const bytes = dataUriBytes(input.carDataUri);
+  const size = cloudflareOutputSize(bytes ? readImageDims(bytes) : null, cloudflareLongEdge());
+
+  const form = new FormData();
+  form.append(
+    'prompt',
+    buildCloudflarePrompt({ ...input, partLabels: parts.map((p) => p.label ?? '') }, parts.length, Boolean(reference))
+  );
+  const ext = (b: Blob) => (b.type === 'image/png' ? 'png' : b.type === 'image/webp' ? 'webp' : 'jpg');
+  form.append('input_image_0', car, `car.${ext(car)}`);
+  parts.forEach((p, i) => form.append(`input_image_${i + 1}`, p.blob, `part-${i + 1}.${ext(p.blob)}`));
+  if (reference) form.append(`input_image_${parts.length + 1}`, reference, `reference.${ext(reference)}`);
+  form.append('width', String(size.width));
+  form.append('height', String(size.height));
+
+  const url = `https://api.cloudflare.com/client/v4/accounts/${creds.accountId}/ai/run/${spec.model}`;
+  const out = await send(url, { Authorization: `Bearer ${creds.token}` }, form, timeoutMs, refineCloudflareFail);
+  if ('fail' in out) return out.fail;
+  try {
+    const data = (await out.res.json()) as { success?: boolean; result?: { image?: string } };
+    const b64 = data.result?.image;
+    if (!b64 || b64.length < 1000) return EMPTY;
+    // The real format comes from the bytes (FLUX.2 answers JPEG today, but never trust a label).
+    const type = sniffImage(Buffer.from(b64.slice(0, 64), 'base64'));
+    return type ? { ok: true, image: `data:${type};base64,${b64}` } : EMPTY;
+  } catch {
+    return EMPTY;
+  }
+};
+
 export const ADAPTERS: Record<ProviderId, Adapter> = {
   gemini: geminiAdapter,
   openrouter: openRouterAdapter,
   fal: falAdapter,
   openai: openAiAdapter,
+  cloudflare: cloudflareAdapter,
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { CompareImages, useCompareSlider } from '@/components/ui/CompareImages';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -242,20 +243,14 @@ export function VeloceCustomize() {
   // Rendered result of this side (if any): the top picture becomes a before / after comparison.
   const afterPhoto = generatedAngles[activeAngleId] || '';
   const hasAfter = Boolean(afterPhoto);
-  const [sliderPos, setSliderPos] = React.useState(50);
-  const sliderRef = React.useRef<HTMLDivElement | null>(null);
+  const slider = useCompareSlider(50);
+  const sliderPos = slider.pos;
   const stageRef = React.useRef<HTMLDivElement | null>(null);
   const toggleFullscreen = () => {
     const el = stageRef.current;
     if (!el) return;
     if (document.fullscreenElement) void document.exitFullscreen();
     else void el.requestFullscreen?.();
-  };
-  const sliderDrag = React.useRef(false);
-  const moveSlider = (clientX: number) => {
-    const rect = sliderRef.current?.getBoundingClientRect();
-    if (!rect || rect.width <= 0) return;
-    setSliderPos(Math.max(0, Math.min(((clientX - rect.left) / rect.width) * 100, 100)));
   };
   const stepAngle = (delta: number) => {
     const withPhoto = FIVE_CAR_ANGLES.filter((a) => multiAngles[a.id] || generatedAngles[a.id]);
@@ -483,40 +478,35 @@ export function VeloceCustomize() {
       <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] lg:mt-0 bg-surface-1 shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(232,191,116,0.10),transparent_70%)] lg:hidden" />
         <div
-          ref={sliderRef}
-          onPointerDown={(e) => {
-            if (!hasAfter) return;
-            sliderDrag.current = true;
-            e.currentTarget.setPointerCapture?.(e.pointerId);
-            moveSlider(e.clientX);
-          }}
-          onPointerMove={(e) => {
-            if (sliderDrag.current) moveSlider(e.clientX);
-          }}
-          onPointerUp={() => {
-            sliderDrag.current = false;
-          }}
-          onPointerCancel={() => {
-            sliderDrag.current = false;
-          }}
-          className={`relative h-full w-full overflow-hidden ${hasAfter ? 'cursor-ew-resize touch-none select-none' : ''}`}
+          ref={slider.ref}
+          {...(hasAfter
+            ? {
+                ...slider.handlers,
+                role: 'slider',
+                tabIndex: 0,
+                'aria-label': `${t('before')} / ${t('after')}`,
+                'aria-valuemin': 0,
+                'aria-valuemax': 100,
+                'aria-valuenow': Math.round(sliderPos),
+              }
+            : {})}
+          className={`relative h-full w-full overflow-hidden ${hasAfter ? 'cursor-ew-resize touch-none select-none outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70' : ''}`}
         >
           {hasAfter ? (
             <>
-              <img src={afterPhoto} alt={tr('afterAlt')} draggable={false} className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
-              <img
-                src={currentAnglePhoto}
-                alt={tr('beforeAlt')}
-                draggable={false}
-                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-                style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)`, WebkitClipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
+              <CompareImages
+                beforeUrl={currentAnglePhoto}
+                afterUrl={afterPhoto}
+                pos={sliderPos}
+                beforeAlt={tr('beforeAlt')}
+                afterAlt={tr('afterAlt')}
               />
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-y-0 z-[2] w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(232,191,116,0.9)]"
-                style={{ insetInlineStart: `${sliderPos}%`, transform: 'translateX(-50%)' }}
+                style={{ insetInlineStart: `${sliderPos}%`, marginInlineStart: '-1px' }}
               >
-                <div className="absolute start-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_24px_rgba(232,191,116,0.9)]">‹ ›</div>
+                <div className="absolute start-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_24px_rgba(232,191,116,0.9)]">‹ ›</div>
               </div>
               <span className="pointer-events-none absolute start-3 top-3 z-[3] rounded-full bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/85 backdrop-blur-md">{t('before')}</span>
               <span className="pointer-events-none absolute end-3 top-3 z-[3] rounded-full bg-gold-500 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-black">{t('after')}</span>

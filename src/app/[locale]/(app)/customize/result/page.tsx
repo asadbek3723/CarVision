@@ -28,6 +28,7 @@ import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { vibrate } from '@/features/camera/lib/fx';
 import { heroAngleId } from '@/features/visualizer/render-plan';
 import { buttonClasses } from '@/components/ui';
+import { CompareImages, useCompareSlider } from '@/components/ui/CompareImages';
 
 /** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
@@ -57,12 +58,11 @@ export default function CustomizeResultPage() {
 
   const [catalogProducts, setCatalogProducts] = React.useState<VeloceProduct[]>([]);
   const [activeAngleId, setActiveAngleId] = React.useState<string>('front-left');
-  const [sliderPos, setSliderPos] = React.useState(50);
-  const [isDragging, setIsDragging] = React.useState(false);
+  const slider = useCompareSlider(50);
+  const sliderPos = slider.pos;
   const [isVideoStudioOpen, setIsVideoStudioOpen] = React.useState(false);
   const [workshopConfirmed, setWorkshopConfirmed] = React.useState(false);
 
-  const sliderContainerRef = React.useRef<HTMLDivElement | null>(null);
 
   // Load catalog products to resolve selectedPartIds
   React.useEffect(() => {
@@ -140,35 +140,6 @@ export default function CustomizeResultPage() {
     const hero = heroAngleId(frames.map((f) => ({ id: f.id, label: f.label, photo: f.afterUrl })));
     return [...frames].sort((a, b) => (a.id === hero ? -1 : b.id === hero ? 1 : 0));
   }, [renderedAngles, generatedAngles, tc]);
-
-  // Before / After Slider Drag Logic
-  const handleSliderMove = (clientX: number) => {
-    if (!sliderContainerRef.current) return;
-    const rect = sliderContainerRef.current.getBoundingClientRect();
-    if (rect.width <= 0) return;
-    const offset = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    setSliderPos((offset / rect.width) * 100);
-  };
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    setIsDragging(true);
-    handleSliderMove(e.clientX);
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    handleSliderMove(e.clientX);
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    setIsDragging(false);
-    try {
-      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
-    } catch {
-      // ignore
-    }
-  };
 
   // Downloads one image. Cross-origin URLs ignore <a download>, so fetch it as a blob first.
   const saveImage = async (url: string, name: string) => {
@@ -262,12 +233,15 @@ export default function CustomizeResultPage() {
             {/* BEFORE / AFTER viewer: fills the free height, sides sit on the image itself */}
             <div className="overflow-hidden rounded-[28px] bg-surface-1 shadow-[0_32px_90px_-24px_rgba(0,0,0,0.85)]">
               <div
-                ref={sliderContainerRef}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-                className="relative aspect-[4/3] w-full cursor-ew-resize touch-none select-none overflow-hidden sm:aspect-[16/10] lg:aspect-auto lg:h-[calc(100dvh-210px)] lg:min-h-[480px]"
+                ref={slider.ref}
+                {...slider.handlers}
+                role="slider"
+                tabIndex={0}
+                aria-label={`${tf('rsBeforeBadge')} / ${tf('rsAfterBadge')}`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(sliderPos)}
+                className="relative aspect-[4/3] w-full cursor-ew-resize touch-none select-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70 sm:aspect-[16/10] lg:aspect-auto lg:h-[calc(100dvh-210px)] lg:min-h-[480px]"
               >
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.div
@@ -278,26 +252,13 @@ export default function CustomizeResultPage() {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <img
-                      src={afterUrl}
-                      alt={t('afterAlt')}
-                      draggable={false}
-                      className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
+                    <CompareImages
+                      beforeUrl={beforeUrl}
+                      afterUrl={afterUrl}
+                      pos={sliderPos}
+                      beforeAlt={t('beforeAlt')}
+                      afterAlt={t('afterAlt')}
                     />
-                    <div
-                      className="pointer-events-none absolute inset-0 overflow-hidden"
-                      style={{
-                        clipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
-                        WebkitClipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
-                      }}
-                    >
-                      <img
-                        src={beforeUrl}
-                        alt={t('beforeAlt')}
-                        draggable={false}
-                        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
-                      />
-                    </div>
                   </motion.div>
                 </AnimatePresence>
 
@@ -324,9 +285,9 @@ export default function CustomizeResultPage() {
                 {/* Slider handle */}
                 <div
                   className="pointer-events-none absolute inset-y-0 w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(232,191,116,0.9)]"
-                  style={{ insetInlineStart: `${sliderPos}%`, transform: 'translateX(-50%)' }}
+                  style={{ insetInlineStart: `${sliderPos}%`, marginInlineStart: '-1px' }}
                 >
-                  <div className="absolute start-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_28px_rgba(232,191,116,0.9)]">
+                  <div className="absolute start-1/2 top-1/2 grid h-11 w-11 -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_28px_rgba(232,191,116,0.9)]">
                     ‹ ›
                   </div>
                 </div>

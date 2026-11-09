@@ -7,7 +7,7 @@
  * which is enough to stop hammering exhausted keys within a warm instance.
  */
 
-export type ProviderId = 'gemini' | 'openrouter' | 'fal' | 'openai';
+export type ProviderId = 'gemini' | 'openrouter' | 'fal' | 'openai' | 'cloudflare';
 
 /** Splits comma/whitespace/newline separated key lists, drops short junk and duplicates. */
 export function parseKeys(...values: Array<string | undefined>): string[] {
@@ -32,7 +32,38 @@ export function envKeys(provider: ProviderId, env: NodeJS.ProcessEnv = process.e
       return parseKeys(env.FAL_KEYS, env.FAL_KEY, env.FAL_API_KEY);
     case 'openai':
       return parseKeys(env.OPENAI_API_KEYS, env.OPENAI_API_KEY);
+    case 'cloudflare':
+      return cloudflareKeys(env);
   }
+}
+
+const CF_ACCOUNT_ID = /^[a-f0-9]{32}$/i;
+
+/**
+ * Cloudflare Workers AI needs an account id next to every API token. Each entry of
+ * CLOUDFLARE_API_TOKENS may be `accountId:token` (several accounts) or a bare token, which then
+ * uses CLOUDFLARE_ACCOUNT_ID. A token without a valid account id is useless and is dropped, so a
+ * half-configured env never switches live generation on. Returned as `accountId:token`.
+ */
+export function cloudflareKeys(env: NodeJS.ProcessEnv = process.env): string[] {
+  const defaultAccount = (env.CLOUDFLARE_ACCOUNT_ID ?? '').trim();
+  const out: string[] = [];
+  for (const entry of parseKeys(env.CLOUDFLARE_API_TOKENS, env.CLOUDFLARE_API_TOKEN)) {
+    const at = entry.indexOf(':');
+    const account = at > 0 ? entry.slice(0, at) : defaultAccount;
+    const token = at > 0 ? entry.slice(at + 1) : entry;
+    if (CF_ACCOUNT_ID.test(account) && token.length > 8) out.push(`${account.toLowerCase()}:${token}`);
+  }
+  return [...new Set(out)];
+}
+
+/** Splits a key produced by `cloudflareKeys` back into its account id and token. */
+export function splitCloudflareKey(key: string): { accountId: string; token: string } | null {
+  const at = key.indexOf(':');
+  if (at <= 0) return null;
+  const accountId = key.slice(0, at);
+  const token = key.slice(at + 1);
+  return CF_ACCOUNT_ID.test(accountId) && token ? { accountId, token } : null;
 }
 
 const cooldowns = new Map<string, number>();

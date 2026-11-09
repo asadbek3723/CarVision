@@ -224,6 +224,13 @@ export async function POST(request: NextRequest) {
             meta: meta(),
           });
         }
+        // A failed attempt was refunded; it is finished, not "in progress". The key cannot be reused
+        // (it is stored on that row), so the client must send the retry with a new key.
+        if (dup.status === 'FAILED') {
+          return errorResponse(409, 'IDEMPOTENCY_KEY_USED', "Bu so'rov avval muvaffaqiyatsiz tugagan, kredit qaytarilgan. Qayta urinib ko'ring", {
+            creditsRemaining: currentBalance,
+          });
+        }
         return errorResponse(409, 'IN_PROGRESS', "Bu so'rov allaqachon bajarilmoqda");
       }
     }

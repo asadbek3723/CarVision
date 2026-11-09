@@ -32,6 +32,10 @@ export const STATIC_IMAGE_MODELS: ImageModelSpec[] = [
   { provider: 'fal', model: 'fal-ai/flux-pro/kontext/multi', supportsEdit: true, rank: 31 },
   { provider: 'fal', model: 'fal-ai/flux-pro/kontext', supportsEdit: true, rank: 41 },
   { provider: 'openai', model: 'gpt-image-1', supportsEdit: false, rank: 12 },
+  // Cloudflare Workers AI, FLUX.2 [dev]: real multi-reference image editing (car photo + up to 3
+  // part / reference photos), keeps the framing of the customer's photo. FLUX.2 [klein] is left out
+  // on purpose: on Workers AI it flags ordinary car photos as unsafe (error 3030) every time.
+  { provider: 'cloudflare', model: '@cf/black-forest-labs/flux-2-dev', supportsEdit: true, rank: 13 },
   // Known-good OpenRouter fallback when /images/models discovery is unavailable
   { provider: 'openrouter', model: 'google/gemini-2.5-flash-image', supportsEdit: true, rank: 15 },
 ];
@@ -110,7 +114,7 @@ export interface ModelPref {
   model: string;
 }
 
-const PROVIDER_IDS: ProviderId[] = ['gemini', 'openrouter', 'fal', 'openai'];
+const PROVIDER_IDS: ProviderId[] = ['gemini', 'openrouter', 'fal', 'openai', 'cloudflare'];
 
 /**
  * Parses `provider:model,provider:model` (for example

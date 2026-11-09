@@ -36,6 +36,7 @@ export interface DirectFitmentResponse {
     | 'gemini-ai'
     | 'openai'
     | 'openrouter'
+    | 'cloudflare-ai'
     | 'local-neural-compositor';
   /** Exact model that produced the image (e.g. "google/gemini-2.5-flash-image"). */
   modelUsed?: string | undefined;
@@ -51,6 +52,7 @@ const PROVIDER_LABEL: Record<ProviderId, Exclude<DirectFitmentResponse['provider
   openrouter: 'openrouter',
   fal: 'fal-ai',
   openai: 'openai',
+  cloudflare: 'cloudflare-ai',
 };
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -248,7 +250,7 @@ export function hasAiProvider(): boolean {
 
 /**
  * Master AI execution router. Models from every configured provider (Gemini, OpenRouter, Fal,
- * OpenAI) are ranked by quality; the strongest is tried first, every key of a
+ * OpenAI, Cloudflare Workers AI) are ranked by quality; the strongest is tried first, every key of a
  * provider is rotated on rate limits, then the next model takes over (see `image-chain.ts`).
  */
 export async function executeDirectAiFitment(
@@ -335,7 +337,7 @@ export interface VideoEnhanceRequest {
 export interface VideoEnhanceResponse {
   /** data URI of the mastered frame, or null when no provider could do it */
   image: string | null;
-  providerUsed: 'fal-ai' | 'gemini-ai' | 'none';
+  providerUsed: Exclude<DirectFitmentResponse['providerUsed'], 'local-neural-compositor'> | 'none';
   outcome?: 'no_provider' | 'failed' | 'invalid_image' | undefined;
 }
 
@@ -381,16 +383,23 @@ export async function executeVideoEnhance(req: VideoEnhanceRequest): Promise<Vid
   if (!src) return { image: null, providerUsed: 'none', outcome: 'invalid_image' };
 
   // Same ranked, key-rotating chain as the fitment render (image-to-image editors only).
+  // Cloudflare is left out unless CLOUDFLARE_VIDEO_ENHANCE=1: this call is free for the customer and
+  // one video is ~5 frames, which would eat the daily Workers AI allocation the paid renders need.
+  // Without a provider the reel still renders with the built-in grade.
   const chain = await runImageChain({
     carDataUri: src,
     partDataUris: [],
     referenceDataUri: null,
     prompt: buildVideoMasterPrompt(req),
     mode: 'enhance_for_video',
-  }, { task: 'video_frame' });
+  }, {
+    task: 'video_frame',
+    ...(process.env.CLOUDFLARE_VIDEO_ENHANCE === '1' ? {} : { excludeProviders: ['cloudflare'] }),
+  });
+  if (!chain.ok && chain.reason === 'no_provider') return { image: null, providerUsed: 'none', outcome: 'no_provider' };
   if (!chain.ok) return { image: null, providerUsed: 'none', outcome: 'failed' };
 
   const valid = validDataUri(chain.image) ?? (await providerImageToDataUri(chain.image));
   if (!valid) return { image: null, providerUsed: 'none', outcome: 'failed' };
-  return { image: valid, providerUsed: chain.provider === 'fal' ? 'fal-ai' : 'gemini-ai' };
+  return { image: valid, providerUsed: PROVIDER_LABEL[chain.provider] };
 }

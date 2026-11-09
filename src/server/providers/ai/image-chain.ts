@@ -20,7 +20,7 @@ import {
   type ProviderId,
 } from './key-pool';
 
-const ALL_PROVIDERS: ProviderId[] = ['gemini', 'openrouter', 'fal', 'openai'];
+const ALL_PROVIDERS: ProviderId[] = ['gemini', 'openrouter', 'fal', 'openai', 'cloudflare'];
 
 /**
  * Whole chain must finish inside the route's maxDuration (60s) with time left to store the picture
@@ -70,6 +70,8 @@ export interface ChainOptions {
   now?: () => number;
   /** Replaces the retry pause (tests). */
   sleep?: (ms: number) => Promise<void>;
+  /** Providers this call must not use (for example a free daily allocation kept for paid renders). */
+  excludeProviders?: ProviderId[];
 }
 
 /** True when at least one provider has a usable key. */
@@ -87,6 +89,7 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
 
   const keyMap = new Map<ProviderId, string[]>();
   for (const provider of ALL_PROVIDERS) {
+    if (opts.excludeProviders?.includes(provider)) continue;
     const keys = keysFor(provider);
     if (keys.length > 0) keyMap.set(provider, keys);
   }

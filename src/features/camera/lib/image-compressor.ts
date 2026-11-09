@@ -137,6 +137,27 @@ export async function compressFileToDataUrl(file: File, maxSide = 1600, quality 
 }
 
 /**
+ * Camera frames are stored as WebP. Not every image model accepts WebP input (Cloudflare FLUX.2 is
+ * only confirmed for JPEG / PNG), so a WebP photo is re-encoded once as a high quality JPEG before it
+ * is sent for rendering. Same pixels, same size; anything else is returned unchanged.
+ */
+export async function toJpegDataUrl(dataUrl: string, quality = 0.92): Promise<string> {
+  if (!dataUrl.startsWith('data:image/webp')) return dataUrl;
+  try {
+    const bitmap = await createImageBitmap(await (await fetch(dataUrl)).blob());
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    canvas.getContext('2d')?.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const url = canvas.toDataURL('image/jpeg', quality);
+    return url.startsWith('data:image/jpeg') ? url : dataUrl;
+  } catch {
+    return dataUrl;
+  }
+}
+
+/**
  * Makes sure a captured photo (data URL) fits the render request limit before it is sent.
  * Hosting platforms reject request bodies of about 4.5 MB, so anything bigger is re-encoded as a
  * smaller JPEG. Photos that already fit, and non data URLs, are returned unchanged.

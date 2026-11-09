@@ -5,7 +5,7 @@ import { planRender, summarize, usableReference, type AngleState, type PlanAngle
 import { visibleParts } from '@/lib/part-visibility';
 import { getCarCheckToken } from './car-check';
 import { readJson } from '@/lib/safe-json';
-import { fitDataUrlToLimit } from '@/features/camera/lib/image-compressor';
+import { fitDataUrlToLimit, toJpegDataUrl } from '@/features/camera/lib/image-compressor';
 
 export interface BuildPart {
   id: string;
@@ -77,7 +77,7 @@ export function toRequestBody(angle: PlanAngle, allParts: BuildPart[], reference
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function renderAngle(angle: PlanAngle, parts: BuildPart[], reference?: string): Promise<{ url: string; demo: boolean }> {
-  const photo = angle.photo ? await fitDataUrlToLimit(angle.photo) : angle.photo;
+  const photo = angle.photo ? await fitDataUrlToLimit(await toJpegDataUrl(angle.photo)) : angle.photo;
   for (let attempt = 0; ; attempt++) {
     const res = await fetch('/api/v1/generations', {
       method: 'POST',

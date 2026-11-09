@@ -18,6 +18,8 @@ export const maxDuration = 60;
 // Hosting platforms cut request bodies at ~4.5 MB, so a bigger limit would never be reached.
 const MAX_IMAGE_CHARS = 4_200_000;
 const PER_MINUTE = 12;
+/** The call is free for the customer but costs real AI money: a day cap stops one account from draining it. */
+const PER_DAY = 60;
 
 const schema = z
   .object({
@@ -38,8 +40,11 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Ma’lumotlar noto‘g‘ri', meta: meta() }, { status: 400 });
   }
-  const used = await recentFailures('login_key', session.userId, 'video_enhance', 60_000, true);
-  if (used >= PER_MINUTE) {
+  const [used, usedToday] = await Promise.all([
+    recentFailures('login_key', session.userId, 'video_enhance', 60_000, true),
+    recentFailures('login_key', session.userId, 'video_enhance', 24 * 60 * 60_000, true),
+  ]);
+  if (used >= PER_MINUTE || usedToday >= PER_DAY) {
     return NextResponse.json({ success: false, code: 'RATE_LIMITED', error: 'Juda ko‘p so‘rov', meta: meta() }, { status: 429 });
   }
   await recordAttempt('video_enhance', session.userId, clientIp(request), true);
