@@ -1,6 +1,7 @@
 -- CarVision: full-price purchases instead of the 3% deposit.
 -- Migration: 20261117000000_full_payment_purchases.sql   (idempotent)
 -- Requires 20261105000000_bookings.sql and 20261109000000_bookings_telegram.sql.
+-- Run the WHOLE file at once (nothing selected in the SQL editor): it is one transaction.
 --
 -- The customer now pays the whole price to the platform card and uploads the receipt.
 -- After the admin approves it the platform keeps its commission and owes the rest to the
@@ -92,6 +93,8 @@ BEGIN
     RETURN jsonb_build_object('success', true, 'status', v_new);
 END;
 $$;
+REVOKE ALL ON FUNCTION public.admin_review_booking(UUID, UUID, BOOLEAN, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_review_booking(UUID, UUID, BOOLEAN, TEXT, TEXT) TO service_role;
 
 -- 4) Customer cancels a paid purchase. Allowed only while it is UNLOCKED (not handed over),
 --    within p_window_hours of the approval, and before the workshop was paid out.
@@ -132,6 +135,8 @@ BEGIN
     RETURN jsonb_build_object('success', true, 'refundCents', v_refund);
 END;
 $$;
+REVOKE ALL ON FUNCTION public.customer_cancel_purchase(UUID, UUID, INT, INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.customer_cancel_purchase(UUID, UUID, INT, INT) TO service_role;
 
 -- 5) Admin marks the workshop payout as transferred (manual bank transfer).
 CREATE OR REPLACE FUNCTION public.admin_mark_payout(p_admin_id UUID, p_booking_id UUID, p_ip TEXT)
@@ -157,6 +162,8 @@ BEGIN
     RETURN jsonb_build_object('success', true);
 END;
 $$;
+REVOKE ALL ON FUNCTION public.admin_mark_payout(UUID, UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_mark_payout(UUID, UUID, TEXT) TO service_role;
 
 -- 6) Admin marks a customer refund as sent (manual bank transfer).
 CREATE OR REPLACE FUNCTION public.admin_mark_refund(p_admin_id UUID, p_booking_id UUID, p_ip TEXT)
@@ -181,16 +188,9 @@ BEGIN
     RETURN jsonb_build_object('success', true);
 END;
 $$;
+REVOKE ALL ON FUNCTION public.admin_mark_refund(UUID, UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_mark_refund(UUID, UUID, TEXT) TO service_role;
 
 -- 7) Commission, payout and refund columns must never reach the browser. The app reads
 --    bookings only through the server (service role), so signed-in users lose direct SELECT.
 REVOKE SELECT ON public.bookings, public.booking_items FROM authenticated;
-
-REVOKE ALL ON FUNCTION public.admin_review_booking(UUID, UUID, BOOLEAN, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.customer_cancel_purchase(UUID, UUID, INT, INT) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.admin_mark_payout(UUID, UUID, TEXT) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.admin_mark_refund(UUID, UUID, TEXT) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.admin_review_booking(UUID, UUID, BOOLEAN, TEXT, TEXT) TO service_role;
-GRANT EXECUTE ON FUNCTION public.customer_cancel_purchase(UUID, UUID, INT, INT) TO service_role;
-GRANT EXECUTE ON FUNCTION public.admin_mark_payout(UUID, UUID, TEXT) TO service_role;
-GRANT EXECUTE ON FUNCTION public.admin_mark_refund(UUID, UUID, TEXT) TO service_role;
