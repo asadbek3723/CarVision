@@ -15,6 +15,7 @@ import {
   Package,
   ShoppingBag,
   ArrowRight,
+  Check,
 } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -362,7 +363,17 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
               <span>{t('addToCart')}</span>
             </button>
           ) : (
-            <Link href={`/${locale}/cart`} className={buttonClasses({ size: 'lg', fullWidth: true, className: 'motion-safe:animate-[badge-pop_320ms_ease-out]' })}>
+            // In the cart: the button turns green and leads to the cart.
+            <Link
+              href={`/${locale}/cart`}
+              className={buttonClasses({
+                size: 'lg',
+                fullWidth: true,
+                className:
+                  'bg-emerald-500 text-[#03130B] shadow-[0_10px_30px_-8px_rgba(16,185,129,0.6)] hover:bg-emerald-400 motion-safe:animate-[badge-pop_320ms_ease-out]',
+              })}
+            >
+              <Check className="h-5 w-5" strokeWidth={2.6} />
               <span>{t('goToCart')}</span>
               <ArrowRight className="h-5 w-5 rtl:rotate-180" />
             </Link>
