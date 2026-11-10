@@ -1,19 +1,54 @@
 'use client';
 
 import * as React from 'react';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 const CHECK_EVERY_MS = 30 * 60 * 1000;
+const LAST_RELOAD_KEY = 'cv_sw_reloaded_at';
+/** A page opened this recently has nothing in it worth keeping: it may reload the moment an update lands. */
+const FRESH_PAGE_MS = 15_000;
+
+/** True when reloading now would lose nothing the person is doing (typing, a receipt, an open dialog). */
+function safeToReload(): boolean {
+  const a = document.activeElement;
+  if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
+  if (document.querySelector('[role="dialog"]')) return false;
+  if (/\/(checkout|customize|new-part)(\/|$)/.test(window.location.pathname)) return false;
+  const fields = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('textarea, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"])');
+  for (const el of fields) if (el.value && el.offsetParent !== null) return false;
+  return true;
+}
+
+function reloadOnce(): boolean {
+  try {
+    // Never twice in a row: a broken update must not trap the app in a reload loop.
+    if (Date.now() - Number(sessionStorage.getItem(LAST_RELOAD_KEY) ?? 0) < 30_000) return false;
+    sessionStorage.setItem(LAST_RELOAD_KEY, String(Date.now()));
+  } catch {
+    /* storage blocked: reload anyway, the page-age rule still limits it */
+  }
+  window.location.reload();
+  return true;
+}
 
 /**
- * Keeps an installed app from running old code. The service worker is checked for a new version
- * whenever the app comes back to the foreground (and every 30 minutes while it stays open). When a
- * new version takes over, a small card offers to reload; nothing reloads by itself, so a half-filled
- * form or a payment receipt is never lost.
+ * Keeps an installed app from running old code, without asking anyone. The service worker is checked
+ * for a new version whenever the app comes back to the foreground (and every 30 minutes). When a new
+ * version takes over, the app reloads by itself at a moment that costs nothing: right at launch, when
+ * the person returns to the app, or at their next screen change. If they are in the middle of
+ * something (typing, a dialog, checkout) it waits, and only then shows a small "Update" card.
  */
 export function SwUpdater() {
   const t = useTranslations('pwaUpdate');
+  const pathname = usePathname();
   const [ready, setReady] = React.useState(false);
+  const pending = React.useRef(false);
+
+  // The person moved to another screen while an update waits: reload into the new version now.
+  React.useEffect(() => {
+    if (pending.current && safeToReload()) reloadOnce();
+  }, [pathname]);
 
   // Opening the app clears the red dot a notification put on its icon.
   React.useEffect(() => {
@@ -32,7 +67,12 @@ export function SwUpdater() {
     // A first install also fires `controllerchange`; only a change from an older controller is an update.
     let hadController = Boolean(sw.controller);
     const onChange = () => {
-      if (hadController) setReady(true);
+      if (hadController) {
+        pending.current = true;
+        // Opened a moment ago: nothing to lose, update at once. Otherwise wait for a quiet moment.
+        if (performance.now() < FRESH_PAGE_MS && safeToReload() && reloadOnce()) return;
+        setReady(true);
+      }
       hadController = true;
     };
     sw.addEventListener('controllerchange', onChange);
@@ -43,7 +83,10 @@ export function SwUpdater() {
       void sw.getRegistration().then((r) => r?.update()).catch(() => {});
     };
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && Date.now() - lastCheck > 60_000) check();
+      if (document.visibilityState !== 'visible') return;
+      // Back in the app with an update waiting: take it now, before anything is touched.
+      if (pending.current && safeToReload() && reloadOnce()) return;
+      if (Date.now() - lastCheck > 60_000) check();
     };
     document.addEventListener('visibilitychange', onVisible);
     const id = window.setInterval(check, CHECK_EVERY_MS);
