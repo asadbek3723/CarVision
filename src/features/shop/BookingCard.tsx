@@ -9,6 +9,7 @@ import { compressForUpload, loadImageFromBlob } from '@/features/seller/lib/imag
 import { readJson } from '@/lib/safe-json';
 import { buttonClasses } from '@/components/ui';
 import { SuccessTick } from '@/components/ui/SuccessTick';
+import { useErrorToast } from '@/components/ui/Toaster';
 
 export interface BookingView {
   id: string;
@@ -105,6 +106,7 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  useErrorToast(error);
 
   const needsPayment = booking.status === 'AWAITING_PAYMENT' || booking.status === 'REJECTED';
 
@@ -198,7 +200,6 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {uploading ? t('sending') : t('send')}
           </button>
-          {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
           {booking.status === 'AWAITING_PAYMENT' && (
             <button type="button" onClick={() => void cancel(false)} className="min-h-11 text-xs text-white/40 underline hover:text-white/70 sm:min-h-0">
               {t('cancelLink')}
@@ -259,7 +260,6 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
         </p>
       )}
 
-      {error && !needsPayment && <p role="alert" className="mt-3 text-xs text-red-300">{error}</p>}
     </>
   );
 }

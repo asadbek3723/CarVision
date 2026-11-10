@@ -13,6 +13,7 @@ import { BookingCard, type BookingView, type PaymentInfo } from '@/features/shop
 import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { readJson } from '@/lib/safe-json';
 import { buttonClasses } from '@/components/ui';
+import { useErrorToast } from '@/components/ui/Toaster';
 
 const fieldCls =
   'w-full rounded-xl  bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition ';
@@ -35,6 +36,7 @@ function CheckoutPageInner() {
   const [note, setNote] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  useErrorToast(error);
 
   const [bookings, setBookings] = React.useState<BookingView[]>([]);
   const [payment, setPayment] = React.useState<PaymentInfo>({ configured: false });
@@ -243,8 +245,6 @@ function CheckoutPageInner() {
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
           {t('lockedInfo')}
         </p>
-
-        {error && <p role="alert" className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 
         <button
           type="submit"

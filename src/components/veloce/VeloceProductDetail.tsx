@@ -339,9 +339,8 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
       )}
 
       {/* Fixed bottom bar in place of the dock: one full-width button. Add to cart, then Go to cart. */}
-      <div className="cv-bottom-bar fixed inset-x-0 bottom-0 z-40 bg-surface-1/95 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md md:start-24 lg:start-28">
-        <span aria-hidden className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-transparent" />
-        <div className="mx-auto max-w-6xl px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] sm:px-5 md:px-10">
+      <div className="cv-bottom-bar fixed inset-x-0 bottom-0 z-40 bg-surface-1/50 backdrop-blur-2xl backdrop-saturate-150 [mask-image:linear-gradient(to_bottom,transparent,#000_22px)] md:start-24 lg:start-28">
+        <div className="mx-auto max-w-6xl px-4 pt-6 pb-[max(env(safe-area-inset-bottom),12px)] sm:px-5 md:px-10">
           {outOfStock ? (
             <button type="button" disabled className={buttonClasses({ size: 'lg', fullWidth: true })}>
               {t('outOfStock')}
@@ -364,7 +363,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
                 size: 'lg',
                 fullWidth: true,
                 className:
-                  'bg-emerald-500 text-[#03130B] shadow-[0_10px_30px_-8px_rgba(16,185,129,0.6)] hover:bg-emerald-400 motion-safe:animate-[badge-pop_320ms_ease-out]',
+                  'bg-[linear-gradient(180deg,#2fe86a_0%,#0fba4b_100%)] text-[#04210F] shadow-[0_12px_32px_-8px_rgba(34,230,100,0.6),inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-110 motion-safe:animate-[badge-pop_320ms_ease-out]',
               })}
             >
               <Check className="h-5 w-5" strokeWidth={2.6} />

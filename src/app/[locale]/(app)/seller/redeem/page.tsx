@@ -12,6 +12,7 @@ import { isSellerUser } from '@/features/auth/roles';
 import { LeadDetail, formatDate, type SellerLeadOrder } from '@/features/seller/components/LeadDetail';
 import { readJson } from '@/lib/safe-json';
 import { buttonClasses } from '@/components/ui';
+import { useErrorToast } from '@/components/ui/Toaster';
 
 /** Voucher terminal: the customer shows a code, the workshop looks it up and accepts it. */
 export default function SellerRedeemVoucherPage() {
@@ -28,6 +29,7 @@ export default function SellerRedeemVoucherPage() {
   const [match, setMatch] = React.useState<SellerLeadOrder | null>(null);
   const [searching, setSearching] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  useErrorToast(error);
 
   const loadRecent = React.useCallback(async () => {
     try {
@@ -117,7 +119,6 @@ export default function SellerRedeemVoucherPage() {
             <span className="hidden sm:inline">{t('check')}</span>
           </button>
         </div>
-        {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
       </form>
 
       {match && <div className="mt-5"><LeadDetail order={match} onRedeem={redeem} /></div>}

@@ -26,6 +26,8 @@ interface TabPagerProps {
    * turns round), so the shell can start changing the bottom bar before the swipe is finished.
    */
   onAim?: ((index: number) => void) | undefined;
+  /** Another screen is laid over the pager (a part's page): its tabs stop refreshing in the background. */
+  covered?: boolean | undefined;
 }
 
 function insideHorizontalScroller(el: HTMLElement, stop: HTMLElement): boolean {
@@ -65,7 +67,7 @@ const SETTLE_MIN_SPEED = 0.5;
  *   keep their own swipes, and swipes from the very edge are left to the browser's back gesture
  *   (except inside the installed app, where there is none).
  */
-export function TabPager({ tabs, index, dir, onScrub, onSettle, onAim }: TabPagerProps) {
+export function TabPager({ tabs, index, dir, onScrub, onSettle, onAim, covered = false }: TabPagerProps) {
   const router = useRouter();
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
@@ -263,7 +265,7 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle, onAim }: TabPage
               className="h-full shrink-0 overflow-y-auto overflow-x-hidden overscroll-y-none bg-surface-0 [contain:content] [touch-action:pan-y] pb-[var(--dock-h,72px)] md:pb-12"
               style={{ width: `${100 / tabs.length}%` }}
             >
-              <TabActiveContext.Provider value={active}>{mounted.has(i) ? tab.render() : null}</TabActiveContext.Provider>
+              <TabActiveContext.Provider value={active && !covered}>{mounted.has(i) ? tab.render() : null}</TabActiveContext.Provider>
             </section>
           );
         })}

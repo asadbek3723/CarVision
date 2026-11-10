@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Banknote, Calendar, Check, Clock, Loader2, Phone, ShieldCheck, XCircle } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { buttonClasses } from '@/components/ui';
+import { useErrorToast } from '@/components/ui/Toaster';
 
 export interface SellerLeadOrder {
   id: string;
@@ -43,6 +44,7 @@ export function LeadDetail({ order, onRedeem }: Props) {
   const [confirming, setConfirming] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  useErrorToast(error);
   const done = order.status === 'completed';
   const cancelled = order.status === 'cancelled';
 
@@ -128,8 +130,6 @@ export function LeadDetail({ order, onRedeem }: Props) {
           {t('cancelledHint')}
         </p>
       )}
-
-      {error && <p role="alert" className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 
       {cancelled ? null : done ? (
         <p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-emerald-300"><Check className="h-4 w-4" />{t('voucherAccepted')}</p>

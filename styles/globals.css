@@ -1108,13 +1108,3 @@ img {
     scale: 1;
   }
 }
-
-/* iPhone installed app: make the page fill the whole screen, under the home indicator too. */
-@supports (-webkit-touch-callout: none) {
-  html {
-    height: -webkit-fill-available;
-  }
-  body {
-    min-height: -webkit-fill-available;
-  }
-}

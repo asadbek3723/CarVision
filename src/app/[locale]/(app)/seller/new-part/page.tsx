@@ -17,6 +17,7 @@ import { dataUrlToBlob } from '@/features/seller/lib/photo-input';
 import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { CATALOG_CATEGORIES, ITEM_LOCALES, MAX_ITEM_IMAGES, PRICE_CURRENCIES, type CatalogCategory, type CatalogItemDTO, type ItemLocale, type ItemTranslations } from '@/domain/catalog';
 import { buttonClasses } from '@/components/ui';
+import { useErrorToast } from '@/components/ui/Toaster';
 
 interface PhotoEntry {
   id: string;
@@ -110,6 +111,7 @@ function SellerNewPartPageInner() {
 
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  useErrorToast(error);
   const [done, setDone] = React.useState(false);
   const [loadingItem, setLoadingItem] = React.useState(Boolean(editId));
 
@@ -599,8 +601,6 @@ function SellerNewPartPageInner() {
 
       </div>
       </div>
-
-      {error && <p role="alert" className="mt-5 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
 
       <div className="fixed inset-x-0 bottom-[calc(var(--dock-h,72px)+12px)] z-30 px-4 md:bottom-6 md:ps-28">
         <button

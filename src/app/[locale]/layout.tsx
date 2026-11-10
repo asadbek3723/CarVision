@@ -11,6 +11,7 @@ import { TouchGuard } from '@/components/pwa/TouchGuard';
 import { LaunchSplash } from '@/components/pwa/LaunchSplash';
 import { SwUpdater } from '@/components/pwa/SwUpdater';
 import { Haptics } from '@/components/pwa/Haptics';
+import { Toaster } from '@/components/ui/Toaster';
 import { IOS_STARTUP_IMAGES } from '@/lib/ios-splash';
 import { APP_THEME } from '@/lib/pwa-theme';
 import { JsonLd, organizationLd, websiteLd } from '@/lib/seo/jsonld';
@@ -116,6 +117,7 @@ export default async function LocaleLayout({
                 <TouchGuard />
                 <Haptics />
                 <SwUpdater />
+                <Toaster />
                 <LaunchSplash />
               </VeloceStoreProvider>
             </CurrencyProvider>

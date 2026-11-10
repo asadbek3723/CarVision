@@ -63,6 +63,7 @@ const CATEGORIES = [
 import { composeCarAnglePhotorealistic } from '@/lib/automotive-compositor';
 import { buttonClasses } from '@/components/ui';
 import { liveVersion, useLiveTick } from '@/lib/live';
+import { useErrorToast } from '@/components/ui/Toaster';
 
 /** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
@@ -120,6 +121,7 @@ export function VeloceCustomize() {
   }, [captureStamp]);
   const [showProgress, setShowProgress] = React.useState(false);
   const [applyError, setApplyError] = React.useState<string | null>(null);
+  useErrorToast(applyError);
   const render = useRenderBuild(refreshProfile);
   const isApplying = render.running;
   // Shows the car check again (server no longer accepts it, or the remembered car is gone).
@@ -648,15 +650,6 @@ export function VeloceCustomize() {
         </div>
       </aside>
       </div>
-
-      {applyError && (
-        <div role="alert" className="mt-4 flex items-start justify-between gap-3 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          <span>{applyError}</span>
-          <button type="button" onClick={() => setApplyError(null)} className="shrink-0 text-xs font-semibold text-red-100/80 hover:text-white">
-            {t('close')}
-          </button>
-        </div>
-      )}
 
       {/* Category tabs */}
       <div role="tablist" aria-label={t('subtitle')} className="mt-2 flex shrink-0 touch-pan-x gap-6 overflow-x-auto overflow-y-hidden overscroll-none px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">

@@ -265,10 +265,22 @@ export function VeloceShell({ children }: VeloceShellProps) {
     return () => document.documentElement.classList.remove('app-locked');
   }, []);
   // A newly opened screen starts at its top (the pager keeps each tab's own position).
-  const mainRef = React.useRef<HTMLElement | null>(null);
+  const overlayRef = React.useRef<HTMLDivElement | null>(null);
   React.useLayoutEffect(() => {
-    if (!pager && mainRef.current) mainRef.current.scrollTop = 0;
+    if (!pager && overlayRef.current) overlayRef.current.scrollTop = 0;
   }, [pathname, pager]);
+  // A screen opened on top of the tabs keeps the tab it came from alive underneath, so a back swipe
+  // shows that tab sliding in instead of an empty page.
+  const lastTabRef = React.useRef(-1);
+  if (pager) lastTabRef.current = tabIndex;
+  const underTab = !pager && user && lastTabRef.current >= 0 && lastTabRef.current < tabs.length ? lastTabRef.current : -1;
+  const underRef = React.useRef<HTMLDivElement | null>(null);
+  const shadeRef = React.useRef<HTMLDivElement | null>(null);
+  const headerRef = React.useRef<HTMLElement | null>(null);
+  const headerH = React.useRef(0);
+  React.useLayoutEffect(() => {
+    if (!hideHeader && headerRef.current) headerH.current = headerRef.current.offsetHeight;
+  });
   // Dock selection ("liquid glass").
   const routeCol = isHome ? 0 : (isSeller ? isGarage : isCart) ? 1 : isShop ? 3 : isProfile || isDashboard ? 4 : null;
   const indicatorRef = React.useRef<LiquidIndicatorHandle | null>(null);
@@ -326,15 +338,19 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
   // Installed app: swipe from the edge to leave a screen opened on top of the tabs.
   useEdgeBack(
-    mainRef,
+    overlayRef,
     !pager,
     () => (previousPath() ? router.back() : router.push(`/${locale}/seller`)),
-    isRtl
+    isRtl,
+    underRef,
+    shadeRef,
+    // The tab underneath is shown only when going back really lands on it.
+    () => underTab >= 0 && (previousPath() ?? '').split('?')[0] === tabs[underTab]?.href
   );
 
   return (
     <div
-      className="fixed inset-0 flex flex-col overflow-hidden md:ps-24 lg:ps-28 bg-surface-0 text-foreground"
+      className="flex h-[100dvh] flex-col overflow-hidden md:ps-24 lg:ps-28 bg-surface-0 text-foreground"
       ref={rootRef}
       data-bar-ready={barReady ? 'true' : 'false'}
       onClick={onShellClick}
@@ -387,6 +403,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
       {/* Sticky Header */}
       <header
+        ref={headerRef}
         className={`relative z-30 grid shrink-0 grid-cols-[auto_1fr_auto] items-center bg-surface-0 px-5 pb-4 pt-[max(env(safe-area-inset-top),16px)] md:px-10 md:pt-4 ${
           hideHeader ? 'max-md:hidden' : ''
         }`}
@@ -509,25 +526,36 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
       {/* Main Content */}
       {/* Phones: room for the dock only (measured, hidden behind it); each page keeps its own small bottom gap. */}
-      <main
-        ref={mainRef}
-        className={
-          pager
-            ? 'relative min-h-0 flex-1'
-            : `min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-none [touch-action:pan-y] ${hideDock ? 'md:pb-0' : 'pb-[var(--dock-h,72px)] md:pb-12'}`
-        }
-      >
-        {pager ? (
-          <TabPager
-            tabs={tabs}
-            index={tabIndex}
-            dir={isRtl ? -1 : 1}
-            onScrub={onPagerScrub}
-            onSettle={onPagerSettle}
-            onAim={onPagerAim}
-          />
-        ) : (
-          children
+      <main className="relative min-h-0 flex-1 overflow-hidden">
+        {/* The tabs. While a part's page (or checkout...) is open they stay mounted underneath, hidden, so a back swipe can show them. */}
+        {(pager || underTab >= 0) && (
+          <div
+            ref={underRef}
+            className="absolute inset-x-0 bottom-0"
+            style={{ top: pager ? 0 : headerH.current, ...(pager ? {} : { visibility: 'hidden' as const }) }}
+            {...(pager ? {} : { inert: true, 'aria-hidden': true })}
+          >
+            <TabPager
+              tabs={tabs}
+              index={pager ? tabIndex : underTab}
+              dir={isRtl ? -1 : 1}
+              onScrub={onPagerScrub}
+              onSettle={onPagerSettle}
+              onAim={onPagerAim}
+              covered={!pager}
+            />
+            {/* Dark veil that lifts as the screen on top slides away. */}
+            <div ref={shadeRef} aria-hidden className="pointer-events-none absolute inset-0 bg-black opacity-0" />
+          </div>
+        )}
+        {/* Every other screen: scrolls on its own, laid over the tabs. */}
+        {!pager && (
+          <div
+            ref={overlayRef}
+            className={`absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-y-none bg-surface-0 [touch-action:pan-y] ${hideDock ? 'md:pb-0' : 'pb-[var(--dock-h,72px)] md:pb-12'}`}
+          >
+            {children}
+          </div>
         )}
       </main>
 

@@ -9,6 +9,7 @@ import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { LuxuryQrCode } from '@/components/ui/LuxuryQrCode';
 import { LiveCamera } from './LiveCamera';
 import { fileToPhotoDataUrl } from '../lib/photo-input';
+import { useErrorToast } from '@/components/ui/Toaster';
 
 interface Props {
   isOpen: boolean;
@@ -40,6 +41,7 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
   const [status, setStatus] = React.useState<'waiting' | 'connected' | 'captured'>('waiting');
   const [copied, setCopied] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  useErrorToast(error);
   const [busy, setBusy] = React.useState(false);
   const [dragging, setDragging] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
@@ -124,7 +126,6 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
         <button type="button" onClick={onClose} aria-label={t('close')} className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white">
           <X className="h-5 w-5" />
         </button>
-        {error && <p role="alert" className="absolute inset-x-4 top-16 rounded-xl bg-red-500/90 px-4 py-3 text-center text-sm text-white">{error}</p>}
       </div>
     );
   }
@@ -191,7 +192,6 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
             </button>
           </section>
         </div>
-        {error && <p role="alert" className="mt-6 text-center text-sm text-red-300">{error}</p>}
       </div>
     </div>
   );
