@@ -88,46 +88,56 @@ export function MyCarPicker() {
     setOpen(false);
   };
 
-  const quiet = 'text-[#8C8C8C] transition hover:text-white';
-
   return (
     <>
-      {/* A banner: asks for the car, or shows the chosen one (name, year) with a way to change or remove it. */}
-      <div
-        className={`relative flex min-w-0 items-center gap-3.5 overflow-hidden rounded-[20px] border p-3.5 transition ${
-          car ? `${md.line} ${md.card}` : 'border-[#FDC902]/25 bg-[linear-gradient(135deg,rgba(253,201,2,0.13),rgba(253,201,2,0.025)_70%)]'
-        }`}
-      >
-        {!car && <span aria-hidden className="pointer-events-none absolute -end-8 -top-10 h-28 w-28 rounded-full bg-[#FDC902]/15 blur-2xl" />}
+      {/* Banner: a dark car photo that dissolves into blur on the left, where the text sits. */}
+      <div className="relative isolate overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#0A0B0F] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.85)]">
+        <img
+          src="/assets/car-banner-v1.webp"
+          alt=""
+          width={1536}
+          height={640}
+          draggable={false}
+          className="pointer-events-none absolute inset-0 -z-10 h-full w-full select-none object-cover object-right"
+        />
+        {/* Keeps the text readable and melts the photo into the card on the text side. */}
+        <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(90deg,#0A0B0F_0%,rgba(10,11,15,0.82)_38%,rgba(10,11,15,0)_78%)]" />
+        <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-[#D4AE62]/50 to-transparent" />
+
         <button
           type="button"
           onClick={openDialog}
           aria-label={car ? t('change') : t('chip')}
-          className="group relative flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FDC902]/60"
+          className="group relative flex min-h-[150px] w-full flex-col items-start justify-center gap-1 px-5 py-5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FDC902]/60"
         >
-          <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[14px] ${car ? 'bg-[#FDC902]/12 text-[#FDC902]' : 'bg-[#FDC902] text-[#0A0A0A]'}`}>
-            <Car className="h-6 w-6" strokeWidth={1.8} />
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#D4AE62]">
+            <Car className="h-3.5 w-3.5" strokeWidth={2} />
+            {car ? t('yourCar') : t('eyebrow')}
           </span>
-          <span className="min-w-0 flex-1">
-            {car ? (
-              <>
-                <span className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-[10px] font-medium uppercase tracking-[0.16em] text-[#8C8C8C]">{t('yourCar')}</span>
-                  {car.year && <span className="shrink-0 rounded-full bg-[#FDC902]/15 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-[#FDC902]">{car.year}</span>}
-                </span>
-                <span className="mt-1 block truncate text-[16px] font-semibold leading-tight text-white">{car.label}</span>
-              </>
-            ) : (
-              <>
-                <span className="block text-[16px] font-semibold leading-tight text-white">{t('chip')}</span>
-                <span className="mt-1 block text-[12.5px] leading-snug text-[#A8A8A8]">{t('hint')}</span>
-              </>
-            )}
+          {car ? (
+            <span className="mt-1 flex max-w-[78%] flex-col items-start gap-1.5">
+              <span className="line-clamp-2 text-[22px] font-semibold leading-[1.15] tracking-[-0.01em] text-white">{car.label}</span>
+              {car.year && <span className="rounded-full border border-[#FDC902]/35 bg-[#FDC902]/10 px-2.5 py-0.5 text-[12px] font-semibold tabular-nums text-[#FDC902]">{car.year}</span>}
+            </span>
+          ) : (
+            <>
+              <span className="mt-1 block max-w-[62%] text-[22px] font-semibold leading-[1.15] tracking-[-0.01em] text-white">{t('chip')}</span>
+              <span className="mt-1 block max-w-[58%] text-[12.5px] leading-snug text-[#A9A9AE]">{t('hint')}</span>
+            </>
+          )}
+          <span className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.08] ps-4 pe-3 text-[13px] font-semibold text-white backdrop-blur-md transition group-hover:bg-white/[0.14]">
+            {car ? t('change') : t('choose')}
+            <ChevronRight className="h-4 w-4 text-[#FDC902] rtl:rotate-180" />
           </span>
-          <ChevronRight className="h-5 w-5 shrink-0 text-[#FDC902] transition group-hover:translate-x-0.5 rtl:rotate-180" />
         </button>
+
         {car && (
-          <button type="button" onClick={() => setCar(null)} aria-label={t('removeCar')} className={`relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/[0.06] ${quiet}`}>
+          <button
+            type="button"
+            onClick={() => setCar(null)}
+            aria-label={t('removeCar')}
+            className="absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-black/35 text-white/80 backdrop-blur-md transition hover:bg-black/55 hover:text-white"
+          >
             <X className="h-4 w-4" />
           </button>
         )}
