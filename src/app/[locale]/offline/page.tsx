@@ -20,7 +20,7 @@ export default function OfflinePage() {
   const params = useParams();
   const c = COPY[(params?.['locale'] as string) ?? 'uz'] ?? COPY['uz']!;
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#07080B] p-6 text-center">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-[#07080B] p-6 text-center">
       <span className="flex h-20 w-20 items-center justify-center rounded-full bg-gold-500/15 text-gold-500"><WifiOff className="h-9 w-9" /></span>
       <h1 className="text-balance font-heading text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">{c.title}</h1>
       <p className="max-w-xs text-sm text-white/55">{c.body}</p>

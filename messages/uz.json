@@ -1,4 +1,6 @@
 {
+  "push": {"title": "Bildirishnomalar", "onSub": "Buyurtma holati haqida xabar olasiz", "offSub": "Buyurtma holati bu qurilmaga xabar qilinmaydi", "blocked": "Brauzer sozlamalarida ruxsat bering", "needsInstall": "Avval ilovani Bosh ekranga qo‘shing"},
+  "pwaUpdate": {"title": "Yangi versiya tayyor", "body": "Ilova yangilandi. Qayta yuklab, yangi imkoniyatlardan foydalaning.", "reload": "Yangilash", "later": "Keyinroq"},
   "common": {
     "appName": "CarVision",
     "save": "Saqlash",

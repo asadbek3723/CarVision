@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/server';
 import { centsToUsd } from '@/domain/catalog';
+import { notifyUser } from '@/server/push';
 import { CANCEL_REFUND_BPS, CANCEL_WINDOW_HOURS, cancelRefundCents } from '@/domain/money';
 
 type Db = ReturnType<typeof createAdminClient>;
@@ -42,8 +43,38 @@ export async function reviewBooking(
   });
   const r = data as { success?: boolean; error?: string; status?: string } | null;
   if (error || !r) return { ok: false, error: 'FAILED' };
-  if (r.success) return { ok: true, status: r.status ?? '' };
+  if (r.success) {
+    await pushBookingEvent(db, args.bookingId, args.approve ? 'approved' : 'rejected');
+    return { ok: true, status: r.status ?? '' };
+  }
   return { ok: false, error: r.error === 'INVALID_STATE' ? 'INVALID_STATE' : 'NOT_FOUND' };
+}
+
+/**
+ * Tells the people involved in an order about a change, by push notification (best effort: it never
+ * throws and never blocks the change itself). `approved` also tells the workshop it has a new paid order.
+ */
+export async function pushBookingEvent(db: Db, bookingId: string, event: 'approved' | 'rejected' | 'refund_done' | 'payout_paid'): Promise<void> {
+  try {
+    const { data: b } = await db.from('bookings').select('user_id, shop_id').eq('id', bookingId).maybeSingle();
+    if (!b) return;
+    const customerPath = `/profile/bookings/${bookingId}`;
+    if (event === 'approved') {
+      await notifyUser(b.user_id as string, 'order_approved', { path: customerPath, tag: `order-${bookingId}` });
+    } else if (event === 'rejected') {
+      await notifyUser(b.user_id as string, 'order_rejected', { path: customerPath, tag: `order-${bookingId}` });
+    } else if (event === 'refund_done') {
+      await notifyUser(b.user_id as string, 'refund_done', { path: customerPath, tag: `order-${bookingId}` });
+    }
+    if (event === 'approved' || event === 'payout_paid') {
+      const { data: shop } = await db.from('shops').select('owner_id').eq('id', b.shop_id as string).maybeSingle();
+      if (shop?.owner_id) {
+        await notifyUser(shop.owner_id as string, event === 'approved' ? 'new_paid_order' : 'payout_paid', { path: `/seller/orders/${bookingId}`, tag: `shop-order-${bookingId}` });
+      }
+    }
+  } catch (err) {
+    console.warn('pushBookingEvent failed', err);
+  }
 }
 
 export type BookingStatus = 'AWAITING_PAYMENT' | 'PENDING_ADMIN_APPROVAL' | 'UNLOCKED' | 'REDEEMED' | 'REJECTED' | 'CANCELLED';

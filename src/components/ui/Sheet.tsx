@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,7 @@ function Dialog({ placement, open, onClose, title, description, footer, size = '
   const reduce = useReducedMotion();
   const desktop = useIsDesktop();
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const dragControls = useDragControls();
   const titleId = React.useId();
   const descId = React.useId();
   const [mounted, setMounted] = React.useState(false);
@@ -132,14 +133,41 @@ function Dialog({ placement, open, onClose, title, description, footer, size = '
             animate={shown}
             exit={hidden}
             transition={reduce ? { duration: 0.15 } : SPRING}
+            // Phone sheets follow the finger down from the handle / title and close when thrown or pulled far enough.
+            {...(asSheet && !reduce
+              ? {
+                  drag: 'y' as const,
+                  dragControls,
+                  dragListener: false,
+                  dragConstraints: { top: 0, bottom: 0 },
+                  dragElastic: { top: 0.04, bottom: 0.7 },
+                  onDragEnd: (_: unknown, info: { offset: { y: number }; velocity: { y: number } }) => {
+                    if (info.offset.y > 110 || info.velocity.y > 650) onClose();
+                  },
+                }
+              : {})}
             className={cn(
               'relative flex w-full flex-col bg-surface-1 shadow-e4 focus:outline-none',
               asSheet ? 'max-h-[92dvh] rounded-t-xl' : cn('max-h-[88dvh] rounded-xl', widths[size]),
               className
             )}
           >
-            {asSheet && <span aria-hidden="true" className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-neutral-700" />}
-            <div className="flex items-start justify-between gap-4 px-5 pt-4 sm:px-7 sm:pt-6">
+            {asSheet && (
+              <div
+                aria-hidden="true"
+                data-no-haptic
+                className="flex h-7 shrink-0 cursor-grab touch-none items-center justify-center"
+                onPointerDown={(e) => dragControls.start(e)}
+              >
+                <span className="h-1 w-10 rounded-full bg-neutral-700" />
+              </div>
+            )}
+            <div
+              className={cn('flex items-start justify-between gap-4 px-5 pt-1 sm:px-7 sm:pt-6', asSheet && 'touch-none')}
+              onPointerDown={(e) => {
+                if (asSheet && !(e.target as HTMLElement).closest('button, a, input')) dragControls.start(e);
+              }}
+            >
               <div className={cn('min-w-0 pt-2', hideTitle && 'sr-only')}>
                 <h2 id={titleId} className="text-lg font-semibold tracking-[-0.01em] text-foreground">
                   {title}

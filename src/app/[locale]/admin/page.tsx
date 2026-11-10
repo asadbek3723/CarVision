@@ -10,7 +10,7 @@ import { AdminApp } from '@/components/admin/AdminApp';
 import { buttonClasses } from '@/components/ui';
 
 function Centered({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-screen flex-col items-center justify-center bg-[#07080B] p-6 text-center">{children}</div>;
+  return <div className="flex min-h-dvh flex-col items-center justify-center bg-[#07080B] p-6 text-center">{children}</div>;
 }
 
 export default function SuperAdminPage() {

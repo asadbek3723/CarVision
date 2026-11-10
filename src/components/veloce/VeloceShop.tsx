@@ -14,7 +14,7 @@ import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
 import { rememberProducts } from '@/features/shop/product-cache';
-import { useLiveTick } from '@/lib/live';
+import { liveVersion, useLiveTick } from '@/lib/live';
 
 interface Facets {
   brands: string[];
@@ -48,6 +48,10 @@ export function VeloceShop() {
   const [visible, setVisible] = React.useState(PAGE);
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const live = useLiveTick();
+  // Parts that appeared while the shop was open (published by a workshop): they rise in with a gold glow.
+  const knownIds = React.useRef<Set<string> | null>(null);
+  const lastFilter = React.useRef(filterQuery);
+  const [freshIds, setFreshIds] = React.useState<Set<string>>(() => new Set());
 
   React.useEffect(() => {
     let cancelled = false;
@@ -63,13 +67,26 @@ export function VeloceShop() {
     setError(false);
     (async () => {
       try {
-        const res = await fetch(`/api/v1/products?${qs}`, { cache: 'no-store' });
+        const res = await fetch(`/api/v1/products?${qs}&v=${liveVersion()}`, { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error('load failed');
         const next = { products: (data.products ?? []) as VeloceProduct[], facets: (data.facets ?? { brands: [], categories: [] }) as Facets };
         listCache.set(qs, next);
         rememberProducts(locale, next.products);
         if (!cancelled) {
+          const ids = new Set(next.products.map((x) => x.id));
+          // A changed filter starts a new baseline: it must not light up every card it newly shows.
+          const filterChanged = filterQuery !== lastFilter.current;
+          const before = filterChanged ? null : knownIds.current;
+          if (before) {
+            const added = [...ids].filter((id) => !before.has(id));
+            if (added.length > 0 && added.length <= 6) {
+              setFreshIds(new Set(added));
+              window.setTimeout(() => setFreshIds(new Set()), 2600);
+            }
+          }
+          knownIds.current = ids;
+          lastFilter.current = filterQuery;
           setProducts(next.products);
           setFacets(next.facets);
         }
@@ -204,7 +221,7 @@ export function VeloceShop() {
           <div className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-x-6 md:gap-y-10 xl:grid-cols-4">
             {shown.map((p, idx) => (
               <React.Fragment key={p.id}>
-                <MinimalProductCard p={p} i={idx} />
+                <MinimalProductCard p={p} i={idx} isNew={freshIds.has(p.id)} />
                 {/* Phones: the advertising banner after the first two cards */}
                 {idx === Math.min(1, shown.length - 1) && <ShopBanner className="col-span-full md:hidden" />}
               </React.Fragment>

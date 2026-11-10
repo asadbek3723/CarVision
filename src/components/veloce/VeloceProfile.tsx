@@ -12,6 +12,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { BOOKING_STATUS_STYLE, type BookingView } from '@/features/shop/BookingCard';
 import { initialsOf, LANGUAGES } from '@/features/account/preferences';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
+import { PushToggle } from '@/components/pwa/PushToggle';
 import { useLiveTick } from '@/lib/live';
 
 /** Figma "Icon tile": 40px, radius 12, on the #222222 inner surface. */
@@ -240,6 +241,9 @@ export function VeloceProfile() {
               <SettingsRow href={`/${locale}/dashboard`} icon={LayoutDashboard} title={t('dashboard')} sub={t('manage')} />
             </>
           )}
+          <li>
+            <PushToggle />
+          </li>
           <SettingsRow href={`${base}/settings`} icon={Globe} title={t('language')} value={languageName} />
           <SettingsRow href={`/${locale}#faq`} icon={CircleHelp} title={t('help')} last />
         </ul>

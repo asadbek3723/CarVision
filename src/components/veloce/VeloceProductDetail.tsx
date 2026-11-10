@@ -22,6 +22,7 @@ import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { buttonClasses, ProductImage } from '@/components/ui';
+import { PRODUCT_IMAGE_VT, viewTransitionReady } from '@/lib/view-transition';
 import { cachedOthers, cachedProduct, rememberProducts } from '@/features/shop/product-cache';
 import { previousPath } from '@/lib/nav-history';
 
@@ -58,6 +59,10 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
   const [related, setRelated] = React.useState<VeloceProduct[]>(() => cachedOthers(locale, id, 4));
   const [isLoading, setIsLoading] = React.useState(() => !(initialProduct ?? cachedProduct(locale, id)));
   const [activeImg, setActiveImg] = React.useState(0);
+  // The page is on screen: let a card-to-page photo transition play.
+  React.useLayoutEffect(() => {
+    if (product) viewTransitionReady();
+  }, [product]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -209,7 +214,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
       <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
         <div className="lg:col-span-6">
         {/* Image Visual */}
-        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#11131A] shadow-[0_24px_60px_rgba(0,0,0,0.65)]">
+        <div style={{ viewTransitionName: PRODUCT_IMAGE_VT }} className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#11131A] shadow-[0_24px_60px_rgba(0,0,0,0.65)]">
           {product.swatch ? (
             <div
               className="h-full w-full"

@@ -62,6 +62,7 @@ const CATEGORIES = [
 
 import { composeCarAnglePhotorealistic } from '@/lib/automotive-compositor';
 import { buttonClasses } from '@/components/ui';
+import { liveVersion, useLiveTick } from '@/lib/live';
 
 /** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
@@ -137,18 +138,24 @@ export function VeloceCustomize() {
     reopenCarGate();
   }, [render.running, render.states, reopenCarGate]);
 
-  // Load catalog products
+  // Load catalog products (and quietly again whenever the server says the catalog changed)
+  const liveTick = useLiveTick();
+  const catalogLoadedOnce = React.useRef(false);
   React.useEffect(() => {
     let isMounted = true;
     const fetchCatalog = async () => {
       try {
-        setIsLoadingCatalog(true);
+        if (!catalogLoadedOnce.current) setIsLoadingCatalog(true);
         // Workshop owners see only their own garage parts; regular users see every shop's parts that fit their car.
-        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120&locale=${locale}${filterQuery ? `&${filterQuery}` : ''}`;
+        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120&locale=${locale}${filterQuery ? `&${filterQuery}` : ''}&v=${liveVersion()}`;
         const res = await fetch(endpoint, { cache: 'no-store' });
         const data = await res.json();
         if (isMounted) {
-          setCatalogProducts(data.success && Array.isArray(data.products) ? data.products : []);
+          // A failed silent refresh keeps what is already on screen.
+          if (data.success && Array.isArray(data.products)) {
+            catalogLoadedOnce.current = true;
+            setCatalogProducts(data.products);
+          } else if (!catalogLoadedOnce.current) setCatalogProducts([]);
         }
       } catch (err) {
         console.warn('Could not load catalog:', err);
@@ -161,7 +168,7 @@ export function VeloceCustomize() {
     return () => {
       isMounted = false;
     };
-  }, [isSeller, filterQuery, locale]);
+  }, [isSeller, filterQuery, locale, liveTick]);
 
   // One part per slot: a car can't wear two sets of wheels or two paint jobs, so picking a part
   // replaces the one already chosen in the same slot.

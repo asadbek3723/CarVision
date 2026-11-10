@@ -52,7 +52,7 @@ export default function PhoneCapturePage() {
 
   if (lastShot) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#07080B] p-6 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-[#07080B] p-6 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
           <Check className="h-8 w-8" />
         </div>

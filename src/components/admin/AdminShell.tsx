@@ -31,7 +31,7 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
   const active = NAV.find((n) => n.id === activeTab) ?? NAV[0]!;
 
   return (
-    <div className="min-h-screen bg-[#07080B] text-white md:flex">
+    <div className="min-h-dvh bg-[#07080B] text-white md:flex">
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between bg-surface-1 p-4 md:flex">
         <div>

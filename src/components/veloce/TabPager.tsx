@@ -45,8 +45,13 @@ const FLICK_PX_PER_MS = 0.35;
 const SLOP_PX = 8;
 /** iOS / Android browsers own swipes that start at the screen edge (back / forward). */
 const EDGE_PX = 22;
-// Calm, iOS-like deceleration (no snap at the start, long soft landing).
-const EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
+// iOS-like ease-out: starts at the finger's own speed (no snap at the start) and lands softly.
+const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+/** Settling time bounds (ms): about what an iPhone takes for a page swipe. */
+const SETTLE_MIN_MS = 280;
+const SETTLE_MAX_MS = 420;
+/** Below this finger speed (px/ms) the landing is timed as if the finger had moved at it. */
+const SETTLE_MIN_SPEED = 0.6;
 
 /**
  * The bottom-dock tabs laid out side by side like a native app: swipe left / right to move between
@@ -121,8 +126,8 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle, onAim }: TabPage
     currentRef.current = index;
     setCurrent(index);
     mount(index);
-    // Slow and smooth like iOS, so the eye can follow the screens sliding past (a longer trip takes a little longer).
-    place(index, 0, Math.min(950 + distance * 110, 1250));
+    // A dock tap glides there like an iPhone tab switch; a longer trip takes a little longer.
+    place(index, 0, Math.min(380 + (distance - 1) * 50, 480));
   }, [index, mount, place]);
 
   // Neighbours load quietly after the first paint, so the first swipe already shows them.
@@ -133,11 +138,16 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle, onAim }: TabPage
     else window.setTimeout(run, 600);
   }, [current, mount]);
 
-  const settle = (target: number, velocity: number) => {
+  /**
+   * `remaining` is how many pixels the track still has to travel. The time is that distance at the
+   * finger's own release speed, so the page keeps moving the way the finger was: a flick lands fast,
+   * a slow drop takes a little longer, and nothing is slower than a native swipe.
+   */
+  const settle = (target: number, velocity: number, remaining: number) => {
     const from = currentRef.current;
     const clamped = Math.max(0, Math.min(tabs.length - 1, target));
-    // Faster flicks finish a little faster, like a native pager, but never in a blink.
-    const ms = Math.round(Math.max(780, Math.min(1000, 1000 - Math.abs(velocity) * 160)));
+    const speed = Math.max(Math.abs(velocity), SETTLE_MIN_SPEED);
+    const ms = Math.round(Math.max(SETTLE_MIN_MS, Math.min(SETTLE_MAX_MS, remaining / speed)));
     currentRef.current = clamped;
     place(clamped, 0, ms);
     onSettle?.(clamped);
@@ -218,7 +228,8 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle, onAim }: TabPage
     const w = widthRef.current || 1;
     const step = -Math.sign(g.dx) * dir;
     const committed = !cancelled && (Math.abs(g.dx) > w * COMMIT_RATIO || (Math.abs(v) > FLICK_PX_PER_MS && Math.sign(v) === Math.sign(g.dx)));
-    settle(committed ? currentRef.current + step : currentRef.current, v);
+    const travelled = Math.min(Math.abs(g.dx), w);
+    settle(committed ? currentRef.current + step : currentRef.current, v, committed ? w - travelled : travelled);
   };
 
   // A swipe must not end as a tap on whatever was under the finger.

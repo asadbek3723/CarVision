@@ -68,7 +68,7 @@ function QuerySync({ onChange }: { onChange: (q: QueryState) => void }) {
 }
 
 /** How long the dock takes to sink out of sight (globals.css `.cv-dock[data-hidden]`); the page's own bar rises after it. */
-const DOCK_OUT_MS = 520;
+const DOCK_OUT_MS = 260;
 
 /** Dock column of each swipeable tab: Home 0, Garage/Cart 1, [Create 2], Shop 3, Profile 4. */
 const TAB_COLS = [0, 1, 3, 4] as const;

@@ -23,40 +23,50 @@ export function setMuted(muted: boolean): void {
   }
 }
 
-let iosSwitch: HTMLLabelElement | null = null;
-
 /**
  * iPhone Safari has no Vibration API. Since iOS 18, toggling a native `<input type="checkbox" switch>`
- * plays the system haptic, so a hidden one is clicked instead (works while the user is touching).
+ * plays the system haptic. It is created fresh for every tap and clicked inside the user's tap.
+ * iOS 17 and older, and iPhones with system haptics
+ * turned off in Settings, give no feedback at all: that is Apple's limit, not something a web page can change.
  */
 function iosHaptic(): void {
   if (typeof document === 'undefined') return;
   try {
-    if (!iosSwitch) {
-      const label = document.createElement('label');
-      label.setAttribute('aria-hidden', 'true');
-      label.style.cssText = 'position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:-9999px;top:0';
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.setAttribute('switch', '');
-      input.tabIndex = -1;
-      label.appendChild(input);
-      document.body.appendChild(label);
-      iosSwitch = label;
-    }
-    iosSwitch.click();
+    const label = document.createElement('label');
+    label.setAttribute('aria-hidden', 'true');
+    label.style.display = 'none';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.setAttribute('switch', '');
+    label.appendChild(input);
+    document.head.appendChild(label);
+    label.click();
+    document.head.removeChild(label);
   } catch {
     /* noop */
   }
 }
 
+let lastTapAt = 0;
+/** When the app last gave a haptic tap on its own (the global tap feedback skips taps that already got one). */
+export function lastHapticAt(): number {
+  return lastTapAt;
+}
+
+/** True on iPhone / iPad Safari, where the switch trick is the only haptic there is. */
+function hasNativeVibrate(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+}
+
 /**
  * Haptic tap. Not tied to "Reduce motion": that setting is about movement on screen, and turning
  * it on used to silence every vibration in the app (the parts wheel included).
+ * On iPhone a pattern is played as separate taps (every odd entry of the pattern is a pause).
  */
 export function vibrate(pattern: number | number[]): void {
   if (typeof navigator === 'undefined') return;
-  if ('vibrate' in navigator) {
+  lastTapAt = Date.now();
+  if (hasNativeVibrate()) {
     try {
       navigator.vibrate(pattern);
     } catch {
@@ -64,7 +74,18 @@ export function vibrate(pattern: number | number[]): void {
     }
     return;
   }
-  iosHaptic();
+  if (!Array.isArray(pattern)) {
+    iosHaptic();
+    return;
+  }
+  let at = 0;
+  pattern.forEach((ms, i) => {
+    if (i % 2 === 0) {
+      if (at === 0) iosHaptic();
+      else window.setTimeout(iosHaptic, at);
+    }
+    at += ms;
+  });
 }
 
 /**
@@ -74,7 +95,8 @@ export function vibrate(pattern: number | number[]): void {
  * which already feels every notch.
  */
 export function hapticOnRelease(): void {
-  if (typeof navigator === 'undefined' || 'vibrate' in navigator) return;
+  if (typeof navigator === 'undefined' || hasNativeVibrate()) return;
+  lastTapAt = Date.now();
   iosHaptic();
 }
 

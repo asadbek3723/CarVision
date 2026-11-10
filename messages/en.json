@@ -1,4 +1,6 @@
 {
+  "push": {"title": "Notifications", "onSub": "You get updates about your orders", "offSub": "Order updates are not sent to this device", "blocked": "Allow it in your browser settings", "needsInstall": "Add the app to your Home Screen first"},
+  "pwaUpdate": {"title": "New version ready", "body": "The app was updated. Reload to get the latest.", "reload": "Update", "later": "Later"},
   "common": {
     "appName": "CarVision",
     "save": "Save",

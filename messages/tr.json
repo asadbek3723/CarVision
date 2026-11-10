@@ -1,4 +1,6 @@
 {
+  "push": {"title": "Bildirimler", "onSub": "Sipariş durumundan haberdar olursunuz", "offSub": "Sipariş bildirimleri bu cihaza gönderilmiyor", "blocked": "Tarayıcı ayarlarından izin verin", "needsInstall": "Önce uygulamayı Ana Ekrana ekleyin"},
+  "pwaUpdate": {"title": "Yeni sürüm hazır", "body": "Uygulama güncellendi. Yeniliklere ulaşmak için yeniden yükleyin.", "reload": "Güncelle", "later": "Sonra"},
   "common": {
     "appName": "CarVision",
     "save": "Kaydet",

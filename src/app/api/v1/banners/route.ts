@@ -8,7 +8,7 @@ import { isBannerSlot, readBanner } from '@/server/banners';
  */
 export async function GET(request: NextRequest) {
   const slot = request.nextUrl.searchParams.get('slot') ?? 'shop';
-  const cache = { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' };
+  const cache = { 'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=10' };
   if (!isBannerSlot(slot)) return NextResponse.json({ success: true, banner: null }, { headers: cache });
 
   const read = await readBanner(slot, true);

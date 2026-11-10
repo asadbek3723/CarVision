@@ -16,7 +16,7 @@ export async function GET() {
     const shops = new Set((rows ?? []).map((r) => r.shop_id as string));
     return NextResponse.json(
       { success: true, stats: { parts: items ?? 0, brands: brands.size, workshops: shops.size, vehicleModels: models ?? 0 } },
-      { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+      { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' } }
     );
   } catch (err) {
     console.error('stats error:', err);

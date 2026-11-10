@@ -8,6 +8,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { compressForUpload, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { readJson } from '@/lib/safe-json';
 import { buttonClasses } from '@/components/ui';
+import { SuccessTick } from '@/components/ui/SuccessTick';
 
 export interface BookingView {
   id: string;
@@ -215,8 +216,8 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
 
       {booking.workshop.unlocked && (
         <div className={`mt-5 space-y-3 ${flat ? 'rounded-2xl bg-emerald-500/[0.06] p-4 sm:rounded-none sm:bg-transparent sm:p-0' : 'rounded-2xl bg-emerald-500/[0.06] p-4'}`}>
-          <p className="flex items-center gap-2 text-sm font-bold text-emerald-300">
-            <Check className="h-4 w-4" />
+          <p className="flex items-center gap-3 text-sm font-bold text-emerald-300">
+            <SuccessTick size={40} haptic={false} />
             {t('unlockedTitle')}
           </p>
           <p className="text-base font-bold text-white">{booking.workshop.name}</p>

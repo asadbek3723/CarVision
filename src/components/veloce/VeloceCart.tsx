@@ -12,6 +12,7 @@ import { Modal, ProductImage, Sheet, buttonClasses } from '@/components/ui';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { cn } from '@/lib/utils';
 import { useLiveTick } from '@/lib/live';
+import { CountUp } from '@/components/ui/CountUp';
 
 /** Parts left at or below this count show an "N left" warning, as marketplaces do. */
 const LOW_STOCK = 5;
@@ -319,7 +320,7 @@ export function VeloceCart() {
           </dl>
           <div className="mt-4 flex items-end justify-between gap-3 border-t border-white/[0.08] pt-4">
             <span className="text-sm text-white/70">{t('payNow')}</span>
-            <span className="font-display text-2xl font-semibold tabular-nums text-gold-500">{formatPrice(totalUSD)}</span>
+            <span className="font-display text-2xl font-semibold tabular-nums text-gold-500"><CountUp value={totalUSD} format={formatPrice} /></span>
           </div>
           {checkoutButton('mt-5 w-full')}
           <p className="mt-3 text-xs leading-relaxed text-white/45">{t('unlockNote')}</p>
@@ -337,7 +338,7 @@ export function VeloceCart() {
           </p>
           <div className="flex items-center justify-between gap-3 py-3">
             <div className="min-w-0">
-              <p className="truncate font-display text-[20px] font-semibold leading-tight tabular-nums text-gold-500 min-[400px]:text-[24px]">{formatPrice(totalUSD)}</p>
+              <p className="truncate font-display text-[20px] font-semibold leading-tight tabular-nums text-gold-500 min-[400px]:text-[24px]"><CountUp value={totalUSD} format={formatPrice} /></p>
               <p className="truncate text-[13px] text-white/55">{t('barCount', { count: selectedUnits })}</p>
             </div>
             {checkoutButton('shrink-0')}

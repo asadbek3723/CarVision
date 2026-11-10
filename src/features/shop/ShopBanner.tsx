@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ProductImage } from '@/components/ui/ProductImage';
+import { liveVersion, useLiveTick } from '@/lib/live';
 
 export interface ShopBannerData {
   imageUrl: string;
@@ -18,8 +19,9 @@ export const BANNER_FRAME = 'relative aspect-[16/7] w-full overflow-hidden round
 let pending: Promise<ShopBannerData | null> | null = null;
 let loaded: ShopBannerData | null | undefined;
 
-function loadBanner(): Promise<ShopBannerData | null> {
-  pending ??= fetch('/api/v1/banners?slot=shop')
+function loadBanner(fresh = false): Promise<ShopBannerData | null> {
+  if (fresh) pending = null;
+  pending ??= fetch(`/api/v1/banners?slot=shop&v=${liveVersion()}`)
     .then((r) => r.json())
     .then((d): ShopBannerData | null => {
       const b = d?.success && d.banner && typeof d.banner.imageUrl === 'string' ? d.banner : null;
@@ -39,15 +41,19 @@ export function ShopBanner({ className = '' }: { className?: string }) {
   const locale = (params?.['locale'] as string) || 'uz';
   const [banner, setBanner] = React.useState<ShopBannerData | null | undefined>(loaded);
 
+  const live = useLiveTick();
+  const first = React.useRef(true);
   React.useEffect(() => {
     let cancelled = false;
-    void loadBanner().then((b) => {
+    // The first run reuses the shared answer; later runs (the server said something changed) ask again.
+    void loadBanner(!first.current).then((b) => {
       if (!cancelled) setBanner(b);
     });
+    first.current = false;
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [live]);
 
   if (!banner) return null;
 

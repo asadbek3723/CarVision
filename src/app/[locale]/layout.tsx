@@ -9,6 +9,10 @@ import { VeloceStoreProvider } from '@/context/VeloceStore';
 import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt';
 import { TouchGuard } from '@/components/pwa/TouchGuard';
 import { LaunchSplash } from '@/components/pwa/LaunchSplash';
+import { SwUpdater } from '@/components/pwa/SwUpdater';
+import { Haptics } from '@/components/pwa/Haptics';
+import { IOS_STARTUP_IMAGES } from '@/lib/ios-splash';
+import { APP_THEME } from '@/lib/pwa-theme';
 import { JsonLd, organizationLd, websiteLd } from '@/lib/seo/jsonld';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { DEFAULT_LOCALE, SITE_NAME, SITE_URL, isLocale } from '@/lib/seo/site';
@@ -47,7 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     applicationName: SITE_NAME,
     title: copy.home.title,
     description: copy.home.description,
-    manifest: '/manifest.json',
+    manifest: `/${l}/manifest.webmanifest`,
     icons: {
       icon: [
         { url: '/icons/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
@@ -55,16 +59,19 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       ],
       apple: [{ url: '/icons/apple-touch-icon.png?v=2', sizes: '180x180' }],
     },
-    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: SITE_NAME },
+    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: SITE_NAME, startupImage: IOS_STARTUP_IMAGES },
+    other: { 'mobile-web-app-capable': 'yes' },
     formatDetection: { telephone: false },
     verification,
   };
 }
 
 export const viewport: Viewport = {
-  themeColor: '#12141A',
+  themeColor: APP_THEME,
   width: 'device-width',
   initialScale: 1,
+  // Draw under the notch / home bar so env(safe-area-inset-*) reports real values on iPhone.
+  viewportFit: 'cover',
   // App-like: no pinch zoom (Android honours this; iOS is handled by <TouchGuard />).
   maximumScale: 1,
   userScalable: false,
@@ -98,7 +105,7 @@ export default async function LocaleLayout({
           }}
         />
       </head>
-      <body className="bg-surface-0 text-white min-h-screen antialiased select-none" suppressHydrationWarning>
+      <body className="bg-surface-0 text-white min-h-dvh antialiased select-none" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <CurrencyProvider>
@@ -107,6 +114,8 @@ export default async function LocaleLayout({
                 {children}
                 <PwaInstallPrompt />
                 <TouchGuard />
+                <Haptics />
+                <SwUpdater />
                 <LaunchSplash />
               </VeloceStoreProvider>
             </CurrencyProvider>

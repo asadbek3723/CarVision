@@ -10,7 +10,7 @@ import { useVeloceStore } from '@/context/VeloceStore';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { buttonClasses } from '@/components/ui';
-import { useLiveTick } from '@/lib/live';
+import { liveVersion, useLiveTick } from '@/lib/live';
 
 const FEATURES = [
   { icon: Camera, key: 'f1', items: ['f1a', 'f1b'] },
@@ -39,7 +39,7 @@ export function VeloceHome() {
 
   React.useEffect(() => {
     let isMounted = true;
-    fetch(`/api/v1/products?limit=4&locale=${locale}`, { cache: 'no-store' })
+    fetch(`/api/v1/products?limit=4&locale=${locale}&v=${liveVersion()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
         if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
@@ -58,7 +58,7 @@ export function VeloceHome() {
 
   React.useEffect(() => {
     let isMounted = true;
-    fetch('/api/v1/catalog/stats', { cache: 'no-store' })
+    fetch(`/api/v1/catalog/stats?v=${liveVersion()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
         if (isMounted && d.success) setStats(d.stats);

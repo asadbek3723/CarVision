@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     // 5 min, so most shop visits never wait for the database.
     return NextResponse.json(
       { success: true, products, facets: { brands, categories } },
-      { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=300' } }
+      { headers: { 'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=10' } }
     );
   } catch (err) {
     console.error('products list error:', err);

@@ -62,7 +62,7 @@ export function AdminPinGate({ onSuccess, adminName }: Props) {
   const ss = String(lockedFor % 60).padStart(2, '0');
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#07080B] p-5">
+    <div className="flex min-h-dvh items-center justify-center bg-[#07080B] p-5">
       <form onSubmit={submit} className="w-full max-w-sm rounded-[32px] bg-white/[0.04] p-7 text-center">
         <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-gold-500/15 text-gold-500"><Shield className="h-8 w-8" /></span>
         <h1 className="mt-5 text-xl font-bold text-white">{t('title')}</h1>

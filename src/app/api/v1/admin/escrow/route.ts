@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { adminLiveOr401 } from '@/server/admin';
-import { cancellableUntil, fetchBookingItems, fetchBookingRows, reviewBooking } from '@/server/bookings';
+import { cancellableUntil, fetchBookingItems, fetchBookingRows, pushBookingEvent, reviewBooking } from '@/server/bookings';
 import { syncDecisionToTelegram } from '@/server/telegram';
 
 const unauthorized = () => NextResponse.json({ success: false, code: 'ADMIN_SESSION_REQUIRED', error: 'Unauthorized' }, { status: 401 });
@@ -103,6 +103,7 @@ export async function PATCH(request: NextRequest) {
           { status: r.error === 'NOT_FOUND' ? 404 : 409 }
         );
       }
+      await pushBookingEvent(db, parsed.data.orderId, parsed.data.action === 'payout_paid' ? 'payout_paid' : 'refund_done');
       return NextResponse.json({ success: true });
     }
 
