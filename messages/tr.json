@@ -815,7 +815,8 @@
     "after": "Sonra",
     "partsHiddenAll": "Seçilen parçalar fotoğraflarınızda görünmüyor. İlgili taraftan fotoğraf ekleyin (örneğin arka farlar için arka taraf).",
     "partsHiddenSome": "Bu parçalar fotoğraflarınızda görünmüyor ve işlenmeyecek: {names}. İlgili taraftan fotoğraf ekleyin.",
-    "errConfirmCar": "Önce aracı doğrulayın"
+    "errConfirmCar": "Önce aracı doğrulayın",
+    "fitAll": "Tüm araçlara uygun"
   },
   "identify": {
     "dialog": "Aracı belirle",
@@ -957,7 +958,10 @@
         "short": "Sol ön",
         "guide": "Aracın sol ön köşesini 45° açıyla, ön ve sol yan birlikte görünecek şekilde çekin."
       }
-    }
+    },
+    "skipAngle": "Skip this angle",
+    "continueWith": "Continue with {count} photos",
+    "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible."
   },
   "scanLive": {
     "compassLabel": "Pusula rehberi: {angle}",
@@ -991,7 +995,9 @@
       "person": "İnsan — kamerayı araca çevirin",
       "other": "Karede araç yok"
     },
-    "rotateCta": "Kamerayı aç"
+    "rotateCta": "Kamerayı aç",
+    "skip": "Skip",
+    "finishWith": "Done ({count})"
   },
   "landing": {
     "nav": {
@@ -1942,7 +1948,8 @@
     "PART_NOT_VISIBLE": "Seçilen parça bu açıdan görünmüyor. Kredi düşülmedi",
     "CAR_NOT_VERIFIED": "Araç doğrulanmadı. Lütfen fotoğrafları yeniden doğrulayın. Kredi düşülmedi",
     "AI_BLOCKED": "Yapay zekâ bu fotoğrafı işleyemedi (güvenlik filtresi). Kareden insanları çıkarın, aracı tamamen çekin ve yeniden deneyin. Krediniz iade edildi",
-    "AI_STORAGE_FAILED": "Sonuç kaydedilemedi. Krediniz iade edildi, lütfen tekrar deneyin"
+    "AI_STORAGE_FAILED": "Sonuç kaydedilemedi. Krediniz iade edildi, lütfen tekrar deneyin",
+    "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again"
   },
   "capturePage": {
     "sent": "Fotoğraf bilgisayara gönderildi",
@@ -2405,5 +2412,116 @@
         ]
       }
     }
+  },
+  "productCam": {
+    "profiles": {
+      "wheel": "Jant / lastik",
+      "body": "Kaporta / tampon",
+      "light": "Far / lamba",
+      "part": "Parça",
+      "interior": "İç mekân",
+      "finish": "Kaplama / hizmet"
+    },
+    "step": "Fotoğraf {n}/{total}",
+    "shots": {
+      "front": {
+        "title": "Önden",
+        "short": "Ön",
+        "tip": "Ürünün ön yüzü doğrudan kameraya baksın. Arka plan temiz ve düz renk olsun."
+      },
+      "angle": {
+        "title": "45° açıdan (ana fotoğraf)",
+        "short": "45°",
+        "tip": "Biraz yana geçin; ön ve yan birlikte görünsün. Bu fotoğraf mağazada kapak olur."
+      },
+      "side": {
+        "title": "Yandan",
+        "short": "Yan",
+        "tip": "Profili gösterin: kalınlık, genişlik ve şekil net görünsün."
+      },
+      "back": {
+        "title": "Arkadan / içeriden",
+        "short": "Arka",
+        "tip": "İç tarafı, bağlantı noktalarını ve soketleri gösterin."
+      },
+      "detail": {
+        "title": "Yakın çekim",
+        "short": "Detay",
+        "tip": "Malzemeyi, işçiliği ve dikişleri yakından çekin. Çizik varsa saklamayın."
+      },
+      "label": {
+        "title": "Etiket / parça numarası",
+        "short": "Numara",
+        "tip": "Parça numarası, ölçü yazıları (R, ET, PCD) veya fabrika damgası okunmalı."
+      },
+      "set": {
+        "title": "Tam set",
+        "short": "Set",
+        "tip": "Tüm parçaları (cıvatalar, braketler) yan yana dizip yukarıdan çekin."
+      },
+      "onCar": {
+        "title": "Araç üzerinde sonuç",
+        "short": "Sonuç",
+        "tip": "Bitmiş aracı 45° açıdan, tamamı kadraja girecek şekilde çekin."
+      },
+      "surface": {
+        "title": "Yüzey yakın çekim",
+        "short": "Yüzey",
+        "tip": "Parlaklığı ve rengi gösterin: ışık yüzeye yansısın."
+      }
+    },
+    "heights": {
+      "level": "Ürün yüksekliğinde",
+      "above": "Biraz yukarıdan",
+      "top": "Tam yukarıdan"
+    },
+    "frames": {
+      "full": "Çerçeveyi doldursun",
+      "detail": "Dairenin ortasında",
+      "label": "Yazı okunsun",
+      "wide": "Tamamı sığsın"
+    },
+    "unitCm": "{value} cm",
+    "unitM": "{value} m",
+    "pitch": {
+      "tiltDown": "Telefonu aşağı eğin",
+      "tiltUp": "Telefonu daha dik tutun"
+    },
+    "light": {
+      "dark": "Çok karanlık: aydınlık bir yere geçin",
+      "bright": "Çok parlak: doğrudan güneşten kaçının",
+      "backlit": "Işık arkada: pencerenin karşısında değil, yanında durun"
+    },
+    "ready": "Her şey tamam, çekin",
+    "sensor": "Eğim yardımcısını aç",
+    "allDone": "Tüm fotoğraflar çekildi! “Tamam”a dokunun",
+    "done": "Tamam ({count})",
+    "upload": "Galeri",
+    "planTitle": "Alıcıların görmek istediği fotoğraflar"
+  },
+  "listingTips": {
+    "anyLanguage": "İstediğiniz dilde yazın. Kaydettiğinizde yapay zekâ yalnızca yazım ve noktalamayı düzeltir (metni kısaltmaz, uzatmaz) ve 8 dile çevirir. Alıcı uygulamayı hangi dilde açarsa ürünü o dilde görür.",
+    "nameFormula": "Formül: Marka + model + ölçü/tip + durum",
+    "nameExample": {
+      "wheel": "Örn.: BBS CI-R R19 8.5J 5x114.3 ET35, sıfır",
+      "body": "Örn.: Chevrolet Gentra ön tampon M-Sport, sıfır",
+      "light": "Örn.: Cobalt LED ön farlar (çift), sıfır",
+      "part": "Örn.: KW V3 coilover Toyota Camry 70, ikinci el",
+      "interior": "Örn.: Karbon direksiyon Malibu 2, alcantara",
+      "finish": "Örn.: Mat siyah kaplama, tüm gövde"
+    },
+    "price": "Açıklamada fiyatın tek adet mi set mi olduğunu ve montajın dahil olup olmadığını yazın.",
+    "descIntro": "Alıcıların sorduklarını eklemek için dokunun ve değerini yazın:",
+    "descFields": {
+      "wheel": "Ölçü (R, J)|PCD|ET (ofset)|Göbek deliği (DIA)|Malzeme|Durum|Set",
+      "body": "Uyumlu araç ve yıllar|Malzeme|Boyalı mı|Montaj|Durum|Kutu içeriği",
+      "light": "Uyumlu araç ve yıllar|Ampul tipi (LED, xenon)|Soket|Durum|Set (1 veya çift)",
+      "part": "Uyumlu araç ve yıllar|Parça numarası|Üretici|Durum|Kilometre|Garanti",
+      "interior": "Uyumlu araç ve yıllar|Malzeme|Renk|Durum|Kutu içeriği",
+      "finish": "Malzeme / marka|Renk ve efekt|Ömür|İşçilik süresi|Garanti"
+    },
+    "descPlaceholder": "Örn.:\nDurum: sıfır, kutusunda\nSet: 4 adet",
+    "honest": "Kusur varsa açıkça yazın: alıcı güvenir, iadeler azalır.",
+    "photos": "Kamera {count} fotoğraf için açıyı ve mesafeyi gösterir. Ana fotoğraf: 45° açıdan."
   }
 }

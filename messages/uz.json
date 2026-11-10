@@ -815,7 +815,8 @@
     "after": "Keyin",
     "partsHiddenAll": "Tanlangan detallar suratlaringizda ko'rinmaydi. Mos tomondan rasm qo'shing (masalan, orqa fara uchun orqa rasm).",
     "partsHiddenSome": "Bu detallar rasmlaringizda ko'rinmaydi va yaratilmaydi: {names}. Mos tomondan rasm qo'shing.",
-    "errConfirmCar": "Avval mashinani tasdiqlang"
+    "errConfirmCar": "Avval mashinani tasdiqlang",
+    "fitAll": "Barcha mashinalarga"
   },
   "identify": {
     "dialog": "Mashinani aniqlash",
@@ -913,12 +914,12 @@
     "uploadPhotos": "Rasmlarni yuklash",
     "oneHint": "Istalgan paytda 1 ta rasm bilan ham davom etishingiz mumkin",
     "stUploaded": "Yuklandi",
-    "stNext": "Navbatdagi majburiy",
+    "stNext": "Navbatdagi",
     "stWaiting": "Kutilmoqda",
     "angleUploaded": "Surat yuklandi: {angle}",
     "angleUpload": "Rasmni yuklang: {angle}",
-    "allDoneHint": "Barcha {total} ta majburiy rasm yuklandi! Endi davom etishingiz mumkin.",
-    "nextHint": "Keyingi majburiy rakursga oʻting yoki rasmni yangilang.",
+    "allDoneHint": "Barcha {total} ta rasm yuklandi! Endi davom etishingiz mumkin.",
+    "nextHint": "Keyingi rakursga oʻting yoki rasmni yangilang.",
     "dropHint": "Kompas koʻrsatgan tomon suratini tanlang yoki shu yerga tashlang",
     "angleSaved": "Saqlandi: {angle}",
     "replace": "Almashtirish",
@@ -927,7 +928,7 @@
     "pickBtn": "Rasmni tanlash: {angle}",
     "prev": "Oldingi",
     "nextAngle": "Keyingi rakurs",
-    "allReady": "Barcha {total} ta majburiy rasm tayyor",
+    "allReady": "Barcha {total} ta rasm tayyor",
     "locked": "Majburiy: barcha {total} ta rasm yuklanmaguncha davom etib boʻlmaydi",
     "continue": "Davom etish ({uploaded}/{total})",
     "processing": "4K Studio tayyorlanmoqda…",
@@ -957,13 +958,16 @@
         "short": "Oldi-chap",
         "guide": "Mashinaning oldi-chap burchagini 45° da, old va chap tomon birga koʻrinadigan qilib oling."
       }
-    }
+    },
+    "skipAngle": "Bu tomonni o'tkazib yuborish",
+    "continueWith": "{count} ta rasm bilan davom etish",
+    "optionalHint": "1 tadan 5 tagacha rasm yuklash mumkin: istalgan tomonni o'tkazib yuboring. AI qaysi tomon ko'rinayotganini o'zi aniqlaydi."
   },
   "scanLive": {
     "compassLabel": "Kompas yoʻriqnomasi: {angle}",
     "compassAlt": "3D avtomobil kompas modeli",
     "captured": "{angle} olindi ({done}/{total}) — Endi: {next}",
-    "allCaptured": "Barcha {total} ta majburiy rakurs olindi!",
+    "allCaptured": "Barcha {total} ta rakurs olindi!",
     "eyebrow": "Smart Camera · Majburiy rejim",
     "rotateTitle": "Telefonni yotqizing",
     "back": "Orqaga",
@@ -991,7 +995,9 @@
       "person": "Odam — kamerani mashinaga qarating",
       "other": "Kadrda mashina yoʻq"
     },
-    "rotateCta": "Kamerani ochish"
+    "rotateCta": "Kamerani ochish",
+    "skip": "O'tkazish",
+    "finishWith": "Tayyor ({count})"
   },
   "landing": {
     "nav": {
@@ -1942,7 +1948,8 @@
     "PART_NOT_VISIBLE": "Tanlangan detal bu rakursda ko'rinmaydi. Kredit yechilmadi",
     "CAR_NOT_VERIFIED": "Mashina tasdiqlanmagan. Suratlarni qayta tasdiqlang. Kredit yechilmadi",
     "AI_BLOCKED": "AI bu suratni qayta ishlay olmadi (xavfsizlik filtri). Suratda odamlar bo'lmasin, mashinani to'liq kadrga olib qayta suratga oling. Kredit qaytarildi",
-    "AI_STORAGE_FAILED": "Natijani saqlab bo'lmadi. Kredit qaytarildi, qayta urinib ko'ring"
+    "AI_STORAGE_FAILED": "Natijani saqlab bo'lmadi. Kredit qaytarildi, qayta urinib ko'ring",
+    "AI_WRONG_VIEW": "AI natijasi mashinaning boshqa tomonini ko'rsatdi, shuning uchun berilmadi. Kredit qaytarildi, qayta urinib ko'ring"
   },
   "capturePage": {
     "sent": "Rasm kompyuterga yuborildi",
@@ -2134,14 +2141,14 @@
     "smStepLine": "Rakurs: {step} / {total} · Yuklandi: {done} / {total}",
     "smUploadedTitle": "{angle} surati yuklandi",
     "smUploadTitle": "{angle} rasmini yuklang",
-    "smAllDone": "Barcha {total} ta majburiy rasm yuklandi! Endi davom etishingiz mumkin.",
-    "smNextHint": "Keyingi majburiy rakursga o‘ting yoki rasmni yangilang.",
+    "smAllDone": "Barcha {total} ta rasm yuklandi! Endi davom etishingiz mumkin.",
+    "smNextHint": "Keyingi rakursga o‘ting yoki rasmni yangilang.",
     "smDropHint": "Kompas ko‘rsatgan tomon suratini tanlang yoki shu yerga tashlang",
     "smSaved": "{angle} saqlandi",
     "smClickPick": "{angle} suratini tanlash uchun bosing",
     "smFormats": "JPG, PNG, HEIC yoki WebP formatlari",
     "smPickShort": "{angle} rasmini tanlash",
-    "smReady": "Barcha {total} ta majburiy rasm tayyor",
+    "smReady": "Barcha {total} ta rasm tayyor",
     "smRequired": "Majburiy: barcha {total} ta rasm yuklanmaguncha davom etib bo‘lmaydi",
     "smBridge": "Offlayn uzatish · ustaxona Wi-Fi ko‘prigi",
     "smScanQr": "Telefoningiz kamerasi bilan QR kodni skanerlang",
@@ -2405,5 +2412,116 @@
         ]
       }
     }
+  },
+  "productCam": {
+    "profiles": {
+      "wheel": "Disk / shina",
+      "body": "Kuzov / bamper",
+      "light": "Fara / chiroq",
+      "part": "Detal",
+      "interior": "Salon",
+      "finish": "Plyonka / xizmat"
+    },
+    "step": "{n}/{total}-rasm",
+    "shots": {
+      "front": {
+        "title": "Old tomondan",
+        "short": "Old",
+        "tip": "Mahsulot yuzi kameraga toʻgʻri qarasin. Orqa fon toza va bir xil rangda boʻlsin."
+      },
+      "angle": {
+        "title": "45° burchakdan (asosiy rasm)",
+        "short": "45°",
+        "tip": "Bir oz yonga oʻting: old va yon tomoni birga koʻrinsin. Bu rasm doʻkonda muqova boʻladi."
+      },
+      "side": {
+        "title": "Yon tomondan",
+        "short": "Yon",
+        "tip": "Profilini koʻrsating: qalinligi, kengligi va shakli aniq koʻrinsin."
+      },
+      "back": {
+        "title": "Orqa / ichki tomoni",
+        "short": "Orqa",
+        "tip": "Ichki tomoni, mahkamlash joylari va ulagichlarini koʻrsating."
+      },
+      "detail": {
+        "title": "Yaqindan detal",
+        "short": "Detal",
+        "tip": "Material, sifat va choklarni yaqindan oling. Tirnalgan joy boʻlsa, yashirmang."
+      },
+      "label": {
+        "title": "Yozuv / raqam",
+        "short": "Raqam",
+        "tip": "Detal raqami, oʻlcham yozuvlari (R, ET, PCD) yoki zavod belgisi aniq oʻqilsin."
+      },
+      "set": {
+        "title": "Toʻliq komplekt",
+        "short": "Komplekt",
+        "tip": "Barcha qismlarni (boltlar, kronshteynlar) yonma-yon qoʻyib, tepadan oling."
+      },
+      "onCar": {
+        "title": "Mashinadagi natija",
+        "short": "Natija",
+        "tip": "Ishlangan mashinani 45° burchakdan, butunligicha ramkaga sigʻdirib oling."
+      },
+      "surface": {
+        "title": "Sirt yaqindan",
+        "short": "Sirt",
+        "tip": "Yaltirash va rangni koʻrsating: chiroq aksi sirtga tushsin."
+      }
+    },
+    "heights": {
+      "level": "Mahsulot balandligida",
+      "above": "Biroz yuqoridan",
+      "top": "Tepadan pastga"
+    },
+    "frames": {
+      "full": "Ramkani toʻldirsin",
+      "detail": "Doira markazida",
+      "label": "Yozuv oʻqilsin",
+      "wide": "Butunligicha sigʻsin"
+    },
+    "unitCm": "{value} sm",
+    "unitM": "{value} m",
+    "pitch": {
+      "tiltDown": "Telefonni pastroqqa qarating",
+      "tiltUp": "Telefonni tikroq tuting"
+    },
+    "light": {
+      "dark": "Juda qorongʻi: yorugʻroq joyga oʻting",
+      "bright": "Juda yorugʻ: toʻgʻridan quyoshdan qoching",
+      "backlit": "Yorugʻlik orqada: deraza oldida emas, yonida turing"
+    },
+    "ready": "Hammasi joyida, suratga oling",
+    "sensor": "Qiyalik yordamchisini yoqish",
+    "allDone": "Hamma rasmlar olindi! «Tayyor» ni bosing",
+    "done": "Tayyor ({count})",
+    "upload": "Galereya",
+    "planTitle": "Xaridorlar koʻrmoqchi boʻlgan rasmlar"
+  },
+  "listingTips": {
+    "anyLanguage": "Istalgan tilda yozing. Saqlaganingizda AI faqat imlo va tinish belgilarini tuzatadi (matnni qisqartirmaydi ham, choʻzmaydi ham) va uni 8 tilga tarjima qiladi. Xaridor ilovani qaysi tilda ochsa, mahsulot shu tilda koʻrinadi.",
+    "nameFormula": "Formula: Brend + model + oʻlcham/turi + holati",
+    "nameExample": {
+      "wheel": "Masalan: BBS CI-R R19 8.5J 5x114.3 ET35, yangi",
+      "body": "Masalan: Chevrolet Gentra old bamper M-Sport, yangi",
+      "light": "Masalan: Cobalt LED old faralar (juft), yangi",
+      "part": "Masalan: KW V3 koilover Toyota Camry 70, ishlatilgan",
+      "interior": "Masalan: Karbon rul Malibu 2, alkantara",
+      "finish": "Masalan: Matoviy qora plyonka, butun kuzov"
+    },
+    "price": "Bitta dona yoki komplekt narxi ekanini va oʻrnatish kirgan-kirmaganini tavsifda yozing.",
+    "descIntro": "Xaridor soʻraydigan maʼlumotlarni bosib qoʻshing va qiymatini yozing:",
+    "descFields": {
+      "wheel": "Oʻlcham (R, J)|PCD|ET (vilet)|Markaz teshigi (DIA)|Material|Holati|Komplekt",
+      "body": "Mos mashina va yillar|Material|Boʻyalganmi|Mahkamlash|Holati|Komplektda nima bor",
+      "light": "Mos mashina va yillar|Lampa turi (LED, ksenon)|Ulagich|Holati|Komplekt (1 yoki juft)",
+      "part": "Mos mashina va yillar|Detal raqami|Ishlab chiqaruvchi|Holati|Probeg|Kafolat",
+      "interior": "Mos mashina va yillar|Material|Rang|Holati|Komplektda nima bor",
+      "finish": "Material / brend|Rang va effekt|Xizmat muddati|Ish vaqti|Kafolat"
+    },
+    "descPlaceholder": "Masalan:\nHolati: yangi, qutida\nKomplekt: 4 dona",
+    "honest": "Kamchilik boʻlsa, ochiq yozing: xaridor ishonadi va qaytarishlar kamayadi.",
+    "photos": "Kamera {count} ta rasmni qaysi burchakdan va qancha masofadan olishni koʻrsatadi. Asosiy rasm: 45° burchakdan."
   }
 }

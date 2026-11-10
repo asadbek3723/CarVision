@@ -23,19 +23,18 @@ function ownPath(url: string): string | null {
   return path.startsWith('banners/') ? path : null;
 }
 
-async function audit(adminId: string, action: string, before: unknown, after: unknown, ip: string) {
-  try {
-    await createAdminClient().from('admin_audit_log').insert({
-      admin_id: adminId,
-      action,
-      target_entity: 'app_banners',
-      payload_before: before ?? null,
-      payload_after: after ?? null,
-      ip_address: ip,
-    });
-  } catch (err) {
-    console.error('banner audit failed:', err instanceof Error ? err.message : 'unknown');
-  }
+/** Writes the audit row; returns false when it could not be written (the caller then refuses). */
+async function audit(adminId: string, action: string, before: unknown, after: unknown, ip: string): Promise<boolean> {
+  const { error } = await createAdminClient().from('admin_audit_log').insert({
+    admin_id: adminId,
+    action,
+    target_entity: 'app_banners',
+    payload_before: before ?? null,
+    payload_after: after ?? null,
+    ip_address: ip,
+  });
+  if (error) console.error('banner audit failed:', error.message);
+  return !error;
 }
 
 /** The current banner of a slot for the editor (also an inactive one). */
@@ -116,6 +115,18 @@ export async function PUT(request: NextRequest) {
       updated_by: auth.adminId,
       updated_at: new Date().toISOString(),
     };
+    // Audit first: a change that cannot be put on record is not made.
+    const audited = await audit(
+      auth.adminId,
+      'SET_BANNER',
+      before ? { slot, link: before.linkUrl, active: before.isActive } : null,
+      { slot, link, active: isActive, imageChanged: Boolean(image) },
+      ipOf(request)
+    );
+    if (!audited) {
+      if (uploadedPath) await db.storage.from(CATALOG_BUCKET).remove([uploadedPath]).catch(() => undefined);
+      return bad('Saqlab bo‘lmadi', 'INTERNAL', 500);
+    }
     const { error } = await db.from('app_banners').upsert(row, { onConflict: 'slot' });
     if (error) {
       console.error('banner save failed:', error.message);
@@ -126,14 +137,6 @@ export async function PUT(request: NextRequest) {
     // The replaced picture is no longer used anywhere: free the storage.
     const oldPath = uploadedPath && before ? ownPath(before.imageUrl) : null;
     if (oldPath) await db.storage.from(CATALOG_BUCKET).remove([oldPath]).catch(() => undefined);
-
-    await audit(
-      auth.adminId,
-      'SET_BANNER',
-      before ? { slot, link: before.linkUrl, active: before.isActive } : null,
-      { slot, link, active: isActive, imageChanged: Boolean(image) },
-      ipOf(request)
-    );
 
     const saved = await readBanner(slot, false);
     return NextResponse.json({ success: true, banner: saved.ok ? saved.banner : null });
@@ -156,6 +159,9 @@ export async function DELETE(request: NextRequest) {
 
   try {
     const db = createAdminClient();
+    if (!(await audit(auth.adminId, 'REMOVE_BANNER', { slot, link: current.banner.linkUrl }, null, ipOf(request)))) {
+      return bad('O‘chirib bo‘lmadi', 'INTERNAL', 500);
+    }
     const { error } = await db.from('app_banners').delete().eq('slot', slot);
     if (error) {
       console.error('banner delete failed:', error.message);
@@ -163,7 +169,6 @@ export async function DELETE(request: NextRequest) {
     }
     const path = ownPath(current.banner.imageUrl);
     if (path) await db.storage.from(CATALOG_BUCKET).remove([path]).catch(() => undefined);
-    await audit(auth.adminId, 'REMOVE_BANNER', { slot, link: current.banner.linkUrl }, null, ipOf(request));
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('banner delete error:', err);

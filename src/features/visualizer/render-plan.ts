@@ -10,20 +10,30 @@ export interface PlanAngle {
   label: string;
   /** The customer's photo of this side (data URL or http URL). Empty/missing = side not captured. */
   photo?: string | undefined;
+  /** The side the photo really shows (AI check); falls back to `id`. */
+  view?: string | undefined;
 }
+
+/** The side used to decide what a photo can show: the AI-detected one, else the slot it was taken for. */
+export const sideOf = (a: PlanAngle): string => a.view || a.id;
 
 export const CREDITS_PER_ANGLE = 1;
 
 /** Preferred hero order: the most flattering 3/4 view first, it also anchors the other angles. */
-const HERO_PREFERENCE = ['front-left', 'front-right', 'rear-right', 'rear-left', 'front', 'right', 'left', 'rear'];
+const HERO_PREFERENCE = ['front-left', 'front-right', 'rear-right', 'rear-left', 'right', 'left', 'front', 'rear'];
 
 export function capturedAngles(angles: PlanAngle[]): PlanAngle[] {
   return angles.filter((a) => typeof a.photo === 'string' && a.photo.length > 5);
 }
 
 export function heroAngleId(angles: PlanAngle[]): string | null {
-  const have = new Set(capturedAngles(angles).map((a) => a.id));
-  return HERO_PREFERENCE.find((id) => have.has(id)) ?? capturedAngles(angles)[0]?.id ?? null;
+  // The hero becomes the look reference for the other sides: a 3/4 view shows the most of the build.
+  const captured = capturedAngles(angles);
+  for (const side of HERO_PREFERENCE) {
+    const hit = captured.find((a) => sideOf(a) === side);
+    if (hit) return hit.id;
+  }
+  return captured[0]?.id ?? null;
 }
 
 export interface RenderPlan {
@@ -48,10 +58,10 @@ export function planRender(angles: PlanAngle[], parts?: Array<VisibilityPart & {
   const chosen = parts ?? [];
   const checkParts = chosen.length > 0;
 
-  const have = checkParts ? photographed.filter((a) => visibleParts(chosen, a.id).length > 0) : photographed;
+  const have = checkParts ? photographed.filter((a) => visibleParts(chosen, sideOf(a)).length > 0) : photographed;
   const skipped = checkParts ? photographed.filter((a) => !have.includes(a)) : [];
   const hiddenPartIds = checkParts
-    ? chosen.filter((p) => !photographed.some((a) => visibleParts([p], a.id).length > 0)).map((p) => p.id)
+    ? chosen.filter((p) => !photographed.some((a) => visibleParts([p], sideOf(a)).length > 0)).map((p) => p.id)
     : [];
 
   const heroId = heroAngleId(have);

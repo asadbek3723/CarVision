@@ -12,25 +12,28 @@ export async function GET(request: NextRequest) {
     const params = new URL(request.url).searchParams;
     const q = (params.get('q') || '').replace(/[%,()*]/g, ' ').trim();
     const role = params.get('role');
+    const offset = Math.max(0, Math.min(100_000, Number(params.get('offset')) || 0));
+    const PAGE = 30;
     const db = createAdminClient();
 
     let query = db
       .from('profiles')
       .select('id, role, full_name, phone, credits_balance, is_banned, banned_reason, phone_verified, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .limit(200);
+      .range(offset, offset + PAGE - 1);
     if (role === 'b2c_user' || role === 'b2b_seller' || role === 'super_admin') query = query.eq('role', role);
     if (q) query = query.or(`phone.ilike.%${q}%,full_name.ilike.%${q}%`);
     const { data, count, error } = await query;
     if (error) throw new Error(error.message);
 
     const ids = (data ?? []).map((u) => u.id as string);
-    const { data: shops } = ids.length ? await db.from('shops').select('owner_id, shop_name, credits_balance, current_plan_code').in('owner_id', ids) : { data: [] };
+    const { data: shops } = ids.length ? await db.from('shops').select('id, owner_id, shop_name, credits_balance, current_plan_code').in('owner_id', ids) : { data: [] };
     const shopByOwner = new Map((shops ?? []).map((s) => [s.owner_id as string, s]));
 
     return NextResponse.json({
       success: true,
       total: count ?? 0,
+      nextOffset: offset + (data?.length ?? 0) < (count ?? 0) ? offset + (data?.length ?? 0) : null,
       users: (data ?? []).map((u) => {
         const shop = shopByOwner.get(u.id as string);
         return {
@@ -41,6 +44,7 @@ export async function GET(request: NextRequest) {
           credits: shop ? (shop.credits_balance as number) : (u.credits_balance as number),
           plan: shop ? (shop.current_plan_code as string) : 'FREE_TRIAL',
           shopName: shop ? (shop.shop_name as string) : null,
+          shopId: shop ? (shop.id as string) : null,
           banned: Boolean(u.is_banned),
           bannedReason: (u.banned_reason as string | null) ?? null,
           phoneVerified: Boolean(u.phone_verified),
@@ -66,7 +70,7 @@ export async function PATCH(request: NextRequest) {
   const auth = await adminLiveOr401(request);
   if ('response' in auth) return auth.response;
   const parsed = banSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Ma’lumotlar noto‘g‘ri' }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ success: false, code: 'INVALID_INPUT', error: 'Invalid input' }, { status: 400 });
   const { data, error: rpcErr } = await createAdminClient().rpc('admin_set_ban', {
     p_admin_id: auth.adminId,
     p_user_id: parsed.data.userId,
@@ -76,9 +80,12 @@ export async function PATCH(request: NextRequest) {
   });
   if (rpcErr) {
     console.error('admin rpc failed:', rpcErr.message);
-    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Serverda xatolik' }, { status: 500 });
+    return NextResponse.json({ success: false, code: 'INTERNAL', error: 'Server error' }, { status: 500 });
   }
   const r = data as { success?: boolean; error?: string } | null;
-  if (!r?.success) return NextResponse.json({ success: false, error: BAN_ERRORS[r?.error ?? ''] ?? 'Bajarib bo‘lmadi' }, { status: 409 });
+  if (!r?.success) {
+    const code = r?.error ?? 'FAILED';
+    return NextResponse.json({ success: false, code, error: BAN_ERRORS[code] ?? code }, { status: code === 'USER_NOT_FOUND' ? 404 : 409 });
+  }
   return NextResponse.json({ success: true });
 }

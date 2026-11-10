@@ -2,15 +2,16 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
-import { Banknote, Cpu, LayoutDashboard, Lock, Megaphone, Shield, ShieldCheck, Store, Users } from 'lucide-react';
+import { Banknote, Cpu, LayoutDashboard, Lock, Megaphone, Shield, ShieldCheck, Store, Users, Wallet } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 
-export type AdminTab = 'dashboard' | 'shops' | 'escrow' | 'users' | 'renders' | 'banners' | 'security';
+export type AdminTab = 'dashboard' | 'shops' | 'escrow' | 'finance' | 'users' | 'renders' | 'banners' | 'security';
 
 const NAV: Array<{ id: AdminTab; label: string; short: string; icon: React.ComponentType<{ className?: string }> }> = [
   { id: 'dashboard', label: 'dashboard', short: 'sDashboard', icon: LayoutDashboard },
   { id: 'shops', label: 'shops', short: 'sShops', icon: Store },
   { id: 'escrow', label: 'escrow', short: 'sEscrow', icon: Banknote },
+  { id: 'finance', label: 'finance', short: 'sFinance', icon: Wallet },
   { id: 'users', label: 'users', short: 'sUsers', icon: Users },
   { id: 'renders', label: 'renders', short: 'sRenders', icon: Cpu },
   { id: 'banners', label: 'banners', short: 'sBanners', icon: Megaphone },
@@ -86,14 +87,14 @@ export function AdminShell({ activeTab, onTabChange, onLock, adminName, pendingD
       </div>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 bg-surface-1/95 px-1 pt-2 pb-[max(env(safe-area-inset-bottom),10px)] backdrop-blur-xl md:hidden" aria-label={t('sections')}>
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-8 bg-surface-1/95 px-0.5 pt-2 pb-[max(env(safe-area-inset-bottom),10px)] backdrop-blur-xl md:hidden" aria-label={t('sections')}>
         {NAV.map((n) => (
           <button
             key={n.id}
             type="button"
             onClick={() => onTabChange(n.id)}
             aria-current={activeTab === n.id ? 'page' : undefined}
-            className={`relative flex flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold transition ${activeTab === n.id ? 'text-gold-500' : 'text-white/50'}`}
+            className={`relative flex min-w-0 flex-col items-center gap-1 truncate rounded-2xl py-2 text-[9px] font-semibold transition ${activeTab === n.id ? 'text-gold-500' : 'text-white/50'}`}
           >
             <span className="relative">
               <n.icon className="h-5 w-5" />

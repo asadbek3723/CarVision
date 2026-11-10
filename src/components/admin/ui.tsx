@@ -68,6 +68,144 @@ export function useAdminData<T>(url: string) {
   return { data, error, loading, reload: load, setData };
 }
 
+/**
+ * Paged list: loads the first page of `url` (which must not contain `offset`), and `loadMore`
+ * appends the next one. Pages are `{ <key>: T[], total, nextOffset }` responses.
+ */
+export function useAdminPaged<T, R extends { total: number; nextOffset: number | null }>(url: string, pick: (r: R) => T[]) {
+  const t = useTranslations('adm.common');
+  const api = useAdminApi();
+  const [items, setItems] = React.useState<T[]>([]);
+  const [meta, setMeta] = React.useState<R | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const seq = React.useRef(0);
+  const pickRef = React.useRef(pick);
+  pickRef.current = pick;
+  const join = url.includes('?') ? '&' : '?';
+
+  const load = React.useCallback(async () => {
+    const id = ++seq.current;
+    setLoading(true);
+    setError(null);
+    try {
+      const d = await api<R>(`${url}${join}offset=0`);
+      if (id !== seq.current) return;
+      setMeta(d);
+      setItems(pickRef.current(d));
+    } catch (e) {
+      if (id === seq.current) setError(e instanceof Error ? e.message : t('errGeneric'));
+    } finally {
+      if (id === seq.current) setLoading(false);
+    }
+  }, [api, url, join, t]);
+
+  const loadMore = React.useCallback(async () => {
+    if (meta?.nextOffset === null || meta?.nextOffset === undefined) return;
+    const id = seq.current;
+    setLoadingMore(true);
+    try {
+      const d = await api<R>(`${url}${join}offset=${meta.nextOffset}`);
+      if (id !== seq.current) return;
+      setMeta(d);
+      setItems((prev) => [...prev, ...pickRef.current(d)]);
+    } catch (e) {
+      if (id === seq.current) setError(e instanceof Error ? e.message : t('errGeneric'));
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [api, url, join, meta, t]);
+
+  React.useEffect(() => {
+    void load();
+  }, [load]);
+
+  return { items, meta, error, loading, loadingMore, reload: load, loadMore, hasMore: meta?.nextOffset !== null && meta?.nextOffset !== undefined };
+}
+
+/** Debounced copy of a value (search boxes hit the server only after typing pauses). */
+export function useDebounced<T>(value: T, ms = 350): T {
+  const [v, setV] = React.useState(value);
+  React.useEffect(() => {
+    const id = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(id);
+  }, [value, ms]);
+  return v;
+}
+
+/** A new id for one admin money action; the server applies the same id only once. */
+export function newRequestId(): string {
+  return crypto.randomUUID();
+}
+
+export function LoadMore({ hasMore, loading, onClick, shown, total }: { hasMore: boolean; loading: boolean; onClick: () => void; shown: number; total: number }) {
+  const t = useTranslations('adm.common');
+  if (total === 0) return null;
+  return (
+    <div className="mt-5 flex flex-col items-center gap-2">
+      <p className="text-xs text-white/40">{t('shownOf', { shown, total })}</p>
+      {hasMore && (
+        <button type="button" onClick={onClick} disabled={loading} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-2.5 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-60">
+          {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {t('loadMore')}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Confirmation step for actions that move money or change access. */
+export function ConfirmDialog({
+  open,
+  title,
+  body,
+  confirmLabel,
+  tone = 'gold',
+  busy,
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  body: React.ReactNode;
+  confirmLabel: string;
+  tone?: 'gold' | 'green' | 'red';
+  busy?: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const t = useTranslations('adm.common');
+  const cls = tone === 'red' ? 'bg-red-500 text-white' : tone === 'green' ? 'bg-emerald-500 text-black' : 'bg-gold-500 text-black';
+  return (
+    <Sheet open={open} onClose={onClose} title={title}>
+      <div className="space-y-5">
+        <div className="text-sm text-white/75">{body}</div>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={onClose} className="rounded-full bg-white/10 py-3.5 text-sm font-semibold text-white hover:bg-white/15">{t('cancel')}</button>
+          <button type="button" disabled={busy} onClick={onConfirm} className={`rounded-full py-3.5 text-sm font-bold hover:brightness-110 disabled:opacity-60 ${cls}`}>
+            {busy ? t('saving') : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+/** Tiny CSV export (UTF-8 with BOM so Excel opens Cyrillic / Uzbek text correctly). */
+export function downloadCsv(filename: string, rows: Array<Array<string | number | null | undefined>>) {
+  const esc = (v: string | number | null | undefined) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const blob = new Blob(['\uFEFF' + rows.map((r) => r.map(esc).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 /* ------------------------------------------------------------------ formatting */
 
 /** Number, currency and relative-time formatting in the active UI language. */
@@ -77,10 +215,16 @@ export function useAdminFormat() {
     const intlLocale = locale === 'ar' ? 'ar-AE' : locale;
     const nf = new Intl.NumberFormat(intlLocale);
     const usdFmt = new Intl.NumberFormat(intlLocale, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+    const uzsFmt = new Intl.NumberFormat(intlLocale, { maximumFractionDigits: 0 });
     const rtf = new Intl.RelativeTimeFormat(intlLocale, { numeric: 'auto' });
     return {
       nf,
       usd: (v: number) => usdFmt.format(v),
+      /** So'm amount, e.g. "1 250 000 so'm". */
+      uzs: (v: number) => `${uzsFmt.format(v)} so‘m`,
+      /** Amount stored in minor units (x100) of any supported currency; so'm is shown without decimals. */
+      money: (minor: number, currency: string) =>
+        currency === 'UZS' ? `${uzsFmt.format(Math.round(minor / 100))} so‘m` : new Intl.NumberFormat(intlLocale, { style: 'currency', currency }).format(minor / 100),
       timeAgo: (iso: string): string => {
         const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
         if (s < 60) return rtf.format(0, 'second');

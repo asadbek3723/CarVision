@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { EmptyState, ErrorState, PageHeader, Pill, Spinner, StatTile, Surface, useAdminData, useAdminFormat } from './ui';
+import * as React from 'react';
+import { EmptyState, ErrorState, LoadMore, PageHeader, Pill, Segmented, Spinner, StatTile, Surface, useAdminFormat, useAdminPaged } from './ui';
 
 interface Gen {
   id: string;
@@ -18,9 +19,12 @@ interface Gen {
 }
 
 interface Data {
-  stats: { total: number; completed: number; failed: number; successRate: number | null; avgSeconds: number | null; creditsCommitted: number; creditsRefunded: number; byProvider: Record<string, number> };
+  stats: { total: number; completed: number; failed: number; successRate: number | null; avgSeconds: number | null; creditsCommitted: number; creditsRefunded: number; unsettled: number; byProvider: Record<string, number> };
   items: Gen[];
+  total: number;
+  nextOffset: number | null;
 }
+type StatusFilter = 'all' | 'COMPLETED' | 'FAILED' | 'UNSETTLED';
 
 const TONE: Record<string, 'green' | 'red' | 'amber' | 'neutral'> = { COMPLETED: 'green', FAILED: 'red', PROCESSING: 'amber', QUEUED: 'neutral' };
 const STATUSES = new Set(['COMPLETED', 'FAILED', 'PROCESSING', 'QUEUED']);
@@ -30,7 +34,8 @@ export function AdminRendersView() {
   const t = useTranslations('adm.renders');
   const tc = useTranslations('adm.common');
   const { nf, timeAgo } = useAdminFormat();
-  const { data, error, loading, reload } = useAdminData<Data>('/api/v1/admin/generations');
+  const [status, setStatus] = React.useState<StatusFilter>('all');
+  const { items, meta: data, error, loading, loadingMore, reload, loadMore, hasMore } = useAdminPaged<Gen, Data>(status === 'all' ? '/api/v1/admin/generations' : '/api/v1/admin/generations?status=' + status, (p) => p.items);
   if (loading && !data) return <Spinner />;
   if (error && !data) return <ErrorState message={error} onRetry={reload} />;
   if (!data) return null;
@@ -47,6 +52,7 @@ export function AdminRendersView() {
         <StatTile label={t('avg')} value={s.avgSeconds === null ? '—' : tc('seconds', { seconds: s.avgSeconds })} />
         <StatTile label={t('committed')} value={nf.format(s.creditsCommitted)} accent="gold" />
         <StatTile label={t('refundedLabel')} value={nf.format(s.creditsRefunded)} />
+        <StatTile label={t('unsettled')} value={nf.format(s.unsettled)} accent={s.unsettled ? 'amber' : undefined} hint={t('unsettledHint')} />
       </div>
 
       {providers.length > 0 && (
@@ -59,9 +65,21 @@ export function AdminRendersView() {
       )}
 
       <h2 className="mb-3 mt-6 text-sm font-bold text-white">{t('recent')}</h2>
+      <div className="mb-3">
+        <Segmented
+          value={status}
+          onChange={setStatus}
+          options={[
+            { id: 'all', label: tc('all') },
+            { id: 'COMPLETED', label: t('COMPLETED') },
+            { id: 'FAILED', label: t('FAILED') },
+            { id: 'UNSETTLED', label: t('unsettled'), count: s.unsettled },
+          ]}
+        />
+      </div>
       <div className="space-y-3">
-        {data.items.length === 0 && <EmptyState>{t('empty')}</EmptyState>}
-        {data.items.map((g) => (
+        {items.length === 0 && <EmptyState>{t('empty')}</EmptyState>}
+        {items.map((g) => (
           <Surface key={g.id} className="flex gap-4 p-3 sm:p-4">
             <div className="h-20 w-24 shrink-0 overflow-hidden rounded-2xl bg-black">
               {g.imageUrl && g.imageUrl.startsWith('http') ? <img src={g.imageUrl} alt="" className="h-full w-full object-cover" /> : null}
@@ -80,6 +98,7 @@ export function AdminRendersView() {
           </Surface>
         ))}
       </div>
+      <LoadMore hasMore={hasMore} loading={loadingMore} onClick={() => void loadMore()} shown={items.length} total={data.total} />
     </div>
   );
 }

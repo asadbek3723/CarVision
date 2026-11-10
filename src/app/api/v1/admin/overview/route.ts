@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { adminLiveOr401, dayKey, lastDays } from '@/server/admin';
+import { CANCEL_WINDOW_HOURS } from '@/domain/money';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,12 +12,16 @@ export async function GET(request: NextRequest) {
   if ('response' in auth) return auth.response;
   try {
     const db = createAdminClient();
+    if (request.nextUrl.searchParams.get('lite') === '1') {
+      const { count: pendingOnly } = await db.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'PENDING_ADMIN_APPROVAL');
+      return NextResponse.json({ success: true, pending: pendingOnly ?? 0 });
+    }
     const now = new Date().toISOString();
     const since30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
     const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString();
     const head = { count: 'exact' as const, head: true };
 
-    const [users, sellers, shops, paidShops, items, pending, unlocked, redeemed, gensOk, gensFailed, auditRows, signups, gens, books, sales, committed] = await Promise.all([
+    const [users, sellers, shops, paidShops, items, pending, unlocked, redeemed, gensOk, gensFailed, auditRows, signups, gens, books, finance] = await Promise.all([
       count(db.from('profiles').select('id', head)),
       count(db.from('profiles').select('id', head).eq('role', 'b2b_seller')),
       count(db.from('shops').select('id', head)),
@@ -31,9 +36,11 @@ export async function GET(request: NextRequest) {
       db.from('profiles').select('created_at').gte('created_at', since7).limit(5000),
       db.from('generations').select('created_at, status').gte('created_at', since7).limit(5000),
       db.from('bookings').select('created_at').gte('created_at', since7).limit(5000),
-      db.from('bookings').select('total_cents, commission_cents, payout_cents, payout_status').in('status', ['UNLOCKED', 'REDEEMED']).limit(5000),
-      db.from('generations').select('credits_charged').eq('credit_state', 'COMMITTED').gte('created_at', since30).limit(10000),
+      // Exact sums in SQL (no row caps): last 30 days, plus live balances.
+      db.rpc('admin_finance_summary', { p_from: since30, p_to: new Date(Date.now() + 60_000).toISOString(), p_window_hours: CANCEL_WINDOW_HOURS }),
     ]);
+    if (finance.error) throw new Error(finance.error.message);
+    const f = finance.data as { grossCents: number; commissionEarnedCents: number; commissionInWindowCents: number; cancelRetainedCents: number; payoutsOwedCents: number; creditsUsed: number };
 
     const days = lastDays(7);
     const series = (rows: Array<{ created_at: string }> | null) => {
@@ -45,11 +52,11 @@ export async function GET(request: NextRequest) {
       return days.map((d) => ({ day: d, value: m.get(d) ?? 0 }));
     };
 
-    const saleRows = sales.data ?? [];
-    const commissionCents = saleRows.reduce((s, b) => s + ((b.commission_cents as number | null) ?? 0), 0);
-    const dealCents = saleRows.reduce((s, b) => s + (b.total_cents as number), 0);
-    const payoutsOwedCents = saleRows.filter((b) => b.payout_status === 'PENDING').reduce((s, b) => s + ((b.payout_cents as number | null) ?? 0), 0);
-    const creditsUsed = (committed.data ?? []).reduce((s, g) => s + (g.credits_charged as number), 0);
+    // Earned = commission that can no longer be cancelled away, plus what is kept on cancellations.
+    const commissionCents = Number(f.commissionEarnedCents) + Number(f.cancelRetainedCents);
+    const dealCents = Number(f.grossCents);
+    const payoutsOwedCents = Number(f.payoutsOwedCents);
+    const creditsUsed = Number(f.creditsUsed);
 
     // Recent admin actions with admin phone
     const adminIds = [...new Set((auditRows.data ?? []).map((a) => a.admin_id as string))];
@@ -62,6 +69,7 @@ export async function GET(request: NextRequest) {
         users, sellers, shops, paidShops, freeShops: shops - paidShops, publishedItems: items,
         bookings: { pending, unlocked, redeemed },
         commissionUSD: commissionCents / 100,
+        commissionInWindowUSD: Number(f.commissionInWindowCents) / 100,
         payoutsOwedUSD: payoutsOwedCents / 100,
         dealUSD: dealCents / 100,
         renders30d: { completed: gensOk, failed: gensFailed, creditsUsed },

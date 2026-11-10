@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
 import { sendReceiptForReview } from '@/server/telegram';
+import { paymentDetails } from '@/server/bookings';
 
 export const maxDuration = 30;
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -28,6 +29,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!guard.ok) return guard.response;
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) return fail(404, 'NOT_FOUND', 'Buyurtma topilmadi');
+
+    // Without a configured card the customer cannot have paid anyone: never accept a receipt.
+    if (!paymentDetails()) return fail(503, 'PAYMENT_NOT_CONFIGURED', 'To‘lov kartasi hali sozlanmagan');
 
     const db = createAdminClient();
     const { data: booking } = await db.from('bookings').select('id, status').eq('id', id).eq('user_id', guard.value.userId).maybeSingle();
@@ -63,7 +67,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .in('status', ['AWAITING_PAYMENT', 'REJECTED'])
       .select('id')
       .maybeSingle();
-    if (error || !updated) return fail(409, 'INVALID_STATE', 'Holat o‘zgargan, sahifani yangilang');
+    if (error || !updated) {
+      // Do not leave an orphaned receipt file behind (e.g. a parallel upload of the same image).
+      await db.storage.from('receipts').remove([path]).catch(() => undefined);
+      if (error && /receipt_hash|duplicate|unique/i.test(error.message)) return fail(409, 'DUPLICATE_RECEIPT', 'Bu chek avval boshqa buyurtmada ishlatilgan');
+      return fail(409, 'INVALID_STATE', 'Holat o‘zgargan, sahifani yangilang');
+    }
 
     // Best-effort Telegram notification (never throws); awaited so serverless doesn't cut it off.
     await sendReceiptForReview(id);

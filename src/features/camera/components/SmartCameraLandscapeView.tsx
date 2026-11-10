@@ -52,6 +52,15 @@ const DEFAULT_FRAME_RING = 'ring-gold-500/65 shadow-[0_0_60px_rgba(0,0,0,0.95),0
  */
 export const SCAN_5_ANGLES: ScanAngle[] = GUIDED_SCAN_ANGLES;
 
+/** Index of the next angle after `from` (going round once) that has no photo yet; null when all are taken. */
+export function nextOpenStep(from: number, captured: Record<number, unknown>): number | null {
+  for (let k = 1; k <= SCAN_5_ANGLES.length; k++) {
+    const idx = (from + k) % SCAN_5_ANGLES.length;
+    if (!captured[SCAN_5_ANGLES[idx]!.id]) return idx;
+  }
+  return null;
+}
+
 export interface LuxuryCarCompassProps {
   activeAngleId: number;
   completedAngles: number[];
@@ -198,6 +207,11 @@ interface SmartCameraLandscapeViewProps {
     allCaptured?: Record<number, CompressResult>
   ) => void;
   onAllPhotosCaptured?: (allCaptured: Record<number, CompressResult>) => void;
+  /**
+   * "Done" with fewer than all angles (at least one photo). Every angle is optional: the customer
+   * may skip any side. Without this prop the camera keeps asking until every angle is taken.
+   */
+  onFinish?: (allCaptured: Record<number, CompressResult>) => void;
   onClose?: () => void;
   className?: string;
 }
@@ -205,6 +219,7 @@ interface SmartCameraLandscapeViewProps {
 export function SmartCameraLandscapeView({
   onPhotoCaptured,
   onAllPhotosCaptured,
+  onFinish,
   onClose,
   className = '',
 }: SmartCameraLandscapeViewProps) {
@@ -446,8 +461,9 @@ export function SmartCameraLandscapeView({
           // Notify parent of this single angle capture
           onPhotoCaptured(frameResult, activeAngle.id, updatedMap);
 
-          const nextStepIndex = currentStepIndex + 1;
-          if (nextStepIndex < SCAN_5_ANGLES.length) {
+          // Next angle not taken yet (skipped ones included), going round once.
+          const nextStepIndex = nextOpenStep(currentStepIndex, updatedMap);
+          if (nextStepIndex !== null) {
             setCurrentStepIndex(nextStepIndex);
           } else {
             // All 5 required angles have been captured!
@@ -462,6 +478,20 @@ export function SmartCameraLandscapeView({
         setIsCapturing(false);
       }
     }, 180);
+  };
+
+  const capturedCount = Object.keys(capturedResults).length;
+  /** Skips this side: the next angle not photographed yet. */
+  const skipStep = () => {
+    if (isCapturing) return;
+    vibrate(10);
+    setCurrentStepIndex((i) => nextOpenStep(i, capturedResults) ?? (i + 1) % SCAN_5_ANGLES.length);
+  };
+  const finish = () => {
+    if (isCapturing || capturedCount === 0) return;
+    playLock();
+    vibrate([40, 60, 40]);
+    (onFinish ?? onAllPhotosCaptured)?.(capturedResults);
   };
 
   return (
@@ -699,6 +729,32 @@ export function SmartCameraLandscapeView({
             {/* Solid Pure White Inner Disc */}
             <span className="relative z-10 h-12 w-12 sm:h-14 sm:w-14 md:h-[68px] md:w-[68px] rounded-full bg-white shadow-[0_4px_18px_rgba(255,255,255,0.4)] transition-transform duration-200 group-hover:scale-[0.98] group-active:scale-90" />
           </button>
+
+          {/* Every side is optional: skip this one, or finish with what is taken (1 to 5 photos). */}
+          {onFinish && (
+            <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-1 sm:bottom-5">
+              {capturedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={finish}
+                  disabled={isCapturing}
+                  className="min-h-9 w-full max-w-[112px] rounded-full bg-gold-500 px-2 text-[11px] font-bold text-black shadow-[0_0_16px_rgba(232,191,116,0.45)] transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  {t('finishWith', { count: capturedCount })}
+                </button>
+              )}
+              {capturedCount < SCAN_5_ANGLES.length && (
+                <button
+                  type="button"
+                  onClick={skipStep}
+                  disabled={isCapturing}
+                  className="min-h-9 w-full max-w-[112px] rounded-full bg-white/10 px-2 text-[11px] font-semibold text-white/80 ring-1 ring-white/15 backdrop-blur transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  {t('skip')}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

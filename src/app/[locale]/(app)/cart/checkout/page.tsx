@@ -112,6 +112,13 @@ function CheckoutPageInner() {
   const hasUnavailable = lines.some((l) => l.p.stock <= 0);
   const missing = cartIds.length - products.length;
 
+  // Same key for retries of the same checkout, so a lost response never creates duplicate orders.
+  const idemKey = React.useRef<string | null>(null);
+  const linesSig = lines.map((l) => `${l.p.id}:${l.qty}`).join(',');
+  React.useEffect(() => {
+    idemKey.current = null;
+  }, [linesSig]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -121,7 +128,7 @@ function CheckoutPageInner() {
     try {
       const res = await fetch('/api/v1/bookings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': (idemKey.current ??= crypto.randomUUID()) },
         body: JSON.stringify({
           items: lines.map((l) => ({ id: l.p.id, quantity: l.qty })),
           customerName: name.trim(),
@@ -133,6 +140,7 @@ function CheckoutPageInner() {
       if (!res.ok || !data.success) throw new Error(apiError(data, t('errCreate')));
       setPayment(data.payment);
       setBookings(data.bookings);
+      idemKey.current = null;
       // Ordered lines leave the cart; anything left unticked stays for later.
       removeLines(lines.map((l) => l.p.id));
     } catch (err) {

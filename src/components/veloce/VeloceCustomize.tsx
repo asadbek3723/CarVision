@@ -27,6 +27,7 @@ import { onePerSlot, partSlot, toggleInSlot } from '@/lib/part-slot';
 import { RenderProgress } from '@/features/visualizer/RenderProgress';
 import { planRender, type PlanAngle } from '@/features/visualizer/render-plan';
 import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderBuild';
+import { getCarViews } from '@/features/visualizer/car-views';
 
 const CONFIRMED_KEY = 'carvision_car_confirmed_for';
 
@@ -149,7 +150,7 @@ export function VeloceCustomize() {
       try {
         if (!catalogLoadedOnce.current) setIsLoadingCatalog(true);
         // Workshop owners see only their own garage parts; regular users see every shop's parts that fit their car.
-        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?limit=120&locale=${locale}${filterQuery ? `&${filterQuery}` : ''}&v=${liveVersion()}`;
+        const endpoint = isSeller ? `/api/v1/seller/inventory?locale=${locale}` : `/api/v1/products?limit=120&locale=${locale}${filterQuery ? `&${filterQuery}` : ''}&v=${liveVersion()}`;
         const res = await fetch(endpoint, { cache: 'no-store' });
         const data = await res.json();
         if (isMounted) {
@@ -303,13 +304,20 @@ export function VeloceCustomize() {
 
 
   // The sides that were actually photographed. A single plain photo counts as the hero side.
+  // Each photo carries the side the AI check saw in it, so a photo in the wrong slot is still
+  // rendered and judged as the side it really shows.
   const planAngles = React.useMemo<PlanAngle[]>(() => {
-    const sides: PlanAngle[] = FIVE_CAR_ANGLES.map((a) => ({ id: a.id, label: t(`angles.${a.key}`), photo: multiAngles[a.id] }));
+    const views = carConfirmed ? getCarViews() : {};
+    const sides: PlanAngle[] = FIVE_CAR_ANGLES.map((a) => ({ id: a.id, label: t(`angles.${a.key}`), photo: multiAngles[a.id], view: views[a.id] }));
     if (!sides.some((a) => a.photo) && photo) {
       return sides.map((a) => (a.id === 'front-left' ? { ...a, photo } : a));
     }
     return sides;
-  }, [multiAngles, photo, t]);
+  }, [multiAngles, photo, t, carConfirmed]);
+  // The photo the car check starts from: the front if there is one, else the first one taken.
+  const gatePhotoId = FIVE_CAR_ANGLES.find((a) => a.id === 'front' && multiAngles[a.id])?.id
+    ?? FIVE_CAR_ANGLES.find((a) => multiAngles[a.id])?.id
+    ?? 'front-left';
   // Only angles that can show a chosen part are rendered (and paid for): a rear light is not in a front photo.
   const renderPlan = React.useMemo(
     () => planRender(planAngles, selectedProducts.map((p) => ({ id: p.id, category: p.category, name: p.name, spec: p.spec, zone: partZoneOf(p) }))),
@@ -455,8 +463,9 @@ export function VeloceCustomize() {
       {showGate && (
         <CarIdentifyGate
           key={captureStamp}
-          photo={multiAngles['front'] || photo || ''}
-          angles={FIVE_CAR_ANGLES.filter((a) => a.id !== 'front' && multiAngles[a.id]).map((a) => ({ id: a.id, label: t(`angles.${a.key}`), photo: multiAngles[a.id] as string }))}
+          photo={multiAngles[gatePhotoId] || photo || ''}
+          photoId={gatePhotoId}
+          angles={FIVE_CAR_ANGLES.filter((a) => a.id !== gatePhotoId && multiAngles[a.id]).map((a) => ({ id: a.id, label: t(`angles.${a.key}`), photo: multiAngles[a.id] as string }))}
           onRetake={openCamera}
           onClose={() => router.push(isSeller ? `/${locale}/dashboard` : `/${locale}/shop`)}
           onDone={confirmCar}
@@ -708,6 +717,7 @@ export function VeloceCustomize() {
             nextLabel={t('scrollForward')}
             formatPrice={formatPrice}
             fitFallback={t('fitFallback')}
+            universalLabel={t('fitAll')}
             ariaLabel={t('pickFromStrip')}
           />
         )}

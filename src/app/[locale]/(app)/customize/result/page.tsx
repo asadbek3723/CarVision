@@ -63,7 +63,7 @@ export default function CustomizeResultPage() {
     const fetchCatalog = async () => {
       try {
         // Workshop owners only ever see their own garage; everyone else sees the whole marketplace.
-        const endpoint = isSeller ? '/api/v1/seller/inventory' : `/api/v1/products?locale=${locale}`;
+        const endpoint = isSeller ? `/api/v1/seller/inventory?locale=${locale}` : `/api/v1/products?locale=${locale}`;
         const res = await fetch(endpoint);
         const data = await res.json();
         if (isMounted && data.success && Array.isArray(data.products)) {

@@ -232,6 +232,9 @@ export default function MobileScanSessionPage() {
     [sessionId, tAcc]
   );
 
+  // Uploads still on their way: "Done" waits for them before telling the computer to continue.
+  const inFlight = React.useRef<Set<Promise<void>>>(new Set());
+
   const handlePhotoCaptured = (
     result: CompressResult,
     angleId: number,
@@ -239,16 +242,42 @@ export default function MobileScanSessionPage() {
   ) => {
     const count = allCaptured ? Object.keys(allCaptured).length : syncedAngleIds.length + 1;
     // iOS may hand back an oversized PNG: always bring it under the upload limit first.
-    void shrinkImageBlob(result.blob)
+    const job: Promise<void> = shrinkImageBlob(result.blob)
       .catch(() => result.blob)
-      .then((blob) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = typeof reader.result === 'string' ? reader.result : '';
-          if (dataUrl) void uploadPhotoData(dataUrl, blob, angleId, count);
-        };
-        reader.readAsDataURL(blob);
+      .then(
+        (blob) =>
+          new Promise<void>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+              if (dataUrl) void uploadPhotoData(dataUrl, blob, angleId, count).finally(resolve);
+              else resolve();
+            };
+            reader.onerror = () => resolve();
+            reader.readAsDataURL(blob);
+          })
+      )
+      .finally(() => inFlight.current.delete(job));
+    inFlight.current.add(job);
+  };
+
+  /** "Done" with 1 to 4 photos: once they are uploaded, the computer opens the studio with them. */
+  const handleFinish = async () => {
+    setIsUploading(true);
+    await Promise.allSettled([...inFlight.current]);
+    try {
+      const res = await fetch(`/api/v1/camera-session/${sessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'captured' }),
       });
+      if (res.ok) setIsTransferred(true);
+      else setUploadError(res.status === 404 ? tAcc('scanErrExpired') : tAcc('scanErrUpload'));
+    } catch {
+      setUploadError(tAcc('scanErrUpload'));
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleManualRetry = async () => {
@@ -278,7 +307,7 @@ export default function MobileScanSessionPage() {
         </div>
 
         <h1 className="font-display text-xl sm:text-2xl font-light tracking-[0.25em] text-foreground uppercase">
-          {t('doneTitle', { total: REQUIRED_ANGLES_TOTAL })}
+          {t('doneTitle', { total: syncedAngleIds.length || REQUIRED_ANGLES_TOTAL })}
         </h1>
 
         <p className="mt-3 max-w-xs font-display text-xs sm:text-sm font-light tracking-wider text-gold-500 leading-relaxed">
@@ -313,6 +342,7 @@ export default function MobileScanSessionPage() {
 
       <SmartCameraLandscapeView
         onPhotoCaptured={handlePhotoCaptured}
+        onFinish={() => void handleFinish()}
         className="w-full h-full"
       />
 

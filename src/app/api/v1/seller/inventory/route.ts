@@ -5,20 +5,21 @@ import { saveManualTranslations, syncItemTranslations } from '@/server/catalog-t
 import { requirePaidSeller } from '@/server/auth/guards';
 import { getServerRates } from '@/server/rates';
 import { coverFor, itemBodySchema, loadItems, replaceItemRelations } from '@/server/catalog';
-import { toUsdCents, veloceCategory, type CatalogItemDTO } from '@/domain/catalog';
+import { ITEM_LOCALES, localizedText, toUsdCents, veloceCategory, type CatalogItemDTO } from '@/domain/catalog';
 
 const fail = (status: number, error: string, extra: Record<string, unknown> = {}) =>
   NextResponse.json({ success: false, error, ...extra }, { status });
 
 /** Shape the studio / customize screens already understand (VeloceProduct). */
-function toVeloceProduct(i: CatalogItemDTO) {
+function toVeloceProduct(i: CatalogItemDTO, locale: string) {
+  const text = localizedText(i, locale);
   return {
     id: i.id,
-    name: i.name,
+    name: text.name,
     brand: i.brand || 'CarVision',
     price: i.priceUSD,
     priceUSD: i.priceUSD,
-    spec: i.description,
+    spec: text.description,
     category: veloceCategory(i.category, i.attributes),
     image: i.coverImageUrl ?? i.images[0]?.url ?? '',
     angleImage: i.images.find((g) => g.kind === 'ANGLE')?.url,
@@ -37,7 +38,10 @@ export async function GET(request: NextRequest) {
   try {
     const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
-    const id = new URL(request.url).searchParams.get('id');
+    const params = new URL(request.url).searchParams;
+    const id = params.get('id');
+    const localeParam = params.get('locale') ?? '';
+    const locale = (ITEM_LOCALES as readonly string[]).includes(localeParam) ? localeParam : '';
     if (id && !z.string().uuid().safeParse(id).success) return fail(400, 'id noto‘g‘ri');
 
     const items = await loadItems(createAdminClient(), {
@@ -51,7 +55,7 @@ export async function GET(request: NextRequest) {
       success: true,
       seller: { id: guard.value.shopId, business_name: guard.value.session.shop?.shop_name ?? '' },
       items,
-      products: items.filter((i) => i.status === 'PUBLISHED').map(toVeloceProduct),
+      products: items.filter((i) => i.status === 'PUBLISHED').map((i) => toVeloceProduct(i, locale)),
       totalCount: items.length,
       inStockCount: items.filter((i) => i.stock > 0 && i.status === 'PUBLISHED').length,
     });

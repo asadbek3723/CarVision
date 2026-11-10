@@ -53,3 +53,36 @@ describe('translateListing', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('translateListing polish', () => {
+  beforeEach(() => {
+    vi.stubEnv('GEMINI_API_KEY', 'test-key-123456');
+    vi.stubEnv('OPENAI_API_KEY', '');
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  const reply = (polished: { name: string; description: string }) =>
+    vi.fn(async () => geminiReply({ sourceLang: 'uz', polished, translations: { ru: { name: 'Диски', description: '' } } }));
+
+  it('keeps a light proofread of the original', async () => {
+    vi.stubGlobal('fetch', reply({ name: 'Disklar BBS R19', description: 'Yangi, 4 dona.' }));
+    const r = await translateListing({ name: 'disklar bbs R19', description: 'yangi 4 dona' });
+    expect(r?.polished).toEqual({ name: 'Disklar BBS R19', description: 'Yangi, 4 dona.' });
+  });
+
+  it('rejects a rewrite that expands or invents text', async () => {
+    vi.stubGlobal('fetch', reply({ name: 'Disklar BBS R19', description: 'Yangi, 4 dona. Yuqori sifatli alyuminiy, kafolat bilan!' }));
+    const r = await translateListing({ name: 'disklar bbs R19', description: 'yangi 4 dona' });
+    expect(r?.polished).toBeNull();
+    expect(r?.translations.ru?.name).toBe('Диски');
+  });
+
+  it('never fills an empty description', async () => {
+    vi.stubGlobal('fetch', reply({ name: 'Disklar', description: 'Yangi disklar.' }));
+    const r = await translateListing({ name: 'disklar', description: '' });
+    expect(r?.polished).toBeNull();
+  });
+});

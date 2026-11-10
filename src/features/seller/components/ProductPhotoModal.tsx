@@ -7,15 +7,21 @@ import { useParams } from 'next/navigation';
 import { Check, Copy, ImagePlus, Loader2, X } from 'lucide-react';
 import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { LuxuryQrCode } from '@/components/ui/LuxuryQrCode';
-import { LiveCamera } from './LiveCamera';
+import { SmartProductCamera } from './SmartProductCamera';
+import { SHOT_PLANS, type ShotProfile } from '../lib/product-shots';
 import { fileToPhotoDataUrl } from '../lib/photo-input';
 import { useErrorToast } from '@/components/ui/Toaster';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  /** Receives a compressed JPEG data URL. */
+  /** Receives a compressed JPEG data URL. The modal stays open for the next shot. */
   onPhoto: (dataUrl: string) => void;
+  /** Which shot plan the camera follows. */
+  profile: ShotProfile;
+  onProfileChange?: (profile: ShotProfile) => void;
+  /** The seller finished shooting (closes the modal without leaving the page). */
+  onDone?: () => void;
 }
 
 function detectMobile(): boolean {
@@ -29,8 +35,9 @@ function detectMobile(): boolean {
  * Phone: opens the live camera at once (upload-from-device at the bottom).
  * Computer: QR code (take the photo with the phone, it appears here) and "upload from device".
  */
-export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
+export function ProductPhotoModal({ isOpen, onClose, onPhoto, profile, onProfileChange, onDone }: Props) {
   const t = useTranslations('photoModal');
+  const tCam = useTranslations('productCam');
   const apiError = useApiError();
   const tImg = useTranslations('imageErrors');
   const imgText = useImageErrorText();
@@ -117,15 +124,20 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
 
   if (!isOpen || mobile === null) return null;
 
-  const url = sessionId && typeof window !== 'undefined' ? `${window.location.origin}/${locale}/capture/${sessionId}` : '';
+  const url = sessionId && typeof window !== 'undefined' ? `${window.location.origin}/${locale}/capture/${sessionId}?p=${profile}` : '';
 
   if (mobile) {
     return (
       <div className="fixed inset-0 z-[100] bg-black">
-        <LiveCamera busy={busy} onShot={onPhoto} onFile={(f) => void handleFile(f)} />
-        <button type="button" onClick={onClose} aria-label={t('close')} className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white">
-          <X className="h-5 w-5" />
-        </button>
+        <SmartProductCamera
+          profile={profile}
+          onProfileChange={onProfileChange}
+          busy={busy}
+          onShot={onPhoto}
+          onFile={(f) => void handleFile(f)}
+          onClose={onClose}
+          onDone={onDone ?? onClose}
+        />
       </div>
     );
   }
@@ -138,6 +150,22 @@ export function ProductPhotoModal({ isOpen, onClose, onPhoto }: Props) {
         </button>
         <h2 className="text-2xl font-light text-white">{t('title')}</h2>
         <p className="mt-1 text-sm text-white/50">{t('subtitle')}</p>
+
+        {/* The shots buyers want to see for this kind of product */}
+        <div className="mt-5 rounded-2xl bg-white/[0.04] p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gold-500">{tCam('planTitle')}</p>
+          <ol className="mt-2 grid gap-x-6 gap-y-1.5 text-sm text-white/75 md:grid-cols-2">
+            {SHOT_PLANS[profile].map((s, i) => (
+              <li key={s.key} className="flex gap-2">
+                <span className="text-white/40">{i + 1}.</span>
+                <span>
+                  <span className="font-semibold text-white">{tCam(`shots.${s.key}.title`)}</span>
+                  <span className="text-white/50"> — {tCam(`shots.${s.key}.tip`)}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
 
         <div className="mt-8 grid gap-8 md:grid-cols-2">
           {/* QR */}

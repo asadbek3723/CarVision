@@ -11,7 +11,7 @@ import { useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { cachedInventory, rememberInventory } from '@/features/seller/lib/inventory-cache';
 import { ProductImage } from '@/components/ui/ProductImage';
-import type { CatalogItemDTO } from '@/domain/catalog';
+import { localizedText, type CatalogItemDTO } from '@/domain/catalog';
 import { SellerOnly } from './SellerOnly';
 import { isSellerUser } from '@/features/auth/roles';
 import { buttonClasses } from '@/components/ui';
@@ -117,7 +117,7 @@ export function SellerDashboardView() {
   };
 
   const remove = async (item: CatalogItemDTO) => {
-    if (!window.confirm(t('confirmDelete', { name: item.name }))) return;
+    if (!window.confirm(t('confirmDelete', { name: localizedText(item, locale).name }))) return;
     setBusyId(item.id);
     try {
       const res = await fetch(`/api/v1/seller/inventory?productId=${encodeURIComponent(item.id)}`, { method: 'DELETE' });
@@ -258,14 +258,14 @@ export function SellerDashboardView() {
                   <li key={item.id} className="flex min-w-0 flex-col">
                     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-surface-1">
                       {item.coverImageUrl && (
-                        <ProductImage src={item.coverImageUrl} alt={item.name} sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw" className="object-cover" />
+                        <ProductImage src={item.coverImageUrl} alt={localizedText(item, locale).name} sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw" className="object-cover" />
                       )}
                       <span className={`absolute start-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-md ${isPublished ? 'bg-black/60 text-emerald-300' : 'bg-black/60 text-white/70'}`}>
                         {isPublished ? t('statusPublished') : t('statusDraft')}
                       </span>
                     </div>
 
-                    <h3 className="mt-3 truncate text-sm font-semibold text-white md:text-base">{item.name}</h3>
+                    <h3 className="mt-3 truncate text-sm font-semibold text-white md:text-base">{localizedText(item, locale).name}</h3>
                     <p className="mt-0.5 truncate text-[11px] text-white/45 md:text-xs">
                       {tCat(item.category)}
                       {item.brand ? ` · ${item.brand}` : ''}

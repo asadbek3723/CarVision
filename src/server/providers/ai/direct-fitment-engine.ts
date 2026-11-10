@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { hasAnyImageKey, runImageChain } from './image-chain';
 import type { ProviderId } from './key-pool';
+import { checkRender, hasRenderChecker, type RenderCheck } from './render-check';
 
 export interface FitmentPartInput {
   id: string;
@@ -43,7 +44,9 @@ export interface DirectFitmentResponse {
   afterImageUrl: string | null;
   promptUsed: string;
   durationMs: number;
-  outcome?: 'no_provider' | 'failed' | 'busy' | 'no_quota' | 'blocked' | 'invalid_image' | undefined;
+  outcome?: 'no_provider' | 'failed' | 'busy' | 'no_quota' | 'blocked' | 'invalid_image' | 'wrong_view' | undefined;
+  /** What the second-look check said about the delivered picture (absent when it did not run). */
+  check?: RenderCheck | undefined;
 }
 
 const PROVIDER_LABEL: Record<ProviderId, Exclude<DirectFitmentResponse['providerUsed'], 'local-neural-compositor'>> = {
@@ -183,7 +186,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
       return `Change ONLY the exterior paint colour to "${p.name}" (${p.swatch || 'custom automotive wrap'}). Recolour EVERY painted body surface visible in this photo completely and evenly, with no patch of the old colour left anywhere: doors, front and rear fenders, hood, roof, pillars, trunk lid, painted bumper areas, door handles, mirror shells, sills and the paint seen in the reflections on the car. Keep the real 3D shading: the same highlights, shadows and reflections stay in the same places and the same intensity, only their hue becomes the new colour, so it looks like real paint and not a flat fill. Every dent, crease, scratch, scuff, chip and panel gap stays visible with the same shape. Do not make the paint glossier or shinier than it was. Windows, glass, black trim, rubber, lamps, tyres, wheels, grille, badges and number plate keep their original colour`;
     }
     if (cat.includes('wheel') || cat.includes('disk')) {
-      return `Replace the wheels with "${p.name}"${specText}: exact spoke geometry from the reference photo, same wheel size position, brake calipers and tyre sidewalls kept, realistic contact shadow`;
+      return `Replace EVERY visible wheel (front and rear, near side and far side) with "${p.name}"${specText}. All wheels get the identical new design and finish: the exact spoke geometry, the exact colour and finish of the part photo applied over the WHOLE wheel face: spokes, centre, hub, centre cap, lug nuts area, barrel and lip. No part of any wheel keeps the old wheel's colour or design (no silver, white or chrome centre left over unless the part photo has it). Same wheel size and position, tyres and brake calipers kept, realistic contact shadow`;
     }
     if (cat.includes('bumper') || cat.includes('bamper')) {
       return `Replace the front or rear bumper visible from this viewpoint with "${p.name}"${specText}: exact shape, intakes, grille mesh and lip from the reference photo, aligned with the factory panel gaps, painted in the car's current colour unless the part is carbon or black by design`;
@@ -192,7 +195,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
       return `Mount "${p.name}"${specText} on the trunk lid / rear deck exactly like the reference photo (same blade shape, end plates, uprights and finish), correctly scaled to this car and in perspective; it is only visible from rear or side viewpoints`;
     }
     if (cat.includes('light') || cat.includes('fara')) {
-      return `Replace the headlights or tail lights with "${p.name}"${specText} inside the factory housings: same LED signature, projector layout and lens tint as the reference photo, with a natural daytime running light glow`;
+      return `Replace the headlights or tail lights visible from this viewpoint with "${p.name}"${specText} inside the factory housings: same LED signature, projector layout and lens tint as the reference photo, identical on the left and right lamp, with a natural daytime running light glow`;
     }
     if (cat.includes('body') || cat.includes('aero')) {
       return `Replace the matching body part with "${p.name}"${specText}, aligned with the factory panel gaps and painted in the car's current paint colour (or the shown carbon weave)`;
@@ -210,9 +213,11 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     `This is a precise edit of the customer's real car photo (${angleText}), not a new picture: change only what is listed below, and keep every other pixel of the photo as it is.`,
     'CHANGES TO MAKE:',
     ...partInstructions.map((line, n) => `${n + 1}. ${line}.`),
+    'Apply every change completely and identically to EVERY visible instance of that part (all wheels, both headlights, both tail lights, both mirrors, every painted panel): never leave one instance, or part of one, in its old colour or shape.',
     req.referenceAfter
-      ? 'The LAST input image shows this same car already modified, taken from a different angle: use it ONLY as a reference for how the new parts, wheel design and paint look, and reproduce them identically. Never copy its camera angle or background.'
+      ? 'The LAST input image shows this same car already modified, taken from a DIFFERENT angle: use it ONLY as a reference for how the new parts look (wheel design and colour including the wheel centre and centre cap, paint, body parts) and reproduce them identically. Never copy its camera angle, its side of the car, its framing or its background.'
       : '',
+    `CAMERA: the result must show exactly the same side of the car from exactly the same camera position as the FIRST input image (the customer photo, ${angleText}). If the customer photo shows the front, the result shows the front; if it shows the side, the result shows the same side. Never rotate, turn or re-pose the car.`,
     `Only modify what is actually visible from this ${angleText}; do not invent parts that are hidden from this viewpoint.`,
     'KEEP EXACTLY AS IN THE ORIGINAL PHOTO: car make, model and body shape, camera angle, framing, background, lighting, shadows, number plate, glass, and all existing damage and wear: dents, dings, creases, scratches, scuffs, chips, rust, dirt, stickers.',
     'Never repair, clean, smooth, retouch or beautify anything that was not listed above.',
@@ -258,17 +263,60 @@ export async function executeDirectAiFitment(
     const partLabels = withPhoto.map((r) => r.label);
     const referenceDataUri = req.referenceAfter ? await resolveImageToDataUri(req.referenceAfter) : null;
 
-    const chain = await runImageChain({
-      carDataUri,
-      partDataUris,
-      partLabels,
-      referenceDataUri,
-      prompt: promptUsed,
-      mode: 'fitment',
-    }, {
-      task: 'fitment',
-      ...(req.deadlineMs ? { deadlineMs: Math.max(8_000, req.deadlineMs - (Date.now() - startMs)) } : {}),
-    });
+    const deadline = req.deadlineMs ? startMs + req.deadlineMs : Number.POSITIVE_INFINITY;
+    const left = () => deadline - Date.now();
+    const changes = req.parts.map((p) => p.name);
+
+    const render = (prompt: string, reference: string | null) =>
+      runImageChain({
+        carDataUri,
+        partDataUris,
+        partLabels,
+        referenceDataUri: reference,
+        prompt,
+        mode: 'fitment',
+      }, {
+        task: 'fitment',
+        ...(Number.isFinite(deadline) ? { deadlineMs: Math.max(8_000, left()) } : {}),
+      });
+
+    let chain = await render(promptUsed, referenceDataUri);
+    let check: RenderCheck | null = null;
+
+    // Second look: same side as the customer photo, and every wheel / lamp fully changed?
+    if (chain.ok && hasRenderChecker()) {
+      const afterUri = await resolveImageToDataUri(chain.image);
+      check = afterUri ? await checkRender(carDataUri, afterUri, changes, Math.min(9_000, left() - 1_000)) : null;
+      // One more try when there is time for a render plus its check. A wrong side is usually the
+      // reference render of another angle being copied, so the retry goes without it.
+      if (check && (!check.sameView || !check.partsComplete) && left() > 22_000) {
+        const fix = !check.sameView
+          ? 'IMPORTANT: a previous attempt turned the car and showed another side. Keep the exact camera angle of the customer photo.'
+          : `IMPORTANT: a previous attempt left a part unfinished (${check.problem || 'one instance kept the old part or colour'}). Change every instance completely.`;
+        const retry = await render(`${promptUsed} ${fix}`, check.sameView ? referenceDataUri : null);
+        if (retry.ok) {
+          const retryUri = await resolveImageToDataUri(retry.image);
+          const retryCheck = retryUri ? await checkRender(carDataUri, retryUri, changes, Math.min(9_000, left() - 500)) : null;
+          // Keep the retry unless the check says it is worse (wrong side where the first one was right).
+          if (!(retryCheck && !retryCheck.sameView && check.sameView)) {
+            chain = retry;
+            check = retryCheck;
+          }
+        }
+      }
+      if (check && !check.sameView) {
+        console.warn('AI render shows another side of the car:', check.problem);
+        return {
+          providerUsed: chain.ok ? PROVIDER_LABEL[chain.provider] : 'local-neural-compositor',
+          liveApiActive: false,
+          afterImageUrl: null,
+          promptUsed,
+          durationMs: Date.now() - startMs,
+          outcome: 'wrong_view',
+          check,
+        };
+      }
+    }
 
     if (chain.ok) {
       return {
@@ -278,6 +326,7 @@ export async function executeDirectAiFitment(
         afterImageUrl: chain.image,
         promptUsed,
         durationMs: Date.now() - startMs,
+        check: check ?? undefined,
       };
     }
     console.warn(

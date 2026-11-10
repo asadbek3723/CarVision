@@ -10,9 +10,27 @@ export function newBookingNumber(): string {
   return `CV-${crypto.randomBytes(4).toString('hex').slice(0, 6).toUpperCase()}`;
 }
 
-/** Adds the UZS amount to pay (cards in Uzbekistan are paid in so'm). */
-export function withUzs<T extends { payUSD: number }>(dtos: T[], uzsRate: number): Array<T & { payUZS: number }> {
-  return dtos.map((b) => ({ ...b, payUZS: Math.round(b.payUSD * uzsRate) }));
+/**
+ * The so'm amount to pay (cards in Uzbekistan are paid in so'm). Orders store the exact amount
+ * fixed when they were created; only very old orders fall back to today's rate.
+ */
+export function withUzs<T extends { payUSD: number; payUZS: number | null }>(dtos: T[], uzsRate: number): Array<T & { payUZS: number }> {
+  return dtos.map((b) => ({ ...b, payUZS: b.payUZS ?? Math.round(b.payUSD * uzsRate) }));
+}
+
+/** Unpaid orders are closed after this many hours (nothing was paid, nothing to refund). */
+export const UNPAID_EXPIRY_HOURS = 48;
+
+/** Closes stale unpaid orders. Cheap and idempotent; called lazily from the order lists. */
+export async function expireUnpaid(db: Db): Promise<void> {
+  const { error } = await db.rpc('expire_unpaid_bookings', { p_hours: UNPAID_EXPIRY_HOURS });
+  if (error) console.warn('expire_unpaid_bookings failed:', error.message);
+}
+
+/** When the workshop payout may be sent: right away once handed over, else after the cancel window. */
+export function payoutAllowedFrom(r: Pick<BookingRow, 'status' | 'unlocked_at'>): string | null {
+  if (r.status === 'REDEEMED' || !r.unlocked_at) return null;
+  return new Date(new Date(r.unlocked_at).getTime() + CANCEL_WINDOW_HOURS * 3600_000).toISOString();
 }
 
 export function newRedemptionCode(): string {
@@ -27,12 +45,22 @@ export function paymentDetails(): { cardNumber: string; holder: string; bank: st
   return { cardNumber, holder, bank: process.env.ESCROW_BANK?.trim() || '' };
 }
 
-export type ReviewResult = { ok: true; status: string } | { ok: false; error: 'NOT_FOUND' | 'INVALID_STATE' | 'FAILED' };
+export type ReviewResult = { ok: true; status: string } | { ok: false; error: 'NOT_FOUND' | 'INVALID_STATE' | 'OUT_OF_STOCK' | 'FAILED'; item?: string };
 
 /** Single confirmation point for payments: used by the website admin panel and the Telegram bot. */
 export async function reviewBooking(
   db: Db,
-  args: { adminId: string; bookingId: string; approve: boolean; reason?: string | null | undefined; ip: string }
+  args: {
+    adminId: string;
+    bookingId: string;
+    approve: boolean;
+    reason?: string | null | undefined;
+    ip: string;
+    /** So'm amount actually seen on the receipt / bank statement. */
+    paidUzs?: number | null | undefined;
+    /** Bank transaction id from the receipt. */
+    reference?: string | null | undefined;
+  }
 ): Promise<ReviewResult> {
   const { data, error } = await db.rpc('admin_review_booking', {
     p_admin_id: args.adminId,
@@ -40,13 +68,19 @@ export async function reviewBooking(
     p_approve: args.approve,
     p_reason: args.reason ?? null,
     p_ip: args.ip.slice(0, 45),
+    p_paid_uzs: args.paidUzs ?? null,
+    p_reference: args.reference ?? null,
   });
-  const r = data as { success?: boolean; error?: string; status?: string } | null;
-  if (error || !r) return { ok: false, error: 'FAILED' };
+  const r = data as { success?: boolean; error?: string; status?: string; item?: string } | null;
+  if (error || !r) {
+    if (error) console.error('admin_review_booking failed:', error.message);
+    return { ok: false, error: 'FAILED' };
+  }
   if (r.success) {
     await pushBookingEvent(db, args.bookingId, args.approve ? 'approved' : 'rejected');
     return { ok: true, status: r.status ?? '' };
   }
+  if (r.error === 'OUT_OF_STOCK') return { ok: false, error: 'OUT_OF_STOCK', ...(r.item ? { item: r.item } : {}) };
   return { ok: false, error: r.error === 'INVALID_STATE' ? 'INVALID_STATE' : 'NOT_FOUND' };
 }
 
@@ -87,6 +121,8 @@ export interface BookingDTO {
   totalUSD: number;
   /** The amount to transfer to the payment card (equals totalUSD). */
   payUSD: number;
+  /** Exact so'm amount fixed at order time (null on very old orders). */
+  payUZS: number | null;
   createdAt: string;
   rejectedReason: string | null;
   /** Until when a paid purchase can still be cancelled (null when it cannot). */
@@ -108,8 +144,8 @@ export interface BookingDTO {
   redemptionCode: string | null;
 }
 
-const BOOKING_COLUMNS =
-  'id, booking_number, user_id, shop_id, status, total_cents, amount_cents, commission_cents, payout_cents, payout_status, payout_paid_at, cancelled_at, refund_cents, refund_status, refunded_at, redemption_code, customer_name, customer_phone, customer_note, rejected_reason, created_at, unlocked_at, redeemed_at, receipt_path, receipt_hash, receipt_submitted_at';
+export const BOOKING_COLUMNS =
+  'id, booking_number, user_id, shop_id, status, total_cents, amount_cents, commission_cents, payout_cents, payout_status, payout_paid_at, cancelled_at, refund_cents, refund_status, refunded_at, redemption_code, customer_name, customer_phone, customer_note, rejected_reason, created_at, unlocked_at, redeemed_at, receipt_path, receipt_hash, receipt_submitted_at, amount_uzs, fx_rate, paid_amount_uzs, bank_reference';
 
 export type PayoutStatus = 'NONE' | 'PENDING' | 'PAID' | 'VOID';
 export type RefundStatus = 'NONE' | 'PENDING' | 'DONE';
@@ -143,6 +179,12 @@ export interface BookingRow {
   receipt_path: string | null;
   receipt_hash: string | null;
   receipt_submitted_at: string | null;
+  /** So'm amount the customer was asked to pay, fixed at order time. */
+  amount_uzs: number | null;
+  fx_rate: number | null;
+  /** So'm amount the admin confirmed on approval. */
+  paid_amount_uzs: number | null;
+  bank_reference: string | null;
 }
 
 export async function fetchBookingRows(db: Db, filter: { userId?: string | undefined; shopId?: string | undefined; id?: string | undefined; ids?: string[] | undefined; statuses?: BookingStatus[] | undefined; limit?: number | undefined }): Promise<BookingRow[]> {
@@ -205,6 +247,7 @@ export async function toCustomerDTOs(db: Db, rows: BookingRow[]): Promise<Bookin
       status: r.status,
       totalUSD: centsToUsd(r.total_cents),
       payUSD: centsToUsd(r.amount_cents),
+      payUZS: r.amount_uzs !== null ? Number(r.amount_uzs) : null,
       createdAt: r.created_at,
       rejectedReason: r.rejected_reason,
       cancellableUntil: until,

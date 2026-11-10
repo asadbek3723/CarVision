@@ -27,7 +27,8 @@ import { compressFileToDataUrl, type CompressResult } from '@/features/camera/li
 import { playLock, playShutter, vibrate } from '@/features/camera/lib/fx';
 import { LuxuryQrCode } from '@/components/ui/LuxuryQrCode';
 
-import { GUIDED_SCAN_ANGLES, REQUIRED_ANGLE_COUNT } from './scan-angles';
+import { GUIDED_SCAN_ANGLES, MIN_ANGLE_COUNT, REQUIRED_ANGLE_COUNT } from './scan-angles';
+import { nextOpenStep } from '@/features/camera/components/SmartCameraLandscapeView';
 
 interface VeloceSmartCameraModalProps {
   isOpen: boolean;
@@ -142,14 +143,13 @@ export function VeloceSmartCameraModal({
     };
   }, [isOpen, isMobileDevice]);
 
-  // Safe navigation to Studio ONLY when all 5 required angles are present
+  // Opens the studio with the photos taken: any 1 to 5 sides (every side is optional).
   const handleProceedToStudio = React.useCallback(
     (customUrl?: string, customAngles?: Record<number, string>) => {
       const finalAngles = customAngles || uploadedAngles;
       const count = Object.keys(finalAngles).length;
 
-      // Enforce mandatory all-angles rule unless customAngles has all required photos
-      if (count < REQUIRED_ANGLE_COUNT && !customUrl) {
+      if (count < MIN_ANGLE_COUNT && !customUrl) {
         return;
       }
 
@@ -201,13 +201,14 @@ export function VeloceSmartCameraModal({
         setRemoteCapturedCount(Math.min(Number(data.session.uploads) || 0, REQUIRED_ANGLE_COUNT));
 
         // 2. Only when every photo should be there, download them once.
-        if (data.session.status === 'captured' && Number(data.session.uploads) >= REQUIRED_ANGLE_COUNT) {
+        // The phone says "done" (1 to 5 photos), or every angle is in.
+        if (data.session.status === 'captured' && Number(data.session.uploads) >= MIN_ANGLE_COUNT) {
           const fullRes = await fetch(`/api/v1/camera-session/${sessionId}?full=1`, { cache: 'no-store' });
           const full = await fullRes.json();
           const remoteAngles: Record<number, string> = full.session?.angles || {};
           const count = Object.keys(remoteAngles).length;
           setRemoteCapturedCount(count);
-          if (count >= REQUIRED_ANGLE_COUNT) {
+          if (count >= MIN_ANGLE_COUNT) {
             clearInterval(interval);
             handleProceedToStudio(remoteAngles[1] || full.session.imageUrl, remoteAngles);
           }
@@ -255,8 +256,8 @@ export function VeloceSmartCameraModal({
           setTimeout(() => handleProceedToStudio(next[1] || dataUrl, next), 350);
           return;
         }
-        if (currentStepIndex < GUIDED_SCAN_ANGLES.length - 1) {
-          const nextIdx = currentStepIndex + 1;
+        const nextIdx = nextOpenStep(currentStepIndex, next);
+        if (nextIdx !== null) {
           setTimeout(() => {
             setCurrentStepIndex(nextIdx);
           }, 350);
@@ -327,6 +328,27 @@ export function VeloceSmartCameraModal({
     reader.readAsDataURL(result.blob);
   };
 
+  // Mobile "Done" with 1 to 4 photos: read every taken photo, then open the studio.
+  const handleMobileFinish = (allCaptured: Record<number, CompressResult>) => {
+    const read = (blob: Blob) =>
+      new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(blob);
+      });
+    void Promise.all(Object.entries(allCaptured).map(async ([id, r]) => [Number(id), await read(r.blob)] as const)).then((pairs) => {
+      const next: Record<number, string> = {};
+      for (const [id, url] of pairs) if (url) next[id] = url;
+      if (Object.keys(next).length < MIN_ANGLE_COUNT) return;
+      mobileAnglesRef.current = next;
+      setUploadedAngles(next);
+      handleProceedToStudio(next[1] || Object.values(next)[0], next);
+    });
+  };
+  const skipDesktopStep = () => setCurrentStepIndex((i) => nextOpenStep(i, uploadedAngles) ?? (i + 1) % GUIDED_SCAN_ANGLES.length);
+  const uploadedCount = Object.keys(uploadedAngles).length;
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#050507] text-white">
       {/* 1. MOBILE ONLY: LIVE 1:1 SMART CAMERA (WITH MANDATORY LANDSCAPE LOCK & 5-ANGLE SEQUENCE) */}
@@ -334,6 +356,7 @@ export function VeloceSmartCameraModal({
         <div className="relative w-full h-full flex flex-col bg-[#050507]">
           <SmartCameraLandscapeView
             onPhotoCaptured={handleMobilePhotoCaptured}
+            onFinish={handleMobileFinish}
             onClose={onClose}
             className="w-full h-full"
           />
@@ -537,8 +560,8 @@ export function VeloceSmartCameraModal({
                   {GUIDED_SCAN_ANGLES.map((angle, idx) => {
                     const isUploaded = Boolean(uploadedAngles[angle.id]);
                     const isActive = idx === currentStepIndex;
-                    // Only allow clicking back to already-uploaded steps; cannot skip forward
-                    const canNavigate = isUploaded || idx <= currentStepIndex;
+                    // Every side is optional: any step can be opened in any order.
+                    const canNavigate = true;
 
                     return (
                       <button
@@ -705,6 +728,28 @@ export function VeloceSmartCameraModal({
                       )}
                     </div>
 
+                    {/* 1 to 5 photos: skip a side, or continue with what is uploaded. */}
+                    <div className="flex w-full flex-wrap items-center justify-center gap-3 lg:justify-start">
+                      {uploadedCount < GUIDED_SCAN_ANGLES.length && (
+                        <button
+                          type="button"
+                          onClick={skipDesktopStep}
+                          className="inline-flex min-h-11 items-center rounded-full bg-white/[0.06] px-5 text-sm font-medium text-white/75 transition hover:bg-white/[0.12] hover:text-white cursor-pointer"
+                        >
+                          {t('skipAngle')}
+                        </button>
+                      )}
+                      {uploadedCount >= MIN_ANGLE_COUNT && uploadedCount < GUIDED_SCAN_ANGLES.length && (
+                        <button
+                          type="button"
+                          onClick={() => handleProceedToStudio(uploadedAngles[1] || Object.values(uploadedAngles)[0], uploadedAngles)}
+                          className="inline-flex min-h-11 items-center rounded-full bg-gold-gradient px-6 text-sm font-semibold text-black shadow-gold transition hover:brightness-110 cursor-pointer"
+                        >
+                          {t('continueWith', { count: uploadedCount })}
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t('optionalHint')}</p>
                   </div>
                 </div>
               </motion.div>

@@ -10,7 +10,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { cachedInventory, rememberInventory } from '@/features/seller/lib/inventory-cache';
 import { ProductImage } from '@/components/ui/ProductImage';
-import type { CatalogItemDTO } from '@/domain/catalog';
+import { localizedText, type CatalogItemDTO } from '@/domain/catalog';
 import { SellerOnly } from '@/features/seller/components/SellerOnly';
 import { isSellerUser } from '@/features/auth/roles';
 import { buttonClasses } from '@/components/ui';
@@ -152,7 +152,7 @@ export function VeloceGarage() {
                     {item.coverImageUrl && (
                       <ProductImage
                         src={item.coverImageUrl}
-                        alt={item.name}
+                        alt={localizedText(item, locale).name}
                         sizes="(min-width: 1024px) 25vw, 50vw"
                         className="object-cover transition duration-500 group-hover:scale-105"
                       />
@@ -163,7 +163,7 @@ export function VeloceGarage() {
                       <Car className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{item.isUniversal ? t('allCars') : item.fitment[0]?.label ?? '—'}</span>
                     </span>
-                    <h3 className="mt-0.5 line-clamp-1 text-sm font-medium text-white">{item.name}</h3>
+                    <h3 className="mt-0.5 line-clamp-1 text-sm font-medium text-white">{localizedText(item, locale).name}</h3>
                     <p className="mt-1 truncate font-mono text-sm font-bold tabular-nums text-white/90">{formatPrice(item.priceUSD)}</p>
                     <p className={`mt-0.5 text-[11px] ${item.stock === 0 ? 'text-red-300' : 'text-white/45'}`}>{t('stock', { count: item.stock })}</p>
                   </div>

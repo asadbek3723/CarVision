@@ -5,6 +5,7 @@ import { AdminShell, type AdminTab } from './AdminShell';
 import { AdminOverviewView } from './AdminOverviewView';
 import { AdminShopsView } from './AdminShopsView';
 import { AdminEscrowView } from './AdminEscrowView';
+import { AdminFinanceView } from './AdminFinanceView';
 import { AdminUsersView } from './AdminUsersView';
 import { AdminRendersView } from './AdminRendersView';
 import { AdminBannersView } from './AdminBannersView';
@@ -12,7 +13,7 @@ import { AdminSecurityView } from './AdminSecurityView';
 import { AdminSessionProvider } from './ui';
 
 const TAB_KEY = 'carvision_admin_tab';
-const TABS: AdminTab[] = ['dashboard', 'shops', 'escrow', 'users', 'renders', 'banners', 'security'];
+const TABS: AdminTab[] = ['dashboard', 'shops', 'escrow', 'finance', 'users', 'renders', 'banners', 'security'];
 
 /** The verified admin console. A 401 from any admin API sends the admin back to the PIN screen. */
 export function AdminApp({ adminName, onExpired, onLock }: { adminName: string; onExpired: () => void; onLock: () => void }) {
@@ -40,10 +41,11 @@ export function AdminApp({ adminName, onExpired, onLock }: { adminName: string; 
 
   const refreshPending = React.useCallback(async () => {
     try {
-      const res = await fetch('/api/v1/admin/overview', { cache: 'no-store' });
+      // Lightweight count only (the full dashboard is not recomputed every minute).
+      const res = await fetch('/api/v1/admin/overview?lite=1', { cache: 'no-store' });
       if (res.status === 401) return onExpired();
       const d = await res.json();
-      if (d.success) setPending(d.metrics.bookings.pending);
+      if (d.success) setPending(d.pending);
     } catch {
       // badge is best effort
     }
@@ -61,6 +63,7 @@ export function AdminApp({ adminName, onExpired, onLock }: { adminName: string; 
         {tab === 'dashboard' && <AdminOverviewView onNavigate={changeTab} />}
         {tab === 'shops' && <AdminShopsView />}
         {tab === 'escrow' && <AdminEscrowView onChanged={() => void refreshPending()} />}
+        {tab === 'finance' && <AdminFinanceView onNavigate={changeTab} />}
         {tab === 'users' && <AdminUsersView />}
         {tab === 'renders' && <AdminRendersView />}
         {tab === 'banners' && <AdminBannersView />}

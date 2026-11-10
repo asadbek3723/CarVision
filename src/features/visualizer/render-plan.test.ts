@@ -101,3 +101,22 @@ describe('render plan with part visibility', () => {
     expect(body.partName).toBe('BBS');
   });
 });
+
+describe('AI-detected sides', () => {
+  const rearLight = { id: 'tl', name: 'LED tail light', category: 'Lights', zone: 'rear' };
+  it('judges a photo by the side it really shows, not its slot', () => {
+    // A rear photo uploaded into the "front" slot can show a rear light.
+    const plan = planRender([{ id: 'front', label: 'Front', photo: 'data:image/jpeg;base64,xxxxxx', view: 'rear' }], [rearLight]);
+    expect(plan.order.map((a) => a.id)).toEqual(['front']);
+    expect(plan.skipped).toEqual([]);
+  });
+  it('skips a slot whose real side cannot show the part', () => {
+    const plan = planRender([{ id: 'rear', label: 'Rear', photo: 'data:image/jpeg;base64,xxxxxx', view: 'front' }], [rearLight]);
+    expect(plan.noneVisible).toBe(true);
+  });
+  it('sends the detected side with the request', () => {
+    const body = toRequestBody({ id: 'front', label: 'Front', photo: 'x', view: 'right' }, [{ id: 'w', name: 'Wheel', category: 'Wheels' }]);
+    expect(body.view).toBe('right');
+    expect(body.angleId).toBe('front');
+  });
+});

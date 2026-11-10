@@ -107,6 +107,7 @@ interface BookingForMessage {
   amount_cents: number;
   commission_cents: number | null;
   payout_cents: number | null;
+  amount_uzs: number | null;
   customer_name: string;
   customer_phone: string;
   receipt_path: string | null;
@@ -118,7 +119,7 @@ async function loadBooking(bookingId: string) {
   const db = createAdminClient();
   const { data } = await db
     .from('bookings')
-    .select('id, booking_number, shop_id, total_cents, amount_cents, commission_cents, payout_cents, customer_name, customer_phone, receipt_path, telegram_chat_id, telegram_message_id')
+    .select('id, booking_number, shop_id, total_cents, amount_cents, commission_cents, payout_cents, amount_uzs, customer_name, customer_phone, receipt_path, telegram_chat_id, telegram_message_id')
     .eq('id', bookingId)
     .maybeSingle();
   return { db, booking: (data as BookingForMessage | null) ?? null };
@@ -130,7 +131,11 @@ export async function reviewCaption(db: ReturnType<typeof createAdminClient>, b:
     `🧾 Yangi chek: ${b.booking_number}`,
     `Mijoz: ${b.customer_name} (${b.customer_phone})`,
     `Ustaxona: ${(shop?.shop_name as string | undefined) ?? '—'}`,
-    `To‘lov: ${usd(b.amount_cents)}`,
+    // The so'm amount is what must appear on the receipt; check it before approving.
+    b.amount_uzs !== null
+      ? `To‘lov: ${new Intl.NumberFormat('ru-RU').format(Number(b.amount_uzs))} so‘m (${usd(b.amount_cents)})`
+      : `To‘lov: ${usd(b.amount_cents)}`,
+    `Izohda buyurtma raqami bo‘lishi kerak: ${b.booking_number}`,
     ...(b.payout_cents !== null && b.commission_cents !== null
       ? [`Sotuvchiga: ${usd(b.payout_cents)}  |  Komissiya: ${usd(b.commission_cents)}`]
       : []),
@@ -235,4 +240,27 @@ export async function sendSupportRequest(html: string, photo?: { bytes: ArrayBuf
     }
   }
   return delivered;
+}
+
+/**
+ * Which CarVision admin profile a Telegram user acts as. TELEGRAM_ADMIN_MAP ("tgUserId:profileUuid,...")
+ * gives every admin their own audit identity; without it the legacy single TELEGRAM_ADMIN_PROFILE_ID is used.
+ */
+export async function telegramAdminProfile(tgUserId: number | undefined): Promise<string | null> {
+  if (tgUserId === undefined) return null;
+  const map = process.env.TELEGRAM_ADMIN_MAP?.trim();
+  let profileId: string | null = null;
+  if (map) {
+    for (const pair of map.split(',')) {
+      const [tg, pid] = pair.split(':').map((x) => x.trim());
+      if (tg && pid && tg === String(tgUserId)) profileId = pid;
+    }
+  } else {
+    profileId = process.env.TELEGRAM_ADMIN_PROFILE_ID?.trim() || null;
+  }
+  if (!profileId || !/^[0-9a-f-]{36}$/i.test(profileId)) return null;
+  // The profile must still be an active super admin (a demoted admin loses Telegram access too).
+  const { data } = await createAdminClient().from('profiles').select('role, is_banned').eq('id', profileId).maybeSingle();
+  if (!data || data.role !== 'super_admin' || data.is_banned) return null;
+  return profileId;
 }

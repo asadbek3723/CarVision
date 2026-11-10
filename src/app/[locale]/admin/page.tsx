@@ -17,23 +17,33 @@ export default function SuperAdminPage() {
   const t = useTranslations('adm.page');
   const { user, isLoading } = useAuth();
   const [verified, setVerified] = React.useState<boolean | null>(null);
-  const isAdmin = user?.role === 'super_admin';
+  // The server decides who is an admin (app_metadata role), never the cached profile in the browser.
+  const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
 
-  // Is there already a valid PIN session?
+  // Is this a super admin, and is there already a valid PIN session?
   React.useEffect(() => {
-    if (!isAdmin) {
+    if (!user) {
+      setIsAdmin(false);
       setVerified(false);
       return;
     }
     let cancelled = false;
     fetch('/api/v1/admin/auth/status', { cache: 'no-store' })
       .then((r) => r.json())
-      .then((d) => !cancelled && setVerified(Boolean(d?.isAuthorized)))
-      .catch(() => !cancelled && setVerified(false));
+      .then((d) => {
+        if (cancelled) return;
+        setIsAdmin(Boolean(d?.isSuperAdmin));
+        setVerified(Boolean(d?.isAuthorized));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setIsAdmin(false);
+        setVerified(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, [isAdmin]);
+  }, [user]);
 
   const lock = React.useCallback(async () => {
     try {
@@ -43,7 +53,7 @@ export default function SuperAdminPage() {
     }
   }, []);
 
-  if (isLoading || (isAdmin && verified === null)) {
+  if (isLoading || (user && (isAdmin === null || verified === null))) {
     return (
       <Centered>
         <Loader2 className="h-7 w-7 animate-spin text-gold-500" />
@@ -74,6 +84,7 @@ export default function SuperAdminPage() {
     );
   }
 
+  if (!user) return null;
   const name = user.full_name || user.phone;
 
   if (!verified) return <AdminPinGate adminName={name} onSuccess={() => setVerified(true)} />;

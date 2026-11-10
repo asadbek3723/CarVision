@@ -7,6 +7,7 @@ import { Camera, Check, ChevronLeft, ChevronRight, Loader2, Search, Sparkles, Tr
 import { useMyCar } from '@/features/shop/useMyCar';
 import { buttonClasses } from '@/components/ui';
 import { setCarCheckToken } from '@/features/visualizer/car-check';
+import { setCarViews } from '@/features/visualizer/car-views';
 
 type Phase = 'scan' | 'confirm' | 'manual' | 'year' | 'done' | 'blocked';
 
@@ -16,8 +17,10 @@ interface Candidate {
 }
 
 interface CarIdentifyGateProps {
-  /** Front photo of the car (data URL or same-origin path). */
+  /** Main photo of the car (data URL or same-origin path). */
   photo: string;
+  /** Slot id of `photo` (e.g. "front"): the AI reports which side every photo really shows. */
+  photoId?: string;
   /** The other photographed sides: checked to be the same car as the front photo. */
   angles?: Array<{ id: string; label: string; photo: string }>;
   /** Opens the camera again (shown when the photos are not a car / not one car). */
@@ -56,7 +59,7 @@ async function downscale(src: string, maxSide = 768): Promise<string | null> {
  * 1. AI names the car  2. user confirms (or searches by hand)  3. user picks the year.
  * The year matters: a 1990 and a 2026 model of the same name rarely share body parts.
  */
-export function CarIdentifyGate({ photo, angles, onRetake, onClose, onDone }: CarIdentifyGateProps) {
+export function CarIdentifyGate({ photo, photoId, angles, onRetake, onClose, onDone }: CarIdentifyGateProps) {
   const t = useTranslations('identify');
   const tCommon = useTranslations('common');
   const reduce = useReducedMotion();
@@ -89,6 +92,7 @@ export function CarIdentifyGate({ photo, angles, onRetake, onClose, onDone }: Ca
       let found: { name: string; list: Candidate[] } | null = null;
       let stop: { kind: 'notCar' | 'mismatch'; labels: string[] } | null = null;
       setCarCheckToken(null);
+      setCarViews(null);
       try {
         const small = await downscale(photo);
         if (small) {
@@ -101,10 +105,11 @@ export function CarIdentifyGate({ photo, angles, onRetake, onClose, onDone }: Ca
           const res = await fetch('/api/v1/vehicles/detect', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photo: small, ...(others.length > 0 ? { angles: others } : {}) }),
+            body: JSON.stringify({ photo: small, ...(photoId ? { photoId } : {}), ...(others.length > 0 ? { angles: others } : {}) }),
           });
           const data = await res.json().catch(() => ({}));
           if (data?.carCheckToken) setCarCheckToken(data.carCheckToken as string);
+          if (data?.views && typeof data.views === 'object') setCarViews(data.views as Record<string, unknown>);
           if (data?.detected) {
             found = { name: `${data.make ?? ''} ${data.model ?? ''}`.trim(), list: (data.candidates ?? []) as Candidate[] };
           } else if (data?.reason === 'not_a_car') {
@@ -141,7 +146,7 @@ export function CarIdentifyGate({ photo, angles, onRetake, onClose, onDone }: Ca
       cancelled = true;
       clearInterval(hintTimer);
     };
-  }, [photo, t]);
+  }, [photo, photoId, t]);
 
   // Manual search (debounced)
   React.useEffect(() => {

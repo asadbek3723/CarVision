@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { planRender, summarize, usableReference, type AngleState, type PlanAngle } from './render-plan';
+import { planRender, sideOf, summarize, usableReference, type AngleState, type PlanAngle } from './render-plan';
+import { isCarView } from './car-views';
 import { visibleParts } from '@/lib/part-visibility';
 import { getCarCheckToken } from './car-check';
 import { readJson } from '@/lib/safe-json';
@@ -45,12 +46,13 @@ const MAX_RATE_RETRIES = 3;
 /** Body for POST /api/v1/generations (pure, unit-testable). */
 export function toRequestBody(angle: PlanAngle, allParts: BuildPart[], referenceAfterUrl?: string) {
   // Only the parts that can be seen from this side go to the AI (and are paid for).
-  const shown = visibleParts(allParts, angle.id);
+  const shown = visibleParts(allParts, sideOf(angle));
   const parts = shown.length > 0 ? shown : allParts;
   const primary = parts[0]!;
   return {
     photo: angle.photo,
     angleId: angle.id,
+    ...(isCarView(angle.view) ? { view: angle.view } : {}),
     partId: primary.id,
     partName: parts.map((p) => p.name).join(' + '),
     partCategory: primary.category || 'Wheels',

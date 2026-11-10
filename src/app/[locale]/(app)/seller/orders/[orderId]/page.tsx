@@ -45,9 +45,9 @@ export default function SellerOrderDetailPage() {
     };
   }, [orderId, unlocked, t]);
 
-  const redeem = async (o: SellerLeadOrder): Promise<string | null> => {
+  const redeem = async (o: SellerLeadOrder, code: string): Promise<string | null> => {
     try {
-      const res = await fetch('/api/v1/seller/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: o.id, status: 'completed' }) });
+      const res = await fetch('/api/v1/seller/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: o.id, status: 'completed', code }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) return apiError(data, t('errAccept'));
       setOrder(data.order);

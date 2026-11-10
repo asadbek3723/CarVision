@@ -32,7 +32,7 @@ const MAX_INLINE_RESULT_CHARS = 3_000_000;
  * A PROCESSING row older than this belongs to a request that died (the function is killed at 60s):
  * its credit must go back. Kept close to maxDuration so a customer is not left waiting for it.
  */
-const STALE_AFTER_MS = 75_000;
+const STALE_AFTER_MS = 90_000;
 /** A full 5-angle render plus a couple of retries of failed angles must fit in one minute. */
 const MAX_PER_MINUTE = 10;
 const MAX_IN_FLIGHT = 3;
@@ -58,6 +58,12 @@ const carCheckTokenSchema = short(200).optional();
 const requestSchema = z.object({
   photo: z.string().min(5).max(MAX_PHOTO_CHARS),
   angleId: short(40).optional(),
+  /**
+   * The side the photo really shows, as the AI car check saw it (`front`, `rear`, `right`, ...).
+   * Decides which parts can be seen and how the AI is told about the camera; `angleId` stays the
+   * slot the photo was taken for.
+   */
+  view: z.enum(['front', 'front-left', 'left', 'rear-left', 'rear', 'rear-right', 'right', 'front-right']).optional(),
   partId: short(80).min(1),
   partName: clip(400).pipe(z.string().min(1)),
   partCategory: short(80).min(1),
@@ -157,7 +163,7 @@ export async function POST(request: NextRequest) {
       return errorResponse(400, 'INVALID_IMAGE', "Avtomobil fotosurati yuklanishi shart (JPEG/PNG/WebP, 10MB gacha)");
     }
 
-    const angleKey = input.angleId || 'front-left';
+    const angleKey = input.view || input.angleId || 'front-left';
 
     // A part that cannot be seen from this side (rear light on a front photo, spoiler on the front)
     // is not rendered and not charged: stops direct API calls from paying for an invisible part.
@@ -296,7 +302,13 @@ export async function POST(request: NextRequest) {
     });
     const reserveResult = reserve as { success?: boolean; error?: string; balanceAfter?: number; currentBalance?: number } | null;
     if (reserveErr || !reserveResult?.success) {
-      await db.from('generations').delete().eq('id', generationId);
+      if (reserveErr) {
+        // A transport error may hide a reservation that did commit: never delete the row (that would
+        // orphan the ledger entry). Mark it failed and try to give the credit back; the stale sweep retries.
+        await refund(db, session, generationId, 'Reservation error').catch(() => undefined);
+      } else {
+        await db.from('generations').delete().eq('id', generationId);
+      }
       if (reserveResult?.error === 'INSUFFICIENT_CREDITS') {
         return errorResponse(402, 'INSUFFICIENT_CREDITS', "Kreditlar tugadi. Tarifni yangilang", {
           creditsRemaining: reserveResult.currentBalance ?? 0,
@@ -339,7 +351,12 @@ export async function POST(request: NextRequest) {
     const ai = raced;
 
     if (!ai.afterImageUrl) {
-      await refund(db, session, generationId, ai.outcome === 'invalid_image' ? 'Invalid input image' : 'AI provider failed');
+      await refund(
+        db,
+        session,
+        generationId,
+        ai.outcome === 'invalid_image' ? 'Invalid input image' : ai.outcome === 'wrong_view' ? 'AI result showed another side of the car' : 'AI provider failed'
+      );
       reserved = null;
       if (ai.outcome === 'no_quota') {
         return errorResponse(503, 'AI_NO_QUOTA', "AI kalitida rasm yaratish limiti yo'q (to'lov/billing yoqilmagan). Kredit qaytarildi", {
@@ -348,6 +365,11 @@ export async function POST(request: NextRequest) {
       }
       if (ai.outcome === 'blocked') {
         return errorResponse(422, 'AI_BLOCKED', "AI bu suratni qayta ishlay olmadi (xavfsizlik filtri). Kredit qaytarildi", {
+          creditsRemaining: currentBalance,
+        });
+      }
+      if (ai.outcome === 'wrong_view') {
+        return errorResponse(502, 'AI_WRONG_VIEW', "AI natijasi mashinaning boshqa tomonini ko'rsatdi, shuning uchun berilmadi. Kredit qaytarildi, qayta urinib ko'ring", {
           creditsRemaining: currentBalance,
         });
       }
@@ -380,6 +402,25 @@ export async function POST(request: NextRequest) {
     }
     const finalUrl = stored.ok ? stored.url : ai.afterImageUrl;
 
+    // Settle the credit FIRST. If a parallel stale sweep already refunded this render, the customer
+    // must not get the picture for free: report a timeout instead (the credit is already back).
+    const { data: commitData, error: commitErr } = await db.rpc('commit_credits', {
+      p_user_id: session.userId,
+      p_shop_id: session.shop?.id ?? null,
+      p_amount: GENERATION_COST,
+      p_generation_id: generationId,
+    });
+    const commit = commitData as { success?: boolean; error?: string; state?: string } | null;
+    if (!commitErr && commit && !commit.success && commit.state === 'REFUNDED') {
+      reserved = null;
+      return errorResponse(504, 'AI_TIMEOUT', "Rasm yaratish juda uzoq davom etdi. Kredit qaytarildi, qayta urinib ko'ring", {
+        creditsRemaining: currentBalance,
+      });
+    }
+    // A failed bookkeeping call must not turn into a failed render: the row stays RESERVED and COMPLETED,
+    // which the admin stats flag, and is never refunded by the stale sweep.
+    if (commitErr) console.error('commit_credits failed:', commitErr.message);
+
     const completed = {
       status: 'COMPLETED',
       output_4k_url: finalUrl,
@@ -392,15 +433,6 @@ export async function POST(request: NextRequest) {
     let updateErr = (await db.from('generations').update(completed).eq('id', generationId)).error;
     if (updateErr) updateErr = (await db.from('generations').update(completed).eq('id', generationId)).error;
     if (updateErr) console.error('generation update failed:', updateErr.message);
-
-    const { error: commitErr } = await db.rpc('commit_credits', {
-      p_user_id: session.userId,
-      p_shop_id: session.shop?.id ?? null,
-      p_amount: GENERATION_COST,
-      p_generation_id: generationId,
-    });
-    // The customer already has the picture: a failed bookkeeping call must not turn into a failed render.
-    if (commitErr) console.error('commit_credits failed:', commitErr.message);
     reserved = null;
 
     const payload: GenerationPayload = {
@@ -447,14 +479,20 @@ function cachedPayload(
   };
 }
 
+/**
+ * Gives the credit back, then marks the render failed. A render whose credit was already committed
+ * (delivered) is never marked failed. If the refund call itself fails, the row keeps
+ * credit_state = RESERVED and the stale sweep retries it later, so the credit is never lost.
+ */
 async function refund(db: ReturnType<typeof createAdminClient>, session: Session, generationId: string, reason: string) {
-  await db.from('generations').update({ status: 'FAILED', error_message: reason }).eq('id', generationId);
-  await db.rpc('rollback_credits', {
+  const { error } = await db.rpc('rollback_credits', {
     p_user_id: session.userId,
     p_shop_id: session.shop?.id ?? null,
     p_amount: GENERATION_COST,
     p_generation_id: generationId,
   });
+  if (error) console.error('rollback_credits failed (will retry):', error.message);
+  await db.from('generations').update({ status: 'FAILED', error_message: reason }).eq('id', generationId).neq('credit_state', 'COMMITTED');
 }
 
 /** Refunds this user's PROCESSING renders that outlived the function's time limit. Idempotent. */
@@ -463,7 +501,9 @@ async function refundStale(db: ReturnType<typeof createAdminClient>, session: Se
     .from('generations')
     .select('id')
     .eq('user_id', session.userId)
-    .eq('status', 'PROCESSING')
+    // Interrupted renders, and failed ones whose refund call did not go through.
+    .eq('credit_state', 'RESERVED')
+    .in('status', ['PROCESSING', 'FAILED'])
     .lt('created_at', new Date(Date.now() - STALE_AFTER_MS).toISOString())
     .limit(20);
   for (const row of data ?? []) {

@@ -12,6 +12,7 @@ import {
   reviewCaption,
   showRejectReasons,
   showReviewButtons,
+  telegramAdminProfile,
 } from '@/server/telegram';
 
 interface TgCallbackQuery {
@@ -66,22 +67,24 @@ export async function POST(request: NextRequest) {
       return ok();
     }
 
-    const adminId = process.env.TELEGRAM_ADMIN_PROFILE_ID?.trim();
+    const adminId = await telegramAdminProfile(cq.from?.id);
     if (!adminId) {
-      await answerCallback(cq.id, 'TELEGRAM_ADMIN_PROFILE_ID sozlanmagan');
+      await answerCallback(cq.id, 'Telegram ID admin profiliga bog‘lanmagan (TELEGRAM_ADMIN_MAP)');
       return ok();
     }
 
     const approve = action.kind === 'approve';
     const reason = action.kind === 'reject' ? REJECT_REASONS[action.code] : null;
     const db = createAdminClient();
-    const result = await reviewBooking(db, { adminId, bookingId: action.bookingId, approve, reason, ip: 'telegram' });
+    const result = await reviewBooking(db, { adminId, bookingId: action.bookingId, approve, reason, ip: `tg:${cq.from?.id ?? '?'}` });
 
     const { booking } = await loadBookingForTelegram(action.bookingId);
     const base = booking ? await reviewCaption(db, booking) : (cq.message?.caption ?? '');
 
     if (!result.ok) {
-      if (result.error === 'INVALID_STATE') {
+      if (result.error === 'OUT_OF_STOCK') {
+        await answerCallback(cq.id, `Omborda yetarli emas: ${result.item ?? ''}`.slice(0, 190));
+      } else if (result.error === 'INVALID_STATE') {
         await markDecided(chatId, messageId, base, 'ℹ️ Bu chek allaqachon ko‘rib chiqilgan');
         await answerCallback(cq.id, 'Allaqachon ko‘rib chiqilgan');
       } else {

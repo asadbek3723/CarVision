@@ -22,11 +22,17 @@ export interface ListingText {
 
 export interface ListingTranslation {
   sourceLang: ItemLocale;
+  /**
+   * The seller's own text with only spelling, punctuation and capitalisation fixed, in the same
+   * language. Null when the model changed it too much (or not at all): the original is kept then.
+   */
+  polished: ListingText | null;
   translations: Partial<Record<ItemLocale, ListingText>>;
 }
 
 const resultSchema = z.object({
   sourceLang: z.enum(ITEM_LOCALES),
+  polished: z.object({ name: z.string().default(''), description: z.string().default('') }).optional(),
   translations: z.record(z.string(), z.object({ name: z.string().default(''), description: z.string().default('') })),
 });
 
@@ -39,7 +45,12 @@ Languages (code = language): ${languages}.
 
 Steps:
 1. Detect which of these languages the listing is written in (field "sourceLang").
-2. Translate NAME and DESCRIPTION into EVERY OTHER language in the list.
+2. Proofread NAME and DESCRIPTION in that same language (field "polished"): a minimal touch-up only.
+   - Fix spelling, typos, punctuation, spacing and capitalisation, and obviously broken grammar.
+   - Keep the seller's words, order, meaning, line breaks and "Label: value" lines. Do not rephrase,
+     shorten, expand, summarise or add anything. If the text is already fine, return it unchanged.
+   - For Uzbek keep the Latin script with the proper oʻ / gʻ letters.
+3. Translate the POLISHED NAME and DESCRIPTION into EVERY OTHER language in the list.
 
 Rules:
 - Keep brand names, car makes and models, part numbers and sizes exactly as written (e.g. "BBS CI-R 20", "R19", "ET35", "5x114.3").
@@ -48,8 +59,8 @@ Rules:
 - If DESCRIPTION is empty, return an empty string for it.
 - Keep NAME under 150 characters and DESCRIPTION under 1500 characters.
 
-Return ONLY JSON in this shape, with one entry for each language except the detected one:
-{"sourceLang":"xx","translations":{"<code>":{"name":"...","description":"..."}}}
+Return ONLY JSON in this shape, with one translation for each language except the detected one:
+{"sourceLang":"xx","polished":{"name":"...","description":"..."},"translations":{"<code>":{"name":"...","description":"..."}}}
 
 <listing>
 NAME: ${input.name}
@@ -116,8 +127,19 @@ function clean(text: string, max: number): string {
   return text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').trim().slice(0, max);
 }
 
+/** True when `after` is a light edit of `before`: about the same length, nothing added or dropped. */
+export function isMinorEdit(before: string, after: string): boolean {
+  const a = before.trim();
+  const b = after.trim();
+  if (!a) return !b; // never invent a description that was empty
+  if (!b) return false;
+  const slack = Math.max(6, Math.round(a.length * 0.12));
+  return Math.abs(a.length - b.length) <= slack;
+}
+
 /**
- * Translates a listing into every other storefront language in one request.
+ * Translates a listing into every other storefront language in one request, and proofreads the
+ * original in its own language (see `polished`).
  * Returns null when no AI key is configured or the model fails: callers then simply show the original text.
  */
 export async function translateListing(input: ListingText): Promise<ListingTranslation | null> {
@@ -149,5 +171,15 @@ export async function translateListing(input: ListingText): Promise<ListingTrans
     if (!name) continue; // never store an empty name: the original is shown instead
     translations[locale] = { name, description: clean(t?.description ?? '', 1500) };
   }
-  return { sourceLang: parsed.data.sourceLang, translations };
+  let polished: ListingText | null = null;
+  const p = parsed.data.polished;
+  if (p) {
+    const name = clean(p.name, 150);
+    const description = clean(p.description, 1500);
+    const changed = name !== input.name.trim() || description !== (input.description || '').trim();
+    if (changed && isMinorEdit(input.name, name) && isMinorEdit(input.description || '', description)) {
+      polished = { name, description };
+    }
+  }
+  return { sourceLang: parsed.data.sourceLang, polished, translations };
 }

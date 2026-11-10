@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
       full_name: fullName,
       phone,
       preferred_locale: locale,
-      credits_balance: FREE_CREDITS,
+      // Sellers spend from their shop balance; giving the profile credits too would double the free grant.
+      credits_balance: payload.role === 'b2b_seller' ? 0 : FREE_CREDITS,
       phone_verified: smsOn,
     });
     if (profileErr) {
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
       shopId = shop.id as string;
     }
 
-    await db.from('credit_ledger').insert({
+    const { error: ledgerErr } = await db.from('credit_ledger').insert({
       user_id: userId,
       shop_id: shopId,
       amount: FREE_CREDITS,
@@ -133,6 +134,8 @@ export async function POST(request: NextRequest) {
       action_type: 'TRIAL_BONUS',
       description: 'Free plan credits on sign-up',
     });
+    // The balance is already granted; a missing ledger line is a bookkeeping gap, not a reason to fail sign-up.
+    if (ledgerErr) console.error('sign-up ledger insert failed:', ledgerErr.message);
 
     await recordAttempt('register', phone, ip, true);
 

@@ -4,8 +4,8 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
 import { getServerRates } from '@/server/rates';
 import { normalizePhone } from '@/server/auth/phone';
-import { fetchBookingRows, newBookingNumber, newRedemptionCode, paymentDetails, toCustomerDTOs, withUzs } from '@/server/bookings';
-import { splitPurchase } from '@/domain/money';
+import { expireUnpaid, fetchBookingRows, paymentDetails, toCustomerDTOs, withUzs } from '@/server/bookings';
+import { PLATFORM_COMMISSION_BPS } from '@/domain/money';
 
 
 const MAX_OPEN_UNPAID = 10;
@@ -38,100 +38,54 @@ export async function POST(request: NextRequest) {
     if (!phone) return fail(400, 'INVALID_PHONE', 'Telefon raqam noto‘g‘ri');
 
     const db = createAdminClient();
+    await expireUnpaid(db);
 
-    const { count: unpaid } = await db
-      .from('bookings')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', session.userId)
-      .eq('status', 'AWAITING_PAYMENT');
-    if ((unpaid ?? 0) >= MAX_OPEN_UNPAID) return fail(429, 'TOO_MANY_OPEN', 'To‘lanmagan buyurtmalaringiz ko‘p. Avval ularni yakunlang');
-
-    // Merge duplicate ids, then load real items
-    const qtyById = new Map<string, number>();
-    for (const i of parsed.data.items) qtyById.set(i.id, Math.min(20, (qtyById.get(i.id) ?? 0) + i.quantity));
-    const { data: rows } = await db
-      .from('catalog_items')
-      .select('id, shop_id, name, brand, price_cents, stock, cover_image_url, status')
-      .in('id', [...qtyById.keys()])
-      .eq('status', 'PUBLISHED');
-    const found = rows ?? [];
-    if (found.length !== qtyById.size) return fail(409, 'ITEM_UNAVAILABLE', 'Savatdagi ba’zi detallar endi mavjud emas. Savatni yangilang');
-    const soldOut = found.find((r) => (r.stock as number) < (qtyById.get(r.id as string) ?? 1));
-    if (soldOut) return fail(409, 'OUT_OF_STOCK', `"${soldOut.name as string}" omborda yetarli emas`);
-
-    // A user cannot book from their own workshop
-    if (session.shop && found.some((r) => r.shop_id === session.shop!.id)) {
-      return fail(400, 'OWN_SHOP', 'O‘z ustaxonangiz detalini sotib ololmaysiz');
-    }
-
-    const byShop = new Map<string, typeof found>();
-    for (const r of found) byShop.set(r.shop_id as string, [...(byShop.get(r.shop_id as string) ?? []), r]);
+    // Optional client key: a retried or double-tapped checkout returns the same orders.
+    const idemRaw = request.headers.get('idempotency-key')?.trim() ?? '';
+    const idemKey = /^[A-Za-z0-9-]{8,64}$/.test(idemRaw) ? idemRaw : null;
 
     const rates = await getServerRates();
+    const uzsRate = rates['UZS'] ?? null;
     const payment = paymentDetails();
-    const created: Array<{ id: string }> = [];
 
-    for (const [shopId, list] of byShop) {
-      const total = list.reduce((sum, r) => sum + (r.price_cents as number) * (qtyById.get(r.id as string) ?? 1), 0);
-      if (total <= 0) return fail(400, 'FREE_ITEMS', 'Narxi 0 bo‘lgan detalni sotib olib bo‘lmaydi');
-      const split = splitPurchase(total);
-
-      // Retry on the (very unlikely) unique collision of booking number / voucher code
-      let bookingId: string | null = null;
-      for (let attempt = 0; attempt < 4 && !bookingId; attempt++) {
-        const { data: booking, error } = await db
-          .from('bookings')
-          .insert({
-            booking_number: newBookingNumber(),
-            user_id: session.userId,
-            shop_id: shopId,
-            status: 'AWAITING_PAYMENT',
-            total_cents: total,
-            amount_cents: split.amountCents,
-            commission_cents: split.commissionCents,
-            payout_cents: split.payoutCents,
-            redemption_code: newRedemptionCode(),
-            customer_name: parsed.data.customerName,
-            customer_phone: phone,
-            customer_note: parsed.data.note ?? null,
-          })
-          .select('id')
-          .single();
-        if (!error && booking) bookingId = booking.id as string;
-        else if (error && !/duplicate|unique/i.test(error.message)) {
-          console.error('booking insert failed:', error.message);
-          return fail(500, 'INTERNAL', 'Buyurtma yaratib bo‘lmadi');
-        }
-      }
-      if (!bookingId) return fail(500, 'INTERNAL', 'Buyurtma yaratib bo‘lmadi');
-
-      const { error: itemsErr } = await db.from('booking_items').insert(
-        list.map((r) => ({
-          booking_id: bookingId,
-          item_id: r.id,
-          name: r.name,
-          brand: r.brand ?? null,
-          image_url: r.cover_image_url ?? null,
-          unit_cents: r.price_cents,
-          quantity: qtyById.get(r.id as string) ?? 1,
-        }))
-      );
-      if (itemsErr) {
-        await db.from('bookings').delete().eq('id', bookingId);
-        return fail(500, 'INTERNAL', 'Buyurtma yaratib bo‘lmadi');
-      }
-      created.push({ id: bookingId });
+    // One database transaction: prices and stock are read there, one order per workshop.
+    const { data, error } = await db.rpc('create_purchase', {
+      p_user_id: session.userId,
+      p_shop_of_user: session.shop?.id ?? null,
+      p_items: parsed.data.items,
+      p_name: parsed.data.customerName,
+      p_phone: phone,
+      p_note: parsed.data.note ?? null,
+      p_idem_key: idemKey,
+      p_fx_rate: uzsRate,
+      p_commission_bps: PLATFORM_COMMISSION_BPS,
+      p_max_open: MAX_OPEN_UNPAID,
+    });
+    const r = data as { success?: boolean; error?: string; ids?: string[]; item?: string } | null;
+    if (error || !r) {
+      if (error) console.error('create_purchase failed:', error.message);
+      return fail(500, 'INTERNAL', 'Buyurtma yaratib bo‘lmadi');
     }
+    if (!r.success) {
+      const map: Record<string, [number, string]> = {
+        TOO_MANY_OPEN: [429, 'To‘lanmagan buyurtmalaringiz ko‘p. Avval ularni yakunlang'],
+        ITEM_UNAVAILABLE: [409, 'Savatdagi ba’zi detallar endi mavjud emas. Savatni yangilang'],
+        OUT_OF_STOCK: [409, r.item ? `"${r.item}" omborda yetarli emas` : 'Omborda yetarli emas'],
+        OWN_SHOP: [400, 'O‘z ustaxonangiz detalini sotib ololmaysiz'],
+        FREE_ITEMS: [400, 'Narxi 0 bo‘lgan detalni sotib olib bo‘lmaydi'],
+      };
+      const [status, msg] = map[r.error ?? ''] ?? [500, 'Buyurtma yaratib bo‘lmadi'];
+      return fail(status, r.error ?? 'INTERNAL', msg);
+    }
+    const created = (r.ids ?? []).map((id) => ({ id }));
 
     const dtos = await toCustomerDTOs(db, await fetchBookingRows(db, { userId: session.userId, ids: created.map((c) => c.id), limit: 50 }));
-    const uzsRate = rates['UZS'] ?? 13000;
-
     return NextResponse.json(
       {
         success: true,
-        bookings: withUzs(dtos, uzsRate),
+        bookings: withUzs(dtos, uzsRate ?? 13000),
         payment: payment ? { configured: true, ...payment } : { configured: false },
-        uzsRate,
+        uzsRate: uzsRate ?? 13000,
       },
       { status: 201 }
     );
@@ -147,6 +101,7 @@ export async function GET() {
     const guard = await requireUser();
     if (!guard.ok) return guard.response;
     const db = createAdminClient();
+    await expireUnpaid(db);
     const rows = await fetchBookingRows(db, { userId: guard.value.userId, limit: 50 });
     const rates = await getServerRates();
     const uzsRate = rates['UZS'] ?? 13000;

@@ -1,14 +1,19 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { ErrorState, EmptyState, PageHeader, Pill, Spinner, StatTile, Surface, dateTime, useAdminData } from './ui';
+import * as React from 'react';
+import { ErrorState, EmptyState, LoadMore, PageHeader, Pill, Segmented, Spinner, StatTile, Surface, dateTime, useAdminPaged } from './ui';
 import { actionLabel, attemptLabel } from './labels';
 
 interface Data {
   stats: { failed24h: number; pinFailed24h: number };
   actions: Array<{ id: string; action: string; entity: string; admin: string; ip: string; details: Record<string, unknown> | null; at: string }>;
   failedAttempts: Array<{ id: string; kind: string; who: string; ip: string; at: string }>;
+  total: number;
+  nextOffset: number | null;
 }
+type Group = 'all' | 'money' | 'credits' | 'access';
+type Action = Data['actions'][number];
 
 function detail(t: (key: string, values?: Record<string, string | number>) => string, d: Record<string, unknown> | null): string {
   if (!d) return '';
@@ -24,7 +29,8 @@ export function AdminSecurityView() {
   const t = useTranslations('adm.security');
   const ta = useTranslations('adm.actions');
   const tt = useTranslations('adm.attempts');
-  const { data, error, loading, reload } = useAdminData<Data>('/api/v1/admin/audit');
+  const [group, setGroup] = React.useState<Group>('all');
+  const { items: actions, meta: data, error, loading, loadingMore, reload, loadMore, hasMore } = useAdminPaged<Action, Data>(group === 'all' ? '/api/v1/admin/audit' : '/api/v1/admin/audit?group=' + group, (p) => p.actions);
   if (loading && !data) return <Spinner />;
   if (error && !data) return <ErrorState message={error} onRetry={reload} />;
   if (!data) return null;
@@ -38,9 +44,21 @@ export function AdminSecurityView() {
       </div>
 
       <h2 className="mb-3 mt-6 text-sm font-bold text-white">{t('actions')}</h2>
+      <div className="mb-3">
+        <Segmented
+          value={group}
+          onChange={setGroup}
+          options={[
+            { id: 'all', label: t('gAll') },
+            { id: 'money', label: t('gMoney') },
+            { id: 'credits', label: t('gCredits') },
+            { id: 'access', label: t('gAccess') },
+          ]}
+        />
+      </div>
       <div className="space-y-2">
-        {data.actions.length === 0 && <EmptyState>{t('noActions')}</EmptyState>}
-        {data.actions.map((a) => (
+        {actions.length === 0 && <EmptyState>{t('noActions')}</EmptyState>}
+        {actions.map((a) => (
           <Surface key={a.id} className="p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-white">{actionLabel(ta, a.action)}</p>
@@ -51,6 +69,7 @@ export function AdminSecurityView() {
           </Surface>
         ))}
       </div>
+      <LoadMore hasMore={hasMore} loading={loadingMore} onClick={() => void loadMore()} shown={actions.length} total={data.total} />
 
       <h2 className="mb-3 mt-6 text-sm font-bold text-white">{t('attempts')}</h2>
       <div className="space-y-2">

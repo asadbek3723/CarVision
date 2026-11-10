@@ -26,6 +26,8 @@ interface PartReelProps {
   formatPrice: (usd: number) => string;
   /** Fallback when a part carries no "fits this car" text. */
   fitFallback: string;
+  /** Label for a part that fits every car. */
+  universalLabel: string;
   /** Accessible name of the whole strip. */
   ariaLabel: string;
 }
@@ -96,6 +98,7 @@ export function PartReel({
   nextLabel,
   formatPrice,
   fitFallback,
+  universalLabel,
   ariaLabel,
 }: PartReelProps) {
   const n = items.length;
@@ -382,7 +385,7 @@ export function PartReel({
 
   if (n === 0) return null;
 
-  const currentFit = current ? current.targetCar || current.compatibility?.[0]?.name || fitFallback : '';
+  const currentFit = current ? (current.isUniversal ? universalLabel : current.targetCar || current.compatibility?.[0]?.name || fitFallback) : '';
 
   const slides: number[] = [];
   for (let k = centerK - half; k <= centerK + half; k++) slides.push(k);

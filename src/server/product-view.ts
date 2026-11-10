@@ -26,7 +26,8 @@ export function toVeloceProduct(i: CatalogItemDTO, localeParam: string) {
     installAvailable: i.installAvailable,
     installPrice: i.installPriceUSD,
     attributes: i.attributes,
-    targetCar: i.isUniversal ? 'Barcha mashinalar' : i.fitment[0]?.label ?? '',
+    // Universal parts carry no car name: each screen shows its own translated "all cars" label.
+    targetCar: i.isUniversal ? '' : i.fitment[0]?.label ?? '',
     compatibility: i.isUniversal ? [] : i.fitment.map((f) => ({ id: f.modelId ?? f.id, name: f.label, yearFrom: f.yearFrom, yearTo: f.yearTo })),
     isUniversal: i.isUniversal,
     sellerName: `Verified Partner #${i.shopId.slice(0, 4).toUpperCase()}`,

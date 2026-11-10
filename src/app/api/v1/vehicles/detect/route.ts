@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
 import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 import { envKeys } from '@/server/providers/ai/key-pool';
-import { fetchGeminiGenerate } from '@/server/providers/ai/google-endpoint';
+import { fetchGeminiGenerate, geminiVisionModels } from '@/server/providers/ai/google-endpoint';
 import { signCarCheck } from '@/server/car-check';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,12 @@ const MAX_PER_MINUTE = 8;
 
 const DATA_URI = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 
+const VIEWS = ['front', 'front-left', 'left', 'rear-left', 'rear', 'rear-right', 'right', 'front-right'] as const;
+type CarView = (typeof VIEWS)[number];
+
 const bodySchema = z.object({
+  /** Slot id of `photo` (e.g. "front"), so its real side can be reported back under that id. */
+  photoId: z.string().regex(/^[a-z-]{2,20}$/).optional(),
   photo: z.string().min(50).max(MAX_PHOTO_CHARS).regex(DATA_URI),
   /** The other photographed sides (small copies): checked to be the same car as `photo`. */
   angles: z
@@ -29,16 +34,6 @@ interface Candidate {
   label: string;
 }
 
-/**
- * Vision models tried in order. `gemini-2.5-flash` is deprecated (closed to new accounts, rerouted
- * on 2026-12-01), so the default is a current stable model, with a cheaper one behind it; a model
- * that is not available to this key answers 404 and the next one is tried.
- */
-function detectModels(): string[] {
-  const configured = process.env['GEMINI_DETECT_MODEL']?.trim();
-  return [...new Set([configured, 'gemini-3.6-flash', 'gemini-3.5-flash-lite'].filter((m): m is string => Boolean(m)))];
-}
-
 interface CarAnswer {
   isCar: boolean;
   make: string;
@@ -47,10 +42,12 @@ interface CarAnswer {
   /** False only when the AI says some of the other photos show a different car. */
   sameCar: boolean;
   mismatchAngleIds: string[];
+  /** The side each photo really shows, by its label (only photos the AI could place). */
+  views: Record<string, CarView>;
 }
 
 /** Asks Gemini which car is in the photo (and whether the other sides are the same car). Null = unavailable. */
-async function askGemini(photo: string, angles: Array<{ id: string; photo: string }> = []): Promise<CarAnswer | null> {
+async function askGemini(photo: string, angles: Array<{ id: string; photo: string }> = [], photoId = 'main'): Promise<CarAnswer | null> {
   // Same key pool as image generation (GEMINI_API_KEYS, GEMINI_API_KEY or GOOGLE_API_KEY).
   const keys = envKeys('gemini');
   const key = keys[Math.floor(Math.random() * keys.length)] ?? '';
@@ -69,7 +66,10 @@ async function askGemini(photo: string, angles: Array<{ id: string; photo: strin
       ? `The following labelled images are other sides of the car the customer photographed: ${extra.map((a) => a.id).join(', ')}. ` +
         'Set sameCar to true when every labelled image shows the same physical car as IMAGE 1 (same make, model, body style and colour; the side or angle may differ). ' +
         'Put the labels of images that clearly show a different car, or no car at all, in mismatchAngles. If you are unsure, set sameCar to true.'
-      : 'Set sameCar to true and mismatchAngles to [].');
+      : 'Set sameCar to true and mismatchAngles to []. ') +
+    `Also add "views": an object that gives, for every image, which side of the car the camera sees. Use the key "${photoId}" for IMAGE 1 and the label for the others. ` +
+    `Each value is one of: ${VIEWS.join(', ')}, or "unknown". left / right are the driver's left / right when sitting in the car. ` +
+    'front = mostly the nose (grille, both headlights), rear = mostly the tail (both tail lights), left / right = a side profile, front-left etc. = a 3/4 view showing the nose and one side.';
 
   try {
     const body = {
@@ -86,7 +86,7 @@ async function askGemini(photo: string, angles: Array<{ id: string; photo: strin
       generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
     };
     let res: Response | null = null;
-    for (const model of detectModels()) {
+    for (const model of geminiVisionModels()) {
       res = await fetchGeminiGenerate(key, model, body, 14_000);
       if (res.status !== 404) break; // 404 = this model is not available to the key: try the next one
     }
@@ -96,14 +96,22 @@ async function askGemini(photo: string, angles: Array<{ id: string; photo: strin
     // Thinking models can put a thought part first: take the first real text part.
     const text = json.candidates?.[0]?.content?.parts?.find((p) => typeof p.text === 'string' && !(p as { thought?: boolean }).thought)?.text;
     if (!text) return null;
-    const parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, '')) as { isCar?: unknown; make?: unknown; model?: unknown; confidence?: unknown; sameCar?: unknown; mismatchAngles?: unknown };
+    const parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, '')) as { isCar?: unknown; make?: unknown; model?: unknown; confidence?: unknown; sameCar?: unknown; mismatchAngles?: unknown; views?: unknown };
     // An answer without a clear yes/no is "could not check", never "not a car" (that blocks the customer).
     if (typeof parsed.isCar !== 'boolean') return null;
     const sent = new Set(extra.map((a) => a.id));
     const mismatchAngleIds = Array.isArray(parsed.mismatchAngles)
       ? parsed.mismatchAngles.filter((x): x is string => typeof x === 'string' && sent.has(x))
       : [];
+    const views: Record<string, CarView> = {};
+    if (parsed.views && typeof parsed.views === 'object') {
+      const known = new Set([photoId, ...sent]);
+      for (const [id, v] of Object.entries(parsed.views as Record<string, unknown>)) {
+        if (known.has(id) && typeof v === 'string' && (VIEWS as readonly string[]).includes(v)) views[id] = v as CarView;
+      }
+    }
     return {
+      views,
       sameCar: parsed.sameCar === false && mismatchAngleIds.length > 0 ? false : true,
       mismatchAngleIds,
       isCar: parsed.isCar,
@@ -179,7 +187,7 @@ export async function POST(request: NextRequest) {
     // and the token still lets the render through. Only a definite "not a car" / "different cars" is blocked.
     const unverified = () => ({ carCheckToken: signCarCheck(guard.value.userId) });
 
-    const ai = await askGemini(parsed.data.photo, parsed.data.angles);
+    const ai = await askGemini(parsed.data.photo, parsed.data.angles, parsed.data.photoId);
     if (!ai) return NextResponse.json({ success: true, detected: false, reason: 'unavailable', ...unverified() });
     if (!ai.isCar) return NextResponse.json({ success: true, detected: false, reason: 'not_a_car' });
     if (!ai.sameCar) {
@@ -194,6 +202,7 @@ export async function POST(request: NextRequest) {
       model: ai.model,
       confidence: ai.confidence,
       candidates,
+      views: ai.views,
       ...unverified(),
     });
   } catch (err) {

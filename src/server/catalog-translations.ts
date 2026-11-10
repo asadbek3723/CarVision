@@ -32,6 +32,11 @@ export async function syncItemTranslations(db: Db, itemId: string): Promise<void
     const result = await translateListing({ name, description });
     if (!result) return;
 
+    // The proofread original replaces the seller's text; the hash is of what is stored, so the
+    // next save of the same text does not run again.
+    const finalName = result.polished?.name ?? name;
+    const finalDescription = result.polished?.description ?? description;
+
     const merged: ItemTranslations = {};
     for (const locale of ITEM_LOCALES) {
       if (locale === result.sourceLang) continue;
@@ -44,10 +49,19 @@ export async function syncItemTranslations(db: Db, itemId: string): Promise<void
       if (t) merged[locale] = { name: t.name, description: t.description, manual: false };
     }
 
-    const { error: upErr } = await db
+    let update = db
       .from('catalog_items')
-      .update({ source_lang: result.sourceLang, translations: merged, translations_hash: hash })
-      .eq('id', itemId);
+      .update({
+        ...(result.polished ? { name: finalName, description: finalDescription || null } : {}),
+        source_lang: result.sourceLang,
+        translations: merged,
+        translations_hash: hashOf(finalName, finalDescription),
+      })
+      .eq('id', itemId)
+      // Only if the seller did not save new text meanwhile.
+      .eq('name', name);
+    update = row.description === null ? update.is('description', null) : update.eq('description', description);
+    const { error: upErr } = await update;
     if (upErr) console.error('save translations failed:', upErr.message);
   } catch (err) {
     console.error('syncItemTranslations error:', err instanceof Error ? err.message : 'unknown');

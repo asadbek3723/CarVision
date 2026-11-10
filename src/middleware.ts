@@ -29,8 +29,10 @@ function localeOf(pathname: string): string {
   return LOCALE_PREFIX.exec(pathname)?.[1] ?? routing.defaultLocale;
 }
 
+/** Platform-set headers first: Vercel / Cloudflare overwrite them, so the client cannot forge them. */
 function clientIp(request: NextRequest): string {
-  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || '';
+  const h = request.headers;
+  return (h.get('x-vercel-forwarded-for') || h.get('cf-connecting-ip') || h.get('x-real-ip') || h.get('x-forwarded-for')?.split(',')[0] || '').trim();
 }
 
 /** Empty / unset ADMIN_ALLOWED_IPS = no IP restriction. */

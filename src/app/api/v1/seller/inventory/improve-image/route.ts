@@ -49,24 +49,31 @@ export async function POST(request: NextRequest) {
   });
   if (insertErr) return fail(500, 'INTERNAL', 'Serverda xatolik yuz berdi');
 
-  const { data: reserve } = await db.rpc('reserve_credits', {
+  // Gives the credit back first; a failed call leaves credit_state RESERVED for the stale sweep
+  // (GET /api/v1/generations), so the credit is never lost. Delivered renders are never marked failed.
+  const refund = async (reason: string) => {
+    const { error } = await db.rpc('rollback_credits', { p_user_id: session.userId, p_shop_id: shopId, p_amount: COST, p_generation_id: generationId });
+    if (error) console.error('rollback_credits failed (will retry):', error.message);
+    await db.from('generations').update({ status: 'FAILED', error_message: reason }).eq('id', generationId).neq('credit_state', 'COMMITTED');
+  };
+
+  const { data: reserve, error: reserveErr } = await db.rpc('reserve_credits', {
     p_user_id: session.userId,
     p_shop_id: shopId,
     p_amount: COST,
     p_generation_id: generationId,
   });
   const r = reserve as { success?: boolean; error?: string; balanceAfter?: number; currentBalance?: number } | null;
+  if (reserveErr) {
+    await refund('Reservation error').catch(() => undefined);
+    return fail(500, 'INTERNAL', 'Serverda xatolik yuz berdi');
+  }
   if (!r?.success) {
     await db.from('generations').delete().eq('id', generationId);
     if (r?.error === 'INSUFFICIENT_CREDITS') return fail(402, 'INSUFFICIENT_CREDITS', 'Kreditlar tugadi. Tarifni yangilang');
     if (r?.error === 'PLAN_EXPIRED') return fail(402, 'PLAN_EXPIRED', 'Tarif muddati tugagan');
     return fail(500, 'INTERNAL', 'Serverda xatolik yuz berdi');
   }
-
-  const refund = async (reason: string) => {
-    await db.from('generations').update({ status: 'FAILED', error_message: reason }).eq('id', generationId);
-    await db.rpc('rollback_credits', { p_user_id: session.userId, p_shop_id: shopId, p_amount: COST, p_generation_id: generationId });
-  };
 
   try {
     const res = await fetch('https://fal.run/fal-ai/birefnet', {
@@ -82,8 +89,12 @@ export async function POST(request: NextRequest) {
       return fail(502, 'AI_FAILED', 'Rasmni yaxshilab bo‘lmadi. Kredit qaytarildi');
     }
 
+    const { data: c, error: commitErr } = await db.rpc('commit_credits', { p_user_id: session.userId, p_shop_id: shopId, p_amount: COST, p_generation_id: generationId });
+    if (!commitErr && (c as { state?: string } | null)?.state === 'REFUNDED') {
+      return fail(504, 'AI_TIMEOUT', 'Juda uzoq davom etdi. Kredit qaytarildi');
+    }
+    if (commitErr) console.error('commit_credits failed:', commitErr.message);
     await db.from('generations').update({ status: 'COMPLETED', output_4k_url: url, provider: 'fal-birefnet', completed_at: new Date().toISOString() }).eq('id', generationId);
-    await db.rpc('commit_credits', { p_user_id: session.userId, p_shop_id: shopId, p_amount: COST, p_generation_id: generationId });
     return NextResponse.json({ success: true, cutoutUrl: url, creditsRemaining: r.balanceAfter ?? 0, creditsCharged: COST });
   } catch (err) {
     console.error('improve-image error:', err);

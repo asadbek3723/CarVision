@@ -62,6 +62,11 @@ export function createAdminSessionToken(adminUserId: string, nowMs: number = Dat
 
 /** Returns the admin user id when the token is valid and unexpired, else null. */
 export function getAdminIdFromToken(token: string | undefined | null, nowMs: number = Date.now()): string | null {
+  return getAdminTokenInfo(token, nowMs)?.adminId ?? null;
+}
+
+/** Admin id and issue time (unix seconds) of a valid, unexpired token, else null. */
+export function getAdminTokenInfo(token: string | undefined | null, nowMs: number = Date.now()): { adminId: string; issuedAt: number } | null {
   const secret = sessionSecret();
   if (!secret || !token || typeof token !== 'string') return null;
 
@@ -78,7 +83,7 @@ export function getAdminIdFromToken(token: string | undefined | null, nowMs: num
   const a = Buffer.from(signature);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
-  return adminUserId;
+  return { adminId: adminUserId, issuedAt };
 }
 
 export function verifyAdminSessionToken(token: string | undefined | null): boolean {

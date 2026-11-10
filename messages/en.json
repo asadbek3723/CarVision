@@ -815,7 +815,8 @@
     "after": "After",
     "partsHiddenAll": "The selected parts are not visible in your photos. Add a photo from the matching side (for example the rear for rear lights).",
     "partsHiddenSome": "These parts are not visible in your photos and won't be rendered: {names}. Add a photo from the matching side.",
-    "errConfirmCar": "Confirm the car first"
+    "errConfirmCar": "Confirm the car first",
+    "fitAll": "Fits all cars"
   },
   "identify": {
     "dialog": "Identify your car",
@@ -913,7 +914,7 @@
     "uploadPhotos": "Upload photos",
     "oneHint": "You can continue with just 1 photo at any time",
     "stUploaded": "Uploaded",
-    "stNext": "Next required",
+    "stNext": "Next",
     "stWaiting": "Waiting",
     "angleUploaded": "Photo uploaded: {angle}",
     "angleUpload": "Upload photo: {angle}",
@@ -957,7 +958,10 @@
         "short": "Front-left",
         "guide": "Shoot the front-left corner at 45°, showing the front and left side together."
       }
-    }
+    },
+    "skipAngle": "Skip this angle",
+    "continueWith": "Continue with {count} photos",
+    "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible."
   },
   "scanLive": {
     "compassLabel": "Compass guide: {angle}",
@@ -991,7 +995,9 @@
       "person": "Person — point at the car",
       "other": "No car in frame"
     },
-    "rotateCta": "Open camera"
+    "rotateCta": "Open camera",
+    "skip": "Skip",
+    "finishWith": "Done ({count})"
   },
   "landing": {
     "nav": {
@@ -1942,7 +1948,8 @@
     "PART_NOT_VISIBLE": "The selected part is not visible from this angle. No credit was charged",
     "CAR_NOT_VERIFIED": "The car isn't confirmed. Please confirm the photos again. No credit was charged",
     "AI_BLOCKED": "The AI could not process this photo (safety filter). Keep people out of the shot, frame the whole car and retake it. Your credit was refunded",
-    "AI_STORAGE_FAILED": "The result could not be saved. Your credit was refunded, please try again"
+    "AI_STORAGE_FAILED": "The result could not be saved. Your credit was refunded, please try again",
+    "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again"
   },
   "capturePage": {
     "sent": "The photo was sent to the computer",
@@ -2405,5 +2412,116 @@
         ]
       }
     }
+  },
+  "productCam": {
+    "profiles": {
+      "wheel": "Wheels / tyres",
+      "body": "Body / bumper",
+      "light": "Lights",
+      "part": "Part",
+      "interior": "Interior",
+      "finish": "Wrap / service"
+    },
+    "step": "Photo {n} of {total}",
+    "shots": {
+      "front": {
+        "title": "Front",
+        "short": "Front",
+        "tip": "The face of the product looks straight at the camera. Use a clean, plain background."
+      },
+      "angle": {
+        "title": "45° angle (main photo)",
+        "short": "45°",
+        "tip": "Step a little to the side so the front and side show together. This becomes the cover photo in the shop."
+      },
+      "side": {
+        "title": "Side",
+        "short": "Side",
+        "tip": "Show the profile: thickness, width and shape should be clear."
+      },
+      "back": {
+        "title": "Back / inside",
+        "short": "Back",
+        "tip": "Show the inner side, mounting points and connectors."
+      },
+      "detail": {
+        "title": "Close-up",
+        "short": "Detail",
+        "tip": "Shoot material, finish and seams up close. If there are scratches, do not hide them."
+      },
+      "label": {
+        "title": "Label / part number",
+        "short": "Number",
+        "tip": "The part number, size marks (R, ET, PCD) or factory stamp must be readable."
+      },
+      "set": {
+        "title": "Full set",
+        "short": "Set",
+        "tip": "Lay all pieces (bolts, brackets) side by side and shoot from above."
+      },
+      "onCar": {
+        "title": "Result on the car",
+        "short": "Result",
+        "tip": "Shoot the finished car from a 45° angle, the whole car in the frame."
+      },
+      "surface": {
+        "title": "Surface close-up",
+        "short": "Surface",
+        "tip": "Show the gloss and colour: let a light reflect on the surface."
+      }
+    },
+    "heights": {
+      "level": "At product height",
+      "above": "Slightly above",
+      "top": "Straight down"
+    },
+    "frames": {
+      "full": "Fill the frame",
+      "detail": "Centre of the circle",
+      "label": "Text readable",
+      "wide": "Whole thing in frame"
+    },
+    "unitCm": "{value} cm",
+    "unitM": "{value} m",
+    "pitch": {
+      "tiltDown": "Tilt the phone down",
+      "tiltUp": "Hold the phone more upright"
+    },
+    "light": {
+      "dark": "Too dark: move to better light",
+      "bright": "Too bright: avoid direct sun",
+      "backlit": "Light from behind: stand beside the window, not facing it"
+    },
+    "ready": "Looks good, take the shot",
+    "sensor": "Turn on tilt helper",
+    "allDone": "All photos taken! Tap “Done”",
+    "done": "Done ({count})",
+    "upload": "Gallery",
+    "planTitle": "Photos buyers want to see"
+  },
+  "listingTips": {
+    "anyLanguage": "Write in any language. When you save, AI fixes only spelling and punctuation (it neither shortens nor adds to your text) and translates it into 8 languages. Buyers see the product in whatever language they use the app in.",
+    "nameFormula": "Formula: brand + model + size/type + condition",
+    "nameExample": {
+      "wheel": "E.g. BBS CI-R R19 8.5J 5x114.3 ET35, new",
+      "body": "E.g. Chevrolet Gentra front bumper M-Sport, new",
+      "light": "E.g. Cobalt LED headlights (pair), new",
+      "part": "E.g. KW V3 coilovers Toyota Camry 70, used",
+      "interior": "E.g. Carbon steering wheel Malibu 2, alcantara",
+      "finish": "E.g. Matte black wrap, full body"
+    },
+    "price": "Say in the description whether the price is per piece or per set, and whether fitting is included.",
+    "descIntro": "Tap to add what buyers ask about, then type the value:",
+    "descFields": {
+      "wheel": "Size (R, J)|PCD|ET (offset)|Centre bore (DIA)|Material|Condition|Set",
+      "body": "Fits cars and years|Material|Painted|Mounting|Condition|In the box",
+      "light": "Fits cars and years|Bulb type (LED, xenon)|Connector|Condition|Set (1 or pair)",
+      "part": "Fits cars and years|Part number|Manufacturer|Condition|Mileage|Warranty",
+      "interior": "Fits cars and years|Material|Colour|Condition|In the box",
+      "finish": "Material / brand|Colour and effect|Lifetime|Work time|Warranty"
+    },
+    "descPlaceholder": "E.g.\nCondition: new, boxed\nSet: 4 pcs",
+    "honest": "If there are flaws, say so: buyers trust you and returns drop.",
+    "photos": "The camera shows the angle and distance for {count} photos. Main photo: from a 45° angle."
   }
 }

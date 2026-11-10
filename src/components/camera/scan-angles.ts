@@ -11,9 +11,10 @@ export interface GuidedScanAngle {
 }
 
 /**
- * 5 mandatory angles, ordered as one continuous walk around the car (clockwise from above):
+ * Up to 5 angles, ordered as one continuous walk around the car (clockwise from above):
  * front → right side → rear-right corner → rear → front-left corner.
- * Users MUST capture all 5 in sequence; skipping is forbidden.
+ * Every angle is optional: at least 1 photo, at most 5. The AI car check tells which side each
+ * photo really shows, and only parts visible on those sides are rendered.
  */
 export const GUIDED_SCAN_ANGLES: GuidedScanAngle[] = [
   { id: 1, key: 'front', slug: 'front', coneAngle: 0, isPrimary: true },
@@ -23,4 +24,7 @@ export const GUIDED_SCAN_ANGLES: GuidedScanAngle[] = [
   { id: 5, key: 'frontLeft', slug: 'front-left', coneAngle: 315 },
 ];
 
+/** Maximum number of photos (one per angle). */
 export const REQUIRED_ANGLE_COUNT = GUIDED_SCAN_ANGLES.length;
+/** Fewest photos the studio accepts. */
+export const MIN_ANGLE_COUNT = 1;

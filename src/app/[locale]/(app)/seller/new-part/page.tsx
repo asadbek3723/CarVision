@@ -6,7 +6,7 @@ import { readJson } from '@/lib/safe-json';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { AlertTriangle, ArrowLeft, Camera, Check, ChevronDown, Loader2, Plus, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Camera, Check, ChevronDown, Languages, Lightbulb, Loader2, Plus, Sparkles, X } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { VehiclePicker, type PickedVehicle } from '@/features/seller/components/VehiclePicker';
 import { ProductPhotoModal } from '@/features/seller/components/ProductPhotoModal';
@@ -14,6 +14,7 @@ import { SellerOnly } from '@/features/seller/components/SellerOnly';
 import { isSellerUser } from '@/features/auth/roles';
 import { analyzeQuality, compressForUpload, composeStudioImage, loadImage, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { dataUrlToBlob } from '@/features/seller/lib/photo-input';
+import { CATEGORY_PROFILE, PROFILE_CATEGORY, SHOT_PLANS, type ShotProfile } from '@/features/seller/lib/product-shots';
 import { useImageErrorText } from '@/features/seller/lib/use-image-error-text';
 import { CATALOG_CATEGORIES, ITEM_LOCALES, MAX_ITEM_IMAGES, PRICE_CURRENCIES, type CatalogCategory, type CatalogItemDTO, type ItemLocale, type ItemTranslations } from '@/domain/catalog';
 import { buttonClasses } from '@/components/ui';
@@ -68,6 +69,7 @@ async function uploadBlob(blob: Blob, apiError: (b: { code?: string; error?: str
 
 function SellerNewPartPageInner() {
   const t = useTranslations('newPart');
+  const tTips = useTranslations('listingTips');
   const apiError = useApiError();
   const tc = useTranslations('catalogCat');
   const imgText = useImageErrorText();
@@ -171,8 +173,13 @@ function SellerNewPartPageInner() {
   }, [editId, unlocked]);
 
   // ---- photos -----------------------------------------------------------------------------------
+  const profile: ShotProfile = CATEGORY_PROFILE[category];
+  const changeProfile = (p: ShotProfile) => {
+    if (CATEGORY_PROFILE[category] !== p) setCategory(PROFILE_CATEGORY[p]);
+  };
+
+  // The camera stays open for the next shot; it closes with "Done".
   const addPhoto = React.useCallback(async (dataUrl: string) => {
-    setPhotoModal(false);
     setPhotoNotice(null);
     setUploading((n) => n + 1);
     try {
@@ -357,6 +364,9 @@ function SellerNewPartPageInner() {
           if (photos.length === 0 && !editId) router.push(`/${locale}/dashboard`);
         }}
         onPhoto={(d) => void addPhoto(d)}
+        profile={profile}
+        onProfileChange={changeProfile}
+        onDone={() => setPhotoModal(false)}
       />
 
       <div className="mb-4 flex items-center justify-between">
@@ -407,6 +417,13 @@ function SellerNewPartPageInner() {
           </div>
         )}
 
+        {photos.length < SHOT_PLANS[profile].length && (
+          <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-white/50">
+            <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-500" />
+            {tTips('photos', { count: SHOT_PLANS[profile].length })}
+          </p>
+        )}
+
         {photoNotice && (
           <p className="mt-3 flex items-start gap-2 text-xs text-amber-300">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -452,12 +469,19 @@ function SellerNewPartPageInner() {
         </SelectBox>
       </section>
 
+      {/* Write in any language: AI polishes and translates on save */}
+      <div className="flex items-start gap-3 rounded-3xl bg-gold-500/[0.07] p-4 text-xs leading-relaxed text-white/70">
+        <Languages className="mt-0.5 h-4 w-4 shrink-0 text-gold-500" />
+        <p>{tTips('anyLanguage')}</p>
+      </div>
+
       {/* Name + price */}
       <section className={`${cardCls} space-y-4`}>
         <div>
           <label className={labelCls} htmlFor="p-name">{t('name')}</label>
+          <p className="-mt-1 mb-2 text-xs text-white/45">{tTips('nameFormula')}</p>
           <div className="relative">
-            <input id="p-name" value={name} maxLength={150} onChange={(e) => setName(e.target.value)} placeholder={t('namePlaceholder')} className={`${fieldCls} pe-12`} />
+            <input id="p-name" value={name} maxLength={150} onChange={(e) => setName(e.target.value)} placeholder={tTips(`nameExample.${profile}`)} className={`${fieldCls} pe-12`} />
             {name.trim().length > 1 && (
               <button type="button" aria-label={t('improveText')} onClick={() => void improveText()} disabled={improvingText} className="absolute end-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white/35 transition hover:text-gold-500">
                 {improvingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -497,6 +521,7 @@ function SellerNewPartPageInner() {
               ))}
             </SelectBox>
           </div>
+          <p className="mt-2 text-xs text-white/45">{tTips('price')}</p>
         </div>
       </section>
 
@@ -562,7 +587,35 @@ function SellerNewPartPageInner() {
             )}
             <div>
               <label className={labelCls} htmlFor="p-desc">{t('description')}</label>
-              <textarea id="p-desc" value={description} maxLength={1500} rows={3} onChange={(e) => setDescription(e.target.value)} className={`${fieldCls} resize-y`} />
+              <p className="-mt-1 mb-2 text-xs text-white/45">{tTips('descIntro')}</p>
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {tTips(`descFields.${profile}`)
+                  .split('|')
+                  .map((field) => {
+                    const used = description.toLowerCase().includes(`${field.toLowerCase()}:`);
+                    return (
+                      <button
+                        key={field}
+                        type="button"
+                        disabled={used}
+                        onClick={() => {
+                          setDescription((d) => `${d.trimEnd()}${d.trim() ? '\n' : ''}${field}: `.slice(0, 1500));
+                          requestAnimationFrame(() => {
+                            const el = document.getElementById('p-desc') as HTMLTextAreaElement | null;
+                            el?.focus();
+                            el?.setSelectionRange(el.value.length, el.value.length);
+                          });
+                        }}
+                        className={`rounded-full px-3 py-1.5 text-[11px] font-semibold transition ${used ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/[0.06] text-white/70 hover:bg-white/10 hover:text-white'}`}
+                      >
+                        {used ? '✓ ' : '+ '}
+                        {field}
+                      </button>
+                    );
+                  })}
+              </div>
+              <textarea id="p-desc" value={description} maxLength={1500} rows={5} onChange={(e) => setDescription(e.target.value)} placeholder={tTips('descPlaceholder')} className={`${fieldCls} resize-y`} />
+              <p className="mt-2 text-xs text-white/45">{tTips('honest')}</p>
             </div>
           </div>
         )}

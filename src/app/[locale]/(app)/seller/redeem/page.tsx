@@ -67,9 +67,9 @@ export default function SellerRedeemVoucherPage() {
     }
   };
 
-  const redeem = async (order: SellerLeadOrder): Promise<string | null> => {
+  const redeem = async (order: SellerLeadOrder, value: string): Promise<string | null> => {
     try {
-      const res = await fetch('/api/v1/seller/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: order.voucherCode, action: 'redeem' }) });
+      const res = await fetch('/api/v1/seller/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: value, orderId: order.id, action: 'redeem' }) });
       const data = (await readJson(res)).data;
       if (!res.ok || !data.success) return apiError(data, t('errAccept'));
       setMatch(data.order);
@@ -134,12 +134,11 @@ export default function SellerRedeemVoucherPage() {
             <ul className="space-y-2">
               {pending.map((o) => (
                 <li key={o.id}>
-                  <button type="button" onClick={() => { setMatch(o); setCode(o.voucherCode); }} className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white/[0.04] px-4 py-3.5 text-start transition hover:bg-white/[0.08]">
+                  <button type="button" onClick={() => setMatch(o)} className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white/[0.04] px-4 py-3.5 text-start transition hover:bg-white/[0.08]">
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-white">{o.customerName}</span>
                       <span className="block text-xs text-white/45">#{o.orderNumber} · {formatDate(o.appointmentDate)}</span>
                     </span>
-                    <span className="shrink-0 font-mono text-sm font-bold text-gold-500">{o.voucherCode}</span>
                   </button>
                 </li>
               ))}

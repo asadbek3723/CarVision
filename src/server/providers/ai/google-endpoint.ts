@@ -46,3 +46,12 @@ export async function fetchGeminiGenerate(
   }
   return res!;
 }
+
+/**
+ * Vision (text-answer) models tried in order for photo checks. `GEMINI_DETECT_MODEL` overrides the
+ * first one; a model the key cannot use answers 404 and the next one is tried.
+ */
+export function geminiVisionModels(): string[] {
+  const configured = process.env['GEMINI_DETECT_MODEL']?.trim();
+  return [...new Set([configured, 'gemini-3.6-flash', 'gemini-3.5-flash-lite'].filter((m): m is string => Boolean(m)))];
+}

@@ -5,6 +5,7 @@ import { requirePaidSeller } from '@/server/auth/guards';
 import { getServerRates } from '@/server/rates';
 import { fetchBookingItems, fetchBookingRows, type BookingRow } from '@/server/bookings';
 import { centsToUsd } from '@/domain/catalog';
+import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 
 const fail = (status: number, error: string, code?: string) => NextResponse.json({ success: false, code, error }, { status });
 
@@ -35,7 +36,8 @@ async function toSellerOrders(rows: BookingRow[], shopName: string, shopAddress:
     return {
       id: r.id,
       orderNumber: r.booking_number,
-      voucherCode: cancelled ? '' : r.redemption_code,
+      // The pickup code belongs to the customer: it proves the hand-over, so the workshop never sees it.
+      voucherCode: '',
       customerName: r.customer_name,
       customerPhone: cancelled ? '' : r.customer_phone,
       totalPriceUSD: total,
@@ -77,8 +79,9 @@ export async function GET(request: NextRequest) {
       orders,
       order: orderId ? orders[0] ?? null : undefined,
       count: orders.length,
-      totalPayoutUSD: orders.reduce((s, o) => s + (o.status !== 'cancelled' && o.payoutUSD !== null ? o.payoutUSD : 0), 0),
-      paidOutUSD: orders.reduce((s, o) => s + (o.payoutStatus === 'paid' && o.payoutUSD !== null ? o.payoutUSD : 0), 0),
+      // Summed in integer cents, converted once (no floating-point drift).
+      totalPayoutUSD: centsToUsd(rows.reduce((s, r) => s + (r.status !== 'CANCELLED' && r.payout_cents !== null ? r.payout_cents : 0), 0)),
+      paidOutUSD: centsToUsd(rows.reduce((s, r) => s + (r.payout_status === 'PAID' && r.payout_cents !== null ? r.payout_cents : 0), 0)),
     });
   } catch (err) {
     console.error('seller orders GET error:', err);
@@ -86,9 +89,48 @@ export async function GET(request: NextRequest) {
   }
 }
 
-const redeemSchema = z.object({ code: z.string().trim().min(3).max(20), action: z.enum(['lookup', 'redeem']).default('lookup') });
+const CODE_RE = /^\d{3}-?\d{3}$/;
+const normCode = (raw: string) => {
+  const digits = raw.replace(/\D/g, '');
+  return digits.length === 6 ? `${digits.slice(0, 3)}-${digits.slice(3)}` : null;
+};
+const redeemSchema = z.object({ code: z.string().trim().min(3).max(20), action: z.enum(['lookup', 'redeem']).default('lookup'), orderId: z.string().uuid().optional() });
 
-/** Look up an order by the customer's pickup code (order number or 123-456 code), or hand it over. */
+/** Wrong codes per workshop per 15 minutes before the terminal locks (stops guessing codes). */
+const MAX_CODE_FAILURES = 10;
+const CODE_WINDOW_MS = 15 * 60 * 1000;
+
+async function codeLocked(shopId: string): Promise<boolean> {
+  return (await recentFailures('login_key', `redeem:${shopId}`, 'redeem_code', CODE_WINDOW_MS, false, true)) >= MAX_CODE_FAILURES;
+}
+
+/**
+ * Hands an order over. Only the customer's pickup code works (the workshop cannot see it), so the
+ * hand-over proves the customer was there. Returns the fresh order or an error response.
+ */
+async function redeemWithCode(request: NextRequest, shopId: string, rawCode: string, orderId: string | undefined) {
+  const db = createAdminClient();
+  if (await codeLocked(shopId)) return { response: fail(429, 'Ko‘p marta noto‘g‘ri kod kiritildi. 15 daqiqadan keyin urinib ko‘ring', 'RATE_LIMITED') };
+  const code = normCode(rawCode);
+  if (!code || !CODE_RE.test(code)) {
+    await recordAttempt('redeem_code', `redeem:${shopId}`, clientIp(request), false);
+    return { response: fail(404, 'Bunday kod topilmadi', 'VOUCHER_NOT_FOUND') };
+  }
+  const { data, error } = await db.rpc('redeem_booking', { p_shop_id: shopId, p_code: code, p_booking_id: orderId ?? null });
+  if (error) {
+    console.error('redeem_booking failed:', error.message);
+    return { response: fail(500, 'Serverda xatolik yuz berdi') };
+  }
+  const r = data as { success?: boolean; error?: string; bookingId?: string } | null;
+  if (!r?.success) {
+    if (r?.error === 'ALREADY_REDEEMED') return { response: fail(409, 'Bu buyurtma avval topshirilgan', 'ALREADY_REDEEMED') };
+    await recordAttempt('redeem_code', `redeem:${shopId}`, clientIp(request), false);
+    return { response: fail(404, 'Bunday kod topilmadi', 'VOUCHER_NOT_FOUND') };
+  }
+  return { bookingId: r.bookingId as string };
+}
+
+/** Look up a paid order by the customer's pickup code, or hand it over with that code. */
 export async function POST(request: NextRequest) {
   try {
     const guard = await requirePaidSeller();
@@ -96,65 +138,52 @@ export async function POST(request: NextRequest) {
     const { session, shopId } = guard.value;
     const parsed = redeemSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return fail(400, 'Kodni kiriting');
-    const code = parsed.data.code.replace(/^#/, '');
-
+    const shop = session.shop!;
     const db = createAdminClient();
+
     if (parsed.data.action === 'redeem') {
-      const { data } = await db.rpc('redeem_booking', { p_shop_id: shopId, p_code: code });
-      const r = data as { success?: boolean; error?: string; bookingId?: string } | null;
-      if (!r?.success) {
-        const [msg, code] =
-          r?.error === 'ALREADY_REDEEMED'
-            ? ['Bu buyurtma avval topshirilgan', 'ALREADY_REDEEMED']
-            : r?.error === 'NOT_PAID'
-            ? ['To‘lov hali tasdiqlanmagan', 'NOT_PAID']
-            : ['Bunday kod topilmadi', 'VOUCHER_NOT_FOUND'];
-        return fail(r?.error === 'NOT_FOUND' || !r ? 404 : 409, msg as string, code as string);
-      }
-      const rows = await fetchBookingRows(db, { shopId, id: r.bookingId, limit: 1 });
-      const shop = session.shop!;
+      const res = await redeemWithCode(request, shopId, parsed.data.code, parsed.data.orderId);
+      if ('response' in res) return res.response;
+      const rows = await fetchBookingRows(db, { shopId, id: res.bookingId, limit: 1 });
       const [order] = await toSellerOrders(rows, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
       return NextResponse.json({ success: true, redeemed: true, order });
     }
 
-    // lookup: exact match on this workshop's own bookings that are paid
-    const { data: hit } = await db
-      .from('bookings')
-      .select('id')
-      .eq('shop_id', shopId)
-      .in('status', ['UNLOCKED', 'REDEEMED'])
-      .or(`booking_number.ilike.${code.replace(/[%,()]/g, '')},redemption_code.eq.${code.replace(/[%,()]/g, '')}`)
-      .limit(1)
-      .maybeSingle();
-    if (!hit) return fail(404, 'Bunday kod topilmadi');
+    // lookup: exact pickup-code match on this workshop's own paid orders
+    if (await codeLocked(shopId)) return fail(429, 'Ko‘p marta noto‘g‘ri kod kiritildi. 15 daqiqadan keyin urinib ko‘ring', 'RATE_LIMITED');
+    const code = normCode(parsed.data.code);
+    const { data: hit } = code
+      ? await db.from('bookings').select('id').eq('shop_id', shopId).in('status', ['UNLOCKED', 'REDEEMED']).eq('redemption_code', code).limit(1).maybeSingle()
+      : { data: null };
+    if (!hit) {
+      await recordAttempt('redeem_code', `redeem:${shopId}`, clientIp(request), false);
+      return fail(404, 'Bunday kod topilmadi', 'VOUCHER_NOT_FOUND');
+    }
     const rows = await fetchBookingRows(db, { shopId, id: hit.id as string, limit: 1 });
-    const shop = session.shop!;
     const [order] = await toSellerOrders(rows, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
-    return NextResponse.json({ success: true, redeemed: false, order });
+    // The code was typed by the workshop from the customer, so it may be echoed back for the hand-over step.
+    return NextResponse.json({ success: true, redeemed: false, order: order ? { ...order, voucherCode: code } : order });
   } catch (err) {
     console.error('seller orders POST error:', err);
     return fail(500, 'Serverda xatolik yuz berdi');
   }
 }
 
-/** Order detail page "mark completed" = the item was handed over to the customer. */
+/** Order detail page "mark completed" = handed over; needs the customer's pickup code. */
 export async function PATCH(request: NextRequest) {
   try {
     const guard = await requirePaidSeller();
     if (!guard.ok) return guard.response;
     const { session, shopId } = guard.value;
-    const parsed = z.object({ orderId: z.string().uuid(), status: z.string() }).safeParse(await request.json().catch(() => null));
-    if (!parsed.success) return fail(400, 'Ma’lumotlar noto‘g‘ri');
-    if (parsed.data.status !== 'completed') return fail(400, 'Faqat "yakunlandi" holati qo‘llab-quvvatlanadi');
+    const parsed = z
+      .object({ orderId: z.string().uuid(), status: z.literal('completed'), code: z.string().trim().min(3).max(20) })
+      .safeParse(await request.json().catch(() => null));
+    if (!parsed.success) return fail(400, 'Mijozning olib ketish kodini kiriting', 'CODE_REQUIRED');
 
+    const res = await redeemWithCode(request, shopId, parsed.data.code, parsed.data.orderId);
+    if ('response' in res) return res.response;
     const db = createAdminClient();
-    const rows = await fetchBookingRows(db, { shopId, id: parsed.data.orderId, limit: 1 });
-    const row = rows[0];
-    if (!row) return fail(404, 'Buyurtma topilmadi');
-    const { data } = await db.rpc('redeem_booking', { p_shop_id: shopId, p_code: row.redemption_code });
-    const r = data as { success?: boolean; error?: string } | null;
-    if (!r?.success && r?.error !== 'ALREADY_REDEEMED') return fail(409, 'Holatni o‘zgartirib bo‘lmadi');
-    const fresh = await fetchBookingRows(db, { shopId, id: row.id, limit: 1 });
+    const fresh = await fetchBookingRows(db, { shopId, id: res.bookingId, limit: 1 });
     const shop = session.shop!;
     const [order] = await toSellerOrders(fresh, shop.shop_name, shop.exact_address || `${shop.city}, ${shop.district}`, shop.phone);
     return NextResponse.json({ success: true, order });

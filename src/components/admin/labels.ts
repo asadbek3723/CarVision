@@ -15,8 +15,12 @@ const ACTIONS = new Set([
   'MARK_REFUND_DONE',
   'SET_BANNER',
   'REMOVE_BANNER',
+  'ADMIN_LOGOUT',
+  'OPEN_GARAGE',
+  'REFUND_REJECTED',
+  'SET_PAYOUT_DETAILS',
 ]);
-const ATTEMPTS = new Set(['login', 'admin_pin', 'register', 'otp', 'camera_session']);
+const ATTEMPTS = new Set(['login', 'admin_pin', 'register', 'otp', 'camera_session', 'redeem_code']);
 
 type Translate = (key: string) => string;
 

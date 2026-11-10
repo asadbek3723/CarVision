@@ -33,8 +33,8 @@ export function formatDate(iso: string): string {
 
 interface Props {
   order: SellerLeadOrder;
-  /** Redeems the voucher. Resolves with an error message, or null on success. */
-  onRedeem: (order: SellerLeadOrder) => Promise<string | null>;
+  /** Hands the order over with the customer's pickup code. Resolves with an error message, or null on success. */
+  onRedeem: (order: SellerLeadOrder, code: string) => Promise<string | null>;
 }
 
 /** One sold order: buyer, items, the amount the workshop receives, and the hand-over action. */
@@ -44,6 +44,8 @@ export function LeadDetail({ order, onRedeem }: Props) {
   const [confirming, setConfirming] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Pre-filled only when the workshop just typed the code to look the order up.
+  const [code, setCode] = React.useState(order.voucherCode);
   useErrorToast(error);
   const done = order.status === 'completed';
   const cancelled = order.status === 'cancelled';
@@ -52,16 +54,23 @@ export function LeadDetail({ order, onRedeem }: Props) {
   React.useEffect(() => {
     setConfirming(false);
     setError(null);
-  }, [order.id]);
+    setCode(order.voucherCode);
+  }, [order.id, order.voucherCode]);
+
+  const codeOk = code.replace(/\D/g, '').length === 6;
 
   const redeem = async () => {
+    if (!codeOk) {
+      setError(t('errCodeRequired'));
+      return;
+    }
     if (!confirming) {
       setConfirming(true);
       return;
     }
     setBusy(true);
     setError(null);
-    const err = await onRedeem(order);
+    const err = await onRedeem(order, code);
     setBusy(false);
     setConfirming(false);
     if (err) setError(err);
@@ -135,11 +144,26 @@ export function LeadDetail({ order, onRedeem }: Props) {
         <p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-emerald-300"><Check className="h-4 w-4" />{t('voucherAccepted')}</p>
       ) : (
         <div className="mt-5 space-y-2">
+          {!order.voucherCode && (
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-white/55">{t('pickupCodeLabel')}</span>
+              <input
+                value={code}
+                onChange={(e) => { setCode(e.target.value); setConfirming(false); setError(null); }}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="123-456"
+                maxLength={7}
+                className="w-full rounded-2xl bg-white/[0.07] px-4 py-3.5 text-center font-mono text-lg tracking-widest text-white outline-none placeholder:text-white/25 focus:bg-white/[0.1]"
+              />
+              <span className="mt-1.5 block text-[11px] text-white/45">{t('pickupCodeHint')}</span>
+            </label>
+          )}
           {confirming && <p className="text-center text-xs text-amber-300">{t('confirmHint')}</p>}
           <button
             type="button"
             onClick={() => void redeem()}
-            disabled={busy}
+            disabled={busy || !codeOk}
             className={`flex w-full items-center justify-center gap-2 rounded-full py-4 text-base font-bold transition active:scale-[0.99] disabled:opacity-60 ${confirming ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white hover:bg-white/15'}`}
           >
             {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
