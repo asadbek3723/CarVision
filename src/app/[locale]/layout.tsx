@@ -71,8 +71,8 @@ export const viewport: Viewport = {
   themeColor: APP_THEME,
   width: 'device-width',
   initialScale: 1,
-  // Draw under the notch / home bar so env(safe-area-inset-*) reports real values on iPhone.
-  viewportFit: 'cover',
+  // No `viewport-fit=cover`: with the black-translucent status bar it makes iOS leave a gap at the bottom of
+  // the installed app (fixed bars stop short of the screen edge) and hides the top of pages under the status bar.
   // App-like: no pinch zoom (Android honours this; iOS is handled by <TouchGuard />).
   maximumScale: 1,
   userScalable: false,
