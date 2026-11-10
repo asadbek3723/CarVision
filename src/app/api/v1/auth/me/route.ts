@@ -33,7 +33,7 @@ export async function GET() {
   const session = lookup.session;
   if (!shouldClaim(session.userId)) return NextResponse.json({ success: true, user: session.profile });
   await createAdminClient().rpc('claim_monthly_credits', { p_user_id: session.userId });
-  const fresh = (await loadSession(session.userId)) ?? session;
+  const fresh = (await loadSession(session.userId, session.profile.avatar_url)) ?? session;
   return NextResponse.json({ success: true, user: fresh.profile });
 }
 
@@ -121,6 +121,6 @@ export async function PATCH(request: NextRequest) {
     return fail(500, 'SAVE_FAILED', 'Saqlab bo‘lmadi');
   }
 
-  const fresh = (await loadSession(userId)) ?? session;
+  const fresh = (await loadSession(userId, session.profile.avatar_url)) ?? session;
   return NextResponse.json({ success: true, user: fresh.profile });
 }

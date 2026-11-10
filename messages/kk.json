@@ -742,7 +742,12 @@
     "resend": "Кодты қайта жіберу",
     "resendIn": "Қайта жіберу: {seconds} с",
     "confirm": "Растау және сақтау",
-    "cartRow": "Себет"
+    "cartRow": "Себет",
+    "changePhoto": "Суретті өзгерту",
+    "addPhoto": "Сурет қосу",
+    "removePhoto": "Жою",
+    "photoFailed": "Суретті сақтау мүмкін болмады. Қайталап көріңіз.",
+    "photoUpdated": "Сурет жаңартылды"
   },
   "customize": {
     "clearBuild": "Таңдауды тазалау",

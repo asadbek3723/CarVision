@@ -742,7 +742,12 @@
     "resend": "Kodu tekrar gönder",
     "resendIn": "{seconds} sn sonra tekrar gönder",
     "confirm": "Doğrula ve kaydet",
-    "cartRow": "Sepet"
+    "cartRow": "Sepet",
+    "changePhoto": "Fotoğrafı değiştir",
+    "addPhoto": "Fotoğraf ekle",
+    "removePhoto": "Kaldır",
+    "photoFailed": "Fotoğraf kaydedilemedi. Lütfen tekrar deneyin.",
+    "photoUpdated": "Fotoğraf güncellendi"
   },
   "customize": {
     "clearBuild": "Seçimi temizle",

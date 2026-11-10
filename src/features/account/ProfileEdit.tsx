@@ -9,7 +9,8 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import type { UserProfile } from '@/features/auth/types';
 import { PasswordForm } from '@/features/account/ProfileExtras';
 import { ProfileSection } from '@/features/account/ProfileSection';
-import { initialsOf, pageWrap } from '@/features/account/preferences';
+import { AvatarPicker } from '@/features/account/AvatarPicker';
+import { pageWrap } from '@/features/account/preferences';
 import { cn } from '@/lib/utils';
 
 type ContactKind = 'phone' | 'email';
@@ -243,19 +244,7 @@ export function ProfileEdit() {
     <div className={pageWrap}>
       <PageHeader title={t('editProfile')} subtitle={t('editSub')} back={{ href: profileHref }} />
 
-      <div className="flex items-center gap-5 pb-4 pt-2">
-        <div aria-hidden="true" className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gold-gradient text-2xl font-semibold uppercase text-black md:h-24 md:w-24 md:text-3xl">
-          {initialsOf(name || user.full_name)}
-        </div>
-        <div className="min-w-0">
-          <p className="truncate font-heading text-xl font-semibold text-white md:text-3xl">{trimmedName || t('guest')}</p>
-          {(phone || user.email) && (
-            <p dir="ltr" className="mt-1 truncate text-start text-sm text-white/50 rtl:text-end">
-              {formatPhone(phone) || user.email}
-            </p>
-          )}
-        </div>
-      </div>
+      <AvatarPicker name={name || user.full_name} />
 
       <form onSubmit={save} noValidate>
         <ProfileSection title={t('personalTitle')} hint={t('personalHint')}>

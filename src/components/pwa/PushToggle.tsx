@@ -99,10 +99,10 @@ export function PushToggle() {
       disabled={disabled}
       aria-pressed={on}
       onClick={on ? turnOff : turnOn}
-      className="flex min-h-[68px] w-full items-center gap-4 px-4 text-start transition hover:bg-white/[0.02] disabled:opacity-60"
+      className="flex min-h-[64px] w-full items-center gap-4 text-start transition hover:bg-white/[0.02] disabled:opacity-60"
     >
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#262626] text-white">{on ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}</span>
-      <span className="flex min-h-[68px] min-w-0 flex-1 items-center gap-3 border-b border-[#262626] py-3">
+      {on ? <Bell className="h-[22px] w-[22px] shrink-0 text-white/80" strokeWidth={1.6} /> : <BellOff className="h-[22px] w-[22px] shrink-0 text-white/55" strokeWidth={1.6} />}
+      <span className="flex min-h-[64px] min-w-0 flex-1 items-center gap-3 border-b border-[#262626] py-3">
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-medium leading-tight text-white">{t('title')}</span>
           <span className="mt-1 block text-[13px] leading-[1.35] text-white/55">{hint}</span>

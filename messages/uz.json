@@ -742,7 +742,12 @@
     "resend": "Kodni qayta yuborish",
     "resendIn": "Qayta yuborish: {seconds} s",
     "confirm": "Tasdiqlash va saqlash",
-    "cartRow": "Savat"
+    "cartRow": "Savat",
+    "changePhoto": "Rasmni o‘zgartirish",
+    "addPhoto": "Rasm qo‘shish",
+    "removePhoto": "O‘chirish",
+    "photoFailed": "Rasmni saqlab bo‘lmadi. Qayta urinib ko‘ring.",
+    "photoUpdated": "Rasm yangilandi"
   },
   "customize": {
     "clearBuild": "Tanlovni tozalash",

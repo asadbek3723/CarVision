@@ -742,7 +742,12 @@
     "resend": "Resend code",
     "resendIn": "Resend in {seconds}s",
     "confirm": "Confirm and save",
-    "cartRow": "Cart"
+    "cartRow": "Cart",
+    "changePhoto": "Change photo",
+    "addPhoto": "Add photo",
+    "removePhoto": "Remove",
+    "photoFailed": "Couldn't save the photo. Please try again.",
+    "photoUpdated": "Photo updated"
   },
   "customize": {
     "clearBuild": "Clear build",

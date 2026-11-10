@@ -29,6 +29,8 @@ export interface UserProfile {
   /** False until the number is confirmed by SMS (always false while SMS is off). */
   phone_verified?: boolean;
   full_name: string;
+  /** Profile photo (public URL), set from Profile -> Edit. */
+  avatar_url?: string | undefined;
   role: UserRole;
   credits_balance: number;
   country?: string;

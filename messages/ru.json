@@ -742,7 +742,12 @@
     "resend": "Отправить код ещё раз",
     "resendIn": "Повторно через {seconds} с",
     "confirm": "Подтвердить и сохранить",
-    "cartRow": "Корзина"
+    "cartRow": "Корзина",
+    "changePhoto": "Изменить фото",
+    "addPhoto": "Добавить фото",
+    "removePhoto": "Удалить",
+    "photoFailed": "Не удалось сохранить фото. Попробуйте ещё раз.",
+    "photoUpdated": "Фото обновлено"
   },
   "customize": {
     "clearBuild": "Очистить сборку",

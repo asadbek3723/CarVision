@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowRight, ArrowUpRight, CalendarCheck, CarFront, ChevronRight, CircleHelp, Globe, LayoutDashboard, Loader2, Package, LogOut, Pencil, Settings2, ShoppingBag } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, CarFront, ChevronRight, CircleHelp, LayoutDashboard, Loader2, Package, LogOut, Pencil, Settings2, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { isSellerUser } from '@/features/auth/roles';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -16,7 +16,7 @@ import { PushToggle } from '@/components/pwa/PushToggle';
 import { useLiveTick } from '@/lib/live';
 
 /** Figma "Icon tile": 40px, radius 12, on the #222222 inner surface. */
-const tile = `grid h-10 w-10 shrink-0 place-items-center rounded-xl ${md.tile} text-white`;
+const tile = `grid h-11 w-11 shrink-0 place-items-center rounded-xl ${md.tile} text-white`;
 const roundBtn = `grid h-11 w-11 shrink-0 place-items-center rounded-full transition ${mdFocus}`;
 
 /** One booking inside the "Mening bronlarim" card: photo tile, part, status and total. */
@@ -53,15 +53,13 @@ interface RowProps {
   last?: boolean;
 }
 
-/** Figma settings row: icon tile, title (+ subtitle), optional value and a chevron. */
+/** A settings row: bare icon, title (+ subtitle), optional value and a chevron. Only a hairline separates rows. */
 function SettingsRow({ href, icon: Icon, title, sub, value, last }: RowProps) {
   return (
     <li>
-      <Link href={href} className={`group flex min-h-[68px] items-center gap-4 px-4 transition hover:bg-white/[0.02] ${mdFocus}`}>
-        <span className={tile}>
-          <Icon className="h-5 w-5" strokeWidth={1.8} />
-        </span>
-        <span className={`flex min-h-[68px] min-w-0 flex-1 items-center gap-3 py-3 ${last ? '' : `border-b ${md.line}`}`}>
+      <Link href={href} className={`group flex min-h-[64px] items-center gap-4 transition hover:bg-white/[0.02] ${mdFocus}`}>
+        <Icon className="h-[22px] w-[22px] shrink-0 text-white/80" strokeWidth={1.6} />
+        <span className={`flex min-h-[64px] min-w-0 flex-1 items-center gap-3 py-3 ${last ? '' : `border-b ${md.line}`}`}>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-medium leading-tight text-white">{title}</span>
             {sub && <span className={`mt-1 block truncate text-[13px] leading-[1.35] ${md.muted}`}>{sub}</span>}
@@ -144,22 +142,14 @@ export function VeloceProfile() {
   return (
     <div className={`${geist.className} ${md.page} min-h-full`}>
       <div className="mx-auto w-full max-w-2xl px-5 pb-6 pt-3 md:pt-8">
-        {/* Title row */}
-        <header className="flex items-center justify-between gap-4">
-          <h1 className="text-[30px] font-semibold leading-none tracking-[-0.03em] text-white md:text-[40px]">{t('title')}</h1>
-          <Link href={`${base}/settings`} aria-label={t('settings')} title={t('settings')} className={`${roundBtn} border ${md.line} ${md.card} text-white hover:bg-[#1c1c1c]`}>
-            <Settings2 className="h-5 w-5" strokeWidth={1.8} />
-          </Link>
-        </header>
-
-        {/* Account */}
-        <section className={`mt-6 flex flex-col gap-[18px] rounded-3xl p-5 ${md.card}`}>
+        {/* Account: no card, the photo and the name sit straight on the page */}
+        <section className="flex flex-col gap-6 pt-2">
           <div className="flex min-w-0 items-center gap-4">
-            <div aria-hidden className={`grid h-14 w-14 shrink-0 place-items-center rounded-full text-[22px] font-semibold uppercase text-[#0A0A0A] ${md.accentBg}`}>
-              {initialsOf(user.full_name)}
+            <div aria-hidden className={`relative grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-full text-[24px] font-semibold uppercase text-[#0A0A0A] ring-1 ring-white/10 ${md.accentBg}`}>
+              {user.avatar_url ? <img src={user.avatar_url} alt="" className="h-full w-full object-cover" draggable={false} /> : initialsOf(user.full_name)}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[20px] font-semibold leading-tight tracking-[-0.01em] text-white">{name}</p>
+              <p className="truncate text-[22px] font-semibold leading-tight tracking-[-0.01em] text-white">{name}</p>
               {contact && (
                 <p dir="ltr" className={`mt-1 truncate text-start text-[13px] ${md.muted}`}>
                   {contact}
@@ -172,25 +162,25 @@ export function VeloceProfile() {
                 </span>
               )}
             </div>
-            <Link href={`${base}/edit`} aria-label={t('editProfile')} title={t('editProfile')} className={`${roundBtn} ${md.tile} text-white hover:bg-[#2a2a2a]`}>
-              <Pencil className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            <Link href={`${base}/edit`} aria-label={t('editProfile')} title={t('editProfile')} className={`${roundBtn} text-white/80 hover:bg-white/[0.06] hover:text-white`}>
+              <Pencil className="h-[19px] w-[19px]" strokeWidth={1.8} />
             </Link>
           </div>
 
-          <dl className={`grid grid-cols-3 border-t pt-[18px] ${md.line}`}>
+          <dl className={`grid grid-cols-3 border-y py-5 ${md.line}`}>
             {stats.map((s, i) => (
               <div key={s.label} className={`flex min-w-0 flex-col-reverse items-center gap-1.5 text-center ${i > 0 ? `border-s ${md.line}` : ''}`}>
                 <dt className={`max-w-full truncate px-1 text-[12px] ${md.muted}`}>{s.label}</dt>
-                <dd className="text-[24px] font-semibold leading-none tabular-nums tracking-[-0.02em] text-white">{s.value}</dd>
+                <dd className="text-[26px] font-semibold leading-none tabular-nums tracking-[-0.02em] text-white">{s.value}</dd>
               </div>
             ))}
           </dl>
         </section>
 
         {/* Bookings */}
-        <section aria-labelledby="bookings-title" className={`mt-5 rounded-3xl p-5 ${md.card}`}>
+        <section aria-labelledby="bookings-title" className="mt-8">
           <div className="flex items-center justify-between gap-4">
-            <h2 id="bookings-title" className="text-[17px] font-semibold leading-tight tracking-[-0.01em] text-white">
+            <h2 id="bookings-title" className="text-[18px] font-semibold leading-tight tracking-[-0.01em] text-white">
               {t('bookingsTitle')}
             </h2>
             <Link href={`${base}/stats`} className={`inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg text-[14px] font-medium ${md.muted} transition hover:text-white ${mdFocus}`}>
@@ -206,14 +196,9 @@ export function VeloceProfile() {
                 {t('loading')}
               </div>
             ) : bookings.length === 0 ? (
-              <div className="flex items-center gap-3.5">
-                <span aria-hidden className={tile}>
-                  <CalendarCheck className="h-5 w-5" strokeWidth={1.8} />
-                </span>
-                <p className={`min-w-0 text-[13px] leading-[1.35] ${md.muted}`}>{t('bookingsSub')}</p>
-              </div>
+              <p className={`text-[14px] leading-[1.45] ${md.muted}`}>{t('bookingsSub')}</p>
             ) : (
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-1">
                 {bookings.slice(0, 3).map((b) => (
                   <li key={b.id} className="min-w-0">
                     <BookingRow booking={b} href={`${base}/bookings/${b.id}`} />
@@ -225,15 +210,15 @@ export function VeloceProfile() {
 
           <Link
             href={`/${locale}/shop`}
-            className={`mt-5 flex h-12 items-center justify-between gap-3 rounded-[14px] px-4 text-[15px] font-semibold text-white transition hover:bg-[#2a2a2a] ${md.tile} ${mdFocus}`}
+            className={`mt-5 inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold ${md.accentText} transition hover:brightness-125 ${mdFocus}`}
           >
-            <span className="truncate">{t('shopCta')}</span>
+            {t('shopCta')}
             <ArrowUpRight className="h-[18px] w-[18px] shrink-0 rtl:-scale-x-100" strokeWidth={2.2} />
           </Link>
         </section>
 
-        {/* Settings list */}
-        <ul className={`mt-5 overflow-hidden rounded-[20px] py-1 ${md.card}`}>
+        {/* Settings list: help is last, settings sit just above it */}
+        <ul className="mt-6 border-t border-[#262626] pt-1">
           <SettingsRow href={`/${locale}/customize`} icon={CarFront} title={t('carSetup')} sub={t('carSetupSub')} />
           {isSeller && (
             <>
@@ -244,7 +229,7 @@ export function VeloceProfile() {
           <li>
             <PushToggle />
           </li>
-          <SettingsRow href={`${base}/settings`} icon={Globe} title={t('language')} value={languageName} />
+          <SettingsRow href={`${base}/settings`} icon={Settings2} title={t('settings')} value={languageName} />
           <SettingsRow href={`/${locale}#faq`} icon={CircleHelp} title={t('help')} last />
         </ul>
 
@@ -252,9 +237,9 @@ export function VeloceProfile() {
         <button
           type="button"
           onClick={() => void signOut()}
-          className={`mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] text-[15px] font-semibold text-red-400 transition hover:bg-red-500/10 ${md.card} ${mdFocus}`}
+          className={`mt-4 flex min-h-12 w-full items-center gap-4 text-[15px] font-medium text-red-400 transition hover:text-red-300 ${mdFocus}`}
         >
-          <LogOut className="h-[18px] w-[18px]" strokeWidth={2} />
+          <LogOut className="h-[22px] w-[22px]" strokeWidth={1.7} />
           {t('signOut')}
         </button>
       </div>

@@ -742,7 +742,12 @@
     "resend": "Кодду кайра жөнөтүү",
     "resendIn": "Кайра жөнөтүү: {seconds} с",
     "confirm": "Ырастоо жана сактоо",
-    "cartRow": "Себет"
+    "cartRow": "Себет",
+    "changePhoto": "Сүрөттү өзгөртүү",
+    "addPhoto": "Сүрөт кошуу",
+    "removePhoto": "Өчүрүү",
+    "photoFailed": "Сүрөттү сактоо мүмкүн болгон жок. Кайра аракет кылыңыз.",
+    "photoUpdated": "Сүрөт жаңыртылды"
   },
   "customize": {
     "clearBuild": "Тандоону тазалоо",

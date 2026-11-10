@@ -52,7 +52,8 @@ async function loadProfileRow(userId: string): Promise<Record<string, unknown> |
   return (legacy.data as Record<string, unknown> | null) ?? null;
 }
 
-export async function loadSession(userId: string): Promise<Session | null> {
+/** `avatarUrl` is the profile photo kept in the Supabase Auth user's metadata (the caller already has it). */
+export async function loadSession(userId: string, avatarUrl?: string | null): Promise<Session | null> {
   const db = createAdminClient();
 
   // Independent lookups: run them together (one round trip instead of two).
@@ -78,6 +79,7 @@ export async function loadSession(userId: string): Promise<Session | null> {
     phone: p['phone'] as string,
     phone_verified: p['phone_verified'] === true,
     full_name: (p.full_name as string) || '',
+    ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
     role,
     credits_balance: shop ? shop.credits_balance : (p.credits_balance as number),
     country: 'uz',
@@ -121,7 +123,8 @@ export async function lookupSession(): Promise<SessionLookup> {
       return temporary && error.name !== 'AuthSessionMissingError' ? { status: 'unavailable' } : { status: 'none' };
     }
     if (!user) return { status: 'none' };
-    const session = await loadSession(user.id);
+    const meta = user.user_metadata?.['avatar_url'];
+    const session = await loadSession(user.id, typeof meta === 'string' ? meta : null);
     if (!session) return { status: 'unavailable' };
     if (session.isBanned) return { status: 'none' };
     return { status: 'ok', session };

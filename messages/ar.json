@@ -742,7 +742,12 @@
     "resend": "إعادة إرسال الرمز",
     "resendIn": "إعادة الإرسال بعد {seconds} ث",
     "confirm": "تأكيد وحفظ",
-    "cartRow": "السلة"
+    "cartRow": "السلة",
+    "changePhoto": "تغيير الصورة",
+    "addPhoto": "إضافة صورة",
+    "removePhoto": "إزالة",
+    "photoFailed": "تعذر حفظ الصورة. حاول مرة أخرى.",
+    "photoUpdated": "تم تحديث الصورة"
   },
   "customize": {
     "clearBuild": "مسح التحديد",

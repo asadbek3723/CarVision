@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
       return fail(401, 'INVALID_CREDENTIALS', "Telefon raqam yoki parol noto'g'ri");
     }
 
-    const session = await loadSession(data.user.id);
+    const avatarMeta = data.user.user_metadata?.['avatar_url'];
+    const session = await loadSession(data.user.id, typeof avatarMeta === 'string' ? avatarMeta : null);
     if (!session) {
       await supabase.auth.signOut();
       return fail(401, 'INVALID_CREDENTIALS', "Telefon raqam yoki parol noto'g'ri");
