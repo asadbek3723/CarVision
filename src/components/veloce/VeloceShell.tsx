@@ -68,7 +68,7 @@ function QuerySync({ onChange }: { onChange: (q: QueryState) => void }) {
 }
 
 /** How long the dock takes to sink out of sight (globals.css `.cv-dock[data-hidden]`); the page's own bar rises after it. */
-const DOCK_OUT_MS = 260;
+const DOCK_OUT_MS = 340;
 
 /** Dock column of each swipeable tab: Home 0, Garage/Cart 1, [Create 2], Shop 3, Profile 4. */
 const TAB_COLS = [0, 1, 3, 4] as const;
@@ -334,7 +334,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
 
   return (
     <div
-      className="flex h-[100dvh] flex-col overflow-hidden md:ps-24 lg:ps-28 bg-surface-0 text-foreground"
+      className="fixed inset-0 flex flex-col overflow-hidden md:ps-24 lg:ps-28 bg-surface-0 text-foreground"
       ref={rootRef}
       data-bar-ready={barReady ? 'true' : 'false'}
       onClick={onShellClick}
@@ -514,7 +514,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
         className={
           pager
             ? 'relative min-h-0 flex-1'
-            : `min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-none ${hideDock ? 'md:pb-0' : 'pb-[var(--dock-h,72px)] md:pb-12'}`
+            : `min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-none [touch-action:pan-y] ${hideDock ? 'md:pb-0' : 'pb-[var(--dock-h,72px)] md:pb-12'}`
         }
       >
         {pager ? (

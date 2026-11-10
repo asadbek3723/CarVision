@@ -63,14 +63,24 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   const [captureStamp, setCaptureStamp] = React.useState('none');
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  // Restore state from sessionStorage on mount
+  // Restore state from storage on mount
   React.useEffect(() => {
     try {
-      const savedCart = sessionStorage.getItem('veloce_cart');
+      // The cart lives in localStorage so it survives closing the app (sessionStorage is wiped then).
+      // A cart saved by an older version is still in sessionStorage: picked up once, then moved.
+      const savedCart = localStorage.getItem('veloce_cart') ?? sessionStorage.getItem('veloce_cart');
       if (savedCart) {
-        setCart(JSON.parse(savedCart));
+        const parsed: unknown = JSON.parse(savedCart);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const clean = Object.fromEntries(
+            Object.entries(parsed as Record<string, unknown>).filter(([, q]) => typeof q === 'number' && Number.isInteger(q) && q > 0 && q < 1000)
+          ) as Record<string, number>;
+          setCart(clean);
+          localStorage.setItem('veloce_cart', JSON.stringify(clean));
+          sessionStorage.removeItem('veloce_cart');
+        }
       }
-      const savedUnselected = sessionStorage.getItem('veloce_cart_unselected');
+      const savedUnselected = localStorage.getItem('veloce_cart_unselected') ?? sessionStorage.getItem('veloce_cart_unselected');
       if (savedUnselected) {
         const parsed: unknown = JSON.parse(savedUnselected);
         if (Array.isArray(parsed)) setCartUnselected(parsed.filter((x): x is string => typeof x === 'string'));
@@ -159,7 +169,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     setCart((prev) => {
       const next = { ...prev, [id]: (prev[id] ?? 0) + 1 };
       try {
-        sessionStorage.setItem('veloce_cart', JSON.stringify(next));
+        localStorage.setItem('veloce_cart', JSON.stringify(next));
       } catch {
         // Ignore
       }
@@ -177,7 +187,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
         delete next[id];
       }
       try {
-        sessionStorage.setItem('veloce_cart', JSON.stringify(next));
+        localStorage.setItem('veloce_cart', JSON.stringify(next));
       } catch {
         // Ignore
       }
@@ -187,8 +197,8 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
 
   const saveUnselected = (next: string[]) => {
     try {
-      if (next.length === 0) sessionStorage.removeItem('veloce_cart_unselected');
-      else sessionStorage.setItem('veloce_cart_unselected', JSON.stringify(next));
+      if (next.length === 0) localStorage.removeItem('veloce_cart_unselected');
+      else localStorage.setItem('veloce_cart_unselected', JSON.stringify(next));
     } catch {
       // Ignore
     }
@@ -198,8 +208,8 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     setCart({});
     setCartUnselected([]);
     try {
-      sessionStorage.removeItem('veloce_cart');
-      sessionStorage.removeItem('veloce_cart_unselected');
+      localStorage.removeItem('veloce_cart');
+      localStorage.removeItem('veloce_cart_unselected');
     } catch {
       // Ignore
     }
@@ -211,7 +221,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     setCart((prev) => {
       const next = Object.fromEntries(Object.entries(prev).filter(([id]) => !drop.has(id)));
       try {
-        sessionStorage.setItem('veloce_cart', JSON.stringify(next));
+        localStorage.setItem('veloce_cart', JSON.stringify(next));
       } catch {
         // Ignore
       }

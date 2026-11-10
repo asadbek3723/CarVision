@@ -48,10 +48,10 @@ const EDGE_PX = 22;
 // iOS-like ease-out: starts at the finger's own speed (no snap at the start) and lands softly.
 const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 /** Settling time bounds (ms): about what an iPhone takes for a page swipe. */
-const SETTLE_MIN_MS = 280;
-const SETTLE_MAX_MS = 420;
+const SETTLE_MIN_MS = 360;
+const SETTLE_MAX_MS = 540;
 /** Below this finger speed (px/ms) the landing is timed as if the finger had moved at it. */
-const SETTLE_MIN_SPEED = 0.6;
+const SETTLE_MIN_SPEED = 0.5;
 
 /**
  * The bottom-dock tabs laid out side by side like a native app: swipe left / right to move between
@@ -127,7 +127,7 @@ export function TabPager({ tabs, index, dir, onScrub, onSettle, onAim }: TabPage
     setCurrent(index);
     mount(index);
     // A dock tap glides there like an iPhone tab switch; a longer trip takes a little longer.
-    place(index, 0, Math.min(380 + (distance - 1) * 50, 480));
+    place(index, 0, Math.min(480 + (distance - 1) * 60, 620));
   }, [index, mount, place]);
 
   // Neighbours load quietly after the first paint, so the first swipe already shows them.

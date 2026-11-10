@@ -2,14 +2,13 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { useCurrency } from '@/context/CurrencyContext';
 import { rememberProducts, warmImage } from '@/features/shop/product-cache';
 import { ProductImage } from '@/components/ui/ProductImage';
 import { md, mdFocus } from '@/features/minimal/theme';
-import { navigateWithTransition } from '@/lib/view-transition';
 
 /**
  * Figma "Minimal/Product card": square photo (radius 18), brand label, two-line name,
@@ -21,8 +20,6 @@ export function MinimalProductCard({ p, i = 0, isNew = false }: { p: VeloceProdu
   const locale = (params?.['locale'] as string) || 'uz';
   const { formatPrice } = useCurrency();
   const [imgFailed, setImgFailed] = React.useState(false);
-  const router = useRouter();
-  const photoRef = React.useRef<HTMLDivElement>(null);
 
   return (
     <Link
@@ -32,15 +29,10 @@ export function MinimalProductCard({ p, i = 0, isNew = false }: { p: VeloceProdu
         rememberProducts(locale, [p]);
         warmImage(p.images?.[0] ?? p.image);
       }}
-      onClick={(e) => {
-        // A plain tap: the photo grows into the part page. Ctrl / middle click keep their normal meaning.
-        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        if (navigateWithTransition((h) => router.push(h), `/${locale}/shop/${p.id}`, photoRef.current)) e.preventDefault();
-      }}
       className={`${isNew ? 'cv-new' : 'rise'} group flex min-w-0 flex-col rounded-[18px] ${mdFocus}`}
       style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
     >
-      <div ref={photoRef} className={`relative aspect-square overflow-hidden rounded-[18px] ${md.card}`}>
+      <div className={`relative aspect-square overflow-hidden rounded-[18px] ${md.card}`}>
         {p.swatch ? (
           <div className="h-full w-full" style={{ background: `radial-gradient(circle at 30% 30%, ${p.swatch}, #0A0A0A)` }} />
         ) : imgFailed || !p.image ? (
