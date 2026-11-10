@@ -328,7 +328,9 @@
     "insufficientCredits": "Кредитҳои генерацияи шумо тамом шуд.",
     "sessionEvicted": "Аз сабаби ворид шудан аз дастгоҳи нав, сессия дар ин планшет баста шуд.",
     "renderFailed": "Генерация ба анҷом нарасид. Кредит ба ҳисоби шумо баргардонида шуд.",
-    "receiptDuplicate": "Ин расиди пардохт аллакай дар дигар фармоиш истифода шудааст."
+    "receiptDuplicate": "Ин расиди пардохт аллакай дар дигар фармоиш истифода шудааст.",
+    "crashTitle": "Хатое рух дод",
+    "crashBody": "Ин экран кушода нашуд. Бори дигар кӯшиш кунед."
   },
   "profile": {
     "title": "Профили Устои Ателе",
@@ -959,9 +961,9 @@
         "guide": "Кунҷи пеши чапи мошинро бо 45° гиред, то пеш ва тарафи чап якҷоя намоён шаванд."
       }
     },
-    "skipAngle": "Skip this angle",
-    "continueWith": "Continue with {count} photos",
-    "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible."
+    "skipAngle": "Ин тарафро гузаронед",
+    "continueWith": "Бо {count} акс идома додан",
+    "optionalHint": "Аз 1 то 5 акс бор кардан мумкин аст, ҳар тарафро гузаронед. AI худаш муайян мекунад, ки кадом тарафи мошин намоён аст."
   },
   "scanLive": {
     "compassLabel": "Роҳнамои қутбнамо: {angle}",
@@ -997,7 +999,7 @@
     },
     "rotateCta": "Кушодани камера",
     "skip": "Skip",
-    "finishWith": "Done ({count})"
+    "finishWith": "Тайёр ({count})"
   },
   "landing": {
     "nav": {
@@ -1941,15 +1943,15 @@
     "TOO_SOON": "Пеш аз дархости рамзи нав андаке интизор шавед.",
     "SEND_FAILED": "SMS фиристода нашуд.",
     "SMS_DISABLED": "Тасдиқи SMS ҳоло дастрас нест.",
-    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
-    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "AI_BUSY": "Ҳоло ҳамаи моделҳои AI банданд. Кредит баргардонида шуд, пас аз 1–2 дақиқа боз кӯшиш кунед",
+    "AI_TIMEOUT": "Сохтани акс хеле тӯл кашид. Кредит баргардонида шуд, бори дигар кӯшиш кунед",
     "VALIDATION_FAILED": "Маълумоти дархост нодуруст аст. Бори дигар кӯшиш кунед.",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "AI_NO_QUOTA": "Калиди AI барои сохтани акс лимит надорад (биллинг фаъол нест). Кредит баргардонида шуд, маъмур бояд калидро санҷад",
     "PART_NOT_VISIBLE": "Қисми интихобшуда аз ин ракурс намоён нест. Кредит гирифта нашуд",
     "CAR_NOT_VERIFIED": "Мошин тасдиқ нашудааст. Аксҳоро аз нав тасдиқ кунед. Кредит гирифта нашуд",
     "AI_BLOCKED": "Зеҳни сунъӣ ин аксро коркард карда натавонист (филтри бехатарӣ). Одамонро аз кадр дур кунед, мошинро пурра гиред ва аз нав акс гиред. Кредит баргардонида шуд",
     "AI_STORAGE_FAILED": "Натиҷаро захира кардан натавонист. Кредит баргардонида шуд, аз нав кӯшиш кунед",
-    "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again"
+    "AI_WRONG_VIEW": "Натиҷаи AI тарафи дигари мошинро нишон дод, бинобар ин дода нашуд. Кредит баргардонида шуд, бори дигар кӯшиш кунед"
   },
   "capturePage": {
     "sent": "Акс ба компютер фиристода шуд",

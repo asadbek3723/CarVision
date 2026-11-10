@@ -43,6 +43,7 @@ export default function CustomizeResultPage() {
     selectedPartIds,
     multiAngles,
     generatedAngles,
+    cart,
     add,
   } = useVeloceStore();
   const { user } = useAuth();
@@ -157,8 +158,12 @@ export default function CustomizeResultPage() {
     }
 
     // B2C User mode: add the selected parts to the cart and go to checkout
-    selectedParts.forEach((p) => add(p.id));
-    router.push(`/${locale}/cart/checkout`);
+    // Only the parts of this build are ordered, each once: tapping again must not raise quantities,
+    // and whatever else sits in the cart stays there for later.
+    selectedParts.forEach((p) => {
+      if (!cart[p.id]) add(p.id);
+    });
+    router.push(`/${locale}/cart/checkout?ids=${encodeURIComponent(selectedParts.map((p) => p.id).join(','))}`);
   };
 
   const ghostBtn =

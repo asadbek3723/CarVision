@@ -753,13 +753,6 @@ html {
   100% { transform: scale(1); }
 }
 
-/* Hide Next.js dev overlay badge */
-nextjs-portal,
-[data-nextjs-dev-overlay],
-[data-nextjs-toast],
-div[data-nextjs-route-announcer] {
-  display: none !important;
-}
 
 
 /* AI mastering scan line (video studio) */

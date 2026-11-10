@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { requestMotionAccess } from '@/features/camera/hooks/useDeviceLevel';
 
 type CameraModalComponent = typeof import('@/components/camera/VeloceSmartCameraModal').VeloceSmartCameraModal;
@@ -21,6 +22,8 @@ export function preloadCamera(): void {
 
 interface VeloceStoreContextType {
   cart: Record<string, number>;
+  /** False until the saved cart has been read from storage: an empty `cart` before that means "not known yet". */
+  hydrated: boolean;
   add: (id: string) => void;
   remove: (id: string) => void;
   clearCart: () => void;
@@ -54,8 +57,10 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   const router = useRouter();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
+  const tCommon = useTranslations('common');
 
   const [cart, setCart] = React.useState<Record<string, number>>({});
+  const [hydrated, setHydrated] = React.useState(false);
   const [cartUnselected, setCartUnselected] = React.useState<string[]>([]);
   const [photo, setPhotoState] = React.useState<string | null>(null);
   const [selectedPartIds, setSelectedPartIdsState] = React.useState<string[]>([]);
@@ -138,6 +143,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     } catch {
       // Ignore sessionStorage issues
     }
+    setHydrated(true);
   }, []);
 
   const setPhoto = React.useCallback((p: string | null) => {
@@ -327,6 +333,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     <VeloceStoreContext.Provider
       value={{
         cart,
+        hydrated,
         add,
         remove,
         clearCart,
@@ -363,7 +370,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
       {CameraModal && <CameraModal isOpen={isCameraOpen} onClose={closeCamera} onCaptured={handleCameraCaptured} />}
       {/* Tapped before the camera arrived (slow connection): show something at once, never a frozen screen. */}
       {isCameraOpen && !CameraModal && (
-        <div role="status" aria-label="Loading" className="fixed inset-0 z-[70] grid place-items-center bg-[#050507]">
+        <div role="dialog" aria-modal="true" aria-busy="true" aria-label={tCommon('loading')} className="fixed inset-0 z-[70] grid place-items-center bg-[#050507]">
           <span className="h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-[#FDC902]" />
         </div>
       )}

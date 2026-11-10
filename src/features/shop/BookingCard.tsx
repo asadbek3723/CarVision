@@ -7,7 +7,7 @@ import { Check, Clock, Loader2, MapPin, Phone, Upload, XCircle } from 'lucide-re
 import { useCurrency } from '@/context/CurrencyContext';
 import { compressForUpload, loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { readJson } from '@/lib/safe-json';
-import { buttonClasses } from '@/components/ui';
+import { Modal, buttonClasses } from '@/components/ui';
 import { SuccessTick } from '@/components/ui/SuccessTick';
 import { useErrorToast } from '@/components/ui/Toaster';
 
@@ -100,9 +100,13 @@ export function BookingItems({ booking, large = false }: { booking: BookingView;
 /** Payment instructions, receipt upload, approval status and (after approval) the pickup place. */
 export function BookingActions({ booking, payment, onChanged, flat = false }: Props) {
   const t = useTranslations('checkout.booking');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const { formatPrice } = useCurrency();
   const apiError = useApiError();
+  // Which cancel is being confirmed: of an unpaid order, or of a paid one (with a refund).
+  const [confirming, setConfirming] = React.useState<'unpaid' | 'paid' | null>(null);
+  const [cancelling, setCancelling] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -138,13 +142,23 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
     }
   };
 
-  const cancel = async (paid: boolean) => {
-    const question = paid && booking.refundUSD !== null ? t('confirmCancelPaid', { amount: formatPrice(booking.refundUSD) }) : t('confirmCancel');
-    if (!window.confirm(question)) return;
+  const cancelQuestion =
+    confirming === 'paid' && booking.refundUSD !== null ? t('confirmCancelPaid', { amount: formatPrice(booking.refundUSD) }) : t('confirmCancel');
+
+  const cancel = async () => {
+    if (cancelling) return;
     setError(null);
-    const res = await fetch(`/api/v1/bookings/${booking.id}`, { method: 'DELETE' });
-    if (res.ok) onChanged();
-    else setError(apiError((await readJson(res)).data, t('errCancel')));
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/v1/bookings/${booking.id}`, { method: 'DELETE' });
+      if (res.ok) onChanged();
+      else setError(apiError((await readJson(res)).data, t('errCancel')));
+    } catch {
+      setError(t('errCancel'));
+    } finally {
+      setCancelling(false);
+      setConfirming(null);
+    }
   };
 
   // A paid order can be cancelled only for a short while; hide the link once that time is over.
@@ -201,7 +215,7 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
             {uploading ? t('sending') : t('send')}
           </button>
           {booking.status === 'AWAITING_PAYMENT' && (
-            <button type="button" onClick={() => void cancel(false)} className="min-h-11 text-xs text-white/40 underline hover:text-white/70 sm:min-h-0">
+            <button type="button" onClick={() => setConfirming('unpaid')} className="min-h-11 text-xs text-white/40 underline hover:text-white/70 sm:min-h-0">
               {t('cancelLink')}
             </button>
           )}
@@ -246,7 +260,7 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
             </div>
           )}
           {canCancelPaid && booking.status === 'UNLOCKED' && (
-            <button type="button" onClick={() => void cancel(true)} className="min-h-11 text-xs text-white/35 underline hover:text-white/60 sm:min-h-0">
+            <button type="button" onClick={() => setConfirming('paid')} className="min-h-11 text-xs text-white/35 underline hover:text-white/60 sm:min-h-0">
               {t('cancelOrder')}
             </button>
           )}
@@ -260,6 +274,25 @@ export function BookingActions({ booking, payment, onChanged, flat = false }: Pr
         </p>
       )}
 
+      <Modal
+        open={confirming !== null}
+        onClose={() => setConfirming(null)}
+        title={cancelQuestion}
+        size="sm"
+        footer={
+          <div className="flex w-full gap-3">
+            <button type="button" onClick={() => setConfirming(null)} className={buttonClasses({ variant: 'ghost', size: 'md', className: 'flex-1' })}>
+              {tc('back')}
+            </button>
+            <button type="button" disabled={cancelling} onClick={() => void cancel()} className={buttonClasses({ variant: 'danger', size: 'md', className: 'flex-1' })}>
+              {cancelling && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t('cancelOrder')}
+            </button>
+          </div>
+        }
+      >
+        {null}
+      </Modal>
     </>
   );
 }

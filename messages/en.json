@@ -328,7 +328,9 @@
     "insufficientCredits": "You have run out of image credits.",
     "sessionEvicted": "This tablet was logged out because your account reached its active device limit on another device.",
     "renderFailed": "Render could not be completed. Your credit has been fully refunded.",
-    "receiptDuplicate": "This receipt has already been submitted for another booking."
+    "receiptDuplicate": "This receipt has already been submitted for another booking.",
+    "crashTitle": "Something went wrong",
+    "crashBody": "This screen could not be opened. Please try again."
   },
   "profile": {
     "title": "Atelier Master Profile",
@@ -960,7 +962,7 @@
       }
     },
     "skipAngle": "Skip this angle",
-    "continueWith": "Continue with {count} photos",
+    "continueWith": "{count, plural, one {Continue with # photo} other {Continue with # photos}}",
     "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible."
   },
   "scanLive": {

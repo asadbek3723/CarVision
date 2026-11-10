@@ -350,7 +350,8 @@ export function VeloceSmartCameraModal({
   const uploadedCount = Object.keys(uploadedAngles).length;
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#050507] text-white">
+    // A dialog for assistive tech, and for the app updater: it never reloads the page while a dialog is open.
+    <div role="dialog" aria-modal="true" aria-label={t('titleChoice')} className="fixed inset-0 z-[100] flex flex-col bg-[#050507] text-white">
       {/* 1. MOBILE ONLY: LIVE 1:1 SMART CAMERA (WITH MANDATORY LANDSCAPE LOCK & 5-ANGLE SEQUENCE) */}
       {isMobileDevice && (
         <div className="relative w-full h-full flex flex-col bg-[#050507]">

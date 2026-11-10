@@ -10,7 +10,7 @@ import { useVeloceStore } from '@/context/VeloceStore';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { buttonClasses } from '@/components/ui';
-import { liveVersion, useLiveTick } from '@/lib/live';
+import { liveVersion, useLiveTick, useRetryTick } from '@/lib/live';
 
 const FEATURES = [
   { icon: Camera, key: 'f1', items: ['f1a', 'f1b'] },
@@ -27,6 +27,7 @@ interface StoreStats {
 
 export function VeloceHome() {
   const t = useTranslations('home');
+  const tList = useTranslations('shop.list');
   const intlLocale = useLocale();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -34,6 +35,9 @@ export function VeloceHome() {
 
   const [trendingProducts, setTrendingProducts] = React.useState<VeloceProduct[]>([]);
   const [isLoadingTrending, setIsLoadingTrending] = React.useState(true);
+  // A failed request is not an empty catalog: it is said so, and asked again by itself.
+  const [trendingError, setTrendingError] = React.useState(false);
+  const retry = useRetryTick(trendingError);
   const [stats, setStats] = React.useState<StoreStats | null>(null);
   const live = useLiveTick();
 
@@ -42,19 +46,28 @@ export function VeloceHome() {
     fetch(`/api/v1/products?limit=4&locale=${locale}&v=${liveVersion()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
-        if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
+        if (!isMounted) return;
+        if (!data.success || !Array.isArray(data.products)) {
+          setTrendingError(true);
+          return;
+        }
+        setTrendingError(false);
+        if (data.products.length > 0) {
           rememberProducts(locale, data.products);
           setTrendingProducts(data.products);
         }
       })
-      .catch((err) => console.warn('Could not load trending products:', err))
+      .catch((err) => {
+        console.warn('Could not load trending products:', err);
+        if (isMounted) setTrendingError(true);
+      })
       .finally(() => {
         if (isMounted) setIsLoadingTrending(false);
       });
     return () => {
       isMounted = false;
     };
-  }, [locale, live]);
+  }, [locale, live, retry]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -253,6 +266,8 @@ export function VeloceHome() {
               trendingProducts.map((p, idx) => (
                 <ProductCard key={p.id} p={p} i={idx} />
               ))
+            ) : trendingError ? (
+              <p role="status" className="col-span-full py-10 text-center text-sm text-red-300">{tList('loadError')}</p>
             ) : (
               <p className="col-span-full py-10 text-center text-sm text-muted-foreground">{t('noParts')}</p>
             )}

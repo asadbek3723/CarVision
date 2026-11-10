@@ -22,6 +22,7 @@ import { ProductCard } from '@/components/veloce/ProductCard';
 import { buttonClasses, ProductImage } from '@/components/ui';
 import { cachedOthers, cachedProduct, rememberProducts } from '@/features/shop/product-cache';
 import { previousPath } from '@/lib/nav-history';
+import { useRetryTick } from '@/lib/live';
 
 interface VeloceProductDetailProps {
   id: string;
@@ -56,6 +57,12 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
   const [related, setRelated] = React.useState<VeloceProduct[]>(() => cachedOthers(locale, id, 4));
   const [isLoading, setIsLoading] = React.useState(() => !(initialProduct ?? cachedProduct(locale, id)));
   const [activeImg, setActiveImg] = React.useState(0);
+  // A failed request is not "product not found": it is said so, and asked again by itself.
+  const [loadError, setLoadError] = React.useState(false);
+  const retry = useRetryTick(loadError);
+  const retrying = React.useRef(false);
+  retrying.current = loadError;
+  const tList = useTranslations('shop.list');
 
   React.useEffect(() => {
     let isMounted = true;
@@ -63,7 +70,8 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
     if (known) {
       setProduct(known);
       setIsLoading(false);
-    } else {
+    } else if (!retrying.current) {
+      // A silent retry keeps the message on screen instead of flashing the skeleton again.
       setIsLoading(true);
     }
     // The part (only when the server did not send it) and the related parts load side by side.
@@ -72,12 +80,21 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
       : fetch(`/api/v1/products?id=${encodeURIComponent(id)}&locale=${locale}`)
           .then((r) => r.json())
           .then((data) => {
-            if (isMounted && data.success && Array.isArray(data.products) && data.products.length > 0) {
+            if (!isMounted) return;
+            if (!data.success || !Array.isArray(data.products)) {
+              setLoadError(true);
+              return;
+            }
+            setLoadError(false);
+            if (data.products.length > 0) {
               rememberProducts(locale, data.products);
               setProduct(data.products[0]);
             }
           })
-          .catch((err) => console.warn('Could not load product detail:', err));
+          .catch((err) => {
+            console.warn('Could not load product detail:', err);
+            if (isMounted) setLoadError(true);
+          });
     const relatedReq = fetch(`/api/v1/products?limit=5&locale=${locale}`)
       .then((r) => r.json())
       .then((relData) => {
@@ -94,7 +111,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
     return () => {
       isMounted = false;
     };
-  }, [id, locale, initialProduct]);
+  }, [id, locale, initialProduct, retry]);
 
   const listHref = fromGarage ? `/${locale}/garage` : `/${locale}/shop`;
   const goBack = () => {
@@ -158,7 +175,11 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
     return (
       <div className="mx-auto max-w-4xl px-5 text-center md:pt-10">
         {topBar}
-        <p className="pt-14 text-sm text-white/50">{t('notFound')}</p>
+        {loadError ? (
+          <p role="status" className="pt-14 text-sm text-red-300">{tList('loadError')}</p>
+        ) : (
+          <p className="pt-14 text-sm text-white/50">{t('notFound')}</p>
+        )}
         <Link
           href={`/${locale}/shop`}
           className="mt-4 inline-block text-xs tracking-widest text-gold-500 uppercase hover:underline"

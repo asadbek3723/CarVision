@@ -26,6 +26,7 @@ import {
   AuthAlert,
 } from '@/features/auth/components/AuthShell';
 import { playLock, vibrate } from '@/features/camera/lib/fx';
+import { readNext, withNext } from '@/lib/login-next';
 import { COUNTRIES, buildE164, isPlausibleNational, type Country } from '@/features/auth/phone-input';
 
 const STEP_KEYS = [
@@ -46,11 +47,18 @@ export default function RegisterPage() {
   const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
   const [selectedRole, setSelectedRole] = React.useState<'user' | 'business' | null>(null);
   const [shake, setShake] = React.useState(0);
+  // Keeps `?next=` on the way back to the login page (read after mount: the server never sees it).
+  const [loginLinkHref, setLoginLinkHref] = React.useState(`/${locale}/login`);
+  React.useEffect(() => setLoginLinkHref(withNext(`/${locale}/login`, locale)), [locale]);
 
   // If already authenticated, redirect to the Veloce App
   React.useEffect(() => {
     if (user) {
-      if (user.role === 'super_admin') {
+      // Back to where the person was sent here from (checkout, their build), else the app's home.
+      const next = readNext(locale);
+      if (next) {
+        router.replace(next);
+      } else if (user.role === 'super_admin') {
         router.push(`/${locale}/admin`);
       } else {
         router.push(`/${locale}/seller`);
@@ -65,7 +73,7 @@ export default function RegisterPage() {
 
   const handleBack = () => {
     if (step === 0 || step === 3) {
-      router.push(`/${locale}/login`);
+      router.push(withNext(`/${locale}/login`, locale));
     } else {
       goToStep(step - 1);
     }
@@ -159,7 +167,7 @@ export default function RegisterPage() {
             {step === 3 && (
               <SuccessScreen
                 role={selectedRole}
-                onSignIn={() => router.push(`/${locale}/login`)}
+                onSignIn={() => router.push(withNext(`/${locale}/login`, locale))}
               />
             )}
           </motion.div>
@@ -169,7 +177,7 @@ export default function RegisterPage() {
           <p className="mt-5 text-center text-xs text-foreground/65">
             {t('haveAccount')}{' '}
             <Link
-              href={`/${locale}/login`}
+              href={loginLinkHref}
               className="font-medium text-gold hover:brightness-125 ms-1"
             >
               {t('signInLink')}

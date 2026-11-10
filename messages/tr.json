@@ -328,7 +328,9 @@
     "insufficientCredits": "Kredi bakiyeniz tükendi.",
     "sessionEvicted": "Başka bir cihazdan giriş yapıldığı için oturum sonlandırıldı.",
     "renderFailed": "Görselleştirme tamamlanamadı. Krediniz hesabınıza iade edildi.",
-    "receiptDuplicate": "Bu ödeme makbuzu başka bir rezervasyonda zaten kullanılmış."
+    "receiptDuplicate": "Bu ödeme makbuzu başka bir rezervasyonda zaten kullanılmış.",
+    "crashTitle": "Bir şeyler ters gitti",
+    "crashBody": "Bu ekran açılamadı. Lütfen tekrar deneyin."
   },
   "profile": {
     "title": "Atölye Master Profili",
@@ -959,9 +961,9 @@
         "guide": "Aracın sol ön köşesini 45° açıyla, ön ve sol yan birlikte görünecek şekilde çekin."
       }
     },
-    "skipAngle": "Skip this angle",
-    "continueWith": "Continue with {count} photos",
-    "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible."
+    "skipAngle": "Bu açıyı atla",
+    "continueWith": "{count} fotoğrafla devam et",
+    "optionalHint": "1 ile 5 arasında fotoğraf yükleyin, istediğiniz açıyı atlayın. Yapay zekâ aracın hangi tarafının göründüğünü kendisi belirler."
   },
   "scanLive": {
     "compassLabel": "Pusula rehberi: {angle}",
@@ -997,7 +999,7 @@
     },
     "rotateCta": "Kamerayı aç",
     "skip": "Skip",
-    "finishWith": "Done ({count})"
+    "finishWith": "Tamam ({count})"
   },
   "landing": {
     "nav": {
@@ -1941,15 +1943,15 @@
     "TOO_SOON": "Yeni kod istemeden önce biraz bekleyin.",
     "SEND_FAILED": "SMS gönderilemedi.",
     "SMS_DISABLED": "SMS doğrulaması şu anda kullanılamıyor.",
-    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
-    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "AI_BUSY": "Şu anda tüm yapay zekâ modelleri meşgul. Krediniz iade edildi, 1–2 dakika sonra tekrar deneyin",
+    "AI_TIMEOUT": "Görsel oluşturma çok uzun sürdü. Krediniz iade edildi, lütfen tekrar deneyin",
     "VALIDATION_FAILED": "İstek geçersiz. Lütfen tekrar deneyin.",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "AI_NO_QUOTA": "Yapay zekâ anahtarının görsel oluşturma kotası yok (faturalandırma etkin değil). Krediniz iade edildi; yöneticinin anahtarı kontrol etmesi gerekiyor",
     "PART_NOT_VISIBLE": "Seçilen parça bu açıdan görünmüyor. Kredi düşülmedi",
     "CAR_NOT_VERIFIED": "Araç doğrulanmadı. Lütfen fotoğrafları yeniden doğrulayın. Kredi düşülmedi",
     "AI_BLOCKED": "Yapay zekâ bu fotoğrafı işleyemedi (güvenlik filtresi). Kareden insanları çıkarın, aracı tamamen çekin ve yeniden deneyin. Krediniz iade edildi",
     "AI_STORAGE_FAILED": "Sonuç kaydedilemedi. Krediniz iade edildi, lütfen tekrar deneyin",
-    "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again"
+    "AI_WRONG_VIEW": "Yapay zekâ sonucu aracın başka bir tarafını gösterdi, bu yüzden teslim edilmedi. Krediniz iade edildi, tekrar deneyin"
   },
   "capturePage": {
     "sent": "Fotoğraf bilgisayara gönderildi",

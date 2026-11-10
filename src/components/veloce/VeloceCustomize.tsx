@@ -65,6 +65,7 @@ import { composeCarAnglePhotorealistic } from '@/lib/automotive-compositor';
 import { buttonClasses } from '@/components/ui';
 import { liveVersion, useLiveTick } from '@/lib/live';
 import { useErrorToast } from '@/components/ui/Toaster';
+import { currentPath, loginHref } from '@/lib/login-next';
 
 /** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
@@ -350,7 +351,7 @@ export function VeloceCustomize() {
     }
 
     if (!user) {
-      router.push(`/${locale}/login`);
+      router.push(loginHref(locale, currentPath()));
       return;
     }
     // The photos must have passed the car check (a car, one car on all sides) before anything is rendered.

@@ -328,7 +328,9 @@
     "insufficientCredits": "Hisobingizda generatsiya kreditlari tugadi.",
     "sessionEvicted": "Ushbu planshetdan chiqildi, chunki akkauntingizga boshqa yangi qurilmadan kirildi.",
     "renderFailed": "Generatsiyada xatolik yuz berdi. Sarflangan limitingiz hisobingizga to'liq qaytarildi.",
-    "receiptDuplicate": "Bu to'lov cheki allaqachon boshqa buyurtmada ishlatilgan."
+    "receiptDuplicate": "Bu to'lov cheki allaqachon boshqa buyurtmada ishlatilgan.",
+    "crashTitle": "Nimadir xato ketdi",
+    "crashBody": "Bu ekranni ochib bo'lmadi. Qayta urinib ko'ring."
   },
   "profile": {
     "title": "Atelier Master Profili",

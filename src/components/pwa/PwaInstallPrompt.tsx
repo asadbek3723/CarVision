@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { createPortal } from 'react-dom';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ArrowDown, ArrowUp, Check, Copy, Download, EllipsisVertical, PlusSquare, Share, X } from 'lucide-react';
@@ -180,6 +181,10 @@ function InstallGuide({ platform, onClose }: { platform: InstallPlatform; onClos
 export function PwaInstallPrompt() {
   const t = useTranslations('install');
   const platform = useInstallPlatform();
+  const pathname = usePathname() ?? '';
+  // A part's page, the cart, checkout and the build screen have their own bar at the bottom
+  // (Add to cart, Checkout, Apply): the banner must never sit on top of it.
+  const hasOwnBottomBar = /^\/[a-z]{2}\/(shop\/[^/]+|cart|customize)(\/|$)/.test(pathname);
   const [bannerOpen, setBannerOpen] = React.useState(false);
   const [guideFor, setGuideFor] = React.useState<InstallPlatform | null>(null);
 
@@ -219,7 +224,7 @@ export function PwaInstallPrompt() {
   };
 
   // The banner is only offered where installing is possible from here (one tap, or the iOS guide).
-  const offerBanner = bannerOpen && (platform === 'prompt' || platform === 'ios-safari' || platform === 'ios-other');
+  const offerBanner = bannerOpen && !hasOwnBottomBar && (platform === 'prompt' || platform === 'ios-safari' || platform === 'ios-other');
 
   return (
     <>

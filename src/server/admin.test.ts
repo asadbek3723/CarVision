@@ -5,6 +5,12 @@ import { createAdminSessionToken } from '@/lib/admin-auth';
 import { getSuperAdminId } from '@/server/auth/session';
 
 vi.mock('@/server/auth/session', () => ({ getSuperAdminId: vi.fn() }));
+// The revocation table is not under test here and no database exists in tests: nothing is revoked.
+vi.mock('@/lib/supabase/server', () => ({
+  createAdminClient: () => ({
+    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) }),
+  }),
+}));
 
 describe('adminLiveOr401 (PIN cookie + still a live super_admin)', () => {
   const ADMIN = 'a0000000-0000-4000-8000-000000000001';

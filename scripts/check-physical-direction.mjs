@@ -2,18 +2,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const FORBIDDEN_PATTERNS = [
-  { regex: /\bml-[\w\d\[\]\.\-]+/g, name: 'ml-* (use ms-* instead)' },
-  { regex: /\bmr-[\w\d\[\]\.\-]+/g, name: 'mr-* (use me-* instead)' },
-  { regex: /\bpl-[\w\d\[\]\.\-]+/g, name: 'pl-* (use ps-* instead)' },
-  { regex: /\bpr-[\w\d\[\]\.\-]+/g, name: 'pr-* (use pe-* instead)' },
-  { regex: /\bleft-[\w\d\[\]\.\-]+/g, name: 'left-* (use start-* instead)' },
-  { regex: /\bright-[\w\d\[\]\.\-]+/g, name: 'right-* (use end-* instead)' },
-  { regex: /\btext-left\b/g, name: 'text-left (use text-start instead)' },
-  { regex: /\btext-right\b/g, name: 'text-right (use text-end instead)' },
-  { regex: /\bborder-l\b/g, name: 'border-l (use border-s instead)' },
-  { regex: /\bborder-r\b/g, name: 'border-r (use border-e instead)' },
-  { regex: /\brounded-l-[\w\d\[\]\.\-]+/g, name: 'rounded-l-* (use rounded-s-* instead)' },
-  { regex: /\brounded-r-[\w\d\[\]\.\-]+/g, name: 'rounded-r-* (use rounded-e-* instead)' }
+  { regex: /\bml-[\w\d\[\]\.\-]+/, name: 'ml-* (use ms-* instead)' },
+  { regex: /\bmr-[\w\d\[\]\.\-]+/, name: 'mr-* (use me-* instead)' },
+  { regex: /\bpl-[\w\d\[\]\.\-]+/, name: 'pl-* (use ps-* instead)' },
+  { regex: /\bpr-[\w\d\[\]\.\-]+/, name: 'pr-* (use pe-* instead)' },
+  { regex: /\bleft-[\w\d\[\]\.\-]+/, name: 'left-* (use start-* instead)' },
+  { regex: /\bright-[\w\d\[\]\.\-]+/, name: 'right-* (use end-* instead)' },
+  { regex: /\btext-left\b/, name: 'text-left (use text-start instead)' },
+  { regex: /\btext-right\b/, name: 'text-right (use text-end instead)' },
+  { regex: /\bborder-l\b/, name: 'border-l (use border-s instead)' },
+  { regex: /\bborder-r\b/, name: 'border-r (use border-e instead)' },
+  { regex: /\brounded-l-[\w\d\[\]\.\-]+/, name: 'rounded-l-* (use rounded-s-* instead)' },
+  { regex: /\brounded-r-[\w\d\[\]\.\-]+/, name: 'rounded-r-* (use rounded-e-* instead)' }
 ];
 
 const SCAN_DIRS = ['src', 'styles'];
@@ -29,16 +29,20 @@ function scanDirectory(dir) {
       if (entry.name !== 'node_modules' && entry.name !== '.next') {
         scanDirectory(fullPath);
       }
-    } else if (/\.(tsx|ts|jsx|js|css)$/.test(entry.name)) {
+    } else if (/\.(tsx|ts|jsx|js|css)$/.test(entry.name) && !/\.test\.(tsx|ts|jsx|js)$/.test(entry.name)) {
       const content = fs.readFileSync(fullPath, 'utf8');
       const lines = content.split('\n');
 
       lines.forEach((line, index) => {
-        // Skip comment lines or test files if explicitly marked
-        if (line.trim().startsWith('//') || line.trim().startsWith('/*')) return;
+        // Skip comment lines (tests have no markup and are skipped as whole files above).
+        const trimmed = line.trim();
+        if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) return;
+
+        // A trailing `// note` is prose, not markup ("right-to-left" must not count as `right-*`).
+        const code = line.replace(/\s\/\/.*$/, '');
 
         for (const pattern of FORBIDDEN_PATTERNS) {
-          if (pattern.regex.test(line)) {
+          if (pattern.regex.test(code)) {
             console.error(`\x1b[31m[DIRECTION VIOLATION]\x1b[0m ${fullPath}:${index + 1}`);
             console.error(`   Found: ${pattern.name}`);
             console.error(`   Line: "${line.trim()}"\n`);

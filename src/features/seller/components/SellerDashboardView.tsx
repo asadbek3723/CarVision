@@ -14,7 +14,7 @@ import { ProductImage } from '@/components/ui/ProductImage';
 import { localizedText, type CatalogItemDTO } from '@/domain/catalog';
 import { SellerOnly } from './SellerOnly';
 import { isSellerUser } from '@/features/auth/roles';
-import { buttonClasses } from '@/components/ui';
+import { Modal, buttonClasses } from '@/components/ui';
 
 interface SellerLead {
   id: string;
@@ -48,6 +48,7 @@ async function patchItem(body: Record<string, unknown>): Promise<boolean> {
 
 export function SellerDashboardView() {
   const t = useTranslations('sellerDash');
+  const tc = useTranslations('common');
   const apiError = useApiError();
   const tCat = useTranslations('catalogCat');
   const intlLocale = useLocale();
@@ -63,6 +64,7 @@ export function SellerDashboardView() {
   const [loading, setLoading] = React.useState(() => !cachedInventory(user?.id));
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [confirmItem, setConfirmItem] = React.useState<CatalogItemDTO | null>(null);
 
   const isSeller = isSellerUser(user);
 
@@ -117,7 +119,7 @@ export function SellerDashboardView() {
   };
 
   const remove = async (item: CatalogItemDTO) => {
-    if (!window.confirm(t('confirmDelete', { name: localizedText(item, locale).name }))) return;
+    setConfirmItem(null);
     setBusyId(item.id);
     try {
       const res = await fetch(`/api/v1/seller/inventory?productId=${encodeURIComponent(item.id)}`, { method: 'DELETE' });
@@ -295,7 +297,7 @@ export function SellerDashboardView() {
                       <button type="button" disabled={busyId === item.id} aria-label={isPublished ? t('hide') : t('publish')} onClick={() => void toggleStatus(item)} className={roundBtn}>
                         {isPublished ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </button>
-                      <button type="button" disabled={busyId === item.id} aria-label={t('delete')} onClick={() => void remove(item)} className={`${roundBtn} hover:!bg-red-500/20 hover:!text-red-300`}>
+                      <button type="button" disabled={busyId === item.id} aria-label={t('delete')} onClick={() => setConfirmItem(item)} className={`${roundBtn} hover:!bg-red-500/20 hover:!text-red-300`}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -350,6 +352,24 @@ export function SellerDashboardView() {
           )}
         </div>
       )}
+      <Modal
+        open={confirmItem !== null}
+        onClose={() => setConfirmItem(null)}
+        title={confirmItem ? t('confirmDelete', { name: localizedText(confirmItem, locale).name }) : ''}
+        size="sm"
+        footer={
+          <div className="flex w-full gap-3">
+            <button type="button" onClick={() => setConfirmItem(null)} className={buttonClasses({ variant: 'ghost', size: 'md', className: 'flex-1' })}>
+              {tc('cancel')}
+            </button>
+            <button type="button" onClick={() => confirmItem && void remove(confirmItem)} className={buttonClasses({ variant: 'danger', size: 'md', className: 'flex-1' })}>
+              {tc('delete')}
+            </button>
+          </div>
+        }
+      >
+        {null}
+      </Modal>
     </div>
   );
 }

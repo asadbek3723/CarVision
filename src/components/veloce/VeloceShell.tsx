@@ -31,6 +31,7 @@ import { VeloceShop } from './VeloceShop';
 import { VeloceProfile } from './VeloceProfile';
 import { SupportedCurrency } from '@/domain/currency';
 import { Wordmark } from '@/components/ui/Wordmark';
+import { currentPath, loginHref } from '@/lib/login-next';
 
 const LOCALE_OPTIONS = [
   { code: 'uz', label: 'UZ', name: "O'zbekcha" },
@@ -209,7 +210,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
   const isPublicPage = /^\/[a-z]{2}\/(shop|plans|cart)(\/|$)/.test(pathname) && !pathname.includes('/cart/checkout');
   React.useEffect(() => {
     if (!isLoading && !user && !isPublicPage) {
-      router.replace(`/${locale}/login`);
+      // Remember the screen, so signing in brings the person back to it.
+      router.replace(loginHref(locale, currentPath()));
     }
   }, [isLoading, user, locale, router, isPublicPage]);
 

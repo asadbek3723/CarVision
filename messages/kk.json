@@ -328,7 +328,9 @@
     "insufficientCredits": "Генерация кредиттері таусылды.",
     "sessionEvicted": "Жаңа құрылғыдан кіргендіктен, осы планшеттегі сессия аяқталды.",
     "renderFailed": "Генерация жасау мүмкін болмады. Кредит шотыңызға қайтарылды.",
-    "receiptDuplicate": "Бұл төлем түбіртегі бұрын басқа тапсырыста қолданылған."
+    "receiptDuplicate": "Бұл төлем түбіртегі бұрын басқа тапсырыста қолданылған.",
+    "crashTitle": "Бірдеңе дұрыс болмады",
+    "crashBody": "Бұл экранды ашу мүмкін болмады. Қайталап көріңіз."
   },
   "profile": {
     "title": "Ателье Шебер Профилі",
@@ -959,9 +961,9 @@
         "guide": "Көліктің сол жақ алдыңғы бұрышын 45° бұрышпен, алды мен сол жағы бірге көрінетіндей түсіріңіз."
       }
     },
-    "skipAngle": "Skip this angle",
-    "continueWith": "Continue with {count} photos",
-    "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible."
+    "skipAngle": "Бұл қырды өткізіп жіберу",
+    "continueWith": "{count} суретпен жалғастыру",
+    "optionalHint": "1-ден 5-ке дейін сурет жүктеуге болады, кез келген қырды өткізіп жіберіңіз. AI көліктің қай жағы көрініп тұрғанын өзі анықтайды."
   },
   "scanLive": {
     "compassLabel": "Компас нұсқауы: {angle}",
@@ -997,7 +999,7 @@
     },
     "rotateCta": "Камераны ашу",
     "skip": "Skip",
-    "finishWith": "Done ({count})"
+    "finishWith": "Дайын ({count})"
   },
   "landing": {
     "nav": {
@@ -1941,15 +1943,15 @@
     "TOO_SOON": "Жаңа код сұрамас бұрын біраз күтіңіз.",
     "SEND_FAILED": "SMS жіберу мүмкін болмады.",
     "SMS_DISABLED": "SMS растау қазір қолжетімсіз.",
-    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
-    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "AI_BUSY": "Қазір барлық AI модельдері бос емес. Кредит қайтарылды, 1–2 минуттан кейін қайталап көріңіз",
+    "AI_TIMEOUT": "Сурет жасау тым ұзаққа созылды. Кредит қайтарылды, қайталап көріңіз",
     "VALIDATION_FAILED": "Сұрау деректері дұрыс емес. Қайталап көріңіз.",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "AI_NO_QUOTA": "AI кілтінде сурет жасауға лимит жоқ (биллинг қосылмаған). Кредит қайтарылды, әкімші кілтті тексеруі керек",
     "PART_NOT_VISIBLE": "Таңдалған бөлшек бұл ракурсте көрінбейді. Кредит алынбады",
     "CAR_NOT_VERIFIED": "Көлік расталмаған. Суреттерді қайта растаңыз. Кредит алынбады",
     "AI_BLOCKED": "Жасанды интеллект бұл суретті өңдей алмады (қауіпсіздік сүзгісі). Кадрдан адамдарды алып тастап, көлікті толық түсіріп, қайталаңыз. Кредит қайтарылды",
     "AI_STORAGE_FAILED": "Нәтижені сақтау мүмкін болмады. Кредит қайтарылды, қайталап көріңіз",
-    "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again"
+    "AI_WRONG_VIEW": "AI нәтижесі көліктің басқа жағын көрсетті, сондықтан берілмеді. Кредит қайтарылды, қайталап көріңіз"
   },
   "capturePage": {
     "sent": "Сурет компьютерге жіберілді",

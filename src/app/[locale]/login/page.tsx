@@ -18,6 +18,8 @@ import {
 } from '@/features/auth/components/AuthShell';
 import { playLock, vibrate } from '@/features/camera/lib/fx';
 import { DEFAULT_DIGITS, detectCountry, nationalLength } from '@/features/auth/lib/phone-countries';
+import { Modal } from '@/components/ui';
+import { readNext, withNext } from '@/lib/login-next';
 
 type FieldErrors = { phone?: string | undefined; pwd?: string | undefined };
 
@@ -36,6 +38,10 @@ export default function LoginPage() {
   const [formError, setFormError] = React.useState<string | null>(null);
   const [shake, setShake] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
+  const [forgotOpen, setForgotOpen] = React.useState(false);
+  // Keeps `?next=` on the way to the register page (read after mount: the server never sees it).
+  const [registerHref, setRegisterHref] = React.useState(`/${locale}/register`);
+  React.useEffect(() => setRegisterHref(withNext(`/${locale}/register`, locale)), [locale]);
 
   // Warm up the pages the user is most likely to open next.
   React.useEffect(() => {
@@ -46,7 +52,11 @@ export default function LoginPage() {
   // If already authenticated, redirect to the Veloce App
   React.useEffect(() => {
     if (user) {
-      if (user.role === 'super_admin') {
+      // Back to where the person was sent here from (checkout, their build), else the app's home.
+      const next = readNext(locale);
+      if (next) {
+        router.replace(next);
+      } else if (user.role === 'super_admin') {
         router.replace(`/${locale}/admin`);
       } else {
         router.replace(`/${locale}/seller`);
@@ -184,9 +194,7 @@ export default function LoginPage() {
           <div>
             <button
               type="button"
-              onClick={() =>
-                alert(t('forgotHelp'))
-              }
+              onClick={() => setForgotOpen(true)}
               className="text-foreground/75 transition hover:text-gold cursor-pointer"
             >
               {t('forgot')}
@@ -195,7 +203,7 @@ export default function LoginPage() {
           <p className="text-foreground/60">
             {t('noAccount')}{' '}
             <Link
-              href={`/${locale}/register`}
+              href={registerHref}
               className="font-medium text-gold transition hover:brightness-125 ms-1"
             >
               {t('registerLink')}
@@ -203,6 +211,9 @@ export default function LoginPage() {
           </p>
         </motion.div>
       </GlassCard>
+      <Modal open={forgotOpen} onClose={() => setForgotOpen(false)} title={t('forgot')} size="sm">
+        <p className="text-sm text-muted-foreground">{t('forgotHelp')}</p>
+      </Modal>
     </AuthShell>
   );
 }

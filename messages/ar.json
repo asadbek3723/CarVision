@@ -328,7 +328,9 @@
     "insufficientCredits": "لقد نفد رصيد التوليد المتاح لديك.",
     "sessionEvicted": "تم تسجيل خروج هذا الجهاز بسبب تسجيل الدخول من جهاز آخر.",
     "renderFailed": "تعذر إكمال التوليد. تم استرداد الرصيد بالكامل إلى حسابك.",
-    "receiptDuplicate": "تم استخدام إيصال الدفع هذا مسبقاً في حجز آخر."
+    "receiptDuplicate": "تم استخدام إيصال الدفع هذا مسبقاً في حجز آخر.",
+    "crashTitle": "حدث خطأ ما",
+    "crashBody": "تعذّر فتح هذه الشاشة. حاول مرة أخرى."
   },
   "profile": {
     "title": "ملف تعريف الأتيليه الرئيسي",
@@ -959,9 +961,9 @@
         "guide": "صوّر الزاوية الأمامية اليسرى بزاوية 45° بحيث يظهر الأمام والجانب الأيسر معًا."
       }
     },
-    "skipAngle": "Skip this angle",
-    "continueWith": "Continue with {count} photos",
-    "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible."
+    "skipAngle": "تخطَّ هذه الزاوية",
+    "continueWith": "{count, plural, one {المتابعة بصورة واحدة} two {المتابعة بصورتين} few {المتابعة بـ # صور} other {المتابعة بـ # صورة}}",
+    "optionalHint": "ارفع من 1 إلى 5 صور وتخطَّ أي زاوية. يحدد الذكاء الاصطناعي الجانب الظاهر من السيارة."
   },
   "scanLive": {
     "compassLabel": "دليل البوصلة: {angle}",
@@ -997,7 +999,7 @@
     },
     "rotateCta": "افتح الكاميرا",
     "skip": "Skip",
-    "finishWith": "Done ({count})"
+    "finishWith": "تم ({count})"
   },
   "landing": {
     "nav": {
@@ -1941,15 +1943,15 @@
     "TOO_SOON": "يرجى الانتظار قليلًا قبل طلب رمز جديد.",
     "SEND_FAILED": "تعذّر إرسال الرسالة النصية.",
     "SMS_DISABLED": "التحقق عبر SMS غير متاح حاليًا.",
-    "AI_BUSY": "All AI models are busy right now. Your credit was refunded, try again in 1–2 minutes",
-    "AI_TIMEOUT": "Rendering took too long. Your credit was refunded, please try again",
+    "AI_BUSY": "جميع نماذج الذكاء الاصطناعي مشغولة الآن. أُعيد رصيدك، حاول بعد دقيقة أو دقيقتين",
+    "AI_TIMEOUT": "استغرق إنشاء الصورة وقتًا طويلًا. أُعيد رصيدك، حاول مرة أخرى",
     "VALIDATION_FAILED": "بيانات الطلب غير صالحة. يرجى المحاولة مرة أخرى.",
-    "AI_NO_QUOTA": "The AI key has no image-generation allowance (billing is not enabled). Your credit was refunded; the administrator needs to check the key",
+    "AI_NO_QUOTA": "مفتاح الذكاء الاصطناعي لا يملك حصة لإنشاء الصور (الفوترة غير مفعّلة). أُعيد رصيدك، وعلى المسؤول التحقق من المفتاح",
     "PART_NOT_VISIBLE": "القطعة المختارة غير ظاهرة من هذه الزاوية. لم يتم خصم أي رصيد",
     "CAR_NOT_VERIFIED": "لم يتم تأكيد السيارة. يرجى تأكيد الصور مرة أخرى. لم يُخصم رصيد",
     "AI_BLOCKED": "تعذّر على الذكاء الاصطناعي معالجة هذه الصورة (مرشّح الأمان). أبعد الأشخاص عن الكادر، وصوّر السيارة كاملة وأعد المحاولة. تم استرداد رصيدك",
     "AI_STORAGE_FAILED": "تعذّر حفظ النتيجة. تم استرداد رصيدك، يرجى المحاولة مرة أخرى",
-    "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again"
+    "AI_WRONG_VIEW": "أظهرت نتيجة الذكاء الاصطناعي جانبًا آخر من السيارة فلم تُسلَّم. أُعيد رصيدك، حاول مرة أخرى"
   },
   "capturePage": {
     "sent": "تم إرسال الصورة إلى الحاسوب",

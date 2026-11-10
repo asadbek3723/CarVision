@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useApiError } from '@/lib/api-error';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -14,23 +14,30 @@ import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { readJson } from '@/lib/safe-json';
 import { buttonClasses } from '@/components/ui';
 import { useErrorToast } from '@/components/ui/Toaster';
+import { useRetryTick } from '@/lib/live';
+import { loginHref } from '@/lib/login-next';
 
 const fieldCls =
   'w-full rounded-xl  bg-white/[0.04] px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition ';
 
 function CheckoutPageInner() {
   const t = useTranslations('checkout');
+  const tList = useTranslations('shop.list');
+  const pathname = usePathname();
   const apiError = useApiError();
   const params = useParams();
   const search = useSearchParams();
   const locale = (params?.['locale'] as string) || 'uz';
   const resumeId = search?.get('booking') ?? null;
-  const { cart, removeLines, cartUnselected } = useVeloceStore();
+  const { cart, hydrated, removeLines, cartUnselected } = useVeloceStore();
   const { formatPrice } = useCurrency();
   const { user, isLoading: authLoading } = useAuth();
 
   const [products, setProducts] = React.useState<VeloceProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = React.useState(true);
+  // A failed request is not an empty cart and not "no longer sold": it is shown as such and asked again.
+  const [loadError, setLoadError] = React.useState(false);
+  const retry = useRetryTick(loadError);
   const [name, setName] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [note, setNote] = React.useState('');
@@ -66,26 +73,36 @@ function CheckoutPageInner() {
       setLoadingProducts(false);
       return;
     }
+    // The saved cart has not been read yet: an empty cart here would only mean "not known yet".
+    if (!hydrated) return;
     if (cartIds.length === 0) {
       setProducts([]);
+      setLoadError(false);
       setLoadingProducts(false);
       return;
     }
     let cancelled = false;
-    setLoadingProducts(true);
     fetch(`/api/v1/products?ids=${cartIds.join(',')}&limit=100&locale=${locale}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
-        if (!cancelled && d.success) setProducts(d.products ?? []);
+        if (cancelled) return;
+        if (!d.success) {
+          setLoadError(true);
+          return;
+        }
+        setProducts(d.products ?? []);
+        setLoadError(false);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
+      })
       .finally(() => {
         if (!cancelled) setLoadingProducts(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [cartIds, resumeId, locale]);
+  }, [hydrated, cartIds, resumeId, locale, retry]);
 
   const reloadBookings = React.useCallback(async () => {
     try {
@@ -168,7 +185,7 @@ function CheckoutPageInner() {
     return shell(
       <div className="mt-10 rounded-3xl bg-surface-1 p-6 text-center">
         <p className="text-sm text-white/80">{t('loginRequired')}</p>
-        <Link href={`/${locale}/login`} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
+        <Link href={loginHref(locale, `${pathname ?? ''}${search?.toString() ? `?${search.toString()}` : ''}`)} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
           {t('login')}
         </Link>
       </div>
@@ -194,6 +211,14 @@ function CheckoutPageInner() {
   }
 
   if (resumeId) return shell(<p className="py-20 text-center text-sm text-white/60">{t('notFound')}</p>);
+
+  if (loadError && lines.length === 0) {
+    return shell(
+      <div role="status" className="py-20 text-center text-sm text-red-300">
+        {tList('loadError')}
+      </div>
+    );
+  }
 
   if (lines.length === 0) {
     return shell(
@@ -256,7 +281,7 @@ function CheckoutPageInner() {
 
         <button
           type="submit"
-          disabled={submitting || hasUnavailable || missing > 0}
+          disabled={submitting || hasUnavailable || missing > 0 || loadError}
           className={buttonClasses({ size: 'md', fullWidth: true })}
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}

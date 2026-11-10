@@ -11,7 +11,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { Modal, ProductImage, Sheet, buttonClasses } from '@/components/ui';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { cn } from '@/lib/utils';
-import { useLiveTick } from '@/lib/live';
+import { useLiveTick, useRetryTick } from '@/lib/live';
 import { CountUp } from '@/components/ui/CountUp';
 
 /** Parts left at or below this count show an "N left" warning, as marketplaces do. */
@@ -46,55 +46,60 @@ export function VeloceCart() {
   const params = useParams();
   const t = useTranslations('shop.cart');
   const tCard = useTranslations('shop.card');
+  const tList = useTranslations('shop.list');
   const locale = (params?.['locale'] as string) || 'uz';
-  const { cart, add, remove, removeLines, cartUnselected, setCartSelected, setAllCartSelected } = useVeloceStore();
+  const { cart, hydrated, add, remove, removeLines, cartUnselected, setCartSelected, setAllCartSelected } = useVeloceStore();
   const { formatPrice } = useCurrency();
 
   const [productsMap, setProductsMap] = React.useState<Record<string, VeloceProduct>>({});
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [loaded, setLoaded] = React.useState(false);
+  // Ids the server has answered for. A line is only called "no longer sold" once the server said so:
+  // a failed or pending request must never look like a missing product.
+  const [checkedIds, setCheckedIds] = React.useState<string[] | null>(null);
+  const [fetchError, setFetchError] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [explainOpen, setExplainOpen] = React.useState(false);
   const router = useRouter();
 
   const cartIdsKey = Object.keys(cart).sort().join(',');
   const live = useLiveTick();
+  const retry = useRetryTick(fetchError);
 
   React.useEffect(() => {
-    if (!cartIdsKey) {
-      setLoaded(true);
-      return;
-    }
+    if (!hydrated || !cartIdsKey) return;
     let isMounted = true;
-    setIsLoading((was) => was || !loaded);
+    const asked = cartIdsKey.split(',');
     fetch(`/api/v1/products?ids=${encodeURIComponent(cartIdsKey)}&limit=100&locale=${locale}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
-        if (isMounted && data.success && Array.isArray(data.products)) {
-          rememberProducts(locale, data.products);
-          const map: Record<string, VeloceProduct> = {};
-          data.products.forEach((p: VeloceProduct) => {
-            map[p.id] = p;
-          });
-          setProductsMap(map);
+        if (!isMounted) return;
+        if (!data.success || !Array.isArray(data.products)) {
+          setFetchError(true);
+          return;
         }
+        rememberProducts(locale, data.products);
+        const map: Record<string, VeloceProduct> = {};
+        data.products.forEach((p: VeloceProduct) => {
+          map[p.id] = p;
+        });
+        setProductsMap(map);
+        setCheckedIds(asked);
+        setFetchError(false);
       })
-      .catch((err) => console.warn('Could not load cart products:', err))
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false);
-          setLoaded(true);
-        }
+      .catch((err) => {
+        console.warn('Could not load cart products:', err);
+        if (isMounted) setFetchError(true);
       });
     return () => {
       isMounted = false;
     };
-    // `loaded` only decides whether to show the skeleton; it must not refetch.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartIdsKey, locale, live]);
+  }, [hydrated, cartIdsKey, locale, live, retry]);
 
   // Lines that are no longer sold (unpublished / deleted): tell the customer and let them clear them.
-  const missingIds = loaded && !isLoading ? Object.keys(cart).filter((id) => !productsMap[id]) : [];
+  const missingIds = React.useMemo(() => {
+    if (!checkedIds) return [];
+    const answered = new Set(checkedIds);
+    return Object.keys(cart).filter((id) => answered.has(id) && !productsMap[id]);
+  }, [cart, checkedIds, productsMap]);
 
   const items = React.useMemo(
     () =>
@@ -126,7 +131,18 @@ export function VeloceCart() {
   const checkoutHref = `/${locale}/cart/checkout?ids=${encodeURIComponent(selected.map(({ product }) => product.id).join(','))}`;
 
   // --- Empty / loading -------------------------------------------------------------------------
-  if (isLoading && !loaded) {
+  // Nothing is known yet: the saved cart is still being read, or its parts have not been answered for.
+  const waiting = !hydrated || (cartIdsKey !== '' && items.length === 0 && checkedIds === null);
+
+  if (waiting && fetchError) {
+    return (
+      <div role="status" className="mx-auto max-w-md px-5 py-20 text-center text-sm text-red-300">
+        {tList('loadError')}
+      </div>
+    );
+  }
+
+  if (waiting) {
     return (
       <div className="mx-auto max-w-5xl px-5 pt-4 md:px-10 md:pt-8">
         <div className="mx-auto mb-6 h-7 w-32 rounded-lg bg-white/[0.05] motion-safe:animate-pulse" />
