@@ -283,7 +283,7 @@ export function SmartCameraLandscapeView({
       if (typeof e.beta !== 'number' || typeof e.gamma !== 'number') return;
       const { roll, pitch } = computeLevel(e.beta, e.gamma, 0);
       if (Math.abs(pitch) > 55) return; // lying flat: roll means nothing
-      const next = roll > 60 ? 'ccw' : roll < -60 ? 'cw' : Math.abs(roll) < 25 ? 'upright' : null;
+      const next = roll < -60 ? 'ccw' : roll > 60 ? 'cw' : Math.abs(roll) < 25 ? 'upright' : null;
       const now = performance.now();
       if (next !== want) {
         want = next;

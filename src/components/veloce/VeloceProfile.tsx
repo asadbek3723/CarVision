@@ -230,7 +230,7 @@ export function VeloceProfile() {
             <PushToggle />
           </li>
           <SettingsRow href={`${base}/settings`} icon={Settings2} title={t('settings')} value={languageName} />
-          <SettingsRow href={`/${locale}#faq`} icon={CircleHelp} title={t('help')} last />
+          <SettingsRow href={`${base}/support`} icon={CircleHelp} title={t('help')} sub={t('helpSub')} last />
         </ul>
 
         {/* Sign out: the shell sends a signed-out visitor to the login page */}

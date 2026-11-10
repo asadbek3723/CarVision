@@ -10,27 +10,25 @@ interface LevelGuideProps {
 }
 
 /**
- * Horizon bar like a pro camera: two short bars on the sides that counter-rotate with the phone
- * and lock (emerald) when the horizon is level. Hidden without sensor data.
+ * Horizon level like the iPhone camera: two short fixed marks on the sides and a line in the middle
+ * that always stays parallel to the real horizon. Turn the phone until the middle line lines up with
+ * the marks; then all three join into one green line. Hidden without sensor data.
  */
 export function LevelGuide({ level, aligned }: LevelGuideProps) {
   if (!level) return null;
-  const rotate = Math.max(-35, Math.min(35, -level.roll));
-  const tone = aligned ? 'bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]' : 'bg-gold-300/70';
+  // Phone turned clockwise by n° -> the real horizon is turned n° the other way on screen.
+  const rotate = Math.max(-40, Math.min(40, -level.roll));
+  const tone = aligned ? 'bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]' : 'bg-white/80';
   return (
     <div className="pointer-events-none absolute inset-0 z-[11] flex items-center justify-center" aria-hidden="true">
-      <motion.div
-        className="flex w-[78%] items-center justify-between"
-        animate={{ rotate }}
-        transition={{ type: 'spring', stiffness: 180, damping: 22, mass: 0.6 }}
-      >
-        <span className={`h-[2px] w-[9%] rounded-full transition-colors duration-300 ${tone}`} />
-        <span className={`h-[2px] w-[9%] rounded-full transition-colors duration-300 ${tone}`} />
-      </motion.div>
-      {/* Fixed reference ticks */}
-      <div className="absolute flex w-[78%] items-center justify-between">
-        <span className="h-3 w-px bg-white/25" />
-        <span className="h-3 w-px bg-white/25" />
+      <div className="flex w-[64%] max-w-[420px] items-center">
+        <span className={`h-[2px] w-[13%] shrink-0 rounded-full transition-colors duration-300 ${tone}`} />
+        <motion.span
+          className={`h-[2px] flex-1 rounded-full transition-[margin,background-color,box-shadow] duration-300 ${tone} ${aligned ? 'mx-0' : 'mx-3'}`}
+          animate={{ rotate }}
+          transition={{ type: 'spring', stiffness: 220, damping: 26, mass: 0.6 }}
+        />
+        <span className={`h-[2px] w-[13%] shrink-0 rounded-full transition-colors duration-300 ${tone}`} />
       </div>
     </div>
   );

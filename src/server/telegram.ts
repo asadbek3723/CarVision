@@ -203,3 +203,36 @@ export async function syncDecisionToTelegram(bookingId: string, approved: boolea
 }
 
 export { loadBooking as loadBookingForTelegram };
+
+/** Escapes text for Telegram's HTML parse mode. */
+export function tgEscape(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * Delivers a support request (HTML text, optionally a screenshot sent as a reply to it) to every
+ * admin chat. Returns true when at least one chat received the text.
+ */
+export async function sendSupportRequest(html: string, photo?: { bytes: ArrayBuffer; type: string; name: string } | null): Promise<boolean> {
+  if (!telegramConfigured()) return false;
+  let delivered = false;
+  for (const chatId of adminChatIds()) {
+    const sent = await call<{ message_id: number }>('sendMessage', {
+      chat_id: chatId,
+      text: html,
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+    });
+    if (!sent) continue;
+    delivered = true;
+    if (photo) {
+      const form = new FormData();
+      form.set('chat_id', String(chatId));
+      form.set('reply_parameters', JSON.stringify({ message_id: sent.message_id }));
+      form.set('caption', '📎 Foydalanuvchi biriktirgan rasm');
+      form.set('photo', new Blob([photo.bytes], { type: photo.type }), photo.name);
+      await call('sendPhoto', form);
+    }
+  }
+  return delivered;
+}

@@ -165,10 +165,33 @@ function skipLandingForSignedIn(request: NextRequest): NextResponse | null {
   return response;
 }
 
+/**
+ * The installed app always opens its manifest `start_url`, which carries the language it was
+ * installed in (`/uz/seller?source=pwa`), and iOS never refreshes it. Without this, next-intl would
+ * render that old language and write it back into NEXT_LOCALE, undoing the user's choice in
+ * Settings. So a PWA launch follows the saved NEXT_LOCALE instead of the URL's locale.
+ */
+function followSavedLocaleOnPwaLaunch(request: NextRequest): NextResponse | null {
+  if (request.method !== 'GET' || request.nextUrl.searchParams.get('source') !== 'pwa') return null;
+  const preferred = request.cookies.get('NEXT_LOCALE')?.value;
+  if (!preferred || !(locales as readonly string[]).includes(preferred)) return null;
+  const current = LOCALE_PREFIX.exec(request.nextUrl.pathname)?.[1];
+  if (!current || current === preferred) return null;
+  const url = request.nextUrl.clone();
+  url.pathname = request.nextUrl.pathname.replace(LOCALE_PREFIX, `/${preferred}`);
+  const response = NextResponse.redirect(url, 307);
+  response.headers.set('Cache-Control', 'private, no-store');
+  return response;
+}
+
 export default async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/api/v1/admin/')) return gateAdminApi(request);
+
+  const pwaLaunch = followSavedLocaleOnPwaLaunch(request);
+  if (pwaLaunch) return pwaLaunch;
+
   if (isAdminPage(pathname)) return gateAdminPage(request);
 
   const intoApp = skipLandingForSignedIn(request);

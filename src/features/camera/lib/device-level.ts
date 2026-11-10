@@ -27,7 +27,8 @@ export function computeLevel(beta: number, gamma: number, screenAngle: number): 
   const a = ((Math.round(screenAngle / 90) % 4) + 4) % 4;
   const [sx, sy] = a === 0 ? [ux, uy] : a === 1 ? [-uy, ux] : a === 2 ? [-ux, -uy] : [uy, -ux];
 
-  const roll = (Math.atan2(sx, sy) * 180) / Math.PI;
+  // Phone turned clockwise -> world "up" leans to the screen's left (sx < 0) -> positive roll.
+  const roll = (Math.atan2(-sx, sy) * 180) / Math.PI;
   const pitch = (Math.asin(Math.max(-1, Math.min(1, -uz))) * 180) / Math.PI;
   return { roll, pitch };
 }

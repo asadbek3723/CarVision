@@ -25,4 +25,14 @@ describe('device level', () => {
     expect(Math.abs(l.roll)).toBeGreaterThan(8);
     expect(isLevel(l)).toBe(false);
   });
+
+  it('gives a positive roll when the phone turns clockwise (portrait and landscape)', () => {
+    // Portrait, top edge turned 10° to the right: up = (-sin10, cos10, 0) in the device frame.
+    // Euler form of that pose: gamma = 90, beta = 80.
+    expect(computeLevel(80, 90, 0).roll).toBeCloseTo(10, 3);
+    expect(computeLevel(80, -90, 0).roll).toBeCloseTo(-10, 3);
+    // Landscape (angle 90), same clockwise turn of the phone as seen by the user.
+    const cw = computeLevel(10, -90 + 1e-9, 90);
+    expect(cw.roll).toBeGreaterThan(0);
+  });
 });

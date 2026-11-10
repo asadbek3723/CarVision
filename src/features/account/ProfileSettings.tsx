@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
+import type { Locale } from '@/i18n/routing';
 import { ChevronDown } from 'lucide-react';
 import { PageHeader } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -43,9 +44,8 @@ export function ProfileSettings() {
   const tx = useTranslations('profileExtras');
   const params = useParams();
   const pathname = usePathname();
-  const router = useRouter();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { currency, setCurrency } = useCurrency();
   const [historyOpen, setHistoryOpen] = React.useState(false);
 
@@ -53,12 +53,18 @@ export function ProfileSettings() {
 
   const changeLanguage = (code: string) => {
     if (code === locale) return;
+    // Saved first, so the next app launch (and the middleware) opens in this language.
+    // updateProfile also writes the NEXT_LOCALE cookie and the cached user.
+    updateProfile({ preferred_language: code as Locale });
+    document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=31536000; SameSite=Lax`;
     void fetch('/api/v1/auth/me', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ preferredLocale: code }),
+      keepalive: true,
     }).catch(() => undefined);
-    router.push(localizedPath(pathname, code));
+    // Full load: every part of the page (and the PWA manifest/lang/dir) switches together.
+    window.location.assign(localizedPath(pathname, code) + window.location.search);
   };
 
   return (
