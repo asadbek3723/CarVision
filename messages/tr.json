@@ -568,7 +568,9 @@
       "back": "Geri",
       "save": "Kaydet",
       "skipYear": "Yılsız kaydet",
-      "yearInvalid": "1950 ile {max} arasında bir yıl girin."
+      "yearInvalid": "1950 ile {max} arasında bir yıl girin.",
+      "hint": "Yalnızca uyan parçaları gösteririz",
+      "yourCar": "Aracım"
     }
   },
   "checkout": {

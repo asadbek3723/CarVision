@@ -568,7 +568,9 @@
       "back": "Orqaga",
       "save": "Saqlash",
       "skipYear": "Yilsiz saqlash",
-      "yearInvalid": "Yilni 1950 dan {max} gacha kiriting."
+      "yearInvalid": "Yilni 1950 dan {max} gacha kiriting.",
+      "hint": "Faqat mashinangizga mos detallarni ko‘rsatamiz",
+      "yourCar": "Mening mashinam"
     }
   },
   "checkout": {

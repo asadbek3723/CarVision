@@ -568,7 +568,9 @@
       "back": "Back",
       "save": "Save",
       "skipYear": "Save without a year",
-      "yearInvalid": "Enter a year from 1950 to {max}."
+      "yearInvalid": "Enter a year from 1950 to {max}.",
+      "hint": "We'll show only parts that fit",
+      "yourCar": "My car"
     }
   },
   "checkout": {

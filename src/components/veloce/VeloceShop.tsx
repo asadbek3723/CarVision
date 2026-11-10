@@ -1,17 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCategoryLabel } from '@/lib/category-label';
-import { Search, ShoppingBag, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { MinimalProductCard } from '@/components/veloce/MinimalProductCard';
 import { MyCarPicker } from '@/features/shop/MyCarPicker';
 import { ShopBanner } from '@/features/shop/ShopBanner';
 import { useMyCar } from '@/features/shop/useMyCar';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
-import { useVeloceStore } from '@/context/VeloceStore';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { liveVersion, useLiveTick, useRetryTick } from '@/lib/live';
@@ -31,8 +29,6 @@ const PAGE = 24;
 
 export function VeloceShop() {
   const t = useTranslations('shop.list');
-  const tNav = useTranslations('nav');
-  const { count } = useVeloceStore();
   const categoryLabel = useCategoryLabel();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -125,28 +121,8 @@ export function VeloceShop() {
   return (
     <div className={`${geist.className} ${md.page} min-h-full`}>
       <div className="mx-auto max-w-7xl px-5 pb-6 pt-3 md:px-10 md:pt-8">
-        {/* Title row */}
-        <header className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-[30px] font-semibold leading-none tracking-[-0.03em] text-white md:text-[40px]">{t('title')}</h1>
-            <p className={`mt-2 text-[14px] leading-snug ${md.muted}`}>{t('subtitle')}</p>
-          </div>
-          <Link
-            href={`/${locale}/cart`}
-            aria-label={count > 0 ? tNav('cartWithCount', { count }) : tNav('cart')}
-            className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-full border ${md.line} ${md.card} text-white transition hover:bg-[#1c1c1c] ${mdFocus}`}
-          >
-            <ShoppingBag className="h-5 w-5" strokeWidth={1.8} />
-            {count > 0 && (
-              <span className={`absolute -end-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums text-[#0A0A0A] ${md.accentBg}`}>
-                {count}
-              </span>
-            )}
-          </Link>
-        </header>
-
         {/* Search + filters */}
-        <div className="mt-5 flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5">
           <label className={`flex h-12 min-w-0 flex-1 cursor-text items-center gap-2.5 rounded-[14px] border px-3.5 transition focus-within:border-[#FDC902]/50 ${md.line} ${md.card}`}>
             <Search className={`h-[18px] w-[18px] shrink-0 ${md.faint}`} />
             <input

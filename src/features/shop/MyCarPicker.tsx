@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
-import { Car, ChevronLeft, Search, X } from 'lucide-react';
+import { Car, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { geist, md } from '@/features/minimal/theme';
 import { useMyCar } from './useMyCar';
@@ -19,7 +19,7 @@ const MIN_YEAR = 1950;
 const QUICK_YEARS = 12;
 
 /**
- * "My car": a quiet line under the search (no box, no border) that opens a two-step dialog,
+ * "My car": a banner under the search that opens a two-step dialog,
  * first the make and model, then the production year. The choice is kept on this device until the
  * customer changes or removes it, and filters the shop to parts that fit it.
  */
@@ -92,15 +92,43 @@ export function MyCarPicker() {
 
   return (
     <>
-      {/* The quiet line: icon and text only */}
-      <div className="flex min-w-0 items-center">
-        <button type="button" onClick={openDialog} aria-label={car ? t('change') : undefined} className={`inline-flex min-h-9 min-w-0 items-center gap-2 text-[13px] font-medium ${quiet}`}>
-          <Car className="h-4 w-4 shrink-0" strokeWidth={1.8} />
-          <span className="truncate">{car ? `${car.label}${car.year ? ` · ${car.year}` : ''}` : t('chip')}</span>
+      {/* A banner: asks for the car, or shows the chosen one (name, year) with a way to change or remove it. */}
+      <div
+        className={`relative flex min-w-0 items-center gap-3.5 overflow-hidden rounded-[20px] border p-3.5 transition ${
+          car ? `${md.line} ${md.card}` : 'border-[#FDC902]/25 bg-[linear-gradient(135deg,rgba(253,201,2,0.13),rgba(253,201,2,0.025)_70%)]'
+        }`}
+      >
+        {!car && <span aria-hidden className="pointer-events-none absolute -end-8 -top-10 h-28 w-28 rounded-full bg-[#FDC902]/15 blur-2xl" />}
+        <button
+          type="button"
+          onClick={openDialog}
+          aria-label={car ? t('change') : t('chip')}
+          className="group relative flex min-w-0 flex-1 items-center gap-3.5 rounded-2xl text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FDC902]/60"
+        >
+          <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[14px] ${car ? 'bg-[#FDC902]/12 text-[#FDC902]' : 'bg-[#FDC902] text-[#0A0A0A]'}`}>
+            <Car className="h-6 w-6" strokeWidth={1.8} />
+          </span>
+          <span className="min-w-0 flex-1">
+            {car ? (
+              <>
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-[10px] font-medium uppercase tracking-[0.16em] text-[#8C8C8C]">{t('yourCar')}</span>
+                  {car.year && <span className="shrink-0 rounded-full bg-[#FDC902]/15 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-[#FDC902]">{car.year}</span>}
+                </span>
+                <span className="mt-1 block truncate text-[16px] font-semibold leading-tight text-white">{car.label}</span>
+              </>
+            ) : (
+              <>
+                <span className="block text-[16px] font-semibold leading-tight text-white">{t('chip')}</span>
+                <span className="mt-1 block text-[12.5px] leading-snug text-[#A8A8A8]">{t('hint')}</span>
+              </>
+            )}
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-[#FDC902] transition group-hover:translate-x-0.5 rtl:rotate-180" />
         </button>
         {car && (
-          <button type="button" onClick={() => setCar(null)} aria-label={t('removeCar')} className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${quiet}`}>
-            <X className="h-3.5 w-3.5" />
+          <button type="button" onClick={() => setCar(null)} aria-label={t('removeCar')} className={`relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/[0.06] ${quiet}`}>
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>
