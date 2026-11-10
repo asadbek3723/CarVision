@@ -40,6 +40,10 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   experimental: {
+    // Screens already fetched are reused for a while when opened again (and a part's page that was
+    // prefetched is ready the moment its card is tapped), so opening something never depends on a
+    // network round trip that could fail and make the browser reload the page.
+    staleTimes: { dynamic: 60, static: 300 },
     // Import only the icons / animation helpers that are used instead of whole packages.
     optimizePackageImports: ['lucide-react', 'framer-motion', 'next-intl'],
   },

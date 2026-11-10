@@ -25,6 +25,8 @@ export function MinimalProductCard({ p, i = 0, isNew = false }: { p: VeloceProdu
     <Link
       href={`/${locale}/shop/${p.id}`}
       aria-label={p.name}
+      // Fully prefetched while the card is on screen: tapping it opens the part with no waiting.
+      prefetch
       onPointerDown={() => {
         rememberProducts(locale, [p]);
         warmImage(p.images?.[0] ?? p.image);

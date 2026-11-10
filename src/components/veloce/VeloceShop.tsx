@@ -14,7 +14,7 @@ import type { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
 import { rememberProducts } from '@/features/shop/product-cache';
-import { liveVersion, useLiveTick } from '@/lib/live';
+import { liveVersion, useLiveTick, useRetryTick } from '@/lib/live';
 
 interface Facets {
   brands: string[];
@@ -48,6 +48,7 @@ export function VeloceShop() {
   const [visible, setVisible] = React.useState(PAGE);
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const live = useLiveTick();
+  const retry = useRetryTick(error);
   // Parts that appeared while the shop was open (published by a workshop): they rise in with a gold glow.
   const knownIds = React.useRef<Set<string> | null>(null);
   const lastFilter = React.useRef(filterQuery);
@@ -99,7 +100,7 @@ export function VeloceShop() {
     return () => {
       cancelled = true;
     };
-  }, [filterQuery, locale, live]);
+  }, [filterQuery, locale, live, retry]);
 
   // A new filter or search starts again from the first screenful.
   React.useEffect(() => setVisible(PAGE), [category, brand, query]);

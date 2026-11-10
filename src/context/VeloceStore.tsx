@@ -2,15 +2,22 @@
 
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { requestMotionAccess } from '@/features/camera/hooks/useDeviceLevel';
 
-// The camera (≈800 lines + animation + QR code) is downloaded only the first time it is opened,
-// not with every page of the site.
-const VeloceSmartCameraModal = dynamic(
-  () => import('@/components/camera/VeloceSmartCameraModal').then((m) => m.VeloceSmartCameraModal),
-  { ssr: false }
-);
+type CameraModalComponent = typeof import('@/components/camera/VeloceSmartCameraModal').VeloceSmartCameraModal;
+
+// The camera (≈800 lines + animation + QR code) is not part of every page. It is downloaded quietly
+// a moment after the app opens (see the provider), so the first tap on "Create" finds it ready
+// instead of waiting for the download; the same promise is shared by every caller.
+let cameraChunk: Promise<CameraModalComponent> | null = null;
+function loadCameraModal(): Promise<CameraModalComponent> {
+  cameraChunk ??= import('@/components/camera/VeloceSmartCameraModal').then((m) => m.VeloceSmartCameraModal);
+  return cameraChunk;
+}
+/** Starts downloading the camera (safe to call often); the "Create" button calls it the moment a finger touches it. */
+export function preloadCamera(): void {
+  void loadCameraModal();
+}
 
 interface VeloceStoreContextType {
   cart: Record<string, number>;
@@ -56,9 +63,32 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
   const [generatedAngles, setGeneratedAnglesState] = React.useState<Record<string, string>>({});
   const [isCameraOpen, setIsCameraOpen] = React.useState(false);
   // Once opened the modal stays mounted (it keeps its own state between openings).
-  const [cameraWanted, setCameraWanted] = React.useState(false);
+  const [CameraModal, setCameraModal] = React.useState<CameraModalComponent | null>(null);
+  // Download the camera in idle time shortly after the app opens, and at once if it is opened sooner.
   React.useEffect(() => {
-    if (isCameraOpen) setCameraWanted(true);
+    let cancelled = false;
+    const start = () => {
+      void loadCameraModal().then((C) => {
+        if (!cancelled) setCameraModal(() => C);
+      });
+    };
+    if (isCameraOpen) {
+      start();
+      return () => {
+        cancelled = true;
+      };
+    }
+    const w = window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    let handle = 0;
+    const timer = window.setTimeout(() => {
+      if (typeof w.requestIdleCallback === 'function') handle = w.requestIdleCallback(start, { timeout: 4000 });
+      else start();
+    }, 2500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      if (handle && typeof w.cancelIdleCallback === 'function') w.cancelIdleCallback(handle);
+    };
   }, [isCameraOpen]);
   const [captureStamp, setCaptureStamp] = React.useState('none');
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -330,12 +360,12 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
         onChange={handleFileChange}
       />
       {children}
-      {(cameraWanted || isCameraOpen) && (
-        <VeloceSmartCameraModal
-          isOpen={isCameraOpen}
-          onClose={closeCamera}
-          onCaptured={handleCameraCaptured}
-        />
+      {CameraModal && <CameraModal isOpen={isCameraOpen} onClose={closeCamera} onCaptured={handleCameraCaptured} />}
+      {/* Tapped before the camera arrived (slow connection): show something at once, never a frozen screen. */}
+      {isCameraOpen && !CameraModal && (
+        <div role="status" aria-label="Loading" className="fixed inset-0 z-[70] grid place-items-center bg-[#050507]">
+          <span className="h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-[#FDC902]" />
+        </div>
       )}
     </VeloceStoreContext.Provider>
   );

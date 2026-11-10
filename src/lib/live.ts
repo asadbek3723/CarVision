@@ -139,3 +139,24 @@ export function useLiveTick(intervalMs = 30_000): number {
 
   return tick;
 }
+
+/**
+ * While `active` (a screen could not load), counts up every few seconds so the screen asks again by
+ * itself: nobody should have to refresh anything. Stops as soon as it loads.
+ */
+export function useRetryTick(active: boolean, everyMs = 4000): number {
+  const [n, setN] = React.useState(0);
+  React.useEffect(() => {
+    if (!active) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine !== false) setN((x) => x + 1);
+    }, everyMs);
+    const onBack = () => setN((x) => x + 1);
+    window.addEventListener('online', onBack);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener('online', onBack);
+    };
+  }, [active, everyMs]);
+  return n;
+}

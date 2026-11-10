@@ -14,7 +14,7 @@ import type { CatalogItemDTO } from '@/domain/catalog';
 import { SellerOnly } from '@/features/seller/components/SellerOnly';
 import { isSellerUser } from '@/features/auth/roles';
 import { buttonClasses } from '@/components/ui';
-import { useLiveTick } from '@/lib/live';
+import { useLiveTick, useRetryTick } from '@/lib/live';
 
 /** Workshop garage: the studio's own published parts, ready to try on a customer's car. */
 /** Internal sentinel for the "all categories" chip; never shown to the user. */
@@ -38,6 +38,7 @@ export function VeloceGarage() {
 
   const isSeller = isSellerUser(user);
   const live = useLiveTick();
+  const retry = useRetryTick(error);
 
   React.useEffect(() => {
     if (waitingForUser) return;
@@ -52,6 +53,7 @@ export function VeloceGarage() {
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error();
         rememberInventory(user?.id, data.items as CatalogItemDTO[]);
+        if (!cancelled) setError(false);
         if (!cancelled) setItems((data.items as CatalogItemDTO[]).filter((i) => i.status === 'PUBLISHED'));
       } catch {
         if (!cancelled && !cachedInventory(user?.id)) setError(true);
@@ -62,7 +64,7 @@ export function VeloceGarage() {
     return () => {
       cancelled = true;
     };
-  }, [waitingForUser, isSeller, user?.id, live]);
+  }, [waitingForUser, isSeller, user?.id, live, retry]);
 
   const categories = React.useMemo(() => [ALL, ...new Set(items.map((i) => i.category))], [items]);
   const visible = items.filter((i) => activeCategory === ALL || i.category === activeCategory);

@@ -16,7 +16,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useVeloceStore } from '@/context/VeloceStore';
+import { preloadCamera, useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { isSellerUser } from '@/features/auth/roles';
@@ -381,6 +381,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
             {/* Create Button (Exact Center) */}
             <button
               type="button"
+              onPointerDown={preloadCamera}
               onClick={openCamera}
               className="group relative flex flex-col items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-primary transition-colors hover:brightness-125 cursor-pointer"
             >

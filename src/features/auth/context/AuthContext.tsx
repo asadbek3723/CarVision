@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import type { UserProfile, SignUpPayload } from '../types';
 
 /** `code` is the server error code, or NETWORK / SERVER when no usable answer arrived. */
@@ -100,13 +101,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, [refreshProfile]);
 
-  const openAuthModal = React.useCallback((mode: 'signin' | 'signup' = 'signin') => {
-    if (typeof window !== 'undefined') {
-      const parts = window.location.pathname.split('/');
-      const locale = parts[1] || 'uz';
-      window.location.href = mode === 'signup' ? `/${locale}/register` : `/${locale}/login`;
-    }
-  }, []);
+  // A soft navigation (no page reload) to the sign-in / sign-up screen.
+  const router = useRouter();
+  const openAuthModal = React.useCallback(
+    (mode: 'signin' | 'signup' = 'signin') => {
+      if (typeof window !== 'undefined') {
+        const parts = window.location.pathname.split('/');
+        const locale = parts[1] || 'uz';
+        router.push(mode === 'signup' ? `/${locale}/register` : `/${locale}/login`);
+      }
+    },
+    [router]
+  );
 
   const closeAuthModal = React.useCallback(() => {
     setIsAuthModalOpen(false);
