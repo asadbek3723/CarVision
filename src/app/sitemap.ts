@@ -13,10 +13,15 @@ const STATIC_PAGES: Array<{ path: string; priority: number; changeFrequency: 'da
   { path: '/plans', priority: 0.6, changeFrequency: 'monthly' },
 ];
 
-async function productEntries(): Promise<Array<{ id: string; lastModified: Date }>> {
+async function productEntries(): Promise<Array<{ id: string; lastModified: Date; images: string[] }>> {
   try {
     const items = await loadItems(createAdminClient(), { statuses: ['PUBLISHED'], limit: 200 });
-    return items.map((i) => ({ id: i.id, lastModified: new Date(i.createdAt) }));
+    return items.map((i) => ({
+      id: i.id,
+      lastModified: new Date(i.createdAt),
+      // Image search: the part's photos are listed with its page.
+      images: (i.images ?? []).map((img) => img.url).filter((u) => u.startsWith('https://')).slice(0, 5),
+    }));
   } catch {
     // DB unavailable at build time: ship the static part of the sitemap anyway.
     return [];
@@ -36,12 +41,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const products = await productEntries();
-  const productEntriesAll = products.flatMap(({ id, lastModified }) =>
+  const productEntriesAll = products.flatMap(({ id, lastModified, images }) =>
     routing.locales.map((locale) => ({
       url: absoluteUrl(localePath(locale, `/shop/${id}`)),
       lastModified,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
+      ...(images.length ? { images } : {}),
       alternates: { languages: languageAlternates(`/shop/${id}`) },
     }))
   );

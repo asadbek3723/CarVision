@@ -15,7 +15,7 @@ import { Toaster } from '@/components/ui/Toaster';
 import { IOS_STARTUP_IMAGES } from '@/lib/ios-splash';
 import { APP_THEME } from '@/lib/pwa-theme';
 import { JsonLd, organizationLd, websiteLd } from '@/lib/seo/jsonld';
-import { SEO_COPY } from '@/lib/seo/copy';
+import { BRAND_VARIANTS, SEO_COPY, SEO_KEYWORDS } from '@/lib/seo/copy';
 import { DEFAULT_LOCALE, SITE_NAME, SITE_URL, isLocale } from '@/lib/seo/site';
 import { JetBrains_Mono, Montserrat, Noto_Sans_Arabic, Outfit, Plus_Jakarta_Sans } from 'next/font/google';
 
@@ -52,16 +52,30 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     applicationName: SITE_NAME,
     title: copy.home.title,
     description: copy.home.description,
+    keywords: [...BRAND_VARIANTS, ...SEO_KEYWORDS[l]],
+    creator: SITE_NAME,
+    publisher: SITE_NAME,
+    category: 'automotive',
     manifest: `/${l}/manifest.webmanifest`,
     icons: {
       icon: [
-        { url: '/icons/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
-        { url: '/icons/icon-512.png?v=2', sizes: '512x512', type: 'image/png' },
+        { url: '/icons/icon.svg?v=3', type: 'image/svg+xml' },
+        { url: '/icons/favicon-32.png?v=3', sizes: '32x32', type: 'image/png' },
+        { url: '/icons/favicon-48.png?v=3', sizes: '48x48', type: 'image/png' },
+        { url: '/icons/icon-192.png?v=3', sizes: '192x192', type: 'image/png' },
+        { url: '/icons/icon-512.png?v=3', sizes: '512x512', type: 'image/png' },
       ],
-      apple: [{ url: '/icons/apple-touch-icon.png?v=2', sizes: '180x180' }],
+      shortcut: [{ url: '/icons/favicon-32.png?v=3', sizes: '32x32', type: 'image/png' }],
+      apple: [{ url: '/icons/apple-touch-icon.png?v=3', sizes: '180x180', type: 'image/png' }],
     },
     appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: SITE_NAME, startupImage: IOS_STARTUP_IMAGES },
-    other: { 'mobile-web-app-capable': 'yes' },
+    other: {
+      'mobile-web-app-capable': 'yes',
+      // Windows (pinned site / Start tile).
+      'msapplication-TileColor': '#0A0B0F',
+      'msapplication-TileImage': '/icons/mstile-310.png?v=3',
+      'msapplication-config': 'none',
+    },
     formatDetection: { telephone: false },
     verification,
   };

@@ -1,4 +1,4 @@
-import { SEO_COPY } from './copy';
+import { BRAND_VARIANTS, SEO_COPY } from './copy';
 import { SITE_NAME, SITE_URL, absoluteUrl, localePath } from './site';
 import type { Locale } from '@/i18n/routing';
 
@@ -10,14 +10,26 @@ export function JsonLd({ data }: { data: Json | Json[] }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
 }
 
+function socialLinks(): string[] {
+  return (process.env['NEXT_PUBLIC_SOCIAL_LINKS'] || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => /^https:\/\//.test(s));
+}
+
 export function organizationLd(): Json {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': `${SITE_URL}/#organization`,
     name: SITE_NAME,
+    alternateName: BRAND_VARIANTS.filter((n) => n !== SITE_NAME),
     url: SITE_URL,
-    logo: absoluteUrl('/icons/icon-512.png'),
+    logo: { '@type': 'ImageObject', url: absoluteUrl('/icons/icon-512.png'), width: 512, height: 512 },
+    image: absoluteUrl('/icons/icon-512.png'),
+    description: SEO_COPY.en.home.description,
+    // Official profiles (Instagram, Telegram...), comma-separated in NEXT_PUBLIC_SOCIAL_LINKS: they tie the brand together for search engines.
+    ...(socialLinks().length ? { sameAs: socialLinks() } : {}),
   };
 }
 
@@ -27,6 +39,8 @@ export function websiteLd(locale: Locale): Json {
     '@type': 'WebSite',
     '@id': `${SITE_URL}/#website`,
     name: SITE_NAME,
+    alternateName: BRAND_VARIANTS.filter((n) => n !== SITE_NAME),
+    description: SEO_COPY[locale].home.description,
     url: absoluteUrl(localePath(locale)),
     inLanguage: locale,
     publisher: { '@id': `${SITE_URL}/#organization` },

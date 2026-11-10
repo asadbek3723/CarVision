@@ -28,7 +28,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ locale:
   const { locale } = await params;
   const l = isLocale(locale) ? locale : DEFAULT_LOCALE;
   const sc = SHORTCUTS[l] ?? SHORTCUTS['uz']!;
-  const icon = [{ src: '/icons/icon-192.png?v=2', sizes: '192x192', type: 'image/png' }];
+  const icon = [{ src: '/icons/icon-192.png?v=3', sizes: '192x192', type: 'image/png' }];
   const shot = (n: number, label: string) => ({
     src: `/screenshots/shot-${n}.png`,
     sizes: '1080x1920',
@@ -39,7 +39,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ locale:
 
   const manifest = {
     id: '/',
-    name: `${SITE_NAME} — AI Tuning`,
+    name: SITE_NAME,
     short_name: SITE_NAME,
     description: SEO_COPY[l].home.description,
     lang: l,
@@ -53,10 +53,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ locale:
     theme_color: APP_THEME,
     prefer_related_applications: false,
     icons: [
-      { src: '/icons/icon-192.png?v=2', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/icons/icon-512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/icons/icon-maskable-192.png?v=2', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-      { src: '/icons/icon-maskable-512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/icons/icon-192.png?v=3', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icons/icon-512.png?v=3', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/icons/icon-maskable-192.png?v=3', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: '/icons/icon-maskable-512.png?v=3', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     screenshots: [shot(1, SITE_NAME), shot(2, sc.shop[0]), shot(3, sc.customize[0])],
     categories: ['automotive', 'shopping', 'business'],

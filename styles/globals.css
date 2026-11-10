@@ -1144,3 +1144,11 @@ img {
   height: 0;
   background: transparent;
 }
+
+/* The still copy of a previous screen (back swipe / push between screens) never replays entrance animations. */
+[data-snap] *,
+[data-snap] *::before,
+[data-snap] *::after {
+  animation: none !important;
+  transition: none !important;
+}

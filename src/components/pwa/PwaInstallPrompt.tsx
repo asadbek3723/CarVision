@@ -73,7 +73,7 @@ function InstallGuide({ platform, onClose }: { platform: InstallPlatform; onClos
   return (
     <>
       <div className="flex flex-col items-center text-center">
-        <img src="/icons/icon-192.png?v=2" alt="" width={64} height={64} className="h-16 w-16 rounded-[18px] shadow-[0_10px_30px_rgba(0,0,0,0.5)]" />
+        <img src="/icons/icon-192.png?v=3" alt="" width={64} height={64} className="h-16 w-16 rounded-[18px] shadow-[0_10px_30px_rgba(0,0,0,0.5)]" />
         <p className="mt-3 text-sm text-white/55">{t('guideSub')}</p>
       </div>
 
@@ -232,7 +232,7 @@ export function PwaInstallPrompt() {
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-x-4 bottom-[calc(var(--dock-h,0px)+16px)] z-50 flex items-center gap-3 rounded-3xl bg-surface-1/95 p-3 pe-2 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.85),0_0_35px_rgba(232,191,116,0.1)] backdrop-blur-2xl sm:inset-x-auto sm:end-6 sm:w-[400px]"
           >
-            <img src="/icons/icon-192.png?v=2" alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-xl" />
+            <img src="/icons/icon-192.png?v=3" alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{t('bannerTitle')}</p>
               <p className="truncate text-xs text-white/55">{t('bannerText')}</p>

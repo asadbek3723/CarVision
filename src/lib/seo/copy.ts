@@ -184,3 +184,21 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
     breadcrumbShop: 'Феҳрист',
   },
 };
+
+/** Names people may type for the brand (spacing, Cyrillic, with the domain). */
+export const BRAND_VARIANTS = ['CarVision', 'Car Vision', 'carvision', 'Карвижн', 'Кар Вижн', 'CarVision AI', 'CarVision tuning'];
+
+/**
+ * What people search for, per language. Google ignores the keywords tag; Yandex and Bing still read it,
+ * and the same words are the ones the page copy is written around.
+ */
+export const SEO_KEYWORDS: Record<Locale, string[]> = {
+  uz: ['avto tyuning', 'mashina tyuning', 'tuning Toshkent', 'disk tanlash', 'mashinaga disk', 'kuzov kit', 'bodykit', 'plyonka', 'mashina rangini o‘zgartirish', 'avto ehtiyot qismlar', 'tyuning ustaxona', 'mashinani AI bilan ko‘rish', 'avto vizualizator', 'spoyler', 'fara', 'keramika qoplama', 'polirovka'],
+  ru: ['тюнинг авто', 'тюнинг Ташкент', 'подбор дисков', 'диски на авто', 'обвес', 'бодикит', 'оклейка плёнкой', 'смена цвета авто', 'автозапчасти', 'тюнинг ателье', 'визуализация тюнинга', 'примерка дисков онлайн', 'спойлер', 'фары', 'керамика', 'полировка'],
+  en: ['car tuning', 'car customizer', 'wheel visualizer', 'try wheels on my car', 'body kit', 'car wrap', 'change car color', 'tuning parts', 'tuning shop', 'AI car visualizer', 'spoiler', 'headlights', 'ceramic coating', 'paint polishing'],
+  ar: ['تعديل السيارات', 'جنوط', 'بودي كت', 'تغليف السيارات', 'تغيير لون السيارة', 'قطع تعديل', 'ورشة تعديل', 'محاكي السيارات', 'سبويلر', 'تلميع', 'سيراميك'],
+  tr: ['araç modifiye', 'jant seçimi', 'body kit', 'araç kaplama', 'araç rengi değiştirme', 'modifiye parçaları', 'modifiye atölyesi', 'yapay zeka araç görselleştirme', 'spoyler', 'far', 'seramik kaplama', 'pasta cila'],
+  kk: ['көлік тюнингі', 'тюнинг Алматы', 'диск таңдау', 'обвес', 'бодикит', 'пленка', 'көлік түсін өзгерту', 'тюнинг бөлшектері', 'тюнинг шеберханасы', 'AI визуализация'],
+  ky: ['унаа тюнинги', 'тюнинг Бишкек', 'диск тандоо', 'обвес', 'бодикит', 'пленка', 'унаанын түсүн өзгөртүү', 'тюнинг тетиктери', 'тюнинг устаканасы', 'AI визуализация'],
+  tg: ['тюнинги мошин', 'тюнинг Душанбе', 'интихоби диск', 'обвес', 'бодикит', 'плёнка', 'иваз кардани ранги мошин', 'қисмҳои тюнинг', 'устохонаи тюнинг', 'визуализатсия бо AI'],
+};

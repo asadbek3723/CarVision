@@ -20,7 +20,7 @@ import { preloadCamera, useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { isSellerUser } from '@/features/auth/roles';
-import { previousPath, rememberPath } from '@/lib/nav-history';
+import { backPath, isPopNavigation, previousPath, rememberPath } from '@/lib/nav-history';
 import { useEdgeBack } from './useEdgeBack';
 import { LiquidIndicator, type LiquidIndicatorHandle } from './LiquidIndicator';
 import { TabPager, type PagerTab } from './TabPager';
@@ -310,6 +310,91 @@ export function VeloceShell({ children }: VeloceShellProps) {
     };
     void Promise.all(anims.map((a) => a.finished)).then(done, done);
   }, [pager, underTab, isRtl]);
+
+  // A screen opened from another screen (a part from "similar parts"): the screen it left is kept as a
+  // still copy, so a back swipe shows it underneath (like a native navigation stack) instead of a dark
+  // empty page, and opening the next one slides it in over that copy.
+  const snapshots = React.useRef(new Map<string, { node: HTMLElement; scrollTop: number }>());
+  const snapRef = React.useRef<HTMLDivElement | null>(null);
+  const snapHostRef = React.useRef<HTMLDivElement | null>(null);
+  const snapShadeRef = React.useRef<HTMLDivElement | null>(null);
+  const pagerNowRef = React.useRef(pager);
+  pagerNowRef.current = pager;
+  const pathnameRef = React.useRef(pathname);
+  pathnameRef.current = pathname;
+  const captureScreen = React.useCallback(() => {
+    const top = overlayRef.current;
+    if (!top || pagerNowRef.current) return;
+    const node = top.cloneNode(true) as HTMLElement;
+    node.classList.remove('cv-overlay-push');
+    node.style.transform = '';
+    node.style.boxShadow = '';
+    node.setAttribute('inert', '');
+    node.removeAttribute('id');
+    // Only the picture is kept: no scripts, structured data or head tags streamed into the page.
+    node.querySelectorAll('script, link, meta, title, noscript, iframe, video').forEach((el) => el.remove());
+    const map = snapshots.current;
+    map.delete(pathnameRef.current);
+    map.set(pathnameRef.current, { node, scrollTop: top.scrollTop });
+    while (map.size > 8) map.delete(map.keys().next().value as string);
+  }, []);
+  const mountSnapshot = React.useCallback((path: string | null) => {
+    const snap = path ? snapshots.current.get(path) : undefined;
+    const host = snapHostRef.current;
+    if (!snap || !host) return false;
+    if (snap.node.parentNode !== host) host.replaceChildren(snap.node);
+    snap.node.scrollTop = snap.scrollTop;
+    return true;
+  }, []);
+  const prevScreenRef = React.useRef<{ path: string; overlay: boolean } | null>(null);
+  React.useLayoutEffect(() => {
+    const prev = prevScreenRef.current;
+    prevScreenRef.current = { path: pathname, overlay: !pager };
+    const top = overlayRef.current;
+    const layer = snapRef.current;
+    const veil = snapShadeRef.current;
+    if (pager || !top || !layer || !veil) return;
+    // Whatever a finished back swipe left behind: the new screen sits in place at once.
+    top.style.transform = '';
+    top.style.boxShadow = '';
+    layer.style.visibility = 'hidden';
+    layer.style.transform = '';
+    veil.style.opacity = '0';
+    if (!prev || !prev.overlay || prev.path === pathname) return;
+    if (isPopNavigation(pathname)) {
+      // Back on a screen we kept a copy of: it opens where it was left.
+      const snap = snapshots.current.get(pathname);
+      if (snap) top.scrollTop = snap.scrollTop;
+      return;
+    }
+    if (!window.matchMedia('(max-width: 767px)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!mountSnapshot(prev.path)) return;
+    // Native push: the new screen slides in over the one it came from, which glides aside and darkens.
+    top.querySelectorAll<HTMLElement>('.page-enter').forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+    const sign = isRtl ? -1 : 1;
+    const w = top.clientWidth || window.innerWidth;
+    const opts: KeyframeAnimationOptions = { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' };
+    layer.style.visibility = 'visible';
+    const anims = [
+      top.animate(
+        [
+          { transform: `translate3d(${sign * 100}%,0,0)`, boxShadow: `${-sign * 18}px 0 40px rgba(0,0,0,0.45)` },
+          { transform: 'translate3d(0,0,0)', boxShadow: `${-sign * 18}px 0 40px rgba(0,0,0,0)` },
+        ],
+        opts
+      ),
+      layer.animate([{ transform: 'translate3d(0,0,0)' }, { transform: `translate3d(${-sign * w * 0.28}px,0,0)` }], opts),
+      veil.animate([{ opacity: 0 }, { opacity: 0.45 }], opts),
+    ];
+    const done = () => {
+      anims.forEach((a) => a.cancel());
+      layer.style.visibility = 'hidden';
+    };
+    void Promise.all(anims.map((a) => a.finished)).then(done, done);
+  }, [pathname, pager, isRtl, mountSnapshot]);
+  // What a back swipe slides in underneath: the tab it came from, or the copy of the previous screen.
+  const revealRef = React.useRef<HTMLElement | null>(null);
+  const revealShadeRef = React.useRef<HTMLElement | null>(null);
   const headerRef = React.useRef<HTMLElement | null>(null);
   const headerH = React.useRef(0);
   React.useLayoutEffect(() => {
@@ -351,8 +436,11 @@ export function VeloceShell({ children }: VeloceShellProps) {
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const a = (e.target as HTMLElement | null)?.closest?.('a[href]');
     const href = a?.getAttribute('href') ?? '';
-    if (a?.getAttribute('target') !== '_blank' && /^\/[a-z]{2}\/shop\/[^/?#]+/.test(href)) setLeaving(true);
-  }, []);
+    if (a?.getAttribute('target') === '_blank' || !href.startsWith('/')) return;
+    // Leaving a screen for another one: keep a still copy of it for the back swipe.
+    if (href.split(/[?#]/)[0] !== pathnameRef.current) captureScreen();
+    if (/^\/[a-z]{2}\/shop\/[^/?#]+/.test(href)) setLeaving(true);
+  }, [captureScreen]);
   const onPagerAim = React.useCallback((i: number) => setAimTab(i === tabIndexRef.current ? null : i), []);
   const onPagerSettle = React.useCallback((i: number) => {
     indicatorRef.current?.settle(TAB_COLS[i] ?? 0);
@@ -378,11 +466,30 @@ export function VeloceShell({ children }: VeloceShellProps) {
     !pager && !/\/customize(\/|$)/.test(pathname),
     () => (previousPath() ? router.back() : router.push(`/${locale}/seller`)),
     isRtl,
-    underRef,
-    shadeRef,
-    // The tab underneath is shown only when going back really lands on it.
-    () => underTab >= 0 && (previousPath() ?? '').split('?')[0] === tabs[underTab]?.href,
-    () => setBacking(true)
+    revealRef,
+    revealShadeRef,
+    // Something is shown underneath only when going back really lands on it.
+    () => {
+      const dest = backPath();
+      if (underTab >= 0 && dest === tabs[underTab]?.href) {
+        revealRef.current = underRef.current;
+        revealShadeRef.current = shadeRef.current;
+        return Boolean(underRef.current);
+      }
+      if (mountSnapshot(dest)) {
+        revealRef.current = snapRef.current;
+        revealShadeRef.current = snapShadeRef.current;
+        return true;
+      }
+      revealRef.current = null;
+      revealShadeRef.current = null;
+      return false;
+    },
+    // The header and dock come back at once, unless the screen it lands on is full-screen too.
+    () => {
+      if (!/^\/[a-z]{2}\/(shop\/[^/]+|customize)/.test(backPath() ?? '')) setBacking(true);
+    },
+    pathname
   );
 
   return (
@@ -584,6 +691,13 @@ export function VeloceShell({ children }: VeloceShellProps) {
             />
             {/* Dark veil that lifts as the screen on top slides away. */}
             <div ref={shadeRef} aria-hidden className="pointer-events-none absolute inset-0 bg-black opacity-0" />
+          </div>
+        )}
+        {/* Still copy of the previous screen, shown under a back swipe or a push from it. */}
+        {!pager && (
+          <div ref={snapRef} aria-hidden data-snap className="pointer-events-none absolute inset-0 overflow-hidden bg-surface-0" style={{ visibility: 'hidden' }}>
+            <div ref={snapHostRef} className="absolute inset-0" />
+            <div ref={snapShadeRef} className="absolute inset-0 bg-black opacity-0" />
           </div>
         )}
         {/* Every other screen: scrolls on its own, laid over the tabs. */}

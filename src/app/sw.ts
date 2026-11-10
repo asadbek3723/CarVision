@@ -108,8 +108,8 @@ sw.addEventListener('push', (event: { data?: { json(): PushPayload } | null; wai
     (async () => {
       await sw.registration.showNotification(data.title || 'CarVision', {
         body: data.body || '',
-        icon: '/icons/icon-192.png?v=2',
-        badge: '/icons/icon-192.png?v=2',
+        icon: '/icons/icon-192.png?v=3',
+        badge: '/icons/badge-96.png?v=3',
         tag: data.tag || 'carvision',
         data: { url: data.url || '/' },
       });

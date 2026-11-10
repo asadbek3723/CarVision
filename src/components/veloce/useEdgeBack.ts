@@ -71,7 +71,9 @@ export function useEdgeBack(
   under?: React.RefObject<HTMLElement | null>,
   shade?: React.RefObject<HTMLElement | null>,
   canReveal?: () => boolean,
-  onCommit?: () => void
+  onCommit?: () => void,
+  /** Changes with the route: a new screen starts clean (no leftover offset, no pending timer). */
+  resetKey?: string
 ) {
   const onBackRef = React.useRef(onBack);
   onBackRef.current = onBack;
@@ -83,8 +85,6 @@ export function useEdgeBack(
   React.useEffect(() => {
     const el = ref.current;
     if (!el || !enabled) return;
-    const underEl = under?.current;
-    const shadeEl = shade?.current;
     let id = -1;
     let state: 'idle' | 'pending' | 'drag' = 'idle';
     let x0 = 0;
@@ -164,8 +164,10 @@ export function useEdgeBack(
           /* gone */
         }
         // Show the screen this swipe goes back to, when there is one.
+        // (Asked first: it may choose which screen goes underneath.)
+        const can = Boolean(canRevealRef.current?.());
         const u = under?.current;
-        reveal = Boolean(u && canRevealRef.current?.());
+        reveal = Boolean(u && can);
         if (u && reveal) u.style.visibility = 'visible';
       }
       // Only towards "back" (right in LTR, left in RTL).
@@ -248,8 +250,8 @@ export function useEdgeBack(
       el.removeEventListener('pointercancel', up);
       el.style.transform = '';
       el.style.boxShadow = '';
-      if (underEl) underEl.style.transform = '';
-      if (shadeEl) shadeEl.style.opacity = '0';
+      if (under?.current) under.current.style.transform = '';
+      if (shade?.current) shade.current.style.opacity = '0';
     };
-  }, [ref, enabled, rtl, under, shade]);
+  }, [ref, enabled, rtl, under, shade, resetKey]);
 }
