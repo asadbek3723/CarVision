@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
-  Film,
   Download,
   CheckCircle2,
   SlidersHorizontal,
@@ -17,16 +16,11 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { FIVE_CAR_ANGLES } from '@/components/veloce/VeloceCustomize';
-import {
-  CinematicVideoStudio,
-  type CinematicAngleFrame,
-} from '@/components/studio/CinematicVideoStudio';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { vibrate } from '@/features/camera/lib/fx';
-import { heroAngleId } from '@/features/visualizer/render-plan';
 import { buttonClasses } from '@/components/ui';
 import { CompareImages, useCompareSlider } from '@/components/ui/CompareImages';
 
@@ -60,7 +54,6 @@ export default function CustomizeResultPage() {
   const [activeAngleId, setActiveAngleId] = React.useState<string>('front-left');
   const slider = useCompareSlider(50);
   const sliderPos = slider.pos;
-  const [isVideoStudioOpen, setIsVideoStudioOpen] = React.useState(false);
   const [workshopConfirmed, setWorkshopConfirmed] = React.useState(false);
 
 
@@ -127,18 +120,6 @@ export default function CustomizeResultPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [goTo]);
 
-  // Video frames: the real rendered sides only
-  const studioAngles: CinematicAngleFrame[] = React.useMemo(() => {
-    const frames = renderedAngles.map((ang) => ({
-      id: ang.id,
-      label: tc(`angles.${ang.key}`),
-      afterUrl: generatedAngles[ang.id] as string,
-    }));
-    // The reel opens on the best 3/4 view
-    const hero = heroAngleId(frames.map((f) => ({ id: f.id, label: f.label, photo: f.afterUrl })));
-    return [...frames].sort((a, b) => (a.id === hero ? -1 : b.id === hero ? 1 : 0));
-  }, [renderedAngles, generatedAngles, tc]);
-
   // Downloads one image. Cross-origin URLs ignore <a download>, so fetch it as a blob first.
   const saveImage = async (url: string, name: string) => {
     try {
@@ -185,8 +166,8 @@ export default function CustomizeResultPage() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1600px] px-4 pb-28 pt-3 md:px-8 lg:px-10 lg:pb-8">
-        {/* Action bar: edit on the left, downloads + video on the right */}
+      <div className="mx-auto w-full min-w-0 max-w-[1600px] overflow-x-clip px-4 pb-28 pt-3 md:px-8 lg:px-10 lg:pb-8">
+        {/* Action bar: edit on the left, downloads on the right */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 lg:mb-6">
           <button type="button" onClick={() => router.push(`/${locale}/customize`)} className={`${ghostBtn} -ms-3`}>
             <ArrowLeft className="h-4 w-4 text-gold-500 rtl:rotate-180" />
@@ -204,15 +185,6 @@ export default function CustomizeResultPage() {
                 <span>{t('downloadAll', { count: renderedAngles.length })}</span>
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setIsVideoStudioOpen(true)}
-              disabled={!hasResults}
-              className={buttonClasses({ size: 'md', className: 'ms-1' })}
-            >
-              <Film className="h-4 w-4" />
-              <span>{t('watchVideo')}</span>
-            </button>
           </div>
         </div>
 
@@ -227,9 +199,9 @@ export default function CustomizeResultPage() {
         )}
 
         {hasResults && (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_440px] xl:gap-14">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_440px] xl:gap-14">
             {/* BEFORE / AFTER viewer: fills the free height, sides sit on the image itself */}
-            <div className="overflow-hidden rounded-[28px] bg-surface-1 shadow-[0_32px_90px_-24px_rgba(0,0,0,0.85)]">
+            <div className="min-w-0 overflow-hidden rounded-[28px] bg-surface-1 shadow-[0_32px_90px_-24px_rgba(0,0,0,0.85)]">
               <div
                 ref={slider.ref}
                 {...slider.handlers}
@@ -295,7 +267,7 @@ export default function CustomizeResultPage() {
                   onPointerDown={(e) => e.stopPropagation()}
                   className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-3 bg-gradient-to-t from-black/75 via-black/25 to-transparent px-4 pb-4 pt-12"
                 >
-                  <div className="flex min-w-0 items-center gap-2.5 overflow-x-auto [scrollbar-width:none]">
+                  <div data-no-swipe className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [scrollbar-width:none]">
                     {renderedAngles.map((ang) => {
                       const active = currentId === ang.id;
                       return (
@@ -319,10 +291,10 @@ export default function CustomizeResultPage() {
             </div>
 
             {/* PARTS + TOTAL + BUY: one open column, no boxes */}
-            <aside className="flex flex-col lg:sticky lg:top-6 lg:max-h-[calc(100dvh-210px)] lg:min-h-[480px]">
+            <aside className="flex min-w-0 flex-col lg:sticky lg:top-6 lg:max-h-[calc(100dvh-210px)] lg:min-h-[480px]">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <h2 className="text-2xl font-extrabold tracking-tight text-white md:text-[28px]">{t('selectedTitle')}</h2>
+                  <h2 className="text-[22px] font-extrabold leading-tight tracking-tight text-white md:text-[28px]">{t('selectedTitle')}</h2>
                   <p className="mt-1.5 text-sm text-muted-foreground">{t('selectedSub')}</p>
                 </div>
                 <button type="button" onClick={() => router.push(`/${locale}/customize`)} className="-me-2 inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold text-gold-500 transition hover:bg-white/[0.07] cursor-pointer">
@@ -364,10 +336,6 @@ export default function CustomizeResultPage() {
                   <h3 className="text-xl font-bold text-white">{t('confirmedTitle')}</h3>
                   <p className="mt-1 text-sm text-white/75">{t('confirmedBody', { count: selectedParts.length })}</p>
                   <div className="mt-5 flex justify-center gap-2">
-                    <button type="button" onClick={() => setIsVideoStudioOpen(true)} className={buttonClasses({ size: 'md' })}>
-                      <Film className="h-4 w-4" />
-                      <span>{t('viewVideo')}</span>
-                    </button>
                     <button type="button" onClick={() => router.push(`/${locale}/customize`)} className={ghostBtn}>
                       <span>{t('editAgain')}</span>
                     </button>
@@ -407,13 +375,6 @@ export default function CustomizeResultPage() {
         )}
       </div>
 
-      {/* AI Cinematic Video Studio Modal */}
-      <CinematicVideoStudio
-        isOpen={isVideoStudioOpen}
-        onClose={() => setIsVideoStudioOpen(false)}
-        angles={studioAngles}
-        selectedParts={selectedParts}
-      />
     </>
   );
 }

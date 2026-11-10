@@ -56,7 +56,6 @@ describe('direct-fitment-engine', () => {
           category: 'Body Kit',
         },
       ],
-      mode: 'fitment',
     });
 
     expect(res.promptUsed).toContain('BBS CI-R 20"');
@@ -65,31 +64,12 @@ describe('direct-fitment-engine', () => {
     expect(res.durationMs).toBeGreaterThanOrEqual(0);
   });
 
-  it('builds an 8K video frame restoration prompt in enhance_for_video mode', async () => {
-    const res = await executeDirectAiFitment({
-      carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
-      angleId: 'right',
-      parts: [
-        {
-          id: 'light-1',
-          name: 'Matrix Laser Headlights',
-          category: 'Performance',
-        },
-      ],
-      mode: 'enhance_for_video',
-    });
-
-    expect(res.promptUsed).toContain('Ultra-sharp 8K commercial automotive cinematography');
-    expect(res.promptUsed).toContain('Matrix Laser Headlights');
-  });
-
   it('describes every angle and the same-build reference in the prompt', async () => {
     const res = await executeDirectAiFitment({
       carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
       angleId: 'rear-left',
       referenceAfter: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
       parts: [{ id: 'w1', name: 'BBS CI-R 20"', category: 'Wheels' }],
-      mode: 'fitment',
     });
     expect(res.promptUsed).toContain('rear-left 3/4');
     expect(res.promptUsed).toContain('LAST input image');
@@ -101,7 +81,6 @@ describe('direct-fitment-engine', () => {
       carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
       angleId: 'front-left',
       parts: [{ id: 'w1', name: 'BBS CI-R 20"', category: 'Wheels' }],
-      mode: 'fitment',
     });
     expect(res.promptUsed).toContain('dents');
     expect(res.promptUsed).toContain('Never repair, clean, smooth');
@@ -113,7 +92,6 @@ describe('direct-fitment-engine', () => {
       carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
       angleId: 'right',
       parts: [{ id: 'c1', name: 'Satin Black', category: 'Color', swatch: '#111' }],
-      mode: 'fitment',
     });
     expect(res.promptUsed).toContain('Change ONLY the exterior paint colour');
     expect(res.promptUsed).toContain('Do not make the paint glossier');
@@ -124,14 +102,12 @@ describe('direct-fitment-engine', () => {
     const ceramic = await executeDirectAiFitment({
       carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
       parts: [{ id: 'k1', name: 'Ceramic Pro 9H', category: 'Ceramic' }],
-      mode: 'fitment',
     });
     expect(ceramic.promptUsed).toContain('CERAMIC COATING');
     expect(ceramic.promptUsed).toContain('deep scratches stay');
     const polish = await executeDirectAiFitment({
       carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
       parts: [{ id: 'p1', name: 'Polirovka 2 bosqich', category: 'Polish' }],
-      mode: 'fitment',
     });
     expect(polish.promptUsed).toContain('PAINT POLISHING');
     expect(polish.promptUsed).toContain('Dents, creases, deep scratches');
@@ -144,7 +120,6 @@ describe('fitment prompt output rules', () => {
       carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
       angleId: 'rear',
       parts: [{ id: 'w', name: 'BBS', category: 'Wheels' }],
-      mode: 'fitment',
     });
     expect(res.promptUsed).toMatch(/exactly one picture/i);
     expect(res.promptUsed).toMatch(/same framing, aspect ratio and camera angle/i);

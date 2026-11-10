@@ -17,7 +17,6 @@ export interface DirectFitmentRequest {
   carPhoto: string;
   angleId?: string | undefined;
   parts: FitmentPartInput[];
-  mode?: 'fitment' | 'enhance_for_video' | undefined;
   /**
    * An already-finished render of the SAME car from another angle. Used only as a reference so
    * paint, wheels and body parts look identical across all angles of one build.
@@ -167,20 +166,6 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
 
   const angleText = angleDescriptions[req.angleId || 'front-left'] || '3/4 automotive view';
 
-  if (req.mode === 'enhance_for_video') {
-    const partNames = req.parts.map((p) => `${p.name} (${p.category})`).join(', ');
-    return [
-      `Ultra-sharp 8K commercial automotive cinematography frame of this exact car in the exact same location and background (${angleText}).`,
-      partNames
-        ? `The vehicle is fitted with ${partNames} with 100% OEM+ precision fitment.`
-        : '',
-      'Enhance optical clarity, reflections on the bodywork, rim metallic micro-contrast, and natural dynamic range.',
-      'Strictly preserve the exact car model, license plate area, background architecture, and camera perspective.',
-    ]
-      .filter(Boolean)
-      .join(' ');
-  }
-
   const isCeramic = (p: { category: string; name: string }) => /ceramic|keramik/i.test(`${p.category} ${p.name}`);
   const isPolish = (p: { category: string; name: string }) => /polish|polirov/i.test(`${p.category} ${p.name}`);
   const isColor = (p: { category: string; swatch?: string | undefined }) => Boolean(p.swatch) || /color|wrap|paint/i.test(p.category);
@@ -195,7 +180,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
       return `PAINT POLISHING "${p.name}": show the paint exactly as if it was machine-polished (paint correction). Swirl marks, haze, oxidation and light surface scratches are removed and the gloss is even and natural. Dents, creases, deep scratches, chips and damaged areas stay exactly as in the photo`;
     }
     if (isColor(p)) {
-      return `Change ONLY the exterior paint colour to "${p.name}" (${p.swatch || 'custom automotive wrap'}). Recolour the painted body panels in place: every dent, crease, scratch, scuff, chip and panel gap stays visible with the same shape, and the reflections keep the same position and intensity as in the original photo. Do not make the paint glossier or shinier than it was. Windows, glass, trim, lamps, tyres and wheels keep their original colour`;
+      return `Change ONLY the exterior paint colour to "${p.name}" (${p.swatch || 'custom automotive wrap'}). Recolour EVERY painted body surface visible in this photo completely and evenly, with no patch of the old colour left anywhere: doors, front and rear fenders, hood, roof, pillars, trunk lid, painted bumper areas, door handles, mirror shells, sills and the paint seen in the reflections on the car. Keep the real 3D shading: the same highlights, shadows and reflections stay in the same places and the same intensity, only their hue becomes the new colour, so it looks like real paint and not a flat fill. Every dent, crease, scratch, scuff, chip and panel gap stays visible with the same shape. Do not make the paint glossier or shinier than it was. Windows, glass, black trim, rubber, lamps, tyres, wheels, grille, badges and number plate keep their original colour`;
     }
     if (cat.includes('wheel') || cat.includes('disk')) {
       return `Replace the wheels with "${p.name}"${specText}: exact spoke geometry from the reference photo, same wheel size position, brake calipers and tyre sidewalls kept, realistic contact shadow`;
@@ -237,7 +222,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
         ? 'The paint gloss level stays the same as in the original photo.'
         : 'Do not touch the paint: the same colour, the same gloss level, the same swirl marks and dull spots. Do not add extra shine, glow, bloom, HDR look or contrast.',
     'OUTPUT: exactly one picture with the same framing, aspect ratio and camera angle as the customer photo. No text, captions, logos, watermark, border, collage or split screen. Do not add people, animals or objects that are not in the photo.',
-    'Result: a photorealistic photo that looks like the same photograph taken after the work was really done, with natural shadows and reflections.',
+    'Result: a photorealistic photo that looks like the same photograph taken after the work was really done: sharp natural detail, the same lens, grain and sensor noise as the original, physically correct contact shadows and reflections, no plastic or painted-over look, no blur, no smearing, no melted or warped shapes, symmetrical wheels and straight panel lines.',
   ]
     .filter(Boolean)
     .join(' ');
@@ -279,7 +264,7 @@ export async function executeDirectAiFitment(
       partLabels,
       referenceDataUri,
       prompt: promptUsed,
-      mode: req.mode || 'fitment',
+      mode: 'fitment',
     }, {
       task: 'fitment',
       ...(req.deadlineMs ? { deadlineMs: Math.max(8_000, req.deadlineMs - (Date.now() - startMs)) } : {}),
@@ -320,86 +305,4 @@ export async function executeDirectAiFitment(
     // 'no_provider' = no API key configured (demo mode); 'invalid_image' = car photo rejected by validation.
     outcome: !carDataUri ? 'invalid_image' : 'no_provider',
   };
-}
-
-// ---------------------------------------------------------------------------------------------
-// Video frame mastering
-// ---------------------------------------------------------------------------------------------
-
-export interface VideoEnhanceRequest {
-  /** Finished tuned render of one side of the car (data URI or allowed https URL). */
-  image: string;
-  angleId?: string | undefined;
-  /** Names of the installed parts, so the model protects them while relighting. */
-  partNames?: string[] | undefined;
-}
-
-export interface VideoEnhanceResponse {
-  /** data URI of the mastered frame, or null when no provider could do it */
-  image: string | null;
-  providerUsed: Exclude<DirectFitmentResponse['providerUsed'], 'local-neural-compositor'> | 'none';
-  outcome?: 'no_provider' | 'failed' | 'invalid_image' | undefined;
-}
-
-function buildVideoMasterPrompt(req: VideoEnhanceRequest): string {
-  const parts = (req.partNames ?? []).filter(Boolean).slice(0, 6).join(', ');
-  return [
-    'Re-master this exact photo as a hero frame from a premium automotive commercial.',
-    'Keep EVERYTHING that is in the photo: the exact same car, make, model, body shape, every installed part' +
-      (parts ? ` (${parts})` : '') +
-      ', wheel design, paint colour, camera angle, framing and location. Do not add, remove or redesign anything.',
-    'Only improve the image quality: razor-sharp detail, clean noise-free surfaces, crisp panel lines,',
-    'deep rich blacks, glossy clear-coat reflections, a soft golden rim light along the body lines,',
-    'polished metallic micro-contrast on the wheels, subtle cinematic colour grade with warm highlights,',
-    'natural shadows under the car, high dynamic range, photorealistic, no text, no watermark, no people.',
-  ].join(' ');
-}
-
-/** Downloads a provider output URL (https only) into a data URI so the client never hot-links it. */
-async function providerImageToDataUri(url: string): Promise<string | null> {
-  if (url.startsWith('data:image/')) return validDataUri(url);
-  if (!url.startsWith('https://')) return null;
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
-    if (!res.ok) return null;
-    const type = (res.headers.get('content-type') || 'image/jpeg').split(';')[0]!.trim().toLowerCase();
-    if (!ALLOWED_MIME.has(type)) return null;
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length === 0 || buf.length > MAX_IMAGE_BYTES) return null;
-    return `data:${type};base64,${buf.toString('base64')}`;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Re-renders one finished frame at commercial quality for the video edit.
- * Image-to-image editors only (never text-to-image: the car must stay the same car).
- */
-export async function executeVideoEnhance(req: VideoEnhanceRequest): Promise<VideoEnhanceResponse> {
-  if (!hasAnyImageKey()) return { image: null, providerUsed: 'none', outcome: 'no_provider' };
-
-  const src = await resolveImageToDataUri(req.image);
-  if (!src) return { image: null, providerUsed: 'none', outcome: 'invalid_image' };
-
-  // Same ranked, key-rotating chain as the fitment render (image-to-image editors only).
-  // Cloudflare is left out unless CLOUDFLARE_VIDEO_ENHANCE=1: this call is free for the customer and
-  // one video is ~5 frames, which would eat the daily Workers AI allocation the paid renders need.
-  // Without a provider the reel still renders with the built-in grade.
-  const chain = await runImageChain({
-    carDataUri: src,
-    partDataUris: [],
-    referenceDataUri: null,
-    prompt: buildVideoMasterPrompt(req),
-    mode: 'enhance_for_video',
-  }, {
-    task: 'video_frame',
-    ...(process.env.CLOUDFLARE_VIDEO_ENHANCE === '1' ? {} : { excludeProviders: ['cloudflare'] }),
-  });
-  if (!chain.ok && chain.reason === 'no_provider') return { image: null, providerUsed: 'none', outcome: 'no_provider' };
-  if (!chain.ok) return { image: null, providerUsed: 'none', outcome: 'failed' };
-
-  const valid = validDataUri(chain.image) ?? (await providerImageToDataUri(chain.image));
-  if (!valid) return { image: null, providerUsed: 'none', outcome: 'failed' };
-  return { image: valid, providerUsed: PROVIDER_LABEL[chain.provider] };
 }

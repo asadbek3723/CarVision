@@ -372,9 +372,10 @@ export function VeloceShell({ children }: VeloceShellProps) {
   }, [dockHidden]);
 
   // Installed app: swipe from the edge to leave a screen opened on top of the tabs.
+  // Part picking, rendering and the result are one flow: a stray swipe must not throw the work away.
   useEdgeBack(
     overlayRef,
-    !pager,
+    !pager && !/\/customize(\/|$)/.test(pathname),
     () => (previousPath() ? router.back() : router.push(`/${locale}/seller`)),
     isRtl,
     underRef,

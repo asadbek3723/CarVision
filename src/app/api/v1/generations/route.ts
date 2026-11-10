@@ -319,7 +319,6 @@ export async function POST(request: NextRequest) {
       carPhoto: input.photo,
       angleId: angleKey,
       parts: fitmentParts,
-      mode: 'fitment',
       referenceAfter: input.referenceAfterUrl,
       deadlineMs: AI_CHAIN_DEADLINE_MS,
     });
