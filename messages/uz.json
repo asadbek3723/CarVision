@@ -747,7 +747,8 @@
     "addPhoto": "Rasm qo‘shish",
     "removePhoto": "O‘chirish",
     "photoFailed": "Rasmni saqlab bo‘lmadi. Qayta urinib ko‘ring.",
-    "photoUpdated": "Rasm yangilandi"
+    "photoUpdated": "Rasm yangilandi",
+    "helpSub": "Savollar, muammolar va bizga yozish"
   },
   "customize": {
     "clearBuild": "Tanlovni tozalash",
@@ -2210,5 +2211,199 @@
     "androidStep2": "<b>Ilovani o‘rnatish</b> ni tanlang",
     "desktopStep": "Manzil satridagi <b>o‘rnatish</b> belgisini yoki brauzer menyusidagi <b>Ilovani o‘rnatish</b> ni bosing",
     "gotIt": "Tushunarli"
+  },
+  "support": {
+    "eyebrow": "Yordam markazi",
+    "title": "Sizga qanday yordam bera olamiz?",
+    "subtitle": "Ko‘p uchraydigan muammolarning yechimini shu yerda toping. Hal bo‘lmasa — bizga yozing, jamoamiz o‘zi bog‘lanadi.",
+    "back": "Profil",
+    "searchPh": "Muammoni qidiring: chek, render, parol…",
+    "topicsTitle": "Mavzular",
+    "faqTitle": "Ko‘p beriladigan savollar",
+    "showAll": "Hammasini ko‘rsatish",
+    "noResults": "Hech narsa topilmadi",
+    "noResultsSub": "Boshqa so‘z bilan qidiring yoki muammoni bizga yozing.",
+    "writeUs": "Bizga yozish",
+    "whatToDo": "Nima qilish kerak",
+    "stillStuck": "Hal bo‘lmadimi? Bizga yozing",
+    "topics": {
+      "order": "Buyurtmalar",
+      "payment": "To‘lov va chek",
+      "render": "Vizualizatsiya",
+      "account": "Hisob va kirish",
+      "seller": "Ustaxonalar uchun",
+      "bug": "Texnik muammolar",
+      "other": "Boshqa"
+    },
+    "contactTitle": "Bizga yozing",
+    "contactSub": "Muammoni batafsil yozing — xabaringiz to‘g‘ridan-to‘g‘ri qo‘llab-quvvatlash jamoasiga boradi.",
+    "topicLabel": "Mavzu",
+    "orderLabel": "Qaysi buyurtma bo‘yicha? (ixtiyoriy)",
+    "orderNone": "Buyurtmaga bog‘liq emas",
+    "messageLabel": "Muammoni tasvirlang",
+    "messagePh": "Nima bo‘ldi, qaysi sahifada va qachon? Qancha batafsil bo‘lsa, shuncha tez yordam beramiz.",
+    "photoAdd": "Skrinshot yoki rasm qo‘shish",
+    "photoAttached": "Rasm biriktirildi",
+    "photoRemove": "Rasmni olib tashlash",
+    "privacyNote": "Tez yordam berishimiz uchun xabar bilan birga hisob ma’lumotlaringiz (ism, {contact}, hisob ID) yuboriladi. Javobni shu kontakt orqali olasiz.",
+    "send": "Yuborish",
+    "sending": "Yuborilmoqda…",
+    "responseTime": "Odatda bir necha soat ichida javob beramiz",
+    "sentTitle": "Murojaatingiz qabul qilindi",
+    "ticketNo": "Murojaat raqami:",
+    "sentSub": "Jamoamiz xabaringizni oldi va tez orada {contact} orqali siz bilan bog‘lanadi.",
+    "sendAnother": "Yana murojaat yuborish",
+    "errShort": "Muammoni kamida {min} belgida yozing",
+    "errRate": "Juda ko‘p murojaat yuborildi. Bir soatdan keyin urinib ko‘ring.",
+    "errFileSize": "Rasm 5 MB dan katta bo‘lmasin",
+    "errFileType": "Faqat rasm biriktirish mumkin (JPG, PNG, WEBP)",
+    "errUnavailable": "Qo‘llab-quvvatlash vaqtincha ishlamayapti. Birozdan keyin urinib ko‘ring.",
+    "errSend": "Xabarni yuborib bo‘lmadi. Qayta urinib ko‘ring.",
+    "errNetwork": "Internet bilan aloqa yo‘q. Ulanishni tekshirib, qayta urinib ko‘ring.",
+    "faq": {
+      "orderHow": {
+        "q": "Detalni qanday sotib olaman?",
+        "a": "Do‘kondan detalni tanlab savatga qo‘shing, so‘ng ismingiz va telefon raqamingizni kiritib buyurtma bering.",
+        "steps": [
+          "Do‘kon bo‘limida detalni oching va «Savatga» tugmasini bosing",
+          "Savatda «Rasmiylashtirish»ni bosing, ism va telefonni kiriting",
+          "Ko‘rsatilgan kartaga summani o‘tkazing va chekni yuklang"
+        ]
+      },
+      "pickup": {
+        "q": "Olib ketish manzili qachon ochiladi?",
+        "a": "To‘lov chekingiz tasdiqlangach, buyurtma sahifasida ustaxona manzili, xaritasi, telefoni va olish kodi ochiladi.",
+        "steps": [
+          "Profil → Mening buyurtmalarim bo‘limidan buyurtmani oching",
+          "Holat «Sotib olindi» bo‘lsa, manzil va olish kodini ko‘rasiz",
+          "Ustaxonada olish kodini ko‘rsatib, detalni oling"
+        ]
+      },
+      "cancel": {
+        "q": "Buyurtmani qanday bekor qilaman?",
+        "a": "Buyurtma sahifasida «Buyurtmani bekor qilish» tugmasi bor. Qaytariladigan summa tasdiqlash oynasida ko‘rsatiladi.",
+        "steps": [
+          "Buyurtmani oching va «Buyurtmani bekor qilish»ni bosing",
+          "Oynadagi summani tekshirib, tasdiqlang",
+          "Tugma ko‘rinmasa, bekor qilish muddati o‘tgan — bizga yozing"
+        ]
+      },
+      "receiptPending": {
+        "q": "Chekim uzoq vaqt tekshirilmoqda",
+        "a": "Har bir chekni jamoamiz qo‘lda tekshiradi. Odatda bu bir necha soat oladi.",
+        "steps": [
+          "Chek aniq va to‘liq ko‘rinishini tekshiring",
+          "Izohda buyurtma raqami yozilganiga ishonch hosil qiling",
+          "Ko‘p vaqt o‘tgan bo‘lsa, buyurtmani tanlab bizga yozing"
+        ]
+      },
+      "receiptRejected": {
+        "q": "Chekim rad etildi, nima qilay?",
+        "a": "Rad etish sababi buyurtma sahifasida ko‘rsatiladi: chek xira, summa mos emas yoki takroriy bo‘lishi mumkin.",
+        "steps": [
+          "Buyurtma sahifasida rad etish sababini o‘qing",
+          "To‘g‘ri va aniq chekni qayta yuklang",
+          "Pul o‘tkazilgan bo‘lsa-yu chek qabul qilinmasa, bizga yozing"
+        ]
+      },
+      "wrongAmount": {
+        "q": "Noto‘g‘ri summa yoki kartaga pul o‘tkazdim",
+        "a": "Xavotir olmang — har bir to‘lov qo‘lda tekshiriladi va jamoamiz masalani hal qiladi.",
+        "steps": [
+          "Bank ilovasidan to‘lov chekini saqlang",
+          "Quyidagi formada buyurtmani tanlang va chekni rasm sifatida biriktiring",
+          "Qancha va qaysi kartaga o‘tkazganingizni yozing"
+        ]
+      },
+      "renderFailed": {
+        "q": "Vizualizatsiya chiqmadi yoki xato berdi",
+        "a": "Render xato bilan tugasa, sarflangan kredit avtomatik qaytariladi.",
+        "steps": [
+          "Internet aloqasini tekshirib, qayta urinib ko‘ring",
+          "Sozlamalar → Kredit tarixida «Qaytarildi» yozuvini tekshiring",
+          "Takrorlansa, skrinshot bilan bizga yozing"
+        ]
+      },
+      "renderQuality": {
+        "q": "Natija mashinamga o‘xshamadi",
+        "a": "Natija sifati ko‘p jihatdan suratga bog‘liq. Aniq va yorug‘ surat eng yaxshi natija beradi.",
+        "steps": [
+          "Mashinani kunduzi, soyasiz joyda suratga oling",
+          "Mashina kadrga to‘liq sig‘sin, burchakni kameradagi ko‘rsatma bo‘yicha tanlang",
+          "Mashina modeli to‘g‘ri tanlanganini tekshiring"
+        ]
+      },
+      "credits": {
+        "q": "Kreditlarim tugadi",
+        "a": "Har bir render kredit sarflaydi. Bepul kreditlar har oy yangilanadi, ko‘proq kerak bo‘lsa tarifni yangilang.",
+        "steps": [
+          "Profilda qolgan kreditlar sonini ko‘ring",
+          "Yangi oy boshlanishini kuting yoki tarifni yangilang",
+          "Kredit noto‘g‘ri yechilgan bo‘lsa, bizga yozing"
+        ]
+      },
+      "login": {
+        "q": "Parolni qanday o‘zgartiraman?",
+        "a": "Parolni profil sahifasidan o‘zgartirish mumkin. Joriy parolni bilish kerak bo‘ladi.",
+        "steps": [
+          "Profil → Profilni tahrirlash sahifasini oching",
+          "«Parol» bo‘limida joriy va yangi parolni kiriting",
+          "Yangi parol kamida 8 belgi, harf va raqamdan iborat bo‘lsin"
+        ]
+      },
+      "contacts": {
+        "q": "Telefon yoki emailni o‘zgartirmoqchiman",
+        "a": "Ism, telefon va email profilni tahrirlash sahifasida o‘zgartiriladi.",
+        "steps": [
+          "Profil → Profilni tahrirlash sahifasini oching",
+          "Yangi ma’lumotni kiriting va saqlang",
+          "Xato chiqsa, xato matni bilan bizga yozing"
+        ]
+      },
+      "language": {
+        "q": "Til yoki valyutani qanday almashtiraman?",
+        "a": "Til va valyuta Sozlamalar bo‘limida tanlanadi. Tanlov keyingi safar ham saqlanib qoladi.",
+        "steps": [
+          "Profil → Sozlamalar bo‘limini oching",
+          "Kerakli til va valyutani tanlang"
+        ]
+      },
+      "sellerPayout": {
+        "q": "Sotilgan detal puli qachon tushadi?",
+        "a": "Mijoz detalni olgach, to‘lov ustaxonangiz kartasiga qo‘lda o‘tkaziladi. Holatini Dashboard’dagi buyurtmada ko‘rasiz.",
+        "steps": [
+          "Dashboard → Buyurtmalar bo‘limida to‘lov holatini tekshiring",
+          "Mijoz detalni olganda olish kodini tasdiqlang",
+          "Uzoq kechiksa, buyurtmani tanlab bizga yozing"
+        ]
+      },
+      "sellerAddPart": {
+        "q": "Detal qo‘sha olmayapman",
+        "a": "Yangi detal Dashboard’dagi «Yangi detal» sahifasidan qo‘shiladi. Rasm sifati va to‘ldirilgan maydonlarni tekshiring.",
+        "steps": [
+          "Rasm aniq va 10 MB dan kichik ekanini tekshiring",
+          "Barcha majburiy maydonlarni to‘ldiring",
+          "Xato takrorlansa, skrinshot bilan bizga yozing"
+        ]
+      },
+      "appBug": {
+        "q": "Sahifa ochilmayapti yoki ilova xato beryapti",
+        "a": "Ko‘pincha sahifani yangilash yoki ilovani qayta ochish yordam beradi.",
+        "steps": [
+          "Sahifani yangilang yoki ilovani yopib qayta oching",
+          "Internet aloqasini tekshiring",
+          "Muammo qolsa, skrinshot va qaysi sahifada bo‘lganini yozib yuboring"
+        ]
+      },
+      "notifications": {
+        "q": "Bildirishnomalar kelmayapti",
+        "a": "Bildirishnomalar profildagi tugma orqali yoqiladi va brauzer ruxsatini talab qiladi.",
+        "steps": [
+          "Profilda «Bildirishnomalar»ni yoqing",
+          "Brauzer yoki telefon sozlamalarida ruxsat berilganini tekshiring",
+          "iPhone’da avval ilovani Bosh ekranga qo‘shing"
+        ]
+      }
+    }
   }
 }

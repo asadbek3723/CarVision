@@ -747,7 +747,8 @@
     "addPhoto": "Add photo",
     "removePhoto": "Remove",
     "photoFailed": "Couldn't save the photo. Please try again.",
-    "photoUpdated": "Photo updated"
+    "photoUpdated": "Photo updated",
+    "helpSub": "Questions, issues and contacting us"
   },
   "customize": {
     "clearBuild": "Clear build",
@@ -2210,5 +2211,199 @@
     "androidStep2": "Choose <b>Install app</b>",
     "desktopStep": "Click the <b>install</b> icon in the address bar, or <b>Install app</b> in the browser menu",
     "gotIt": "Got it"
+  },
+  "support": {
+    "eyebrow": "Help centre",
+    "title": "How can we help?",
+    "subtitle": "Find fixes for common problems here. Still stuck? Write to us and our team will get back to you.",
+    "back": "Profile",
+    "searchPh": "Search: receipt, render, password…",
+    "topicsTitle": "Topics",
+    "faqTitle": "Frequently asked questions",
+    "showAll": "Show all",
+    "noResults": "Nothing found",
+    "noResultsSub": "Try other words or describe the problem to us.",
+    "writeUs": "Write to us",
+    "whatToDo": "What to do",
+    "stillStuck": "Didn't help? Write to us",
+    "topics": {
+      "order": "Orders",
+      "payment": "Payment & receipt",
+      "render": "Visualisation",
+      "account": "Account & sign-in",
+      "seller": "For workshops",
+      "bug": "Technical issues",
+      "other": "Other"
+    },
+    "contactTitle": "Write to us",
+    "contactSub": "Describe the problem in detail — your message goes straight to the support team.",
+    "topicLabel": "Topic",
+    "orderLabel": "Which order? (optional)",
+    "orderNone": "Not about an order",
+    "messageLabel": "Describe the problem",
+    "messagePh": "What happened, on which page and when? The more detail, the faster we can help.",
+    "photoAdd": "Add a screenshot or photo",
+    "photoAttached": "Photo attached",
+    "photoRemove": "Remove photo",
+    "privacyNote": "To help faster, your account details (name, {contact}, account ID) are sent with the message. We'll reply via this contact.",
+    "send": "Send",
+    "sending": "Sending…",
+    "responseTime": "We usually reply within a few hours",
+    "sentTitle": "Request received",
+    "ticketNo": "Request number:",
+    "sentSub": "Our team has your message and will contact you soon via {contact}.",
+    "sendAnother": "Send another request",
+    "errShort": "Describe the problem in at least {min} characters",
+    "errRate": "Too many requests. Please try again in an hour.",
+    "errFileSize": "The image must be 5 MB or smaller",
+    "errFileType": "Only images can be attached (JPG, PNG, WEBP)",
+    "errUnavailable": "Support is temporarily unavailable. Please try again shortly.",
+    "errSend": "Couldn't send the message. Please try again.",
+    "errNetwork": "No internet connection. Check your network and try again.",
+    "faq": {
+      "orderHow": {
+        "q": "How do I buy a part?",
+        "a": "Pick a part in the shop, add it to the cart and place the order with your name and phone number.",
+        "steps": [
+          "Open the part in the shop and tap “Add to cart”",
+          "In the cart tap “Checkout” and enter your name and phone",
+          "Transfer the amount to the card shown and upload the receipt"
+        ]
+      },
+      "pickup": {
+        "q": "When do I see the pickup address?",
+        "a": "Once your receipt is approved, the order page shows the workshop address, map, phone and pickup code.",
+        "steps": [
+          "Open the order under Profile → My orders",
+          "When the status is “Purchased” you'll see the address and pickup code",
+          "Show the code at the workshop and collect the part"
+        ]
+      },
+      "cancel": {
+        "q": "How do I cancel an order?",
+        "a": "The order page has a “Cancel order” button. The refund amount is shown in the confirmation dialog.",
+        "steps": [
+          "Open the order and tap “Cancel order”",
+          "Check the amount in the dialog and confirm",
+          "If the button is gone, the cancellation window has passed — write to us"
+        ]
+      },
+      "receiptPending": {
+        "q": "My receipt has been under review for a long time",
+        "a": "Our team checks every receipt by hand. This usually takes a few hours.",
+        "steps": [
+          "Make sure the receipt is sharp and fully visible",
+          "Check that the order number is in the transfer comment",
+          "If it's been a long time, select the order and write to us"
+        ]
+      },
+      "receiptRejected": {
+        "q": "My receipt was rejected — what now?",
+        "a": "The reason is shown on the order page: blurry receipt, wrong amount or a duplicate.",
+        "steps": [
+          "Read the reason on the order page",
+          "Upload the correct, clear receipt again",
+          "If you paid but the receipt isn't accepted, write to us"
+        ]
+      },
+      "wrongAmount": {
+        "q": "I sent the wrong amount or to the wrong card",
+        "a": "Don't worry — every payment is checked by hand and our team will sort it out.",
+        "steps": [
+          "Save the receipt from your banking app",
+          "In the form below, pick the order and attach the receipt as a photo",
+          "Tell us how much you sent and to which card"
+        ]
+      },
+      "renderFailed": {
+        "q": "The visualisation failed or showed an error",
+        "a": "If a render ends with an error, the credit is refunded automatically.",
+        "steps": [
+          "Check your connection and try again",
+          "Look for a “Refunded” entry in Settings → Credit history",
+          "If it keeps happening, write to us with a screenshot"
+        ]
+      },
+      "renderQuality": {
+        "q": "The result doesn't look like my car",
+        "a": "Quality depends a lot on the photo. A sharp, well-lit photo gives the best result.",
+        "steps": [
+          "Shoot the car in daylight without harsh shadows",
+          "Keep the whole car in frame and follow the camera's angle guide",
+          "Check that the right car model is selected"
+        ]
+      },
+      "credits": {
+        "q": "I've run out of credits",
+        "a": "Each render uses a credit. Free credits renew every month; upgrade your plan for more.",
+        "steps": [
+          "Check your remaining credits on the profile",
+          "Wait for the new month or upgrade your plan",
+          "If a credit was taken by mistake, write to us"
+        ]
+      },
+      "login": {
+        "q": "How do I change my password?",
+        "a": "You can change it from your profile. You'll need your current password.",
+        "steps": [
+          "Open Profile → Edit profile",
+          "In “Password”, enter your current and new password",
+          "Use at least 8 characters with letters and numbers"
+        ]
+      },
+      "contacts": {
+        "q": "I want to change my phone or email",
+        "a": "Name, phone and email are changed on the edit profile page.",
+        "steps": [
+          "Open Profile → Edit profile",
+          "Enter the new details and save",
+          "If you see an error, send us its text"
+        ]
+      },
+      "language": {
+        "q": "How do I change language or currency?",
+        "a": "Pick language and currency in Settings; your choice is kept for next time.",
+        "steps": [
+          "Open Profile → Settings",
+          "Choose the language and currency you want"
+        ]
+      },
+      "sellerPayout": {
+        "q": "When do I get paid for a sold part?",
+        "a": "After the customer collects the part, the payout is sent to your workshop's card by hand. You'll see its status on the order in the Dashboard.",
+        "steps": [
+          "Check the payout status under Dashboard → Orders",
+          "Confirm the pickup code when the customer collects the part",
+          "If the payout is late, pick the order and write to us"
+        ]
+      },
+      "sellerAddPart": {
+        "q": "I can't add a part",
+        "a": "New parts are added on the “New part” page in the Dashboard. Check the photo and the required fields.",
+        "steps": [
+          "Make sure the photo is sharp and under 10 MB",
+          "Fill in all required fields",
+          "If the error repeats, write to us with a screenshot"
+        ]
+      },
+      "appBug": {
+        "q": "A page won't open or the app shows an error",
+        "a": "Refreshing the page or reopening the app usually helps.",
+        "steps": [
+          "Refresh the page, or close and reopen the app",
+          "Check your internet connection",
+          "If it persists, send a screenshot and tell us which page"
+        ]
+      },
+      "notifications": {
+        "q": "I'm not getting notifications",
+        "a": "Notifications are turned on from the profile and need browser permission.",
+        "steps": [
+          "Turn on “Notifications” in your profile",
+          "Check the permission in browser or phone settings",
+          "On iPhone, add the app to the Home Screen first"
+        ]
+      }
+    }
   }
 }

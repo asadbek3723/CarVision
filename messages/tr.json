@@ -747,7 +747,8 @@
     "addPhoto": "Fotoğraf ekle",
     "removePhoto": "Kaldır",
     "photoFailed": "Fotoğraf kaydedilemedi. Lütfen tekrar deneyin.",
-    "photoUpdated": "Fotoğraf güncellendi"
+    "photoUpdated": "Fotoğraf güncellendi",
+    "helpSub": "Sorular, sorunlar ve bize yazın"
   },
   "customize": {
     "clearBuild": "Seçimi temizle",
@@ -2210,5 +2211,199 @@
     "androidStep2": "<b>Uygulamayı yükle</b> seçin",
     "desktopStep": "Adres çubuğundaki <b>yükle</b> simgesine veya tarayıcı menüsündeki <b>Uygulamayı yükle</b>ye tıklayın",
     "gotIt": "Anladım"
+  },
+  "support": {
+    "eyebrow": "Yardım merkezi",
+    "title": "Size nasıl yardımcı olabiliriz?",
+    "subtitle": "Sık karşılaşılan sorunların çözümlerini burada bulun. Çözülmezse bize yazın, ekibimiz size ulaşır.",
+    "back": "Profil",
+    "searchPh": "Ara: dekont, render, şifre…",
+    "topicsTitle": "Konular",
+    "faqTitle": "Sık sorulan sorular",
+    "showAll": "Tümünü göster",
+    "noResults": "Sonuç bulunamadı",
+    "noResultsSub": "Başka kelimelerle arayın veya sorunu bize yazın.",
+    "writeUs": "Bize yazın",
+    "whatToDo": "Ne yapmalı",
+    "stillStuck": "Çözülmedi mi? Bize yazın",
+    "topics": {
+      "order": "Siparişler",
+      "payment": "Ödeme ve dekont",
+      "render": "Görselleştirme",
+      "account": "Hesap ve giriş",
+      "seller": "Atölyeler için",
+      "bug": "Teknik sorunlar",
+      "other": "Diğer"
+    },
+    "contactTitle": "Bize yazın",
+    "contactSub": "Sorunu ayrıntılı yazın — mesajınız doğrudan destek ekibine gider.",
+    "topicLabel": "Konu",
+    "orderLabel": "Hangi sipariş? (isteğe bağlı)",
+    "orderNone": "Siparişle ilgili değil",
+    "messageLabel": "Sorunu açıklayın",
+    "messagePh": "Ne oldu, hangi sayfada ve ne zaman? Ne kadar ayrıntılı olursa o kadar hızlı yardım ederiz.",
+    "photoAdd": "Ekran görüntüsü veya fotoğraf ekle",
+    "photoAttached": "Fotoğraf eklendi",
+    "photoRemove": "Fotoğrafı kaldır",
+    "privacyNote": "Daha hızlı yardım için mesajla birlikte hesap bilgileriniz (ad, {contact}, hesap ID) gönderilir. Yanıtı bu iletişim üzerinden alırsınız.",
+    "send": "Gönder",
+    "sending": "Gönderiliyor…",
+    "responseTime": "Genellikle birkaç saat içinde yanıt veririz",
+    "sentTitle": "Talebiniz alındı",
+    "ticketNo": "Talep numarası:",
+    "sentSub": "Ekibimiz mesajınızı aldı ve yakında {contact} üzerinden sizinle iletişime geçecek.",
+    "sendAnother": "Yeni talep gönder",
+    "errShort": "Sorunu en az {min} karakterle yazın",
+    "errRate": "Çok fazla talep gönderildi. Bir saat sonra tekrar deneyin.",
+    "errFileSize": "Fotoğraf 5 MB'tan büyük olmamalı",
+    "errFileType": "Yalnızca görsel eklenebilir (JPG, PNG, WEBP)",
+    "errUnavailable": "Destek geçici olarak kullanılamıyor. Biraz sonra tekrar deneyin.",
+    "errSend": "Mesaj gönderilemedi. Tekrar deneyin.",
+    "errNetwork": "İnternet bağlantısı yok. Bağlantıyı kontrol edip tekrar deneyin.",
+    "faq": {
+      "orderHow": {
+        "q": "Bir parçayı nasıl satın alırım?",
+        "a": "Mağazadan parçayı seçip sepete ekleyin, ardından adınız ve telefonunuzla sipariş verin.",
+        "steps": [
+          "Mağazada parçayı açın ve “Sepete ekle”ye dokunun",
+          "Sepette “Siparişi tamamla”ya dokunun, ad ve telefonu girin",
+          "Tutarı gösterilen karta aktarın ve dekontu yükleyin"
+        ]
+      },
+      "pickup": {
+        "q": "Teslim alma adresi ne zaman açılır?",
+        "a": "Dekontunuz onaylandığında sipariş sayfasında atölye adresi, harita, telefon ve teslim kodu açılır.",
+        "steps": [
+          "Profil → Siparişlerim bölümünden siparişi açın",
+          "Durum “Satın alındı” ise adresi ve teslim kodunu görürsünüz",
+          "Atölyede kodu gösterip parçayı teslim alın"
+        ]
+      },
+      "cancel": {
+        "q": "Siparişi nasıl iptal ederim?",
+        "a": "Sipariş sayfasında “Siparişi iptal et” düğmesi var. İade tutarı onay penceresinde gösterilir.",
+        "steps": [
+          "Siparişi açın ve “Siparişi iptal et”e dokunun",
+          "Penceredeki tutarı kontrol edip onaylayın",
+          "Düğme görünmüyorsa iptal süresi dolmuştur — bize yazın"
+        ]
+      },
+      "receiptPending": {
+        "q": "Dekontum uzun süredir inceleniyor",
+        "a": "Her dekontu ekibimiz elle kontrol eder. Genellikle birkaç saat sürer.",
+        "steps": [
+          "Dekontun net ve tam göründüğünden emin olun",
+          "Açıklamada sipariş numarasının yazılı olduğunu kontrol edin",
+          "Uzun süre geçtiyse siparişi seçip bize yazın"
+        ]
+      },
+      "receiptRejected": {
+        "q": "Dekontum reddedildi, ne yapmalıyım?",
+        "a": "Ret nedeni sipariş sayfasında yazılıdır: bulanık dekont, yanlış tutar veya tekrar eden dekont.",
+        "steps": [
+          "Sipariş sayfasındaki nedeni okuyun",
+          "Doğru ve net dekontu yeniden yükleyin",
+          "Ödeme yaptıysanız ama dekont kabul edilmiyorsa bize yazın"
+        ]
+      },
+      "wrongAmount": {
+        "q": "Yanlış tutar veya yanlış karta para gönderdim",
+        "a": "Endişelenmeyin — her ödeme elle kontrol edilir ve ekibimiz sorunu çözer.",
+        "steps": [
+          "Banka uygulamasından dekontu kaydedin",
+          "Aşağıdaki formda siparişi seçip dekontu fotoğraf olarak ekleyin",
+          "Ne kadar ve hangi karta gönderdiğinizi yazın"
+        ]
+      },
+      "renderFailed": {
+        "q": "Görselleştirme oluşmadı veya hata verdi",
+        "a": "Render hatayla biterse harcanan kredi otomatik iade edilir.",
+        "steps": [
+          "İnternet bağlantısını kontrol edip tekrar deneyin",
+          "Ayarlar → Kredi geçmişinde “İade edildi” kaydını kontrol edin",
+          "Tekrarlanırsa ekran görüntüsüyle bize yazın"
+        ]
+      },
+      "renderQuality": {
+        "q": "Sonuç arabama benzemiyor",
+        "a": "Sonuç kalitesi büyük ölçüde fotoğrafa bağlıdır. Net ve aydınlık fotoğraf en iyi sonucu verir.",
+        "steps": [
+          "Arabayı gündüz, sert gölge olmadan çekin",
+          "Araba tamamen kadrajda olsun, açıyı kamera rehberine göre seçin",
+          "Araç modelinin doğru seçildiğini kontrol edin"
+        ]
+      },
+      "credits": {
+        "q": "Kredilerim bitti",
+        "a": "Her render bir kredi harcar. Ücretsiz krediler her ay yenilenir; daha fazlası için planınızı yükseltin.",
+        "steps": [
+          "Profilde kalan kredilerinizi görün",
+          "Yeni ayı bekleyin veya planınızı yükseltin",
+          "Kredi yanlışlıkla düşüldüyse bize yazın"
+        ]
+      },
+      "login": {
+        "q": "Şifremi nasıl değiştiririm?",
+        "a": "Şifre profil sayfasından değiştirilir. Mevcut şifrenizi bilmeniz gerekir.",
+        "steps": [
+          "Profil → Profili düzenle sayfasını açın",
+          "“Şifre” bölümüne mevcut ve yeni şifreyi girin",
+          "Yeni şifre en az 8 karakter, harf ve rakam içersin"
+        ]
+      },
+      "contacts": {
+        "q": "Telefon veya e-postamı değiştirmek istiyorum",
+        "a": "Ad, telefon ve e-posta profil düzenleme sayfasında değiştirilir.",
+        "steps": [
+          "Profil → Profili düzenle sayfasını açın",
+          "Yeni bilgileri girip kaydedin",
+          "Hata çıkarsa hata metniyle bize yazın"
+        ]
+      },
+      "language": {
+        "q": "Dili veya para birimini nasıl değiştiririm?",
+        "a": "Dil ve para birimi Ayarlar'dan seçilir ve sonraki girişler için saklanır.",
+        "steps": [
+          "Profil → Ayarlar'ı açın",
+          "İstediğiniz dili ve para birimini seçin"
+        ]
+      },
+      "sellerPayout": {
+        "q": "Satılan parçanın parası ne zaman gelir?",
+        "a": "Müşteri parçayı teslim aldıktan sonra ödeme atölyenizin kartına elle aktarılır. Durumu Dashboard'daki siparişte görürsünüz.",
+        "steps": [
+          "Dashboard → Siparişler'de ödeme durumunu kontrol edin",
+          "Müşteri parçayı alırken teslim kodunu onaylayın",
+          "Ödeme gecikirse siparişi seçip bize yazın"
+        ]
+      },
+      "sellerAddPart": {
+        "q": "Parça ekleyemiyorum",
+        "a": "Yeni parça Dashboard'daki “Yeni parça” sayfasından eklenir. Fotoğrafı ve zorunlu alanları kontrol edin.",
+        "steps": [
+          "Fotoğrafın net ve 10 MB'tan küçük olduğundan emin olun",
+          "Tüm zorunlu alanları doldurun",
+          "Hata tekrarlanırsa ekran görüntüsüyle bize yazın"
+        ]
+      },
+      "appBug": {
+        "q": "Sayfa açılmıyor veya uygulama hata veriyor",
+        "a": "Genellikle sayfayı yenilemek veya uygulamayı yeniden açmak işe yarar.",
+        "steps": [
+          "Sayfayı yenileyin veya uygulamayı kapatıp yeniden açın",
+          "İnternet bağlantınızı kontrol edin",
+          "Devam ederse ekran görüntüsü gönderip hangi sayfa olduğunu yazın"
+        ]
+      },
+      "notifications": {
+        "q": "Bildirimler gelmiyor",
+        "a": "Bildirimler profildeki düğmeyle açılır ve tarayıcı izni gerektirir.",
+        "steps": [
+          "Profilde “Bildirimler”i açın",
+          "Tarayıcı veya telefon ayarlarında izni kontrol edin",
+          "iPhone'da önce uygulamayı Ana Ekrana ekleyin"
+        ]
+      }
+    }
   }
 }
