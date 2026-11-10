@@ -66,6 +66,27 @@ export function splitCloudflareKey(key: string): { accountId: string; token: str
   return CF_ACCOUNT_ID.test(accountId) && token ? { accountId, token } : null;
 }
 
+/**
+ * Positions of every key that draws on the same Cloudflare account as `keys[index]` (the daily
+ * neuron allocation belongs to the account, not to the token, so they run out together).
+ */
+export function sameCloudflareAccount(keys: string[], index: number): number[] {
+  const account = splitCloudflareKey(keys[index] ?? '')?.accountId;
+  if (!account) return [index];
+  const out: number[] = [];
+  keys.forEach((key, i) => {
+    if (splitCloudflareKey(key)?.accountId === account) out.push(i);
+  });
+  return out;
+}
+
+/** Milliseconds until the next 00:00 UTC (+1 min margin): when the Workers AI free allocation resets. */
+export function msUntilUtcMidnight(now = Date.now()): number {
+  const d = new Date(now);
+  const next = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 1);
+  return next - now;
+}
+
 const cooldowns = new Map<string, number>();
 const cursors = new Map<ProviderId, number>();
 

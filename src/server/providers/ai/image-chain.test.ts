@@ -240,3 +240,41 @@ describe('runImageChain: blocked answers and transient errors', () => {
     expect(res).toMatchObject({ ok: true, model: 'g2' });
   });
 });
+
+describe('runImageChain / Cloudflare multi-account failover', () => {
+  const acct = (n: number) => n.toString(16).padStart(32, '0');
+  const cfModels = [spec('cloudflare', '@cf/black-forest-labs/flux-2-dev', 1)];
+
+  it('skips every exhausted account (beyond the 4-try cap) until one still has allowance', async () => {
+    const keys = Array.from({ length: 10 }, (_, i) => `${acct(i + 1)}:tok-${i}-xxxxxxxx`);
+    const used: string[] = [];
+    const cloudflare: Adapter = vi.fn(async (_s, key) => {
+      used.push(key);
+      return keys.indexOf(key) < 6 ? fail('quota') : ok('data:image/png;base64,OK');
+    });
+    const res = await runImageChain(input, {
+      keysFor: (p) => (p === 'cloudflare' ? keys : []),
+      models: cfModels,
+      adapters: { cloudflare },
+    });
+    expect(res).toMatchObject({ ok: true, provider: 'cloudflare' });
+    expect(used).toHaveLength(7);
+
+    // Next request goes straight to a fresh account: exhausted ones stay parked until 00:00 UTC.
+    used.length = 0;
+    await runImageChain(input, { keysFor: (p) => (p === 'cloudflare' ? keys : []), models: cfModels, adapters: { cloudflare } });
+    expect(used.every((k) => keys.indexOf(k) >= 6)).toBe(true);
+  });
+
+  it('parks every token of an account once that account is out of neurons', async () => {
+    const keys = [`${acct(1)}:tok-a-xxxxxxxx`, `${acct(1)}:tok-b-xxxxxxxx`, `${acct(2)}:tok-c-xxxxxxxx`];
+    const used: string[] = [];
+    const cloudflare: Adapter = vi.fn(async (_s, key) => {
+      used.push(key);
+      return key.startsWith(acct(1)) ? fail('quota') : ok('data:image/png;base64,OK');
+    });
+    const res = await runImageChain(input, { keysFor: (p) => (p === 'cloudflare' ? keys : []), models: cfModels, adapters: { cloudflare } });
+    expect(res.ok).toBe(true);
+    expect(used).toEqual([keys[0], keys[2]]);
+  });
+});

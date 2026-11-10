@@ -12,9 +12,12 @@ import {
 import {
   advanceCursor,
   envKeys,
+  isCoolingDown,
   keyModelScope,
   keyScope,
   modelScope,
+  msUntilUtcMidnight,
+  sameCloudflareAccount,
   setCooldown,
   usableKeys,
   type ProviderId,
@@ -33,7 +36,11 @@ const MAX_ATTEMPT_MS = 40_000;
 const RETRY_MIN_LEFT_MS = 14_000;
 const RETRY_DELAY_MS = 1_500;
 const MIN_ATTEMPT_MS = 3_000;
-/** Keys tried per model before moving on (a 22-key pool must not eat the whole budget). */
+/**
+ * Real attempts per model before moving on (a 22-key pool must not eat the whole budget). Keys that
+ * answer instantly with "no quota" / "rejected" do not count, so an exhausted key never blocks the
+ * fresh ones behind it.
+ */
 const MAX_KEYS_PER_MODEL = 4;
 
 const COOLDOWN_MS = {
@@ -122,7 +129,11 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
       continue;
     }
 
-    for (const { key, index } of usable.slice(0, MAX_KEYS_PER_MODEL)) {
+    let realTries = 0;
+    for (const { key, index } of usable) {
+      if (realTries >= MAX_KEYS_PER_MODEL) break;
+      // An earlier key of the same account may have just parked this one.
+      if (isCoolingDown(keyScope(spec.provider, index), now())) continue;
       const remaining = deadline - now();
       if (remaining < MIN_ATTEMPT_MS) break;
 
@@ -145,6 +156,7 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
       }
 
       attempts.push({ provider: spec.provider, model: spec.model, kind: result.kind });
+      if (result.kind !== 'quota' && result.kind !== 'auth') realTries += 1;
       const t = now();
       let nextKey = true;
       switch (result.kind) {
@@ -157,7 +169,12 @@ export async function runImageChain(input: ChainInput, opts: ChainOptions = {}):
           limited += 1;
           break;
         case 'quota':
-          setCooldown(keyScope(spec.provider, index), COOLDOWN_MS.quota, t);
+          if (spec.provider === 'cloudflare') {
+            // Daily free allocation: gone until 00:00 UTC for every token of that account.
+            for (const i of sameCloudflareAccount(keys, index)) setCooldown(keyScope(spec.provider, i), msUntilUtcMidnight(t), t);
+          } else {
+            setCooldown(keyScope(spec.provider, index), COOLDOWN_MS.quota, t);
+          }
           limited += 1;
           quotaFails += 1;
           break;
