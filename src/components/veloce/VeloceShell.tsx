@@ -234,7 +234,9 @@ export function VeloceShell({ children }: VeloceShellProps) {
   // A part's page swaps the dock (and the phone header) for its own top bar and fixed add-to-cart bar.
   const isProductDetail = /^\/[a-z]{2}\/shop\/[^/]+/.test(pathname);
   // Full-screen screens hide both the phone header and the dock.
-  const hideHeader = isImmersive || isProductDetail;
+  // `backing`: a back swipe just committed, so the header and dock return at once instead of after the route changes.
+  const [backing, setBacking] = React.useState(false);
+  const hideHeader = (isImmersive || isProductDetail) && !backing;
   // The cart's checkout bar takes the dock's place at the bottom while there is something to check out.
   const isCartScreen = pathname === `/${locale}/cart`;
   const hideDock = hideHeader || (isCartScreen && count > 0);
@@ -276,6 +278,38 @@ export function VeloceShell({ children }: VeloceShellProps) {
   const underTab = !pager && user && lastTabRef.current >= 0 && lastTabRef.current < tabs.length ? lastTabRef.current : -1;
   const underRef = React.useRef<HTMLDivElement | null>(null);
   const shadeRef = React.useRef<HTMLDivElement | null>(null);
+  // Opening a screen from a tab is a native-style push: the new screen slides in over the tab, which
+  // glides a little to the side and darkens underneath, instead of the page just appearing.
+  const wasPagerRef = React.useRef(pager);
+  React.useLayoutEffect(() => {
+    const cameFromTab = wasPagerRef.current && !pager;
+    wasPagerRef.current = pager;
+    const top = overlayRef.current;
+    const under = underRef.current;
+    const shade = shadeRef.current;
+    if (!cameFromTab || underTab < 0 || !top || !under) return;
+    if (!window.matchMedia('(max-width: 767px)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const sign = isRtl ? -1 : 1;
+    const w = top.clientWidth || window.innerWidth;
+    const opts: KeyframeAnimationOptions = { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' };
+    under.style.visibility = 'visible';
+    const anims = [
+      top.animate(
+        [
+          { transform: `translate3d(${sign * 100}%,0,0)`, boxShadow: `${-sign * 18}px 0 40px rgba(0,0,0,0.45)` },
+          { transform: 'translate3d(0,0,0)', boxShadow: `${-sign * 18}px 0 40px rgba(0,0,0,0)` },
+        ],
+        opts
+      ),
+      under.animate([{ transform: 'translate3d(0,0,0)' }, { transform: `translate3d(${-sign * w * 0.28}px,0,0)` }], { ...opts, fill: 'forwards' }),
+      ...(shade ? [shade.animate([{ opacity: 0 }, { opacity: 0.45 }], { ...opts, fill: 'forwards' })] : []),
+    ];
+    const done = () => {
+      anims.forEach((a) => a.cancel());
+      under.style.visibility = 'hidden';
+    };
+    void Promise.all(anims.map((a) => a.finished)).then(done, done);
+  }, [pager, underTab, isRtl]);
   const headerRef = React.useRef<HTMLElement | null>(null);
   const headerH = React.useRef(0);
   React.useLayoutEffect(() => {
@@ -304,6 +338,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
   React.useEffect(() => {
     setAimTab(null);
     setLeaving(false);
+    setBacking(false);
   }, [pathname]);
   React.useEffect(() => {
     if (!leaving) return;
@@ -345,7 +380,8 @@ export function VeloceShell({ children }: VeloceShellProps) {
     underRef,
     shadeRef,
     // The tab underneath is shown only when going back really lands on it.
-    () => underTab >= 0 && (previousPath() ?? '').split('?')[0] === tabs[underTab]?.href
+    () => underTab >= 0 && (previousPath() ?? '').split('?')[0] === tabs[underTab]?.href,
+    () => setBacking(true)
   );
 
   return (
@@ -533,7 +569,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
           <div
             ref={underRef}
             className="absolute inset-x-0 bottom-0"
-            style={{ top: pager ? 0 : headerH.current, ...(pager ? {} : { visibility: 'hidden' as const }) }}
+            style={{ top: pager || backing ? 0 : headerH.current, ...(pager ? {} : { visibility: 'hidden' as const }) }}
             {...(pager ? {} : { inert: true, 'aria-hidden': true })}
           >
             <TabPager
@@ -553,7 +589,7 @@ export function VeloceShell({ children }: VeloceShellProps) {
         {!pager && (
           <div
             ref={overlayRef}
-            className={`absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-y-none bg-surface-0 [touch-action:pan-y] ${hideDock ? 'md:pb-0' : 'pb-[var(--dock-h,72px)] md:pb-12'}`}
+            className={`${underTab >= 0 ? 'cv-overlay-push ' : ''}absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-y-none bg-surface-0 [touch-action:pan-y] ${hideDock ? 'md:pb-0' : 'pb-[var(--dock-h,72px)] md:pb-12'}`}
           >
             {children}
           </div>

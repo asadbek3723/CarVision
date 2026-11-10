@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ChevronRight, ArrowUpRight, Cog, Camera, Wrench } from 'lucide-react';
+import { ChevronRight, ArrowUpRight, Cog, Camera, Check, Wrench } from 'lucide-react';
 import { ProductCard } from '@/components/veloce/ProductCard';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
@@ -30,7 +30,7 @@ export function VeloceHome() {
   const intlLocale = useLocale();
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
-  const { openCamera } = useVeloceStore();
+  const { openCamera, photo } = useVeloceStore();
 
   const [trendingProducts, setTrendingProducts] = React.useState<VeloceProduct[]>([]);
   const [isLoadingTrending, setIsLoadingTrending] = React.useState(true);
@@ -88,11 +88,13 @@ export function VeloceHome() {
           {/* Car visual right column on desktop */}
           <div className="relative lg:order-2 lg:col-span-7 lg:-me-40 lg:-ms-16">
             <img
-              src="/assets/car-CjioCIbt.jpg"
+              src="/assets/car-hero-v3.webp"
               alt={t('heroAlt')}
-              width={1920}
-              height={1088}
-              className="relative w-full object-cover mix-blend-lighten xl:scale-110 [mask-image:radial-gradient(ellipse_70%_68%_at_58%_50%,black_55%,transparent_85%)]"
+              width={1400}
+              height={794}
+              fetchPriority="high"
+              // The picture's black background is transparent (made once, offline), so it melts into the page colour.
+              className="relative w-full object-cover xl:scale-110 [mask-image:radial-gradient(ellipse_78%_74%_at_55%_50%,black_58%,transparent_92%)]"
             />
             <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-surface-0 to-transparent lg:hidden" />
           </div>
@@ -175,30 +177,52 @@ export function VeloceHome() {
       {/* Main Page Container */}
       <div className="mx-auto max-w-[1500px] px-5 pb-6 md:px-10 lg:px-14">
         {/* 3 Bento Feature Cards */}
-        <section className="mt-8 grid grid-cols-3 gap-2.5 md:gap-6 lg:mt-16">
+        <section className="mt-6 grid grid-cols-1 gap-2.5 md:mt-8 md:grid-cols-3 md:gap-6 lg:mt-16">
           {FEATURES.map((feat, idx) => {
             const Icon = feat.icon;
-            return (
-              <div
-                key={feat.key}
-                className="rise group relative flex min-w-0 flex-col items-center overflow-hidden rounded-[18px] bg-card-gradient px-2 py-5 text-center shadow-card transition duration-500 hover:-translate-y-1 md:p-10 lg:items-start lg:text-start"
-                style={{ animationDelay: `${300 + idx * 100}ms` }}
-              >
+            // The three steps are shortcuts: 1 opens the camera, 2 the shop, 3 the person's orders.
+            const done = feat.key === 'f1' && Boolean(photo);
+            // Phones: a calm list of three rows (icon, title, one line, chevron). Wider screens: three cards.
+            const cls =
+              'rise group relative flex min-w-0 cursor-pointer flex-row items-center gap-3.5 overflow-hidden rounded-[18px] bg-card-gradient px-4 py-3.5 text-start shadow-card transition duration-500 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/60 md:flex-col md:items-center md:gap-0 md:p-10 md:text-center lg:items-start lg:text-start';
+            const body = (
+              <>
                 <div className="pointer-events-none absolute -end-10 -top-10 h-32 w-32 rounded-full bg-primary/0 blur-2xl transition duration-700 group-hover:bg-primary/20" />
-                <Icon
-                  strokeWidth={1.4}
-                  className="h-7 w-7 text-primary transition duration-700 group-hover:rotate-90 lg:h-10 lg:w-10"
-                />
-                <h3 className="mt-3 max-w-full break-words font-display text-[10px] font-medium leading-tight tracking-[0.12em] uppercase text-white sm:text-xs md:mt-4 md:text-sm md:tracking-[0.3em]">
-                  {t(`${feat.key}Title`)}
-                </h3>
-                <ul className="mt-2.5 max-w-full space-y-1.5 text-[9px] leading-snug tracking-[0.08em] text-muted-foreground uppercase md:mt-3 md:text-[11px] md:tracking-[0.2em]">
-                  {feat.items.map((item) => (
-                    <li key={item}>{t(item)}</li>
-                  ))}
-                </ul>
-                <ArrowUpRight className="absolute end-6 top-6 hidden h-5 w-5 text-muted-foreground transition group-hover:text-primary lg:block" />
-              </div>
+                <span aria-hidden className="absolute start-6 top-6 hidden font-display text-[11px] font-medium tracking-[0.2em] text-primary/70 md:block">
+                  0{idx + 1}
+                </span>
+                <span aria-hidden className="absolute end-6 top-6 hidden h-5 w-5 place-items-center text-muted-foreground transition group-hover:text-primary md:grid">
+                  {done ? <Check className="h-5 w-5 text-emerald-400" strokeWidth={2.6} /> : <ArrowUpRight className="h-5 w-5 rtl:-scale-x-100" />}
+                </span>
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/[0.05] md:h-auto md:w-auto md:bg-transparent">
+                  <Icon strokeWidth={1.5} className="h-6 w-6 text-primary transition duration-700 group-hover:rotate-90 md:h-7 md:w-7 lg:h-10 lg:w-10" />
+                </span>
+                <span className="min-w-0 flex-1 md:mt-4 md:flex-none">
+                  <h3 className="max-w-full break-words font-display text-[13px] font-medium leading-tight tracking-[0.1em] uppercase text-white md:text-sm md:tracking-[0.3em]">
+                    {t(`${feat.key}Title`)}
+                  </h3>
+                  <ul className="mt-1 max-w-full text-[12.5px] leading-snug text-muted-foreground md:mt-3 md:space-y-1.5 md:text-[11px] md:uppercase md:tracking-[0.2em]">
+                    {feat.items.map((item, i) => (
+                      <li key={item} className={i > 0 ? 'hidden md:list-item' : ''}>
+                        {t(item)}
+                      </li>
+                    ))}
+                  </ul>
+                </span>
+                <span aria-hidden className="shrink-0 text-muted-foreground transition group-hover:text-primary md:hidden">
+                  {done ? <Check className="h-4 w-4 text-emerald-400" strokeWidth={2.6} /> : <ChevronRight className="h-4 w-4 rtl:rotate-180" />}
+                </span>
+              </>
+            );
+            const style = { animationDelay: `${300 + idx * 100}ms` };
+            return feat.key === 'f1' ? (
+              <button key={feat.key} type="button" onClick={openCamera} aria-label={t(`${feat.key}Title`)} className={cls} style={style}>
+                {body}
+              </button>
+            ) : (
+              <Link key={feat.key} href={`/${locale}/${feat.key === 'f2' ? 'shop' : 'profile'}`} aria-label={t(`${feat.key}Title`)} className={cls} style={style}>
+                {body}
+              </Link>
             );
           })}
         </section>

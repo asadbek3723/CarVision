@@ -863,16 +863,16 @@ label {
   z-index: 200;
   display: grid;
   place-items: center;
-  background: #07080b;
-  animation: cv-splash-fallback 500ms ease 4s forwards;
+  background: #0a0b0f;
+  animation: cv-splash-fallback 500ms ease 6s forwards;
 }
 .cv-splash[data-state='out'] {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition:
-    opacity 620ms cubic-bezier(0.4, 0, 0.2, 1),
-    visibility 0s linear 620ms;
+    opacity 500ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s linear 500ms;
 }
 .cv-splash-mark {
   animation: cv-splash-in 700ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
@@ -883,7 +883,7 @@ label {
 }
 .cv-splash-line {
   transform-origin: center;
-  animation: cv-splash-line 1000ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: cv-splash-line 1800ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 @keyframes cv-splash-in {
   from {
@@ -1106,5 +1106,29 @@ img {
   }
   :where(button, a[href], [role='button'], [role='tab'], summary):active {
     scale: 1;
+  }
+}
+
+/* A screen opened from a tab slides in over it (see VeloceShell), so its own fade-in is switched off. */
+@media (max-width: 767px) {
+  .cv-overlay-push .page-enter {
+    animation: none;
+  }
+}
+
+/* A fixed bottom bar that mounts after the dock has already left rises into place instead of appearing. */
+@keyframes cv-bar-rise {
+  from {
+    transform: translate3d(0, calc(100% + 24px), 0);
+  }
+}
+@media (max-width: 767px) {
+  [data-bar-ready='true'] .cv-bottom-bar {
+    animation: cv-bar-rise 560ms cubic-bezier(0.16, 1, 0.3, 1) 140ms backwards;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-bar-ready='true'] .cv-bottom-bar {
+    animation: none;
   }
 }

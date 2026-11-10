@@ -70,12 +70,15 @@ export function useEdgeBack(
   rtl: boolean,
   under?: React.RefObject<HTMLElement | null>,
   shade?: React.RefObject<HTMLElement | null>,
-  canReveal?: () => boolean
+  canReveal?: () => boolean,
+  onCommit?: () => void
 ) {
   const onBackRef = React.useRef(onBack);
   onBackRef.current = onBack;
   const canRevealRef = React.useRef(canReveal);
   canRevealRef.current = canReveal;
+  const onCommitRef = React.useRef(onCommit);
+  onCommitRef.current = onCommit;
 
   React.useEffect(() => {
     const el = ref.current;
@@ -193,6 +196,8 @@ export function useEdgeBack(
           false,
           (x) => apply(sign * x),
           () => {
+            // The screen underneath is about to become the real one: let the header / dock return at once.
+            onCommitRef.current?.();
             onBackRef.current();
             // If the new screen never arrives, bring this one back rather than leave a blank page.
             timer = window.setTimeout(() => {

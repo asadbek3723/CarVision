@@ -14,8 +14,6 @@ import {
   ShieldCheck,
   Package,
   ShoppingBag,
-  ArrowRight,
-  Check,
 } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
 import { useVeloceStore } from '@/context/VeloceStore';
@@ -356,19 +354,17 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
               <span>{t('addToCart')}</span>
             </button>
           ) : (
-            // In the cart: the button turns green and leads to the cart.
+            // In the cart: the button turns a deep, rich green and leads to the cart. Text only: the colour already says "done".
             <Link
               href={`/${locale}/cart`}
               className={buttonClasses({
                 size: 'lg',
                 fullWidth: true,
                 className:
-                  'bg-[linear-gradient(180deg,#2fe86a_0%,#0fba4b_100%)] text-[#04210F] shadow-[0_12px_32px_-8px_rgba(34,230,100,0.6),inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-110 motion-safe:animate-[badge-pop_320ms_ease-out]',
+                  'bg-[linear-gradient(180deg,#1fc46d_0%,#0e9f55_100%)] font-semibold text-white shadow-[0_10px_28px_-8px_rgba(16,185,129,0.55),inset_0_1px_0_rgba(255,255,255,0.28)] hover:brightness-110 motion-safe:animate-[badge-pop_320ms_ease-out]',
               })}
             >
-              <Check className="h-5 w-5" strokeWidth={2.6} />
               <span>{t('goToCart')}</span>
-              <ArrowRight className="h-5 w-5 rtl:rotate-180" />
             </Link>
           )}
         </div>
