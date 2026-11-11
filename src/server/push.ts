@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import { createAdminClient } from '@/lib/supabase/server';
+import { isPushServiceEndpoint } from '@/server/push-endpoint';
 
 /**
  * Web push notifications. Every call is best-effort: a missing key, a missing table or a push
@@ -90,6 +91,8 @@ export async function notifyUser(userId: string, event: PushEvent, opts: { path:
         const locale = (s.locale as string) in COPY[event] ? (s.locale as string) : 'uz';
         const copy = COPY[event][locale] ?? COPY[event]['uz']!;
         const payload = JSON.stringify({ title: copy.title, body: copy.body, url: `/${locale}${opts.path}`, tag: opts.tag ?? event });
+        // Rows stored before the push-service allowlist existed are never called.
+        if (!isPushServiceEndpoint(s.endpoint as string)) return;
         try {
           await webpush.sendNotification({ endpoint: s.endpoint as string, keys: { p256dh: s.p256dh as string, auth: s.auth as string } }, payload, { TTL: 60 * 60 * 24, urgency: 'high' });
         } catch (err) {

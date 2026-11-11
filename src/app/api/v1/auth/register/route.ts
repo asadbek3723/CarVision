@@ -6,6 +6,8 @@ import { loadSession } from '@/server/auth/session';
 import { isStrongEnoughPassword, normalizePhone, phoneToEmail } from '@/server/auth/phone';
 import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
 import { isSmsConfigured, verifyOtp } from '@/server/sms';
+import { verifyTurnstile } from '@/server/turnstile';
+import { deviceIdOf, recordTrialGrant, setDeviceCookie, shouldWithholdTrial } from '@/server/trial-guard';
 
 const registerSchema = z
   .object({
@@ -21,12 +23,36 @@ const registerSchema = z
     district: z.string().trim().max(100).optional(),
     referralCode: z.string().max(32).optional(),
     otpCode: z.string().regex(/^\d{6}$/).optional(),
+    turnstileToken: z.string().max(2048).optional(),
   })
   .strict();
 
 const REGISTER_WINDOW_MS = 60 * 60 * 1000;
 const MAX_REGISTRATIONS_PER_IP = 8;
 const FREE_CREDITS = 40;
+
+/** Pre-migration path: balance + ledger row as before (two writes, not one transaction). */
+async function legacyTrialGrant(db: ReturnType<typeof createAdminClient>, userId: string, seller: boolean): Promise<boolean> {
+  let shopId: string | null = null;
+  if (seller) {
+    const { data: shop } = await db.from('shops').update({ credits_balance: FREE_CREDITS }).eq('owner_id', userId).select('id').maybeSingle();
+    shopId = (shop?.id as string | undefined) ?? null;
+    if (!shopId) return false;
+  } else {
+    const { error } = await db.from('profiles').update({ credits_balance: FREE_CREDITS }).eq('id', userId);
+    if (error) return false;
+  }
+  const { error: ledgerErr } = await db.from('credit_ledger').insert({
+    user_id: userId,
+    shop_id: shopId,
+    amount: FREE_CREDITS,
+    balance_after: FREE_CREDITS,
+    action_type: 'TRIAL_BONUS',
+    description: 'Free plan credits on sign-up',
+  });
+  if (ledgerErr) console.error('sign-up ledger insert failed:', ledgerErr.message);
+  return true;
+}
 
 function fail(status: number, code: string, error: string) {
   return NextResponse.json({ success: false, code, error }, { status });
@@ -48,6 +74,11 @@ export async function POST(request: NextRequest) {
     const recent = await recentFailures('ip', ip, 'register', REGISTER_WINDOW_MS, true);
     if (recent >= MAX_REGISTRATIONS_PER_IP) {
       return fail(429, 'RATE_LIMITED', "Juda ko'p urinish. Keyinroq qayta urinib ko'ring");
+    }
+
+    // Bots: Cloudflare Turnstile (only enforced when TURNSTILE_SECRET_KEY is configured).
+    if (!(await verifyTurnstile(payload.turnstileToken, ip))) {
+      return fail(400, 'CAPTCHA_FAILED', "Tekshiruvdan o'tilmadi. Sahifani yangilab qayta urinib ko'ring");
     }
 
     const smsOn = isSmsConfigured();
@@ -91,8 +122,8 @@ export async function POST(request: NextRequest) {
       full_name: fullName,
       phone,
       preferred_locale: locale,
-      // Sellers spend from their shop balance; giving the profile credits too would double the free grant.
-      credits_balance: payload.role === 'b2b_seller' ? 0 : FREE_CREDITS,
+      // Credits arrive only through grant_trial_credits below (balance + ledger in one transaction).
+      credits_balance: 0,
       phone_verified: smsOn,
     });
     if (profileErr) {
@@ -101,7 +132,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Shop for b2b sellers
-    let shopId: string | null = null;
     if (payload.role === 'b2b_seller') {
       const { data: shop, error: shopErr } = await db
         .from('shops')
@@ -112,7 +142,9 @@ export async function POST(request: NextRequest) {
           district: payload.district || '-',
           phone,
           current_plan_code: 'FREE_TRIAL',
-          credits_balance: FREE_CREDITS,
+          credits_balance: 0,
+          // New workshops are listed and can sell only after an admin verifies them.
+          is_verified: false,
           watermark_enabled: true,
           max_devices: 1,
           referral_code: crypto.randomBytes(5).toString('hex').toUpperCase(),
@@ -123,19 +155,26 @@ export async function POST(request: NextRequest) {
         await cleanup();
         return fail(500, 'SHOP_FAILED', "Studiya yaratib bo'lmadi");
       }
-      shopId = shop.id as string;
     }
 
-    const { error: ledgerErr } = await db.from('credit_ledger').insert({
-      user_id: userId,
-      shop_id: shopId,
-      amount: FREE_CREDITS,
-      balance_after: FREE_CREDITS,
-      action_type: 'TRIAL_BONUS',
-      description: 'Free plan credits on sign-up',
+    // Free sign-up credits: held back when this network / device already received them several
+    // times (credit farming). A verified phone (SMS) always gets them.
+    const device = deviceIdOf(request);
+    const withhold = smsOn ? false : await shouldWithholdTrial(ip, device.id);
+    const { data: grant, error: grantErr } = await db.rpc('grant_trial_credits', {
+      p_user_id: userId,
+      p_amount: FREE_CREDITS,
+      p_withhold: withhold,
     });
-    // The balance is already granted; a missing ledger line is a bookkeeping gap, not a reason to fail sign-up.
-    if (ledgerErr) console.error('sign-up ledger insert failed:', ledgerErr.message);
+    let granted = (grant as { granted?: boolean } | null)?.granted === true;
+    if (grantErr) {
+      console.error('grant_trial_credits failed:', grantErr.message);
+      // The 20261120 migration is not applied yet: grant the old way so new accounts are not left empty.
+      if (!withhold && /grant_trial_credits|PGRST202|does not exist/i.test(`${grantErr.code ?? ''} ${grantErr.message}`)) {
+        granted = await legacyTrialGrant(db, userId, payload.role === 'b2b_seller');
+      }
+    }
+    if (granted) await recordTrialGrant(ip, device.id);
 
     await recordAttempt('register', phone, ip, true);
 
@@ -148,7 +187,9 @@ export async function POST(request: NextRequest) {
     if (signInErr) return fail(500, 'SIGNIN_FAILED', "Akkaunt yaratildi, lekin kirishda xatolik. Qayta kiring");
 
     const session = await loadSession(userId);
-    return NextResponse.json({ success: true, user: session?.profile });
+    const response = NextResponse.json({ success: true, user: session?.profile, trialWithheld: withhold });
+    if (device.fresh) setDeviceCookie(response, device.id);
+    return response;
   } catch (err) {
     console.error('Register error:', err);
     return fail(500, 'INTERNAL', 'Serverda xatolik yuz berdi');

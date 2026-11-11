@@ -201,6 +201,14 @@ export function SellerDashboardView() {
         </div>
       </header>
 
+      {/* New workshop: parts can be prepared, but they are listed only after an admin verifies the workshop. */}
+      {user.shop && user.shop.verified === false && (
+        <div role="status" className="mt-6 rounded-2xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <p className="font-semibold">{t('pendingTitle')}</p>
+          <p className="mt-0.5 text-xs text-amber-200/80">{t('pendingBody')}</p>
+        </div>
+      )}
+
       {/* Stats: one quiet row */}
       <dl className="mt-8 grid grid-cols-4 md:mt-12">
         {stats.map((s, i) => (

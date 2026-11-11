@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requirePaidSeller } from '@/server/auth/guards';
-import { shopImagePrefix } from '@/server/catalog';
+import { isOwnShopImage } from '@/server/catalog';
 
 export const maxDuration = 60;
 
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return fail(400, 'INVALID_INPUT', 'Rasm manzili noto‘g‘ri');
-  if (!parsed.data.imageUrl.startsWith(shopImagePrefix(shopId))) {
+  if (!isOwnShopImage(parsed.data.imageUrl, shopId)) {
     return fail(400, 'INVALID_IMAGE', 'Avval rasmni yuklang');
   }
 

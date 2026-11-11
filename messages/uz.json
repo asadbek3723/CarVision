@@ -470,7 +470,8 @@
       "southKorea": "Janubiy Koreya"
     },
     "errNetwork": "Internet bilan aloqa yo'q. Ulanishni tekshirib, qayta urinib ko'ring",
-    "errServer": "Serverda xatolik yuz berdi. Birozdan keyin qayta urinib ko'ring"
+    "errServer": "Serverda xatolik yuz berdi. Birozdan keyin qayta urinib ko'ring",
+    "errCaptcha": "Avval “Men robot emasman” tekshiruvidan o‘ting"
   },
   "authShell": {
     "togglePassword": "Parolni koʻrsatish yoki yashirish",
@@ -1378,7 +1379,9 @@
     "call": "Qoʻngʻiroq",
     "payoutPending": "Sizga o‘tkaziladi: {amount}",
     "payoutDone": "O‘tkazildi: {amount}",
-    "cancelled": "Bekor qilindi"
+    "cancelled": "Bekor qilindi",
+    "pendingTitle": "Ustaxona admin tasdig‘ini kutmoqda",
+    "pendingBody": "Detallarni hozir qo‘shib, tayyorlab qo‘yishingiz mumkin. Admin ustaxonani tasdiqlagach, ular do‘konda ko‘rinadi va sotiladi."
   },
   "sellerOrders": {
     "back": "Orqaga",
@@ -1659,7 +1662,27 @@
       "ipUnknown": "IP nomaʼlum",
       "dCredits": "{delta} kredit",
       "dPlan": "tarif {plan}",
-      "dReason": "sabab: {reason}"
+      "dReason": "sabab: {reason}",
+      "locksTitle": "Server · {count} qulf",
+      "lock": {
+        "stableDomain": "Doimiy manzil (Elastic IP)",
+        "https": "SSL (HTTPS)",
+        "ports": "Faqat 80 va 443",
+        "keyOnlyAccess": "Kirish faqat kalit bilan (SSH)",
+        "privateDb": "Yopiq baza (VPC)",
+        "waf": "WAF"
+      },
+      "lockHow": {
+        "stableDomain": "Vercel production domeni",
+        "https": "HTTPS + HSTS, HTTP avtomatik HTTPS ga o‘tadi",
+        "ports": "Vercel faqat 80/443; Supabase’da 5432/6543 yopiq",
+        "keyOnlyAccess": "Server yo‘q; Vercel, Supabase, GitHub’da 2FA",
+        "privateDb": "Brauzer bazaga to‘g‘ridan-to‘g‘ri kira olmaydi",
+        "waf": "Vercel Firewall qoidalari va bot himoyasi"
+      },
+      "lockOn": "Yoqilgan",
+      "lockOff": "O‘chiq — SECURITY.md ga qarang",
+      "lockManual": "Dashboard’da yoqing va tasdiqlang (SECURITY.md)"
     },
     "escrow": {
       "title": "To‘lovlar",
@@ -1951,7 +1974,8 @@
     "CAR_NOT_VERIFIED": "Mashina tasdiqlanmagan. Suratlarni qayta tasdiqlang. Kredit yechilmadi",
     "AI_BLOCKED": "AI bu suratni qayta ishlay olmadi (xavfsizlik filtri). Suratda odamlar bo'lmasin, mashinani to'liq kadrga olib qayta suratga oling. Kredit qaytarildi",
     "AI_STORAGE_FAILED": "Natijani saqlab bo'lmadi. Kredit qaytarildi, qayta urinib ko'ring",
-    "AI_WRONG_VIEW": "AI natijasi mashinaning boshqa tomonini ko'rsatdi, shuning uchun berilmadi. Kredit qaytarildi, qayta urinib ko'ring"
+    "AI_WRONG_VIEW": "AI natijasi mashinaning boshqa tomonini ko'rsatdi, shuning uchun berilmadi. Kredit qaytarildi, qayta urinib ko'ring",
+    "CAPTCHA_FAILED": "Tekshiruvdan o‘tilmadi. Sahifani yangilab, qayta urinib ko‘ring"
   },
   "capturePage": {
     "sent": "Rasm kompyuterga yuborildi",

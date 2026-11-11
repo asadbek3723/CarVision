@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { LISTED_ITEMS } from '@/server/catalog';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,9 +9,9 @@ export async function GET() {
   try {
     const db = createAdminClient();
     const [{ count: items }, { count: models }, { data: rows }] = await Promise.all([
-      db.from('catalog_items').select('id', { count: 'exact', head: true }).eq('status', 'PUBLISHED'),
+      db.from(LISTED_ITEMS).select('id', { count: 'exact', head: true }).eq('status', 'PUBLISHED'),
       db.from('vehicle_models').select('id', { count: 'exact', head: true }).eq('is_active', true),
-      db.from('catalog_items').select('brand, shop_id').eq('status', 'PUBLISHED').limit(2000),
+      db.from(LISTED_ITEMS).select('brand, shop_id').eq('status', 'PUBLISHED').limit(2000),
     ]);
     const brands = new Set((rows ?? []).map((r) => (r.brand as string | null)?.trim().toLowerCase()).filter(Boolean));
     const shops = new Set((rows ?? []).map((r) => r.shop_id as string));

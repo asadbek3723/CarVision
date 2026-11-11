@@ -470,7 +470,8 @@
       "southKorea": "Güney Kore"
     },
     "errNetwork": "Bağlantı yok. İnterneti kontrol edip tekrar deneyin",
-    "errServer": "Sunucu hatası. Lütfen biraz sonra tekrar deneyin"
+    "errServer": "Sunucu hatası. Lütfen biraz sonra tekrar deneyin",
+    "errCaptcha": "Lütfen önce “İnsan olduğumu doğrula” kontrolünü tamamlayın"
   },
   "authShell": {
     "togglePassword": "Şifreyi göster veya gizle",
@@ -1378,7 +1379,9 @@
     "call": "Ara",
     "payoutPending": "Size aktarılacak: {amount}",
     "payoutDone": "Aktarıldı: {amount}",
-    "cancelled": "İptal edildi"
+    "cancelled": "İptal edildi",
+    "pendingTitle": "Atölyeniz yönetici onayı bekliyor",
+    "pendingBody": "Parçaları şimdi ekleyip hazırlayabilirsiniz. Yönetici atölyenizi onayladığında mağazada görünür ve satın alınabilir."
   },
   "sellerOrders": {
     "back": "Geri",
@@ -1659,7 +1662,27 @@
       "ipUnknown": "IP bilinmiyor",
       "dCredits": "{delta} kredi",
       "dPlan": "plan {plan}",
-      "dReason": "neden: {reason}"
+      "dReason": "neden: {reason}",
+      "locksTitle": "Sunucu · {count} kilit",
+      "lock": {
+        "stableDomain": "Sabit adres (Elastic IP)",
+        "https": "SSL (HTTPS)",
+        "ports": "Yalnızca 80 ve 443",
+        "keyOnlyAccess": "Yalnızca anahtarla erişim (SSH)",
+        "privateDb": "Kapalı veritabanı (VPC)",
+        "waf": "WAF"
+      },
+      "lockHow": {
+        "stableDomain": "Vercel production alan adı",
+        "https": "HTTPS + HSTS, HTTP otomatik HTTPS'e yönlenir",
+        "ports": "Vercel yalnızca 80/443; Supabase'de 5432/6543 kapalı",
+        "keyOnlyAccess": "Sunucu girişi yok; Vercel, Supabase, GitHub'da 2FA",
+        "privateDb": "Tarayıcı veritabanına doğrudan erişemez",
+        "waf": "Vercel Firewall kuralları ve bot koruması"
+      },
+      "lockOn": "Açık",
+      "lockOff": "Kapalı — SECURITY.md'ye bakın",
+      "lockManual": "Panelden açın ve onaylayın (SECURITY.md)"
     },
     "escrow": {
       "title": "Ödemeler",
@@ -1951,7 +1974,8 @@
     "CAR_NOT_VERIFIED": "Araç doğrulanmadı. Lütfen fotoğrafları yeniden doğrulayın. Kredi düşülmedi",
     "AI_BLOCKED": "Yapay zekâ bu fotoğrafı işleyemedi (güvenlik filtresi). Kareden insanları çıkarın, aracı tamamen çekin ve yeniden deneyin. Krediniz iade edildi",
     "AI_STORAGE_FAILED": "Sonuç kaydedilemedi. Krediniz iade edildi, lütfen tekrar deneyin",
-    "AI_WRONG_VIEW": "Yapay zekâ sonucu aracın başka bir tarafını gösterdi, bu yüzden teslim edilmedi. Krediniz iade edildi, tekrar deneyin"
+    "AI_WRONG_VIEW": "Yapay zekâ sonucu aracın başka bir tarafını gösterdi, bu yüzden teslim edilmedi. Krediniz iade edildi, tekrar deneyin",
+    "CAPTCHA_FAILED": "Doğrulama başarısız. Sayfayı yenileyip tekrar deneyin"
   },
   "capturePage": {
     "sent": "Fotoğraf bilgisayara gönderildi",

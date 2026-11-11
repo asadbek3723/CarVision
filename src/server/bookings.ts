@@ -45,7 +45,7 @@ export function paymentDetails(): { cardNumber: string; holder: string; bank: st
   return { cardNumber, holder, bank: process.env.ESCROW_BANK?.trim() || '' };
 }
 
-export type ReviewResult = { ok: true; status: string } | { ok: false; error: 'NOT_FOUND' | 'INVALID_STATE' | 'OUT_OF_STOCK' | 'FAILED'; item?: string };
+export type ReviewResult = { ok: true; status: string } | { ok: false; error: 'NOT_FOUND' | 'INVALID_STATE' | 'OUT_OF_STOCK' | 'AMOUNT_MISMATCH' | 'FAILED'; item?: string; expectedUzs?: number };
 
 /** Single confirmation point for payments: used by the website admin panel and the Telegram bot. */
 export async function reviewBooking(
@@ -79,6 +79,10 @@ export async function reviewBooking(
   if (r.success) {
     await pushBookingEvent(db, args.bookingId, args.approve ? 'approved' : 'rejected');
     return { ok: true, status: r.status ?? '' };
+  }
+  if (r.error === 'AMOUNT_MISMATCH') {
+    const expected = (r as { expectedUzs?: number }).expectedUzs;
+    return { ok: false, error: 'AMOUNT_MISMATCH', ...(typeof expected === 'number' ? { expectedUzs: expected } : {}) };
   }
   if (r.error === 'OUT_OF_STOCK') return { ok: false, error: 'OUT_OF_STOCK', ...(r.item ? { item: r.item } : {}) };
   return { ok: false, error: r.error === 'INVALID_STATE' ? 'INVALID_STATE' : 'NOT_FOUND' };

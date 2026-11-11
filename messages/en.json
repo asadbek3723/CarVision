@@ -470,7 +470,8 @@
       "southKorea": "South Korea"
     },
     "errNetwork": "No connection. Check your internet and try again",
-    "errServer": "Server error. Please try again in a moment"
+    "errServer": "Server error. Please try again in a moment",
+    "errCaptcha": "Please complete the “I am human” check first"
   },
   "authShell": {
     "togglePassword": "Show or hide password",
@@ -1378,7 +1379,9 @@
     "call": "Call",
     "payoutPending": "To be paid to you: {amount}",
     "payoutDone": "Paid to you: {amount}",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "pendingTitle": "Your workshop is waiting for admin approval",
+    "pendingBody": "You can add and prepare parts now. They appear in the shop and can be bought once an admin verifies your workshop."
   },
   "sellerOrders": {
     "back": "Back",
@@ -1659,7 +1662,27 @@
       "ipUnknown": "IP unknown",
       "dCredits": "{delta} credits",
       "dPlan": "plan {plan}",
-      "dReason": "reason: {reason}"
+      "dReason": "reason: {reason}",
+      "locksTitle": "Server · {count} locks",
+      "lock": {
+        "stableDomain": "Stable address (Elastic IP)",
+        "https": "SSL (HTTPS)",
+        "ports": "Only 80 and 443",
+        "keyOnlyAccess": "Key-only access (SSH)",
+        "privateDb": "Private database (VPC)",
+        "waf": "WAF"
+      },
+      "lockHow": {
+        "stableDomain": "Vercel production domain",
+        "https": "HTTPS + HSTS, HTTP is upgraded to HTTPS",
+        "ports": "Vercel serves only 80/443; Supabase 5432/6543 closed",
+        "keyOnlyAccess": "No server login; 2FA on Vercel, Supabase, GitHub",
+        "privateDb": "The browser cannot reach the database directly",
+        "waf": "Vercel Firewall rules and bot protection"
+      },
+      "lockOn": "On",
+      "lockOff": "Off — see SECURITY.md",
+      "lockManual": "Turn on in the dashboard and confirm (SECURITY.md)"
     },
     "escrow": {
       "title": "Payments",
@@ -1951,7 +1974,8 @@
     "CAR_NOT_VERIFIED": "The car isn't confirmed. Please confirm the photos again. No credit was charged",
     "AI_BLOCKED": "The AI could not process this photo (safety filter). Keep people out of the shot, frame the whole car and retake it. Your credit was refunded",
     "AI_STORAGE_FAILED": "The result could not be saved. Your credit was refunded, please try again",
-    "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again"
+    "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again",
+    "CAPTCHA_FAILED": "The check failed. Refresh the page and try again"
   },
   "capturePage": {
     "sent": "The photo was sent to the computer",

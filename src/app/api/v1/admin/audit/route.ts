@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { adminLiveOr401 } from '@/server/admin';
+import { securityLocks } from '@/server/security-locks';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,11 +28,12 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE - 1);
     if (group && GROUPS[group]) actionsQ = actionsQ.in('action', GROUPS[group]);
-    const [{ data: audit, count: auditTotal }, { data: attempts }, { count: failed24 }, { count: pinFailed24 }] = await Promise.all([
+    const [{ data: audit, count: auditTotal }, { data: attempts }, { count: failed24 }, { count: pinFailed24 }, locks] = await Promise.all([
       actionsQ,
       db.from('auth_attempts').select('id, kind, login_key, ip, success, created_at').eq('success', false).order('created_at', { ascending: false }).limit(60),
       db.from('auth_attempts').select('id', { count: 'exact', head: true }).eq('success', false).gte('created_at', since24),
       db.from('auth_attempts').select('id', { count: 'exact', head: true }).eq('success', false).eq('kind', 'admin_pin').gte('created_at', since24),
+      securityLocks(db, request),
     ]);
 
     const adminIds = [...new Set((audit ?? []).map((a) => a.admin_id as string))];
@@ -44,6 +46,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       stats: { failed24h: failed24 ?? 0, pinFailed24h: pinFailed24 ?? 0 },
+      locks,
       total: auditTotal ?? 0,
       nextOffset: offset + (audit?.length ?? 0) < (auditTotal ?? 0) ? offset + (audit?.length ?? 0) : null,
       actions: (audit ?? []).map((a) => ({

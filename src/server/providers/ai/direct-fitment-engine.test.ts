@@ -24,6 +24,10 @@ describe('direct-fitment-engine input safety', () => {
     expect(isAllowedRemoteImageUrl('https://v3.fal.media/files/a.jpg')).toBe(true);
     expect(isAllowedRemoteImageUrl('https://fal.media.evil.example/a.jpg')).toBe(false);
     expect(isAllowedRemoteImageUrl('http://v3.fal.media/a.jpg')).toBe(false);
+    // Google Cloud Storage: only Fal's own bucket, never any other bucket.
+    expect(isAllowedRemoteImageUrl('https://storage.googleapis.com/falserverless/out/a.png')).toBe(true);
+    expect(isAllowedRemoteImageUrl('https://storage.googleapis.com/someone-else/a.png')).toBe(false);
+    expect(isAllowedRemoteImageUrl('https://evil-bucket.storage.googleapis.com/a.png')).toBe(false);
   });
 });
 

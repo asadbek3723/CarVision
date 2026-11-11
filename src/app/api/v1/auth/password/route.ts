@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
 import { isStrongEnoughPassword, normalizePhone, phoneToEmail } from '@/server/auth/phone';
 import { clientIp, recentFailures, recordAttempt } from '@/server/auth/rate-limit';
@@ -48,6 +48,14 @@ export async function POST(request: NextRequest) {
   if (error) {
     console.error('Password update failed:', error.message);
     return fail(500, 'UPDATE_FAILED', 'Parolni almashtirib bo‘lmadi');
+  }
+  // A changed password must lock out every other device (a stolen session, the check sign-in above).
+  try {
+    const own = await createServerSupabaseClient();
+    const { error: outErr } = await own.auth.signOut({ scope: 'others' });
+    if (outErr) console.error('sign out other sessions failed:', outErr.message);
+  } catch (err) {
+    console.error('sign out other sessions failed:', err instanceof Error ? err.message : 'unknown');
   }
   return NextResponse.json({ success: true });
 }

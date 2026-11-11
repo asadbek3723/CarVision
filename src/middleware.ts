@@ -3,6 +3,8 @@ import createMiddleware from 'next-intl/middleware';
 import { createServerClient } from '@supabase/ssr';
 import { routing, locales } from './i18n/routing';
 import { ADMIN_COOKIE_NAME, verifyAdminTokenEdge } from './lib/admin-token-edge';
+import { SUPABASE_COOKIE_OPTIONS } from './lib/supabase/cookie-options';
+import { clientIpFromHeaders } from './lib/client-ip';
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -29,10 +31,8 @@ function localeOf(pathname: string): string {
   return LOCALE_PREFIX.exec(pathname)?.[1] ?? routing.defaultLocale;
 }
 
-/** Platform-set headers first: Vercel / Cloudflare overwrite them, so the client cannot forge them. */
 function clientIp(request: NextRequest): string {
-  const h = request.headers;
-  return (h.get('x-vercel-forwarded-for') || h.get('cf-connecting-ip') || h.get('x-real-ip') || h.get('x-forwarded-for')?.split(',')[0] || '').trim();
+  return clientIpFromHeaders(request.headers);
 }
 
 /** Empty / unset ADMIN_ALLOWED_IPS = no IP restriction. */
@@ -102,6 +102,7 @@ async function gateAdminPage(request: NextRequest): Promise<NextResponse> {
   const response = intlMiddleware(request);
   try {
     const supabase = createServerClient(url, key, {
+      cookieOptions: SUPABASE_COOKIE_OPTIONS,
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (list: Array<{ name: string; value: string; options?: Parameters<typeof response.cookies.set>[2] }>) => {

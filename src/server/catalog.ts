@@ -22,6 +22,27 @@ export function shopImagePrefix(shopId: string): string {
   return `${base}/storage/v1/object/public/${CATALOG_BUCKET}/${shopId}/`;
 }
 
+/**
+ * True when `raw` is a file in this shop's own folder. A plain prefix test would accept
+ * `<prefix>../other-shop/x.jpg` (or its %2e%2e spelling), which points at someone else's file.
+ */
+export function isOwnShopImage(raw: string, shopId: string): boolean {
+  const prefix = shopImagePrefix(shopId);
+  if (!raw.startsWith(prefix)) return false;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(raw.slice(prefix.length));
+  } catch {
+    return false;
+  }
+  if (!decoded || decoded.includes('..') || decoded.includes('\\') || /[?#]/.test(raw)) return false;
+  try {
+    return new URL(raw).href.startsWith(prefix);
+  } catch {
+    return false;
+  }
+}
+
 const attributesSchema = z
   .object({
     diameter: z.number().int().min(10).max(30).optional(),
@@ -98,6 +119,8 @@ interface ItemRow {
 }
 
 export interface LoadItemsOptions {
+  /** Public pages: only items of verified workshops whose owner is not banned. */
+  listedOnly?: boolean | undefined;
   shopId?: string | undefined;
   ids?: string[] | undefined;
   statuses?: Array<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'> | undefined;
@@ -107,25 +130,42 @@ export interface LoadItemsOptions {
 }
 
 /** Loads items with their images and fitment (labels resolved from the vehicle database). */
+/** Public listing source: the view hides unverified workshops and banned owners. */
+export const LISTED_ITEMS = 'catalog_items_listed';
+
+/** PostgREST / Postgres answer for a table or view that does not exist (yet). */
+export function isMissingRelation(error: { code?: string | undefined; message?: string | undefined }): boolean {
+  return error.code === '42P01' || error.code === 'PGRST205' || /does not exist|could not find the table/i.test(error.message ?? '');
+}
+
 export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<CatalogItemDTO[]> {
-  let q = db
-    .from('catalog_items')
-    .select(
-      'id, shop_id, category, name, brand, description, price_cents, input_currency, input_price, stock, install_available, install_price_cents, attributes, status, cover_image_url, created_at'
-    )
-    .order('created_at', { ascending: false })
-    .limit(Math.min(opts.limit ?? 100, 200));
+  const run = (table: string) => {
+    let q = db
+      .from(table)
+      .select(
+        'id, shop_id, category, name, brand, description, price_cents, input_currency, input_price, stock, install_available, install_price_cents, attributes, status, cover_image_url, created_at'
+      )
+      .order('created_at', { ascending: false })
+      .limit(Math.min(opts.limit ?? 100, 200));
 
-  if (opts.shopId) q = q.eq('shop_id', opts.shopId);
-  if (opts.ids?.length) q = q.in('id', opts.ids);
-  if (opts.statuses?.length) q = q.in('status', opts.statuses);
-  if (opts.category) q = q.eq('category', opts.category);
-  if (opts.query) {
-    const safe = opts.query.replace(/[%,()]/g, ' ').trim();
-    if (safe) q = q.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
+    if (opts.shopId) q = q.eq('shop_id', opts.shopId);
+    if (opts.ids?.length) q = q.in('id', opts.ids);
+    if (opts.statuses?.length) q = q.in('status', opts.statuses);
+    if (opts.category) q = q.eq('category', opts.category);
+    if (opts.query) {
+      const safe = opts.query.replace(/[%,()]/g, ' ').trim();
+      if (safe) q = q.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
+    }
+    return q;
+  };
+
+  let { data: rows, error } = await run(opts.listedOnly ? LISTED_ITEMS : 'catalog_items');
+  if (error && opts.listedOnly && isMissingRelation(error)) {
+    // The 20261120 migration is not applied yet: keep the shop working (purchases are still checked
+    // by the database once it is), and say so loudly.
+    console.error(`${LISTED_ITEMS} view missing: apply supabase/migrations/20261120000000_security_hardening.sql`);
+    ({ data: rows, error } = await run('catalog_items'));
   }
-
-  const { data: rows, error } = await q;
   if (error) throw new Error(error.message);
   const items = (rows ?? []) as ItemRow[];
   if (items.length === 0) return [];
@@ -202,8 +242,7 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
 
 /** Writes images + fitment of an item (full replace). Returns an error string or null. */
 export async function replaceItemRelations(db: Db, itemId: string, shopId: string, body: ItemBody): Promise<string | null> {
-  const prefix = shopImagePrefix(shopId);
-  if (body.images.some((img) => !img.url.startsWith(prefix))) {
+  if (body.images.some((img) => !isOwnShopImage(img.url, shopId))) {
     return 'Rasm manzili noto‘g‘ri. Rasmlarni qayta yuklang';
   }
 

@@ -205,6 +205,10 @@ export async function PATCH(request: NextRequest) {
       reference: 'reference' in body ? body.reference : null,
     });
     if (!r.ok) {
+      if (r.error === 'AMOUNT_MISMATCH') {
+        const expected = typeof r.expectedUzs === 'number' ? ` (${new Intl.NumberFormat('ru-RU').format(r.expectedUzs)} so‘m)` : '';
+        return fail(409, r.error, `To‘langan summa buyurtma summasidan kam${expected}. Chekdagi summani kiriting`, { expectedUzs: r.expectedUzs ?? null });
+      }
       const status = r.error === 'NOT_FOUND' ? 404 : r.error === 'FAILED' ? 500 : 409;
       return fail(status, r.error, r.error, r.item ? { item: r.item } : {});
     }

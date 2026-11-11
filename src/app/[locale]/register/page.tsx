@@ -339,6 +339,8 @@ function DetailsForm({
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [loading, setLoading] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = React.useState<string | null>(null);
+  const captchaRef = React.useRef<{ reset: () => void } | null>(null);
 
   const updateField =
     (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,6 +373,11 @@ function DetailsForm({
       onError();
       return;
     }
+    if (TURNSTILE_SITE_KEY && !captchaToken) {
+      setFormError(t('errCaptcha'));
+      onError();
+      return;
+    }
 
     if (loading) return;
     setLoading(true);
@@ -384,6 +391,7 @@ function DetailsForm({
         shopName: isBusiness ? formData.name.trim() : undefined,
         city: country.name,
         district: isBusiness ? formData.address.trim() : undefined,
+        turnstileToken: captchaToken ?? undefined,
       });
 
       if (res.success) {
@@ -391,6 +399,9 @@ function DetailsForm({
         vibrate(30);
         setTimeout(onDone, 500);
       } else {
+        // A Turnstile answer is single-use: get a fresh one for the next try.
+        setCaptchaToken(null);
+        captchaRef.current?.reset();
         setErrors({});
         setFormError(
           res.code === 'NETWORK'
@@ -472,6 +483,8 @@ function DetailsForm({
         </motion.div>
       ))}
 
+      {TURNSTILE_SITE_KEY && <TurnstileBox siteKey={TURNSTILE_SITE_KEY} onToken={setCaptchaToken} controlRef={captchaRef} />}
+
       <div className="pt-2">
         <GoldButton type="submit" loading={loading}>
           {t('submit')}
@@ -479,6 +492,70 @@ function DetailsForm({
       </div>
     </form>
   );
+}
+
+const TURNSTILE_SITE_KEY = process.env['NEXT_PUBLIC_TURNSTILE_SITE_KEY'] ?? '';
+const TURNSTILE_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+
+type TurnstileApi = {
+  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
+  reset: (id: string) => void;
+  remove: (id: string) => void;
+};
+
+let turnstileScript: Promise<TurnstileApi | null> | null = null;
+function loadTurnstile(): Promise<TurnstileApi | null> {
+  const w = window as unknown as { turnstile?: TurnstileApi };
+  if (w.turnstile) return Promise.resolve(w.turnstile);
+  turnstileScript ??= new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = TURNSTILE_SRC;
+    s.async = true;
+    s.onload = () => resolve(w.turnstile ?? null);
+    s.onerror = () => {
+      turnstileScript = null;
+      resolve(null);
+    };
+    document.head.appendChild(s);
+  });
+  return turnstileScript;
+}
+
+/** Cloudflare Turnstile: proves a person signs up (free credits are not handed to bots). */
+function TurnstileBox({
+  siteKey,
+  onToken,
+  controlRef,
+}: {
+  siteKey: string;
+  onToken: (token: string | null) => void;
+  controlRef: React.MutableRefObject<{ reset: () => void } | null>;
+}) {
+  const boxRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    let widgetId: string | null = null;
+    let api: TurnstileApi | null = null;
+    let cancelled = false;
+    void loadTurnstile().then((loaded) => {
+      if (cancelled || !loaded || !boxRef.current) return;
+      api = loaded;
+      widgetId = loaded.render(boxRef.current, {
+        sitekey: siteKey,
+        theme: 'dark',
+        size: 'flexible',
+        callback: (token: string) => onToken(token),
+        'expired-callback': () => onToken(null),
+        'error-callback': () => onToken(null),
+      });
+      controlRef.current = { reset: () => widgetId && api?.reset(widgetId) };
+    });
+    return () => {
+      cancelled = true;
+      controlRef.current = null;
+      if (widgetId && api) api.remove(widgetId);
+    };
+  }, [siteKey, onToken, controlRef]);
+  return <div ref={boxRef} className="min-h-[65px]" />;
 }
 
 function SuccessScreen({

@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireUser } from '@/server/auth/guards';
 import { ITEM_LOCALES } from '@/domain/catalog';
+import { isPushServiceEndpoint } from '@/server/push-endpoint';
 
 export const dynamic = 'force-dynamic';
 
 const subscribeSchema = z.object({
   subscription: z.object({
-    endpoint: z.string().url().max(1000).startsWith('https://'),
+    endpoint: z.string().url().max(1000).startsWith('https://').refine(isPushServiceEndpoint, 'Unsupported push service'),
     keys: z.object({ p256dh: z.string().min(10).max(200), auth: z.string().min(10).max(100) }),
   }),
   locale: z.string().max(5).optional(),

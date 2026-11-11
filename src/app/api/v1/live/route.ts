@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { LISTED_ITEMS } from '@/server/catalog';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +19,8 @@ const TTL_MS = 1000;
 async function compute(): Promise<string> {
   const db = createAdminClient();
   const [latest, count, banner] = await Promise.all([
-    db.from('catalog_items').select('updated_at').eq('status', 'PUBLISHED').order('updated_at', { ascending: false }).limit(1),
-    db.from('catalog_items').select('id', { count: 'exact', head: true }).eq('status', 'PUBLISHED'),
+    db.from(LISTED_ITEMS).select('updated_at').eq('status', 'PUBLISHED').order('updated_at', { ascending: false }).limit(1),
+    db.from(LISTED_ITEMS).select('id', { count: 'exact', head: true }).eq('status', 'PUBLISHED'),
     db.from('app_banners').select('updated_at, is_active').eq('slot', 'shop').maybeSingle(),
   ]);
   const t = latest.data?.[0]?.updated_at ? Date.parse(latest.data[0].updated_at as string) : 0;

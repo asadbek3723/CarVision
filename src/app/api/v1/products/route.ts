@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { loadItems } from '@/server/catalog';
+import { LISTED_ITEMS, loadItems } from '@/server/catalog';
 import { toVeloceProduct } from '@/server/product-view';
 import { CATALOG_CATEGORIES, ITEM_LOCALES, veloceCategory } from '@/domain/catalog';
 
@@ -39,8 +39,9 @@ export async function GET(request: NextRequest) {
     const db = createAdminClient();
     // Facets for the filter UI (independent of the current filters): fetched alongside the items.
     // (`.then` starts the request now; a bare query builder would only run when awaited.)
-    const facetsQuery = db.from('catalog_items').select('brand, category, attributes').eq('status', 'PUBLISHED').limit(1000).then((r) => r);
+    const facetsQuery = db.from(LISTED_ITEMS).select('brand, category, attributes').eq('status', 'PUBLISHED').limit(1000).then((r) => r);
     let items = await loadItems(db, {
+      listedOnly: true,
       statuses: ['PUBLISHED'],
       ids: id ? [id] : ids,
       category,

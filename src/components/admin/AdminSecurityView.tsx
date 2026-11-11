@@ -2,11 +2,16 @@
 
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
+import { CheckCircle2, CircleDashed } from 'lucide-react';
 import { ErrorState, EmptyState, LoadMore, PageHeader, Pill, Segmented, Spinner, StatTile, Surface, dateTime, useAdminPaged } from './ui';
 import { actionLabel, attemptLabel } from './labels';
 
+type LockId = 'stableDomain' | 'https' | 'ports' | 'keyOnlyAccess' | 'privateDb' | 'waf';
+interface Lock { id: LockId; ok: boolean; source: 'auto' | 'manual' }
+
 interface Data {
   stats: { failed24h: number; pinFailed24h: number };
+  locks?: Lock[];
   actions: Array<{ id: string; action: string; entity: string; admin: string; ip: string; details: Record<string, unknown> | null; at: string }>;
   failedAttempts: Array<{ id: string; kind: string; who: string; ip: string; at: string }>;
   total: number;
@@ -23,6 +28,39 @@ function detail(t: (key: string, values?: Record<string, string | number>) => st
   if (typeof d['reason'] === 'string' && d['reason']) parts.push(t('dReason', { reason: d['reason'] }));
   if (typeof d['notes'] === 'string' && d['notes']) parts.push(String(d['notes']));
   return parts.join(' · ');
+}
+
+/** "Server · 6 locks": each classic server control, as its Vercel / Supabase equivalent (SECURITY.md). */
+function ServerLocks({ locks }: { locks: Lock[] }) {
+  const t = useTranslations('adm.security');
+  const on = locks.filter((l) => l.ok).length;
+  return (
+    <>
+      <div className="mb-3 mt-6 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-bold text-white">{t('locksTitle', { count: locks.length })}</h2>
+        <Pill tone={on === locks.length ? 'green' : 'amber'}>{`${on} / ${locks.length}`}</Pill>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {locks.map((l, i) => (
+          <Surface key={l.id} className="flex items-start gap-3 p-4">
+            {l.ok ? (
+              <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+            ) : (
+              <CircleDashed aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-white">{t(`lock.${l.id}`)}</p>
+              <p className="mt-1 text-xs text-white/50">{t(`lockHow.${l.id}`)}</p>
+              <p className={`mt-1 text-xs ${l.ok ? 'text-emerald-300' : 'text-amber-300'}`}>
+                {l.ok ? t('lockOn') : l.source === 'manual' ? t('lockManual') : t('lockOff')}
+              </p>
+            </div>
+            <span className="shrink-0 text-xs tabular-nums text-white/30">{i + 1}</span>
+          </Surface>
+        ))}
+      </div>
+    </>
+  );
 }
 
 export function AdminSecurityView() {
@@ -42,6 +80,8 @@ export function AdminSecurityView() {
         <StatTile label={t('failedLogins')} value={data.stats.failed24h} accent={data.stats.failed24h > 20 ? 'red' : undefined} />
         <StatTile label={t('failedPins')} value={data.stats.pinFailed24h} accent={data.stats.pinFailed24h ? 'amber' : undefined} />
       </div>
+
+      {data.locks && data.locks.length > 0 && <ServerLocks locks={data.locks} />}
 
       <h2 className="mb-3 mt-6 text-sm font-bold text-white">{t('actions')}</h2>
       <div className="mb-3">

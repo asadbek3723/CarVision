@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { clientIpFromHeaders } from '@/lib/client-ip';
 
 /**
  * Persistent (database backed) attempt limiter. Works across serverless instances,
@@ -9,11 +10,9 @@ import { createAdminClient } from '@/lib/supabase/server';
 
 export function clientIp(request: NextRequest): string {
   const h = request.headers;
-  // Platform-set headers first: they cannot be forged by the client (Vercel / Cloudflare overwrite them).
-  const trusted = h.get('x-vercel-forwarded-for') || h.get('cf-connecting-ip') || h.get('x-real-ip');
-  const fwd = h.get('x-forwarded-for')?.split(',')[0]?.trim();
-  const ip = (trusted || fwd || '').trim();
-  if (ip) return ip.slice(0, 64);
+  // Only headers the platform writes (see client-ip.ts): a forged x-forwarded-for is ignored on Vercel.
+  const ip = clientIpFromHeaders(h);
+  if (ip) return ip;
   // No address at all: do not let every such client share one bucket. Partition by a fingerprint.
   const fp = `${h.get('user-agent') ?? ''}|${h.get('accept-language') ?? ''}`;
   return `unknown:${createHash('sha256').update(fp).digest('hex').slice(0, 16)}`;

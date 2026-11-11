@@ -76,13 +76,28 @@ export async function POST(request: NextRequest) {
     const approve = action.kind === 'approve';
     const reason = action.kind === 'reject' ? REJECT_REASONS[action.code] : null;
     const db = createAdminClient();
-    const result = await reviewBooking(db, { adminId, bookingId: action.bookingId, approve, reason, ip: `tg:${cq.from?.id ?? '?'}` });
+    // The review caption shows the order's so'm amount; tapping "approve" confirms that amount was received.
+    let paidUzs: number | null = null;
+    if (approve) {
+      const { data: row } = await db.from('bookings').select('amount_uzs').eq('id', action.bookingId).maybeSingle();
+      paidUzs = row?.amount_uzs === null || row?.amount_uzs === undefined ? null : Number(row.amount_uzs);
+    }
+    const result = await reviewBooking(db, {
+      adminId,
+      bookingId: action.bookingId,
+      approve,
+      reason,
+      ip: `tg:${cq.from?.id ?? '?'}`,
+      paidUzs,
+    });
 
     const { booking } = await loadBookingForTelegram(action.bookingId);
     const base = booking ? await reviewCaption(db, booking) : (cq.message?.caption ?? '');
 
     if (!result.ok) {
-      if (result.error === 'OUT_OF_STOCK') {
+      if (result.error === 'AMOUNT_MISMATCH') {
+        await answerCallback(cq.id, 'Summa topilmadi yoki mos emas: saytdagi admin paneldan tasdiqlang');
+      } else if (result.error === 'OUT_OF_STOCK') {
         await answerCallback(cq.id, `Omborda yetarli emas: ${result.item ?? ''}`.slice(0, 190));
       } else if (result.error === 'INVALID_STATE') {
         await markDecided(chatId, messageId, base, 'ℹ️ Bu chek allaqachon ko‘rib chiqilgan');

@@ -15,7 +15,7 @@ const STATIC_PAGES: Array<{ path: string; priority: number; changeFrequency: 'da
 
 async function productEntries(): Promise<Array<{ id: string; lastModified: Date; images: string[] }>> {
   try {
-    const items = await loadItems(createAdminClient(), { statuses: ['PUBLISHED'], limit: 200 });
+    const items = await loadItems(createAdminClient(), { listedOnly: true, statuses: ['PUBLISHED'], limit: 200 });
     return items.map((i) => ({
       id: i.id,
       lastModified: new Date(i.createdAt),

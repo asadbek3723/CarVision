@@ -95,6 +95,7 @@ export async function loadSession(userId: string, avatarUrl?: string | null): Pr
           district: shop.district,
           phone: shop.phone,
           address: shop.exact_address || `${shop.city}, ${shop.district}`,
+          verified: Boolean(shop.is_verified),
         }
       : null,
   };

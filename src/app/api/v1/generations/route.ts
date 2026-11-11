@@ -317,6 +317,9 @@ export async function POST(request: NextRequest) {
       if (reserveResult?.error === 'PLAN_EXPIRED') {
         return errorResponse(402, 'PLAN_EXPIRED', "Tarif muddati tugagan. Tarifni yangilang");
       }
+      if (reserveResult?.error === 'TOO_MANY_IN_FLIGHT') {
+        return errorResponse(429, 'RATE_LIMITED', "Juda tez-tez so'rov. Bir oz kutib qayta urinib ko'ring");
+      }
       if (reserveResult?.error === 'ACCOUNT_BLOCKED') {
         return errorResponse(403, 'ACCOUNT_BLOCKED', 'Akkaunt bloklangan');
       }

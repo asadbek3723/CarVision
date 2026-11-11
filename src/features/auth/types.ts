@@ -9,6 +9,8 @@ export interface ShopData {
   district: string;
   phone?: string;
   address?: string;
+  /** Verified by an admin: only then are the workshop's parts listed and sold. */
+  verified?: boolean;
 }
 
 export type SupportedLocale = 'uz' | 'ru' | 'en' | 'ar' | 'tr' | 'kk' | 'ky' | 'tg';
@@ -53,4 +55,6 @@ export interface SignUpPayload {
   city?: string | undefined;
   district?: string | undefined;
   referralCode?: string | undefined;
+  /** Cloudflare Turnstile answer (only when the site key is configured). */
+  turnstileToken?: string | undefined;
 }

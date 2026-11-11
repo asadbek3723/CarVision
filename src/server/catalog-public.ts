@@ -9,7 +9,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const getPublishedItem = cache(async (id: string): Promise<CatalogItemDTO | null> => {
   if (!UUID.test(id)) return null;
   try {
-    const [item] = await loadItems(createAdminClient(), { ids: [id], statuses: ['PUBLISHED'], limit: 1 });
+    const [item] = await loadItems(createAdminClient(), { listedOnly: true, ids: [id], statuses: ['PUBLISHED'], limit: 1 });
     return item ?? null;
   } catch {
     return null;

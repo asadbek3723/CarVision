@@ -68,7 +68,7 @@ const LOCAL_EXT_MIME: Record<string, string> = {
 
 /** Hosts the server may fetch images from (never arbitrary URLs: SSRF protection). */
 function allowedRemoteHosts(): string[] {
-  const hosts = ['fal.media', 'v3.fal.media', 'v3b.fal.media', 'storage.googleapis.com'];
+  const hosts = ['fal.media', 'v3.fal.media', 'v3b.fal.media'];
   for (const raw of [process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_APP_URL]) {
     try {
       if (raw) hosts.push(new URL(raw).hostname);
@@ -92,6 +92,9 @@ export function isAllowedRemoteImageUrl(raw: string): boolean {
   if (url.protocol !== 'https:') return false;
   if (url.username || url.password) return false;
   const host = url.hostname.toLowerCase();
+  // Fal also serves results from Google Cloud Storage, but only from its own bucket: any other
+  // bucket (or *.storage.googleapis.com) is someone else's file and is not fetched.
+  if (host === 'storage.googleapis.com') return url.pathname.startsWith('/falserverless/');
   return allowedRemoteHosts().some((h) => host === h || host.endsWith(`.${h}`));
 }
 

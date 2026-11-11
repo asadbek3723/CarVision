@@ -16,8 +16,10 @@ export async function POST(request: NextRequest) {
       userId = session.userId;
     }
 
+    // Each session can hold several MB of photos in the database: anonymous visitors get fewer.
     const ip = clientIp(request);
-    if ((await recentFailures('ip', ip, 'camera_session', 60 * 60 * 1000, true)) >= 40) {
+    const perHour = userId ? 40 : 12;
+    if ((await recentFailures('ip', ip, 'camera_session', 60 * 60 * 1000, true)) >= perHour) {
       return NextResponse.json({ success: false, code: 'RATE_LIMITED', error: 'Juda ko‘p so‘rov' }, { status: 429 });
     }
     await recordAttempt('camera_session', 'create', ip, true);
