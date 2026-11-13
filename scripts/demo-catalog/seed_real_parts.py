@@ -32,6 +32,8 @@ SHOP_NAME = 'Chevrolet Performance Tuning Center'
 CARS = {
     'cobalt': [('chevrolet-cobalt', 2012, None)],
     'gentra': [('chevrolet-gentra', 2013, None), ('daewoo-gentra', 2013, None)],
+    # Services for every car (paint): no fitment rows, `attributes.universal = True` instead.
+    'universal': [],
 }
 
 # Stable keys: a re-run finds and replaces the same products. `file` is relative to assets/.
@@ -789,6 +791,55 @@ PARTS = [
     ),
 ]
 
+# ------------------------------------------------------------ universal paint
+# One template per language; {c} is the colour name, {f} the finish. The photo is a sample of the paint the AI
+# matches; `swatch` is the paint's visible tone (not the shadow) for the card and the render prompt.
+PAINT_TEXT = {
+    'uz': ("{c} — kuzovni to'liq bo'yash", "Kuzovni to'liq qayta bo'yash: {f}, ustidan himoya laki. Barcha mashinalar uchun; narx sedan uchun, katta kuzovda farq qilishi mumkin."),
+    'ru': ("{c} — полная покраска кузова", "Полная перекраска кузова: {f}, защитный лак сверху. Для всех автомобилей; цена для седана, для большого кузова может отличаться."),
+    'en': ("{c} — full body repaint", "Full body repaint: {f} with a protective clear coat. For every car; the price is for a sedan and may differ for larger bodies."),
+    'ar': ("{c} — طلاء كامل للهيكل", "إعادة طلاء كاملة للهيكل: {f} مع طبقة ورنيش واقية. لكل السيارات؛ السعر لسيارة سيدان وقد يختلف للهياكل الأكبر."),
+    'tr': ("{c} — tam kaporta boyası", "Tam kaporta boyası: {f}, üstüne koruyucu vernik. Tüm araçlar için; fiyat sedan içindir, büyük gövdelerde farklı olabilir."),
+    'kk': ("{c} — кузовты толық бояу", "Кузовты толық қайта бояу: {f}, үстінен қорғаныш лак. Барлық көліктерге; баға седанға, үлкен кузовта өзгеше болуы мүмкін."),
+    'ky': ("{c} — кузовду толук боёо", "Кузовду толук кайра боёо: {f}, үстүнөн коргоочу лак. Бардык унааларга; баа седан үчүн, чоң кузовдо башкача болушу мүмкүн."),
+    'tg': ("{c} — ранги пурраи кузов", "Ранги пурраи нави кузов: {f}, болояш лаки муҳофизатӣ. Барои ҳамаи мошинҳо; нарх барои седан, барои кузови калон метавонад фарқ кунад."),
+}
+FINISH_TEXT = {
+    'matte': {'uz': 'mat (yaltiramaydigan) qoplama', 'ru': 'матовое покрытие без блеска', 'en': 'a matte finish with no gloss',
+              'ar': 'لمسة نهائية مطفأة بلا لمعان', 'tr': 'parlamayan mat yüzey', 'kk': 'жылтырамайтын күңгірт бет',
+              'ky': 'жалтырабаган күңүрт бет', 'tg': 'сатҳи хираи бедурахш'},
+    'metallic': {'uz': "metallik zarrachali yaltiroq bo'yoq", 'ru': 'блестящая краска с металлическими частицами', 'en': 'a gloss paint with metallic flake',
+                 'ar': 'طلاء لامع بجزيئات معدنية', 'tr': 'metalik pullu parlak boya', 'kk': 'металл бөлшектері бар жылтыр бояу',
+                 'ky': 'металл бөлүкчөлүү жалтырак боёк', 'tg': 'ранги ҷилодор бо зарраҳои металлӣ'},
+    'gloss': {'uz': "yaltiroq (gloss) bo'yoq", 'ru': 'глянцевая краска', 'en': 'a gloss solid paint',
+              'ar': 'طلاء لامع', 'tr': 'parlak düz boya', 'kk': 'жылтыр бояу', 'ky': 'жалтырак боёк', 'tg': 'ранги ҷилодор'},
+}
+
+
+def paint(n, swatch, finish, price, names):
+    return dict(
+        key=f'universal-paint-{n}', car='universal', category='wrap_paint', file=f'universal/universal-paint-{n}.webp',
+        brand='CarVision Paint', price=price, install=0, stock=99,
+        attrs=dict(universal=True, swatch=swatch, finish=finish, method='full_repaint', color_name=names['en']),
+        text={l: (PAINT_TEXT[l][0].format(c=names[l]), PAINT_TEXT[l][1].format(f=FINISH_TEXT[finish][l])) for l in PAINT_TEXT},
+    )
+
+
+PARTS += [
+    paint('01', '#2B2B2B', 'matte', 700, dict(uz='Mat qora', ru='Матовый чёрный', en='Matte Black', ar='أسود مطفأ', tr='Mat Siyah',
+                                             kk='Күңгірт қара', ky='Күңүрт кара', tg='Сиёҳи хира')),
+    paint('02', '#6E1527', 'metallic', 650, dict(uz='Bordo metallik', ru='Бордовый металлик', en='Burgundy Metallic', ar='عنابي معدني',
+                                                tr='Bordo Metalik', kk='Бордо металлик', ky='Бордо металлик', tg='Бордои металлӣ')),
+    paint('03', '#3A3D3C', 'metallic', 650, dict(uz='Grafit kulrang metallik', ru='Графитовый металлик', en='Graphite Grey Metallic',
+                                                ar='رمادي غرافيتي معدني', tr='Grafit Gri Metalik', kk='Графит сұр металлик',
+                                                ky='Графит боз металлик', tg='Хокистарии графитии металлӣ')),
+    paint('04', '#E8A93A', 'gloss', 650, dict(uz='Sport sariq', ru='Спортивный жёлтый', en='Racing Yellow', ar='أصفر رياضي',
+                                             tr='Yarış Sarısı', kk='Спорттық сары', ky='Спорттук сары', tg='Зарди варзишӣ')),
+    paint('05', '#16205A', 'metallic', 650, dict(uz="To'q ko'k metallik", ru='Тёмно-синий металлик', en='Midnight Blue Metallic',
+                                                ar='أزرق داكن معدني', tr='Gece Mavisi Metalik', kk='Қою көк металлик',
+                                                ky='Кочкул көк металлик', tg='Кабуди торики металлӣ')),
+]
+
 env = {}
 for line in open(os.path.join(ROOT, '.env.local'), encoding='utf-8'):
     m = re.match(r'^([A-Z0-9_]+)=(.*)$', line.strip())
@@ -867,18 +918,19 @@ def main():
         rest('POST', 'catalog_items', [dict(
             id=item_id, shop_id=shop_id, category=p.get('category', 'lighting'), name=name, brand=p['brand'], description=desc,
             price_cents=p['price'] * 100, input_currency='USD', input_price=p['price'], stock=p['stock'],
-            install_available=True, install_price_cents=p['install'] * 100,
+            # A service (paint) is the work itself: no separate install price.
+            install_available=p['install'] > 0, install_price_cents=p['install'] * 100,
             attributes={**p['attrs'], 'seed_key': p['key']}, status='PUBLISHED', cover_image_url=url,
             published_at=now, source_lang='uz',
             translations={l: dict(name=t[0], description=t[1], manual=False) for l, t in p['text'].items() if l != 'uz'},
             translations_hash=hashlib.sha1(f'{name}\u0000{desc}'.encode()).hexdigest(),
         )], prefer='return=minimal')
         rest('POST', 'catalog_item_images', [dict(item_id=item_id, url=url, kind='STUDIO', position=0)], prefer='return=minimal')
-        rest('POST', 'catalog_item_fitment',
-             [dict(item_id=item_id, model_id=model_ids[slug], year_from=a, year_to=b) for slug, a, b in CARS[p['car']]],
-             prefer='return=minimal')
+        fitment = [dict(item_id=item_id, model_id=model_ids[slug], year_from=a, year_to=b) for slug, a, b in CARS[p['car']]]
+        if fitment:
+            rest('POST', 'catalog_item_fitment', fitment, prefer='return=minimal')
         print(f'  [{p["car"]}] {name}  ->  {item_id}')
-    print(f'Done: {len(parts)} parts, each fitted to its own car only.')
+    print(f'Done: {len(parts)} parts; car parts fitted to their own car only, universal ones to every car.')
 
 
 if __name__ == '__main__':

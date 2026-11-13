@@ -3,6 +3,7 @@ import {
   isAllowedRemoteImageUrl,
   resolveImageToDataUri,
   executeDirectAiFitment,
+  paintFinish,
 } from './direct-fitment-engine';
 
 describe('direct-fitment-engine input safety', () => {
@@ -132,8 +133,10 @@ describe('direct-fitment-engine', () => {
       angleId: 'right',
       parts: [{ id: 'c1', name: 'Satin Black', category: 'Color', swatch: '#111' }],
     });
-    expect(res.promptUsed).toContain('Change ONLY the exterior paint colour');
-    expect(res.promptUsed).toContain('Do not make the paint glossier');
+    expect(res.promptUsed).toContain('REPAINT the whole car body in "Satin Black"');
+    expect(res.promptUsed).toContain('Every dent, crease, scratch, scuff, chip and panel gap stays visible');
+    // Satin reads as a matte finish, so the old gloss is not kept.
+    expect(res.promptUsed).toContain('MATTE finish');
     expect(res.promptUsed).not.toContain('Do not add extra shine');
   });
 
@@ -164,5 +167,36 @@ describe('fitment prompt output rules', () => {
     expect(res.promptUsed).toMatch(/same framing, aspect ratio and camera angle/i);
     expect(res.promptUsed).toMatch(/No text, captions, logos, watermark/i);
     expect(res.promptUsed).toMatch(/Do not add people/i);
+  });
+});
+
+describe('paint colour renders', () => {
+  const car = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+  const run = (name: string, spec: string, swatch: string) =>
+    executeDirectAiFitment({ carPhoto: car, angleId: 'front-left', parts: [{ id: 'c1', name, category: 'Color', spec, swatch }] });
+
+  it('reads the finish from the name or description in the shop languages', () => {
+    expect(paintFinish({ name: 'Mat qora — kuzovni to‘liq bo‘yash' })).toBe('matte');
+    expect(paintFinish({ name: 'Матовый чёрный' })).toBe('matte');
+    expect(paintFinish({ name: 'Bordo metallik' })).toBe('metallic');
+    expect(paintFinish({ name: 'Graphite Grey', spec: 'a gloss paint with metallic flake' })).toBe('metallic');
+    expect(paintFinish({ name: 'Racing Yellow', spec: 'a gloss solid paint' })).toBe('gloss');
+  });
+
+  it('paints by the light of the photo, keeps shadows, depth and every small detail', async () => {
+    const res = await run('Racing Yellow', 'a gloss solid paint', '#E8A93A');
+    expect(res.promptUsed).toContain('REPAINT the whole car body in "Racing Yellow" (base tone #E8A93A)');
+    expect(res.promptUsed).toContain('LIGHT FIRST');
+    expect(res.promptUsed).toContain('SHADOWS AND DEPTH');
+    expect(res.promptUsed).toContain('COVER EVERY PAINTED DETAIL');
+    expect(res.promptUsed).toContain('DO NOT PAINT what is not body paint');
+    expect(res.promptUsed).toContain('GLOSS solid finish');
+  });
+
+  it('a matte colour drops mirror reflections instead of keeping the old gloss', async () => {
+    const res = await run('Matte Black', 'a matte finish with no gloss', '#2B2B2B');
+    expect(res.promptUsed).toContain('MATTE finish: no mirror-like reflections');
+    expect(res.promptUsed).toContain('The paint finish becomes the matte finish');
+    expect(res.promptUsed).not.toContain('The paint gloss level stays the same');
   });
 });

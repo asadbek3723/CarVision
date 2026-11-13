@@ -158,6 +158,46 @@ export async function resolveImageToDataUri(src: string | undefined): Promise<st
   return null;
 }
 
+export type PaintFinish = 'matte' | 'metallic' | 'pearl' | 'gloss';
+
+/** The finish of a colour part, read from its name and description in any of the shop languages. */
+export function paintFinish(p: { name: string; spec?: string | undefined }): PaintFinish {
+  const text = `${p.name} ${p.spec ?? ''}`.toLowerCase();
+  if (/\bmatte?\b|матов|mat qoplama|\bmat\b|satin|сатин/.test(text)) return 'matte';
+  if (/pearl|perlamutr|перламутр|sedef|inci/.test(text)) return 'pearl';
+  if (/metal|металл|metalik|metallik/.test(text)) return 'metallic';
+  return 'gloss';
+}
+
+const FINISH_LOOK: Record<PaintFinish, string> = {
+  matte:
+    'MATTE finish: no mirror-like reflections at all. Light falls off the curved panels in smooth, soft gradients, highlights are wide and diffuse, reflections of the surroundings become soft blurred glows of light, and the surface shows a very fine even texture',
+  metallic:
+    'METALLIC finish: glossy clear coat with fine metallic flake that sparkles in the highlights; the colour looks brighter and slightly lighter where the light hits it and deeper and darker on the panels turned away (the metallic flip)',
+  pearl:
+    'PEARL finish: glossy clear coat with a soft pearlescent shimmer that shifts subtly in the highlights',
+  gloss:
+    'GLOSS solid finish: a deep glossy clear coat with crisp, sharp reflections of the surroundings exactly where they are in the photo',
+};
+
+/**
+ * Repaint instruction for a colour. The customer asked for paint that reads as real: lit by the
+ * light of the photo, with true shadows and depth, and every small painted detail covered.
+ */
+function paintInstruction(p: { name: string; spec?: string | undefined; swatch?: string | undefined }): string {
+  const finish = paintFinish(p);
+  return [
+    `REPAINT the whole car body in "${p.name}"${p.swatch ? ` (base tone ${p.swatch})` : ''}. Its reference photo is a close-up sample of this paint: match its hue, depth and finish exactly and ignore everything else in that photo.`,
+    `${FINISH_LOOK[finish]}.`,
+    'LIGHT FIRST: before painting, read the light in the customer photo: which side the sun or main light comes from, how hard or soft it is and its colour. The new paint is lit by exactly that light. Surfaces facing the light are brighter, surfaces turned away are darker, and the brightness follows the real curvature of every panel (hood, roof, fenders, doors, bumpers, pillars), so the body keeps its full 3D shape.',
+    'SHADOWS AND DEPTH: keep every shadow where it is and as dark as it is: under the car, in the wheel arches, under the mirrors and door handles, along creases and character lines, and in every panel gap and door seam, which stay thin and dark. Recesses look deeper and richer, crowns and edges catch the light. Never a flat even fill, never a sticker or plastic look. A dark colour still shows its highlights so the shape stays readable; a light colour never burns out to white.',
+    'REFLECTIONS: the reflections of the sky, trees, buildings and ground on the body stay in the same places with the same shapes; only their tint follows the new paint and its finish.',
+    'COVER EVERY PAINTED DETAIL, with no spot of the old colour left: every panel, the edges and returns of each panel, the areas around badges, emblems, lamps and the number plate, painted mirror caps, door handles when they are body colour, the fuel flap, painted bumper and sill areas, painted pillars, the lips of the wheel arches and any painted surface visible through a gap.',
+    'DO NOT PAINT what is not body paint: glass, rubber seals, chrome, black plastic trim, grille mesh, lamps and lenses, badges and lettering, number plate, wipers, wheels, tyres and brake parts keep their exact original colour.',
+    'Every dent, crease, scratch, scuff, chip and panel gap stays visible with the same shape, now in the new colour',
+  ].join(' ');
+}
+
 function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
   const angleDescriptions: Record<string, string> = {
     front: 'front 0-degree symmetrical studio view',
@@ -197,7 +237,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
       return `PAINT POLISHING "${p.name}": show the paint exactly as if it was machine-polished (paint correction). Swirl marks, haze, oxidation and light surface scratches are removed and the gloss is even and natural. Dents, creases, deep scratches, chips and damaged areas stay exactly as in the photo`;
     }
     if (isColor(p)) {
-      return `Change ONLY the exterior paint colour to "${p.name}" (${p.swatch || 'custom automotive wrap'}). Recolour EVERY painted body surface visible in this photo completely and evenly, with no patch of the old colour left anywhere: doors, front and rear fenders, hood, roof, pillars, trunk lid, painted bumper areas, door handles, mirror shells, sills and the paint seen in the reflections on the car. Keep the real 3D shading: the same highlights, shadows and reflections stay in the same places and the same intensity, only their hue becomes the new colour, so it looks like real paint and not a flat fill. Every dent, crease, scratch, scuff, chip and panel gap stays visible with the same shape. Do not make the paint glossier or shinier than it was. Windows, glass, black trim, rubber, lamps, tyres, wheels, grille, badges and number plate keep their original colour`;
+      return paintInstruction(p);
     }
     if (cat.includes('wheel') || cat.includes('disk')) {
       return `Replace EVERY visible wheel (front and rear, near side and far side) with "${p.name}"${specText}. All wheels get the identical new design and finish: the exact spoke geometry, the exact colour and finish of the part photo applied over the WHOLE wheel face: spokes, centre, hub, centre cap, lug nuts area, barrel and lip. No part of any wheel keeps the old wheel's colour or design (no silver, white or chrome centre left over unless the part photo has it). Same wheel size and position, tyres and brake calipers kept, realistic contact shadow`;
@@ -226,6 +266,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
   });
 
   const touchesPaint = req.parts.some((p) => isColor(p) || isCeramic(p) || isPolish(p));
+  const newFinish = colorPart ? paintFinish(colorPart) : null;
   const refinesPaint = req.parts.some((p) => isCeramic(p) || isPolish(p));
 
   return [
@@ -243,7 +284,9 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     'Never repair, clean, smooth, retouch or beautify anything that was not listed above.',
     refinesPaint
       ? 'Outside the listed paint finish work, change nothing about the paint.'
-      : touchesPaint
+      : newFinish === 'matte' || newFinish === 'metallic'
+        ? `The paint finish becomes the ${newFinish} finish described above; nothing else about the surface changes.`
+        : touchesPaint
         ? 'The paint gloss level stays the same as in the original photo.'
         : 'Do not touch the paint: the same colour, the same gloss level, the same swirl marks and dull spots. Do not add extra shine, glow, bloom, HDR look or contrast.',
     'OUTPUT: exactly one picture with the same framing, aspect ratio and camera angle as the customer photo. No text, captions, logos, watermark, border, collage or split screen. Do not add people, animals or objects that are not in the photo.',
