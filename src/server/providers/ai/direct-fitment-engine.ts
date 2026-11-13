@@ -184,8 +184,8 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     ? `the new paint colour of this build, "${colorPart.name}"${colorPart.swatch ? ` (${colorPart.swatch})` : ''}, exactly like the rest of the body`
     : "the car's own paint colour from the customer photo, exactly like the fenders and hood beside it";
   const lightsText = req.parts.some(isLight)
-    ? 'the headlights listed in this build'
-    : 'the headlights of the customer photo, unchanged';
+    ? 'the lamps listed in this build (and the customer\'s own lamps where none is listed)'
+    : 'the lamps of the customer photo, unchanged';
 
   const partInstructions = req.parts.map((p) => {
     const cat = p.category.toLowerCase();
@@ -204,10 +204,10 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     }
     if (cat.includes('bumper') || cat.includes('bamper')) {
       return (
-        `Replace the front or rear bumper visible from this viewpoint with "${p.name}"${specText}. From its reference photo take ONLY the bumper itself: its shape, contours, air intakes, fog lamp housings, grille mesh, lip and splitter, and the design trims that are not body paint (black, chrome, carbon or coloured accent pieces). ` +
-        'That photo shows the bumper fitted on another car: IGNORE everything else in it, including its headlights, grille above the bumper, hood, number plate, wheels, background and, above all, its paint colour. ' +
+        `Replace the front or rear bumper visible from this viewpoint with "${p.name}"${specText}. From its reference photo take ONLY the bumper itself: its shape, contours, air intakes and side vents, fog lamp housings, grille mesh, lip and splitter, rear diffuser and its fins, reflectors built into the bumper, the exhaust tip openings and tips, and the design trims that are not body paint (black, chrome, carbon or coloured accent pieces). ` +
+        'That photo shows the bumper fitted on another car: IGNORE everything else in it, including its headlights and tail lights, grille above the bumper, hood, trunk lid, badges, number plate, wheels, background and, above all, its paint colour. ' +
         `Paint the painted surfaces of the new bumper in ${paintText}, so the bumper never keeps the colour of the car in the reference photo. ` +
-        `The headlights stay ${lightsText}; never copy the headlights of the bumper photo. Align the bumper with the factory panel gaps`
+        `The headlights and tail lights stay ${lightsText}; never copy the lamps of the bumper photo. Align the bumper with the factory panel gaps`
       );
     }
     if (cat.includes('spoiler') || cat.includes('wing')) {

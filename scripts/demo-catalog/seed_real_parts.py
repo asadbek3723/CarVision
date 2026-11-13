@@ -14,6 +14,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 import uuid
@@ -217,6 +218,117 @@ PARTS = [
                    "Chevrolet Cobalt 2012+. Бо грунт меояд, ҳангоми насб ба ранги мошин ранг карда мешавад."),
         },
     ),
+    # ---------------------------------------------------- Cobalt rear bumpers
+    dict(
+        key='cobalt-rear-bumper-01',
+        car='cobalt',
+        category='body_kit',
+        file='cobalt/cobalt-rear-bumper-01.webp',
+        brand='OEM+ Replica',
+        price=170, install=40, stock=5,
+        attrs=dict(part='rear_bumper', slot='bumper', zone='rear', style='Sport diffuser', material='fiberglass',
+                   diffuser='black', exhaust='twin oval tip cut-outs', finish='primer, painted to car colour', warranty_months=12),
+        text={
+            'uz': ("Qora diffuzorli sport orqa bamper — Cobalt",
+                   "Qora diffuzor, yon havo kanallari va ikki tomonlama oval glushitel uchliklari uchun joy. Parktronik teshiklari bor. "
+                   "Chevrolet Cobalt 2012+. Grunt holida, o'rnatishda mashina rangiga bo'yaladi, diffuzor qora qoladi."),
+            'ru': ("Спортивный задний бампер с чёрным диффузором — Cobalt",
+                   "Чёрный диффузор, боковые воздуховоды и вырезы под двойные овальные насадки глушителя. Есть отверстия под парктроник. "
+                   "Chevrolet Cobalt 2012+. В грунте, красится в цвет авто, диффузор остаётся чёрным."),
+            'en': ("Sport rear bumper with black diffuser — Cobalt",
+                   "Black diffuser, side vents and cut-outs for twin oval exhaust tips, with parking sensor holes. "
+                   "Chevrolet Cobalt 2012+. Supplied in primer and painted to the car's colour; the diffuser stays black."),
+            'ar': ("مصد خلفي رياضي بموزع هواء أسود — Cobalt",
+                   "موزع هواء أسود وفتحات جانبية وفتحات لطرفي عادم بيضاويين، مع فتحات لحساسات الركن. "
+                   "Chevrolet Cobalt 2012+. بطبقة أساس ويُطلى بلون السيارة، ويبقى الموزع أسود."),
+            'tr': ("Siyah difüzörlü spor arka tampon — Cobalt",
+                   "Siyah difüzör, yan hava kanalları ve çift oval egzoz ucu yuvaları, park sensörü delikleri. "
+                   "Chevrolet Cobalt 2012+. Astarlı gelir, aracın rengine boyanır, difüzör siyah kalır."),
+            'kk': ("Қара диффузорлы спорттық артқы бампер — Cobalt",
+                   "Қара диффузор, бүйір ауа арналары және қос сопақ шығару ұштарына орын, парктроник тесіктері бар. "
+                   "Chevrolet Cobalt 2012+. Грунтпен келеді, көлік түсіне боялады, диффузор қара қалады."),
+            'ky': ("Кара диффузорлуу спорттук арткы бампер — Cobalt",
+                   "Кара диффузор, капталдагы аба каналдары жана кош сүйрү чыгаруу учтарына орун, парктроник тешиктери бар. "
+                   "Chevrolet Cobalt 2012+. Грунт менен келет, унаанын түсүнө боёлот, диффузор кара калат."),
+            'tg': ("Бампери қафои варзишӣ бо диффузори сиёҳ — Cobalt",
+                   "Диффузори сиёҳ, каналҳои паҳлуии ҳаво ва ҷой барои ду нӯги байзашакли ихроҷ, сӯрохиҳои парктроник. "
+                   "Chevrolet Cobalt 2012+. Бо грунт, ба ранги мошин ранг карда мешавад, диффузор сиёҳ мемонад."),
+        },
+    ),
+    dict(
+        key='cobalt-rear-bumper-02',
+        car='cobalt',
+        category='body_kit',
+        file='cobalt/cobalt-rear-bumper-02.webp',
+        brand='Maxton-style',
+        price=210, install=45, stock=4,
+        attrs=dict(part='rear_bumper', slot='bumper', zone='rear', style='Diffuser with reflectors', material='fiberglass',
+                   diffuser='black with fins', reflectors='red, built into the diffuser', exhaust='twin oval tip cut-outs',
+                   finish='primer, painted to car colour', warranty_months=12),
+        text={
+            'uz': ("Qizil reflektorli diffuzorli orqa bamper — Cobalt",
+                   "Qanotchali qora diffuzor, unga o'rnatilgan ikkita qizil reflektor va oval glushitel uchliklari uchun joy. "
+                   "Chevrolet Cobalt 2012+. Asosiy qismi mashina rangiga bo'yaladi, diffuzor qora qoladi."),
+            'ru': ("Задний бампер с диффузором и красными катафотами — Cobalt",
+                   "Чёрный диффузор с рёбрами, два встроенных красных катафота и вырезы под овальные насадки. "
+                   "Chevrolet Cobalt 2012+. Основная часть красится в цвет авто, диффузор остаётся чёрным."),
+            'en': ("Diffuser rear bumper with red reflectors — Cobalt",
+                   "Finned black diffuser with two built-in red reflectors and cut-outs for oval exhaust tips. "
+                   "Chevrolet Cobalt 2012+. The body is painted to the car's colour; the diffuser stays black."),
+            'ar': ("مصد خلفي بموزع هواء وعواكس حمراء — Cobalt",
+                   "موزع هواء أسود بزعانف مع عاكسين أحمرين مدمجين وفتحات لأطراف عادم بيضاوية. "
+                   "Chevrolet Cobalt 2012+. يُطلى الجسم بلون السيارة ويبقى الموزع أسود."),
+            'tr': ("Kırmızı reflektörlü difüzörlü arka tampon — Cobalt",
+                   "Kanatçıklı siyah difüzör, iki dahili kırmızı reflektör ve oval egzoz ucu yuvaları. "
+                   "Chevrolet Cobalt 2012+. Gövde aracın rengine boyanır, difüzör siyah kalır."),
+            'kk': ("Қызыл шағылыстырғышты диффузорлы артқы бампер — Cobalt",
+                   "Қанатшалы қара диффузор, екі кірістірілген қызыл шағылыстырғыш және сопақ шығару ұштарына орын. "
+                   "Chevrolet Cobalt 2012+. Негізгі бөлігі көлік түсіне боялады, диффузор қара қалады."),
+            'ky': ("Кызыл чагылдыргычтуу диффузорлуу арткы бампер — Cobalt",
+                   "Канатчалуу кара диффузор, эки орнотулган кызыл чагылдыргыч жана сүйрү чыгаруу учтарына орун. "
+                   "Chevrolet Cobalt 2012+. Негизги бөлүгү унаанын түсүнө боёлот, диффузор кара калат."),
+            'tg': ("Бампери қафо бо диффузор ва инъикоскунандаҳои сурх — Cobalt",
+                   "Диффузори сиёҳи болдор, ду инъикоскунандаи сурхи сохташуда ва ҷой барои нӯгҳои байзашакли ихроҷ. "
+                   "Chevrolet Cobalt 2012+. Қисми асосӣ ба ранги мошин ранг карда мешавад, диффузор сиёҳ мемонад."),
+        },
+    ),
+    dict(
+        key='cobalt-rear-bumper-03',
+        car='cobalt',
+        category='body_kit',
+        file='cobalt/cobalt-rear-bumper-03.webp',
+        brand='Maxton-style',
+        price=240, install=50, stock=3,
+        attrs=dict(part='rear_bumper', slot='bumper', zone='rear', style='Aggressive diffuser', material='fiberglass',
+                   diffuser='gloss black with fins', centre_light='red', exhaust='twin rectangular chrome tips',
+                   finish='primer, painted to car colour', warranty_months=12),
+        text={
+            'uz': ("To'rtburchak uchlikli agressiv diffuzor orqa bamper — Cobalt",
+                   "Yaltiroq qora qanotchali diffuzor, markazda qizil chiroq va ikkita to'rtburchak xrom glushitel uchligi. "
+                   "Chevrolet Cobalt 2012+. Asosiy qismi mashina rangiga bo'yaladi, diffuzor qora qoladi."),
+            'ru': ("Агрессивный задний бампер с прямоугольными насадками — Cobalt",
+                   "Глянцево-чёрный диффузор с рёбрами, красный фонарь по центру и две прямоугольные хромированные насадки. "
+                   "Chevrolet Cobalt 2012+. Основная часть красится в цвет авто, диффузор остаётся чёрным."),
+            'en': ("Aggressive diffuser rear bumper with square tips — Cobalt",
+                   "Gloss black finned diffuser, a red centre light and two rectangular chrome exhaust tips. "
+                   "Chevrolet Cobalt 2012+. The body is painted to the car's colour; the diffuser stays black."),
+            'ar': ("مصد خلفي جريء بموزع هواء وأطراف عادم مربعة — Cobalt",
+                   "موزع هواء أسود لامع بزعانف وضوء أحمر في الوسط وطرفا عادم كروم مستطيلان. "
+                   "Chevrolet Cobalt 2012+. يُطلى الجسم بلون السيارة ويبقى الموزع أسود."),
+            'tr': ("Dikdörtgen uçlu agresif difüzörlü arka tampon — Cobalt",
+                   "Parlak siyah kanatçıklı difüzör, ortada kırmızı lamba ve iki dikdörtgen krom egzoz ucu. "
+                   "Chevrolet Cobalt 2012+. Gövde aracın rengine boyanır, difüzör siyah kalır."),
+            'kk': ("Тікбұрышты ұштары бар агрессивті диффузорлы артқы бампер — Cobalt",
+                   "Жылтыр қара қанатшалы диффузор, ортасында қызыл шам және екі тікбұрышты хром шығару ұшы. "
+                   "Chevrolet Cobalt 2012+. Негізгі бөлігі көлік түсіне боялады, диффузор қара қалады."),
+            'ky': ("Тик бурчтуу учтары бар агрессивдүү диффузорлуу арткы бампер — Cobalt",
+                   "Жылтыр кара канатчалуу диффузор, ортосунда кызыл жарык жана эки тик бурчтуу хром чыгаруу учу. "
+                   "Chevrolet Cobalt 2012+. Негизги бөлүгү унаанын түсүнө боёлот, диффузор кара калат."),
+            'tg': ("Бампери қафои агрессивӣ бо диффузор ва нӯгҳои росткунҷа — Cobalt",
+                   "Диффузори сиёҳи ҷилодори болдор, чароғи сурх дар марказ ва ду нӯги хромии росткунҷаи ихроҷ. "
+                   "Chevrolet Cobalt 2012+. Қисми асосӣ ба ранги мошин ранг карда мешавад, диффузор сиёҳ мемонад."),
+        },
+    ),
     # ------------------------------------------------------------------ Gentra
     dict(
         key='gentra-headlight-01',
@@ -411,13 +523,19 @@ def call(method, path, body=None, headers=None, raw=None):
     if body is not None:
         payload = json.dumps(body).encode()
         h['Content-Type'] = 'application/json'
-    req = urllib.request.Request(URL + path, data=payload, method=method, headers=h)
-    try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            txt = r.read().decode()
-            return json.loads(txt) if txt.strip() else None
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f'{method} {path} -> {e.code}: {e.read().decode()[:300]}')
+    # A dropped connection (SSL EOF, timeout) is retried; an HTTP error answer is not.
+    for attempt in range(4):
+        req = urllib.request.Request(URL + path, data=payload, method=method, headers=h)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                txt = r.read().decode()
+                return json.loads(txt) if txt.strip() else None
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f'{method} {path} -> {e.code}: {e.read().decode()[:300]}')
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if attempt == 3:
+                raise
+            time.sleep(1.5 * (attempt + 1))
 
 
 def rest(method, path, body=None, prefer='return=representation'):
@@ -462,7 +580,8 @@ def main():
                  headers={'Content-Type': 'image/webp', 'x-upsert': 'true', 'Cache-Control': 'max-age=31536000'})
         url = f'{URL}/storage/v1/object/public/catalog/{stored(p)}'
         name, desc = p['text']['uz']
-        item_id = str(uuid.uuid4())
+        # Same key, same id: a re-run keeps links, carts and bookings pointing at the part.
+        item_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f'carvision-seed:{p["key"]}'))
         rest('POST', 'catalog_items', [dict(
             id=item_id, shop_id=shop_id, category=p.get('category', 'lighting'), name=name, brand=p['brand'], description=desc,
             price_cents=p['price'] * 100, input_currency='USD', input_price=p['price'], stock=p['stock'],

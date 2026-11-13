@@ -87,9 +87,9 @@ describe('direct-fitment-engine', () => {
     it('takes only the bumper shape, never the photo car lamps or paint', async () => {
       const res = await executeDirectAiFitment({ carPhoto: car, angleId: 'front', parts: [bumper] });
       expect(res.promptUsed).toContain('take ONLY the bumper itself');
-      expect(res.promptUsed).toContain('IGNORE everything else in it, including its headlights');
+      expect(res.promptUsed).toContain('IGNORE everything else in it, including its headlights and tail lights');
       expect(res.promptUsed).toContain("the car's own paint colour from the customer photo");
-      expect(res.promptUsed).toContain('The headlights stay the headlights of the customer photo, unchanged');
+      expect(res.promptUsed).toContain('The headlights and tail lights stay the lamps of the customer photo, unchanged');
       expect(res.promptUsed).toContain('PART PHOTOS');
     });
 
@@ -109,8 +109,8 @@ describe('direct-fitment-engine', () => {
         angleId: 'front',
         parts: [bumper, { id: 'h1', name: 'Angel Eye LED headlights', category: 'Lights' }],
       });
-      expect(res.promptUsed).toContain('The headlights stay the headlights listed in this build');
-      expect(res.promptUsed).toContain('never copy the headlights of the bumper photo');
+      expect(res.promptUsed).toContain('The headlights and tail lights stay the lamps listed in this build');
+      expect(res.promptUsed).toContain('never copy the lamps of the bumper photo');
       expect(res.promptUsed).toContain('never its bumper, grille or paint colour');
     });
   });
