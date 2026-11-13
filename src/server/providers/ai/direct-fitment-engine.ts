@@ -175,6 +175,17 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
   const isCeramic = (p: { category: string; name: string }) => /ceramic|keramik/i.test(`${p.category} ${p.name}`);
   const isPolish = (p: { category: string; name: string }) => /polish|polirov/i.test(`${p.category} ${p.name}`);
   const isColor = (p: { category: string; swatch?: string | undefined }) => Boolean(p.swatch) || /color|wrap|paint/i.test(p.category);
+  const isLight = (p: { category: string }) => /light|fara|lamp/i.test(p.category);
+
+  // A bumper or lamp photo is the part fitted on SOME car: that car's paint, lamps and plate are not
+  // the part. The paint comes from the colour in this build, else from the customer's own car.
+  const colorPart = req.parts.find(isColor);
+  const paintText = colorPart
+    ? `the new paint colour of this build, "${colorPart.name}"${colorPart.swatch ? ` (${colorPart.swatch})` : ''}, exactly like the rest of the body`
+    : "the car's own paint colour from the customer photo, exactly like the fenders and hood beside it";
+  const lightsText = req.parts.some(isLight)
+    ? 'the headlights listed in this build'
+    : 'the headlights of the customer photo, unchanged';
 
   const partInstructions = req.parts.map((p) => {
     const cat = p.category.toLowerCase();
@@ -192,13 +203,18 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
       return `Replace EVERY visible wheel (front and rear, near side and far side) with "${p.name}"${specText}. All wheels get the identical new design and finish: the exact spoke geometry, the exact colour and finish of the part photo applied over the WHOLE wheel face: spokes, centre, hub, centre cap, lug nuts area, barrel and lip. No part of any wheel keeps the old wheel's colour or design (no silver, white or chrome centre left over unless the part photo has it). Same wheel size and position, tyres and brake calipers kept, realistic contact shadow`;
     }
     if (cat.includes('bumper') || cat.includes('bamper')) {
-      return `Replace the front or rear bumper visible from this viewpoint with "${p.name}"${specText}: exact shape, intakes, grille mesh and lip from the reference photo, aligned with the factory panel gaps, painted in the car's current colour unless the part is carbon or black by design`;
+      return (
+        `Replace the front or rear bumper visible from this viewpoint with "${p.name}"${specText}. From its reference photo take ONLY the bumper itself: its shape, contours, air intakes, fog lamp housings, grille mesh, lip and splitter, and the design trims that are not body paint (black, chrome, carbon or coloured accent pieces). ` +
+        'That photo shows the bumper fitted on another car: IGNORE everything else in it, including its headlights, grille above the bumper, hood, number plate, wheels, background and, above all, its paint colour. ' +
+        `Paint the painted surfaces of the new bumper in ${paintText}, so the bumper never keeps the colour of the car in the reference photo. ` +
+        `The headlights stay ${lightsText}; never copy the headlights of the bumper photo. Align the bumper with the factory panel gaps`
+      );
     }
     if (cat.includes('spoiler') || cat.includes('wing')) {
       return `Mount "${p.name}"${specText} on the trunk lid / rear deck exactly like the reference photo (same blade shape, end plates, uprights and finish), correctly scaled to this car and in perspective; it is only visible from rear or side viewpoints`;
     }
     if (cat.includes('light') || cat.includes('fara')) {
-      return `Replace the headlights or tail lights visible from this viewpoint with "${p.name}"${specText} inside the factory housings: same LED signature, projector layout and lens tint as the reference photo, identical on the left and right lamp, with a natural daytime running light glow`;
+      return `Replace the headlights or tail lights visible from this viewpoint with "${p.name}"${specText} inside the factory housings: same LED signature, projector layout and lens tint as the reference photo, identical on the left and right lamp, with a natural daytime running light glow. Take only the lamps from that photo, never its bumper, grille or paint colour`;
     }
     if (cat.includes('body') || cat.includes('aero')) {
       return `Replace the matching body part with "${p.name}"${specText}, aligned with the factory panel gaps and painted in the car's current paint colour (or the shown carbon weave)`;
@@ -217,6 +233,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     'CHANGES TO MAKE:',
     ...partInstructions.map((line, n) => `${n + 1}. ${line}.`),
     'Apply every change completely and identically to EVERY visible instance of that part (all wheels, both headlights, both tail lights, both mirrors, every painted panel): never leave one instance, or part of one, in its old colour or shape.',
+    'PART PHOTOS: each part photo may show that part fitted on a different car. Copy from it only the listed part. Never copy anything else from a part photo: not its paint colour, not its other lamps or body parts, not its number plate, not its background.',
     req.referenceAfter
       ? 'The LAST input image shows this same car already modified, taken from a DIFFERENT angle: use it ONLY as a reference for how the new parts look (wheel design and colour including the wheel centre and centre cap, paint, body parts) and reproduce them identically. Never copy its camera angle, its side of the car, its framing or its background.'
       : '',

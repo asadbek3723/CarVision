@@ -80,6 +80,41 @@ describe('direct-fitment-engine', () => {
     expect(res.promptUsed).toContain('Only modify what is actually visible');
   });
 
+  describe('bumper from a photo of another car', () => {
+    const car = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+    const bumper = { id: 'b1', name: 'Sport front bumper', category: 'Bumper' };
+
+    it('takes only the bumper shape, never the photo car lamps or paint', async () => {
+      const res = await executeDirectAiFitment({ carPhoto: car, angleId: 'front', parts: [bumper] });
+      expect(res.promptUsed).toContain('take ONLY the bumper itself');
+      expect(res.promptUsed).toContain('IGNORE everything else in it, including its headlights');
+      expect(res.promptUsed).toContain("the car's own paint colour from the customer photo");
+      expect(res.promptUsed).toContain('The headlights stay the headlights of the customer photo, unchanged');
+      expect(res.promptUsed).toContain('PART PHOTOS');
+    });
+
+    it('paints the bumper in the colour chosen in the same build', async () => {
+      const res = await executeDirectAiFitment({
+        carPhoto: car,
+        angleId: 'front',
+        parts: [bumper, { id: 'c1', name: 'Mercedes Obsidian Black', category: 'Color', swatch: '#0B0B0C' }],
+      });
+      expect(res.promptUsed).toContain('the new paint colour of this build, "Mercedes Obsidian Black" (#0B0B0C)');
+      expect(res.promptUsed).not.toContain("the car's own paint colour from the customer photo");
+    });
+
+    it('keeps the headlights chosen in the same build, not the bumper photo ones', async () => {
+      const res = await executeDirectAiFitment({
+        carPhoto: car,
+        angleId: 'front',
+        parts: [bumper, { id: 'h1', name: 'Angel Eye LED headlights', category: 'Lights' }],
+      });
+      expect(res.promptUsed).toContain('The headlights stay the headlights listed in this build');
+      expect(res.promptUsed).toContain('never copy the headlights of the bumper photo');
+      expect(res.promptUsed).toContain('never its bumper, grille or paint colour');
+    });
+  });
+
   it('keeps the rest of the car untouched and does not add shine', async () => {
     const res = await executeDirectAiFitment({
       carPhoto: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',

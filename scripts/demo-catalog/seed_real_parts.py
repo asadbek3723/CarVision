@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Adds the real-photo front headlights of Chevrolet Cobalt and Gentra to the catalog (idempotent: re-running replaces them).
+"""Adds the real-photo parts (headlights, bumpers) of Chevrolet Cobalt and Gentra to the catalog (idempotent: re-running replaces them).
 
-    python3 -I scripts/demo-catalog/seed_headlights.py                  # add / replace all
-    python3 -I scripts/demo-catalog/seed_headlights.py --car gentra     # only one car
-    python3 -I scripts/demo-catalog/seed_headlights.py --purge          # remove them (with --car: only that car)
+    python3 -I scripts/demo-catalog/seed_real_parts.py                  # add / replace all
+    python3 -I scripts/demo-catalog/seed_real_parts.py --car gentra     # only one car
+    python3 -I scripts/demo-catalog/seed_real_parts.py --purge          # remove them (with --car: only that car)
 
 Every part is fitted ONLY to its own car (see CARS, no end year) and is not universal: with no car chosen the shop lists
 them with every other part; once a car is chosen (by hand or from a photo) only that car keeps them.
@@ -103,6 +103,118 @@ PARTS = [
             'tg': ("Чароғҳои пеши корпуси сиёҳ бо линза — Cobalt",
                    "Проектори линзадор барои нури наздик ва рефлектор барои нури дур, корпуси дохилии сиёҳ. Chevrolet Cobalt 2012+, "
                    "маҳкамкунакҳо ва пайвасткунаки заводӣ. Маҷмӯа 2 адад."),
+        },
+    ),
+    # --------------------------------------------------------- Cobalt bumpers
+    # Photos are of white cars with the number plate blurred. The bumper is sold unpainted and painted in the
+    # customer's colour, so the texts name no colour (the render paints it in the car's colour too).
+    dict(
+        key='cobalt-bumper-01',
+        car='cobalt',
+        category='body_kit',
+        file='cobalt/cobalt-bumper-01.webp',
+        brand='OEM+ Replica',
+        price=180, install=40, stock=5,
+        attrs=dict(part='front_bumper', slot='bumper', zone='front', style='Sport lip', material='fiberglass',
+                   fog_lights='LED DRL bars', finish='primer, painted to car colour', warranty_months=12),
+        text={
+            'uz': ("LED DRL chiroqli sport oldi bamper — Cobalt",
+                   "Pastki lipli sport oldi bamper, tuman chiroqlari o'rnida LED kunduzgi chiroq bloklari. Chevrolet Cobalt 2012+ uchun, "
+                   "zavod mahkamlagichlariga tushadi. Grunt holida, o'rnatishda mashina rangiga bo'yaladi."),
+            'ru': ("Спортивный передний бампер с LED ДХО — Cobalt",
+                   "Спортивный передний бампер с нижней губой и LED-блоками ДХО на месте противотуманок. Для Chevrolet Cobalt 2012+, "
+                   "штатные крепления. Поставляется в грунте, красится в цвет авто при установке."),
+            'en': ("Sport front bumper with LED DRL lights — Cobalt",
+                   "Sport front bumper with a lower lip and LED daytime running light units in place of the fog lamps. For Chevrolet Cobalt 2012+, "
+                   "factory mounts. Supplied in primer and painted to the car's colour when fitted."),
+            'ar': ("مصد أمامي رياضي بأضواء نهارية LED — Cobalt",
+                   "مصد أمامي رياضي بشفة سفلية ووحدات إضاءة نهارية LED مكان أضواء الضباب. لسيارة Chevrolet Cobalt 2012+، "
+                   "تثبيت أصلي. يُورَّد بطبقة أساس ويُطلى بلون السيارة عند التركيب."),
+            'tr': ("LED DRL ışıklı spor ön tampon — Cobalt",
+                   "Alt lipli spor ön tampon, sis farı yerinde LED gündüz farı üniteleri. Chevrolet Cobalt 2012+ için, "
+                   "orijinal bağlantı noktaları. Astarlı gelir, montajda aracın rengine boyanır."),
+            'kk': ("LED DRL шамдары бар спорттық алдыңғы бампер — Cobalt",
+                   "Төменгі ерні бар спорттық алдыңғы бампер, тұман шамдарының орнында LED күндізгі шам блоктары. Chevrolet Cobalt 2012+ үшін, "
+                   "зауыттық бекіткіштер. Грунтпен келеді, орнатқанда көлік түсіне боялады."),
+            'ky': ("LED DRL жарыктары бар спорттук алдыңкы бампер — Cobalt",
+                   "Төмөнкү эрини бар спорттук алдыңкы бампер, туман фараларынын ордунда LED күндүзгү жарык блоктору. Chevrolet Cobalt 2012+ үчүн, "
+                   "заводдук бекиткичтер. Грунт менен келет, орнотууда унаанын түсүнө боёлот."),
+            'tg': ("Бампери пеши варзишӣ бо чароғҳои LED DRL — Cobalt",
+                   "Бампери пеши варзишӣ бо лаби поёнӣ ва блокҳои чароғи рӯзонаи LED дар ҷои чароғҳои туман. Барои Chevrolet Cobalt 2012+, "
+                   "маҳкамкунакҳои заводӣ. Бо грунт меояд, ҳангоми насб ба ранги мошин ранг карда мешавад."),
+        },
+    ),
+    dict(
+        key='cobalt-bumper-02',
+        car='cobalt',
+        category='body_kit',
+        file='cobalt/cobalt-bumper-02.webp',
+        brand='Maxton-style',
+        price=260, install=50, stock=3,
+        attrs=dict(part='front_bumper', slot='bumper', zone='front', style='Aggressive sport', material='fiberglass',
+                   accents='red fog frames, chrome strips, black splitter', grille='honeycomb mesh',
+                   finish='primer, painted to car colour', warranty_months=12),
+        text={
+            'uz': ("Qizil ramkali agressiv sport oldi bamper — Cobalt",
+                   "Keskin qirrali sport bamper: qizil ramkali havo kanallari, xrom chiziqlar, qora splitter va asal katak to'r. "
+                   "Chevrolet Cobalt 2012+. Asosiy qismi o'rnatishda mashina rangiga bo'yaladi, qizil va qora detallar o'zgarmaydi."),
+            'ru': ("Агрессивный спортивный бампер с красными рамками — Cobalt",
+                   "Спортивный бампер с острыми гранями: воздухозаборники в красных рамках, хромированные полосы, чёрный сплиттер и сетка-соты. "
+                   "Chevrolet Cobalt 2012+. Основная часть красится в цвет авто, красные и чёрные детали остаются."),
+            'en': ("Aggressive sport front bumper with red frames — Cobalt",
+                   "Sharp-edged sport bumper: red-framed air intakes, chrome strips, a black splitter and honeycomb mesh. "
+                   "Chevrolet Cobalt 2012+. The body is painted to the car's colour when fitted; the red and black trims stay."),
+            'ar': ("مصد أمامي رياضي جريء بإطارات حمراء — Cobalt",
+                   "مصد رياضي بحواف حادة: فتحات هواء بإطارات حمراء وشرائط كروم وموزع هواء أسود وشبكة خلية نحل. "
+                   "Chevrolet Cobalt 2012+. يُطلى الجسم بلون السيارة عند التركيب وتبقى القطع الحمراء والسوداء."),
+            'tr': ("Kırmızı çerçeveli agresif spor ön tampon — Cobalt",
+                   "Keskin hatlı spor tampon: kırmızı çerçeveli hava girişleri, krom şeritler, siyah splitter ve bal peteği ızgara. "
+                   "Chevrolet Cobalt 2012+. Gövde montajda aracın rengine boyanır, kırmızı ve siyah parçalar kalır."),
+            'kk': ("Қызыл жақтаулы агрессивті спорттық бампер — Cobalt",
+                   "Өткір қырлы спорттық бампер: қызыл жақтаулы ауа кірістері, хром жолақтар, қара сплиттер және ұя тор. "
+                   "Chevrolet Cobalt 2012+. Негізгі бөлігі көлік түсіне боялады, қызыл және қара бөлшектер қалады."),
+            'ky': ("Кызыл алкактуу агрессивдүү спорттук бампер — Cobalt",
+                   "Курч кырдуу спорттук бампер: кызыл алкактуу аба киргизгичтер, хром тилкелер, кара сплиттер жана уя тор. "
+                   "Chevrolet Cobalt 2012+. Негизги бөлүгү унаанын түсүнө боёлот, кызыл жана кара бөлүктөр калат."),
+            'tg': ("Бампери пеши варзишии агрессивӣ бо чорчӯбаҳои сурх — Cobalt",
+                   "Бампери варзишӣ бо канорҳои тез: даромадгоҳҳои ҳаво бо чорчӯбаи сурх, хатҳои хромӣ, сплиттери сиёҳ ва тӯри шонашакл. "
+                   "Chevrolet Cobalt 2012+. Қисми асосӣ ба ранги мошин ранг карда мешавад, қисмҳои сурх ва сиёҳ мемонанд."),
+        },
+    ),
+    dict(
+        key='cobalt-bumper-03',
+        car='cobalt',
+        category='body_kit',
+        file='cobalt/cobalt-bumper-03.webp',
+        brand='OEM+ Replica',
+        price=150, install=40, stock=6,
+        attrs=dict(part='front_bumper', slot='bumper', zone='front', style='OEM+ lip', material='fiberglass',
+                   fog_lights='round fog lamps', finish='primer, painted to car colour', warranty_months=12),
+        text={
+            'uz': ("Lipli OEM+ oldi bamper, dumaloq tuman faralari bilan — Cobalt",
+                   "Zavod shakliga yaqin oldi bamper: pastki lip, kengaytirilgan pastki havo kanali va dumaloq tuman faralari uchun joy. "
+                   "Chevrolet Cobalt 2012+. Grunt holida, o'rnatishda mashina rangiga bo'yaladi."),
+            'ru': ("Передний бампер OEM+ с губой и круглыми ПТФ — Cobalt",
+                   "Бампер близкий к заводской форме: нижняя губа, расширенный нижний воздухозаборник и места под круглые противотуманки. "
+                   "Chevrolet Cobalt 2012+. Поставляется в грунте, красится в цвет авто при установке."),
+            'en': ("OEM+ lip front bumper with round fog lamps — Cobalt",
+                   "Close-to-factory front bumper with a lower lip, a wider lower intake and housings for round fog lamps. "
+                   "Chevrolet Cobalt 2012+. Supplied in primer and painted to the car's colour when fitted."),
+            'ar': ("مصد أمامي OEM+ بشفة وأضواء ضباب دائرية — Cobalt",
+                   "مصد قريب من الشكل الأصلي بشفة سفلية وفتحة هواء سفلية أعرض ومواضع لأضواء ضباب دائرية. "
+                   "Chevrolet Cobalt 2012+. يُورَّد بطبقة أساس ويُطلى بلون السيارة عند التركيب."),
+            'tr': ("Lipli OEM+ ön tampon, yuvarlak sis farlı — Cobalt",
+                   "Fabrika formuna yakın ön tampon: alt lip, genişletilmiş alt hava girişi ve yuvarlak sis farı yuvaları. "
+                   "Chevrolet Cobalt 2012+. Astarlı gelir, montajda aracın rengine boyanır."),
+            'kk': ("Ерні бар OEM+ алдыңғы бампер, дөңгелек тұман шамдарымен — Cobalt",
+                   "Зауыттық пішінге жақын бампер: төменгі ерін, кеңейтілген төменгі ауа кірісі және дөңгелек тұман шамдарына орын. "
+                   "Chevrolet Cobalt 2012+. Грунтпен келеді, орнатқанда көлік түсіне боялады."),
+            'ky': ("Эрини бар OEM+ алдыңкы бампер, тегерек туман фаралары менен — Cobalt",
+                   "Заводдук формага жакын бампер: төмөнкү эрин, кеңейтилген төмөнкү аба киргизгич жана тегерек туман фараларына орун. "
+                   "Chevrolet Cobalt 2012+. Грунт менен келет, орнотууда унаанын түсүнө боёлот."),
+            'tg': ("Бампери пеши OEM+ бо лаб ва чароғҳои мудаввари туман — Cobalt",
+                   "Бампери наздик ба шакли заводӣ: лаби поёнӣ, даромадгоҳи васеъи поёнӣ ва ҷой барои чароғҳои мудаввари туман. "
+                   "Chevrolet Cobalt 2012+. Бо грунт меояд, ҳангоми насб ба ранги мошин ранг карда мешавад."),
         },
     ),
     # ------------------------------------------------------------------ Gentra
@@ -340,7 +452,7 @@ def main():
         rest('DELETE', f'catalog_items?shop_id=eq.{shop_id}&attributes->>seed_key=eq.{p["key"]}', prefer='return=minimal')
     if purge:
         call('DELETE', '/storage/v1/object/catalog', dict(prefixes=[stored(p) for p in parts]))
-        print(f'{len(parts)} headlights removed.')
+        print(f'{len(parts)} parts removed.')
         return
 
     now = datetime.now(timezone.utc).isoformat()
@@ -352,7 +464,7 @@ def main():
         name, desc = p['text']['uz']
         item_id = str(uuid.uuid4())
         rest('POST', 'catalog_items', [dict(
-            id=item_id, shop_id=shop_id, category='lighting', name=name, brand=p['brand'], description=desc,
+            id=item_id, shop_id=shop_id, category=p.get('category', 'lighting'), name=name, brand=p['brand'], description=desc,
             price_cents=p['price'] * 100, input_currency='USD', input_price=p['price'], stock=p['stock'],
             install_available=True, install_price_cents=p['install'] * 100,
             attributes={**p['attrs'], 'seed_key': p['key']}, status='PUBLISHED', cover_image_url=url,
@@ -365,7 +477,7 @@ def main():
              [dict(item_id=item_id, model_id=model_ids[slug], year_from=a, year_to=b) for slug, a, b in CARS[p['car']]],
              prefer='return=minimal')
         print(f'  [{p["car"]}] {name}  ->  {item_id}')
-    print(f'Done: {len(parts)} headlights, each fitted to its own car only.')
+    print(f'Done: {len(parts)} parts, each fitted to its own car only.')
 
 
 if __name__ == '__main__':
