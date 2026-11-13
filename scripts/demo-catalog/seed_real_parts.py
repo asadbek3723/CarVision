@@ -211,6 +211,77 @@ PARTS = [
                    "Барои Chevrolet Cobalt 2012+, пайвасткунаки заводӣ. Маҷмӯа 2 адад."),
         },
     ),
+    # Coloured front rings: red or RGB light at the front is not allowed on the road, the texts say so.
+    dict(
+        key='cobalt-headlight-06',
+        car='cobalt',
+        file='cobalt/cobalt-headlight-06.webp',
+        brand='Sonar-style',
+        price=290, install=35, stock=3,
+        attrs=dict(part='headlight', zone='front', style='Red segmented ring', light_source='LED projector',
+                   drl='red segmented LED ring', housing='smoked black', road_legal_colour=False, set_of=2, warranty_months=12),
+        text={
+            'uz': ("Qizil LED halqali projektor oldi faralar — Cobalt",
+                   "Linza atrofida bo'lakli qizil LED halqa va ichki qizil yoritish, qoraytirilgan korpus. Chevrolet Cobalt 2012+. "
+                   "Qizil yoritish faqat ko'rgazma uchun: yo'lda oldingi qizil chiroq taqiqlangan. Komplektda 2 dona."),
+            'ru': ("Фары с красным LED-кольцом и линзой — Cobalt",
+                   "Сегментное красное LED-кольцо вокруг линзы и красная подсветка внутри, тонированный корпус. Chevrolet Cobalt 2012+. "
+                   "Красная подсветка только для выставок: красный свет спереди на дороге запрещён. В комплекте 2 шт."),
+            'en': ("Red LED ring projector headlights — Cobalt",
+                   "A segmented red LED ring around the projector and red inner lighting in a smoked housing. Chevrolet Cobalt 2012+. "
+                   "The red lighting is for shows only: red light at the front is not allowed on the road. Set of 2."),
+            'ar': ("مصابيح بعدسة وحلقة LED حمراء — Cobalt",
+                   "حلقة LED حمراء مقطعة حول العدسة وإضاءة داخلية حمراء في هيكل مدخن. Chevrolet Cobalt 2012+. "
+                   "الإضاءة الحمراء للعروض فقط: الضوء الأحمر في الأمام غير مسموح على الطريق. طقم من قطعتين."),
+            'tr': ("Kırmızı LED halkalı projektörlü ön farlar — Cobalt",
+                   "Mercek çevresinde parçalı kırmızı LED halka ve kırmızı iç aydınlatma, füme gövde. Chevrolet Cobalt 2012+. "
+                   "Kırmızı aydınlatma yalnızca gösteri içindir: önde kırmızı ışık yolda yasaktır. 2 adet takım."),
+            'kk': ("Қызыл LED сақиналы линзалы шамдар — Cobalt",
+                   "Линза айналасында бөлікті қызыл LED сақина және ішкі қызыл жарық, күңгірт корпус. Chevrolet Cobalt 2012+. "
+                   "Қызыл жарық тек көрмеге арналған: жолда алдыңғы қызыл шамға тыйым салынған. Жиынтықта 2 дана."),
+            'ky': ("Кызыл LED шакекчелүү линзалуу фаралар — Cobalt",
+                   "Линзанын айланасында бөлүктүү кызыл LED шакекче жана ички кызыл жарык, күңүрт корпус. Chevrolet Cobalt 2012+. "
+                   "Кызыл жарык көргөзмө үчүн гана: жолдо алдыңкы кызыл жарык тыюу салынган. Комплектте 2 даана."),
+            'tg': ("Чароғҳои пеши бо ҳалқаи сурхи LED ва линза — Cobalt",
+                   "Ҳалқаи қисмбандии сурхи LED дар атрофи линза ва рӯшноии дохилии сурх, корпуси тира. Chevrolet Cobalt 2012+. "
+                   "Рӯшноии сурх танҳо барои намоиш: чароғи сурхи пеш дар роҳ манъ аст. Маҷмӯа 2 адад."),
+        },
+    ),
+    dict(
+        key='cobalt-headlight-07',
+        car='cobalt',
+        file='cobalt/cobalt-headlight-07.webp',
+        brand='Eagle Eye-style',
+        price=320, install=40, stock=3,
+        attrs=dict(part='headlight', zone='front', style='RGB hexagon ring', light_source='LED projector',
+                   drl='multicolour RGB hexagon ring', housing='black', road_legal_colour=False, set_of=2, warranty_months=12),
+        text={
+            'uz': ("RGB olti burchakli halqali projektor faralar — Cobalt",
+                   "Linza atrofida ko'p rangli RGB olti burchakli LED halqa, qora korpus. Chevrolet Cobalt 2012+, ulash ustaxonada. "
+                   "Rangli rejim faqat ko'rgazma uchun, yo'lda oq yoki sariq rang ishlatiladi. Komplektda 2 dona."),
+            'ru': ("Фары с RGB-кольцом в форме шестиугольника — Cobalt",
+                   "Многоцветное RGB LED-кольцо в форме шестиугольника вокруг линзы, чёрный корпус. Chevrolet Cobalt 2012+, подключение в мастерской. "
+                   "Цветной режим только для выставок, на дороге белый или жёлтый. В комплекте 2 шт."),
+            'en': ("RGB hexagon ring projector headlights — Cobalt",
+                   "A multicolour RGB hexagon LED ring around the projector in a black housing. Chevrolet Cobalt 2012+, wired at the workshop. "
+                   "The colour modes are for shows only; on the road use white or amber. Set of 2."),
+            'ar': ("مصابيح بعدسة وحلقة RGB سداسية — Cobalt",
+                   "حلقة LED سداسية RGB متعددة الألوان حول العدسة في هيكل أسود. Chevrolet Cobalt 2012+، التوصيل في الورشة. "
+                   "أوضاع الألوان للعروض فقط، وعلى الطريق الأبيض أو الكهرماني. طقم من قطعتين."),
+            'tr': ("RGB altıgen halkalı projektörlü farlar — Cobalt",
+                   "Mercek çevresinde çok renkli RGB altıgen LED halka, siyah gövde. Chevrolet Cobalt 2012+, bağlantı atölyede. "
+                   "Renkli modlar yalnızca gösteri içindir, yolda beyaz veya amber kullanılır. 2 adet takım."),
+            'kk': ("RGB алтыбұрышты сақиналы линзалы шамдар — Cobalt",
+                   "Линза айналасында көп түсті RGB алтыбұрышты LED сақина, қара корпус. Chevrolet Cobalt 2012+, қосу шеберханада. "
+                   "Түсті режим тек көрмеге арналған, жолда ақ не сары түс қолданылады. Жиынтықта 2 дана."),
+            'ky': ("RGB алты бурчтуу шакекчелүү линзалуу фаралар — Cobalt",
+                   "Линзанын айланасында көп түстүү RGB алты бурчтуу LED шакекче, кара корпус. Chevrolet Cobalt 2012+, туташтыруу устаканада. "
+                   "Түстүү режим көргөзмө үчүн гана, жолдо ак же сары түс колдонулат. Комплектте 2 даана."),
+            'tg': ("Чароғҳои пеши бо ҳалқаи шашкунҷаи RGB ва линза — Cobalt",
+                   "Ҳалқаи бисёррангаи шашкунҷаи RGB LED дар атрофи линза, корпуси сиёҳ. Chevrolet Cobalt 2012+, пайвастнамоӣ дар устохона. "
+                   "Реҷаи рангӣ танҳо барои намоиш, дар роҳ ранги сафед ё зард истифода мешавад. Маҷмӯа 2 адад."),
+        },
+    ),
     # --------------------------------------------------------- Cobalt bumpers
     # Photos are of white cars with the number plate blurred. The bumper is sold unpainted and painted in the
     # customer's colour, so the texts name no colour (the render paints it in the car's colour too).
