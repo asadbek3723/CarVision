@@ -840,6 +840,81 @@ PARTS += [
                                                 ky='Кочкул көк металлик', tg='Кабуди торики металлӣ')),
 ]
 
+# ------------------------------------------------------------ universal wheels
+# Sold for every car: the size and bolt pattern are picked for the customer's car when ordering, so the
+# attributes name no single pcd/diameter. Portrait photos were widened to 4:3 by continuing their own backdrop.
+WHEEL_TEXT = {
+    'uz': ("{n} disklar", "{f}. Komplektda 4 dona. O'lchami va bolt naqshi (masalan 4x100, 4x114.3, 5x115) mashinangizga qarab buyurtmada tanlanadi; narx o'lchamga qarab o'zgaradi. Shina montaji va balansirovka bilan o'rnatiladi."),
+    'ru': ("Диски {n}", "{f}. В комплекте 4 шт. Размер и разболтовка (например 4x100, 4x114.3, 5x115) подбираются под ваш автомобиль при заказе; цена зависит от размера. Установка с шиномонтажом и балансировкой."),
+    'en': ("{n} wheels", "{f}. Set of 4. The size and bolt pattern (for example 4x100, 4x114.3, 5x115) are matched to your car when ordering; the price depends on the size. Fitted with tyre mounting and balancing."),
+    'ar': ("جنوط {n}", "{f}. طقم من 4 قطع. يُختار المقاس ونمط البراغي (مثل 4x100 و4x114.3 و5x115) لسيارتك عند الطلب، ويتغير السعر حسب المقاس. التركيب مع تركيب الإطارات وموازنتها."),
+    'tr': ("{n} jantlar", "{f}. 4 adet takım. Ölçü ve bijon düzeni (örneğin 4x100, 4x114.3, 5x115) siparişte aracınıza göre seçilir; fiyat ölçüye göre değişir. Lastik montajı ve balans ile takılır."),
+    'kk': ("{n} дискілері", "{f}. Жиынтықта 4 дана. Өлшемі мен болт үлгісі (мысалы 4x100, 4x114.3, 5x115) тапсырыста көлігіңізге қарай таңдалады; баға өлшемге байланысты. Шина монтажы мен теңгерумен орнатылады."),
+    'ky': ("{n} дисктери", "{f}. Комплектте 4 даана. Өлчөмү жана болт үлгүсү (мисалы 4x100, 4x114.3, 5x115) буйрутмада унааңызга жараша тандалат; баасы өлчөмгө жараша. Шина монтажы жана тең салмактоо менен орнотулат."),
+    'tg': ("Дискҳои {n}", "{f}. Маҷмӯа 4 адад. Андоза ва нақшаи болтҳо (масалан 4x100, 4x114.3, 5x115) ҳангоми фармоиш барои мошини шумо интихоб мешавад; нарх аз андоза вобаста аст. Бо монтажи шина ва мувозинат насб мешавад."),
+}
+WHEEL_FINISH = {
+    'silver_machined': {'uz': "Kumushrang, old yuzasi frezalangan (yaltiroq)", 'ru': 'Серебристые с проточенной лицевой частью', 'en': 'Silver with a machined face',
+                        'ar': 'فضية بواجهة مخروطة لامعة', 'tr': 'Gümüş, ön yüzü elmas kesim', 'kk': 'Күміс түсті, алдыңғы беті жонылған',
+                        'ky': 'Күмүш түстүү, алдыңкы бети жонулган', 'tg': 'Нуқрагин, рӯяи пеш тарошидашуда'},
+    'gloss_black': {'uz': 'Yaltiroq qora', 'ru': 'Глянцево-чёрные', 'en': 'Gloss black', 'ar': 'أسود لامع', 'tr': 'Parlak siyah',
+                    'kk': 'Жылтыр қара', 'ky': 'Жалтырак кара', 'tg': 'Сиёҳи ҷилодор'},
+    'black_machined': {'uz': "Qora, old yuzasi frezalangan", 'ru': 'Чёрные с проточенной лицевой частью', 'en': 'Black with a machined face',
+                       'ar': 'سوداء بواجهة مخروطة', 'tr': 'Siyah, ön yüzü elmas kesim', 'kk': 'Қара, алдыңғы беті жонылған',
+                       'ky': 'Кара, алдыңкы бети жонулган', 'tg': 'Сиёҳ, рӯяи пеш тарошидашуда'},
+    'grey_machined': {'uz': "Grafit kulrang, old yuzasi frezalangan", 'ru': 'Графитовые с проточенной лицевой частью', 'en': 'Graphite grey with a machined face',
+                      'ar': 'رمادي غرافيتي بواجهة مخروطة', 'tr': 'Grafit gri, ön yüzü elmas kesim', 'kk': 'Графит сұр, алдыңғы беті жонылған',
+                      'ky': 'Графит боз, алдыңкы бети жонулган', 'tg': 'Хокистарии графитӣ, рӯяи пеш тарошидашуда'},
+    'black_machined_blue': {'uz': "Qora, frezalangan yuza, ichki gardishi ko'k", 'ru': 'Чёрные с проточкой и синим внутренним ободом', 'en': 'Black with a machined face and a blue inner barrel',
+                            'ar': 'سوداء بواجهة مخروطة وحافة داخلية زرقاء', 'tr': 'Siyah, elmas kesim, iç çember mavi', 'kk': 'Қара, жонылған бет, ішкі шеңбері көк',
+                            'ky': 'Кара, жонулган бет, ички алкагы көк', 'tg': 'Сиёҳ, рӯяи тарошида, ҳалқаи дохилӣ кабуд'},
+    'black_machined_red': {'uz': "Qora, frezalangan yuza, ichki gardishi qizil", 'ru': 'Чёрные с проточкой и красным внутренним ободом', 'en': 'Black with a machined face and a red inner barrel',
+                           'ar': 'سوداء بواجهة مخروطة وحافة داخلية حمراء', 'tr': 'Siyah, elmas kesim, iç çember kırmızı', 'kk': 'Қара, жонылған бет, ішкі шеңбері қызыл',
+                           'ky': 'Кара, жонулган бет, ички алкагы кызыл', 'tg': 'Сиёҳ, рӯяи тарошида, ҳалқаи дохилӣ сурх'},
+    'black_bronze_turquoise': {'uz': "Qora, bronza tusli yuza, ichki gardishi firuza", 'ru': 'Чёрные с бронзовой лицевой частью и бирюзовым ободом', 'en': 'Black with a bronze-tinted face and a turquoise inner barrel',
+                               'ar': 'سوداء بواجهة برونزية وحافة داخلية فيروزية', 'tr': 'Siyah, bronz tonlu yüz, iç çember turkuaz', 'kk': 'Қара, қола реңді бет, ішкі шеңбері көгілдір',
+                               'ky': 'Кара, коло түстүү бет, ички алкагы көгүш', 'tg': 'Сиёҳ, рӯяи биринҷӣ, ҳалқаи дохилӣ фирӯзаӣ'},
+    'steel_black': {'uz': "Qora po'lat disk, oddiy va mustahkam", 'ru': 'Чёрные стальные, простые и прочные', 'en': 'Black steel, simple and strong',
+                    'ar': 'فولاذية سوداء بسيطة ومتينة', 'tr': 'Siyah çelik, sade ve sağlam', 'kk': 'Қара болат, қарапайым әрі берік',
+                    'ky': 'Кара болот, жөнөкөй жана бекем', 'tg': 'Пӯлоди сиёҳ, оддӣ ва мустаҳкам'},
+    'black_polished_lip': {'uz': "Qora to'r naqshli markaz, sayqallangan chuqur gardish va boltlar", 'ru': 'Чёрный сетчатый центр, полированная глубокая полка и болты', 'en': 'Black mesh centre with a polished deep lip and rivets',
+                           'ar': 'مركز شبكي أسود مع حافة عميقة مصقولة ومسامير', 'tr': 'Siyah örgü merkez, cilalı derin dudak ve perçinler', 'kk': 'Қара торлы орта, жылтыратылған терең жиек пен болттар',
+                           'ky': 'Кара тор борбор, жылмаланган терең алкак жана болттор', 'tg': 'Маркази тӯрии сиёҳ, лаби чуқури сайқалдода ва болтҳо'},
+    'gold_polished_lip': {'uz': "Oltinrang to'r naqshli markaz, sayqallangan chuqur gardish va boltlar", 'ru': 'Золотистый сетчатый центр, полированная глубокая полка и болты', 'en': 'Gold mesh centre with a polished deep lip and rivets',
+                          'ar': 'مركز شبكي ذهبي مع حافة عميقة مصقولة ومسامير', 'tr': 'Altın örgü merkez, cilalı derin dudak ve perçinler', 'kk': 'Алтын түсті торлы орта, жылтыратылған терең жиек пен болттар',
+                          'ky': 'Алтын түстүү тор борбор, жылмаланган терең алкак жана болттор', 'tg': 'Маркази тӯрии тиллоранг, лаби чуқури сайқалдода ва болтҳо'},
+    'silver': {'uz': 'Kumushrang, zavod uslubida', 'ru': 'Серебристые, в заводском стиле', 'en': 'Silver, factory style',
+               'ar': 'فضية بأسلوب المصنع', 'tr': 'Gümüş, fabrika tarzı', 'kk': 'Күміс түсті, зауыттық стильде',
+               'ky': 'Күмүш түстүү, заводдук стилде', 'tg': 'Нуқрагин, бо услуби заводӣ'},
+}
+
+
+def wheel(n, model, brand, finish, price, more=()):
+    return dict(
+        key=f'universal-wheel-{n}', car='universal', category='wheels', file=f'universal/universal-wheel-{n}.webp',
+        more=[f'universal/{m}.webp' for m in more], brand=brand, price=price, install=25, stock=8,
+        attrs=dict(universal=True, part='wheel', set_of=4, finish=finish, sizes='matched to the car on order'),
+        text={l: (WHEEL_TEXT[l][0].format(n=model), WHEEL_TEXT[l][1].format(f=WHEEL_FINISH[finish][l])) for l in WHEEL_TEXT},
+    )
+
+
+PARTS += [
+    wheel('01', 'HRE-style 15-spoke', 'HRE-style', 'silver_machined', 560, more=['universal-wheel-01b']),
+    wheel('02', 'Ever Trust Y-spoke', 'Ever Trust', 'gloss_black', 420),
+    wheel('03', 'Elegant multi-spoke deep dish', 'Elegant', 'black_machined', 480),
+    wheel('04', 'Vossen-style 15-spoke Graphite', 'Vossen-style', 'grey_machined', 380),
+    wheel('05', 'Vossen-style 15-spoke Black', 'Vossen-style', 'black_machined', 340),
+    wheel('06', 'Vossen-style 15-spoke Blue', 'Vossen-style', 'black_machined_blue', 350),
+    wheel('07', 'Vossen-style 15-spoke Red', 'Vossen-style', 'black_machined_red', 350),
+    wheel('08', 'Vossen-style 15-spoke Turquoise', 'Vossen-style', 'black_bronze_turquoise', 360),
+    wheel('09', 'Twister 10-spoke', 'OEM+ Replica', 'black_machined', 380),
+    wheel('10', 'Steel', 'OEM Steel', 'steel_black', 120),
+    wheel('11', 'BBS RS-style mesh Black', 'BBS-style', 'black_polished_lip', 560),
+    wheel('12', 'BBS RS-style mesh Gold', 'BBS-style', 'gold_polished_lip', 560),
+    wheel('13', 'Chevrolet 12-spoke', 'OEM', 'silver_machined', 300),
+    wheel('14', 'Chevrolet 6-spoke', 'OEM', 'silver', 240),
+]
+
 env = {}
 for line in open(os.path.join(ROOT, '.env.local'), encoding='utf-8'):
     m = re.match(r'^([A-Z0-9_]+)=(.*)$', line.strip())
@@ -895,23 +970,30 @@ def main():
                 sys.exit(f'Vehicle model "{slug}" not found.')
             model_ids[slug] = found[0]['id']
 
-    def stored(p):
-        return f'{shop_id}/{os.path.basename(p["file"])}'
+    def stored(file):
+        return f'{shop_id}/{os.path.basename(file)}'
+
+    def files_of(p):
+        # `file` is the cover; `more` are extra photos of the same product, shown after it
+        return [p['file'], *p.get('more', [])]
 
     for p in parts:
         # Replace an earlier copy (images and fitment cascade).
         rest('DELETE', f'catalog_items?shop_id=eq.{shop_id}&attributes->>seed_key=eq.{p["key"]}', prefer='return=minimal')
     if purge:
-        call('DELETE', '/storage/v1/object/catalog', dict(prefixes=[stored(p) for p in parts]))
+        call('DELETE', '/storage/v1/object/catalog', dict(prefixes=[stored(f) for p in parts for f in files_of(p)]))
         print(f'{len(parts)} parts removed.')
         return
 
     now = datetime.now(timezone.utc).isoformat()
     for p in parts:
-        with open(os.path.join(ASSETS, p['file']), 'rb') as f:
-            call('POST', f'/storage/v1/object/catalog/{stored(p)}', raw=f.read(),
-                 headers={'Content-Type': 'image/webp', 'x-upsert': 'true', 'Cache-Control': 'max-age=31536000'})
-        url = f'{URL}/storage/v1/object/public/catalog/{stored(p)}'
+        urls = []
+        for file in files_of(p):
+            with open(os.path.join(ASSETS, file), 'rb') as f:
+                call('POST', f'/storage/v1/object/catalog/{stored(file)}', raw=f.read(),
+                     headers={'Content-Type': 'image/webp', 'x-upsert': 'true', 'Cache-Control': 'max-age=31536000'})
+            urls.append(f'{URL}/storage/v1/object/public/catalog/{stored(file)}')
+        url = urls[0]
         name, desc = p['text']['uz']
         # Same key, same id: a re-run keeps links, carts and bookings pointing at the part.
         item_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f'carvision-seed:{p["key"]}'))
@@ -925,7 +1007,8 @@ def main():
             translations={l: dict(name=t[0], description=t[1], manual=False) for l, t in p['text'].items() if l != 'uz'},
             translations_hash=hashlib.sha1(f'{name}\u0000{desc}'.encode()).hexdigest(),
         )], prefer='return=minimal')
-        rest('POST', 'catalog_item_images', [dict(item_id=item_id, url=url, kind='STUDIO', position=0)], prefer='return=minimal')
+        rest('POST', 'catalog_item_images', [dict(item_id=item_id, url=u, kind='STUDIO', position=i) for i, u in enumerate(urls)],
+             prefer='return=minimal')
         fitment = [dict(item_id=item_id, model_id=model_ids[slug], year_from=a, year_to=b) for slug, a, b in CARS[p['car']]]
         if fitment:
             rest('POST', 'catalog_item_fitment', fitment, prefer='return=minimal')
