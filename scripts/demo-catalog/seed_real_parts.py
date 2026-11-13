@@ -106,6 +106,111 @@ PARTS = [
                    "маҳкамкунакҳо ва пайвасткунаки заводӣ. Маҷмӯа 2 адад."),
         },
     ),
+    dict(
+        key='cobalt-headlight-03',
+        car='cobalt',
+        file='cobalt/cobalt-headlight-03.webp',
+        brand='Sonar-style',
+        price=260, install=30, stock=4,
+        attrs=dict(part='headlight', zone='front', style='Amber LED signature', light_source='LED projector',
+                   drl='amber LED pattern', housing='black', set_of=2, warranty_months=12),
+        text={
+            'uz': ("Sariq LED naqshli projektor oldi faralar — Cobalt",
+                   "Qora korpus, linzali projektor va sariq LED naqshli kunduzgi chiroq hamda burilish chirog'i. "
+                   "Chevrolet Cobalt 2012+ uchun, zavod ulagichiga mos. Komplektda 2 dona."),
+            'ru': ("Передние фары с янтарным LED-узором и линзой — Cobalt",
+                   "Чёрный корпус, линзованный проектор и янтарные LED ДХО с поворотником в виде узора. "
+                   "Для Chevrolet Cobalt 2012+, штатный разъём. В комплекте 2 шт."),
+            'en': ("Amber LED signature projector headlights — Cobalt",
+                   "Black housing, projector lens and an amber LED pattern for the daytime light and turn signal. "
+                   "For Chevrolet Cobalt 2012+, factory connector. Set of 2."),
+            'ar': ("مصابيح أمامية بعدسة ونقش LED كهرماني — Cobalt",
+                   "هيكل أسود وعدسة بروجكتور ونقش LED كهرماني للضوء النهاري وإشارة الانعطاف. "
+                   "لسيارة Chevrolet Cobalt 2012+، موصل أصلي. طقم من قطعتين."),
+            'tr': ("Amber LED desenli projektörlü ön farlar — Cobalt",
+                   "Siyah gövde, projektör mercek ve gündüz farı ile sinyal için amber LED desen. "
+                   "Chevrolet Cobalt 2012+ için, orijinal soket. 2 adet takım."),
+            'kk': ("Сары LED өрнекті линзалы алдыңғы шамдар — Cobalt",
+                   "Қара корпус, линзалы проектор және күндізгі шам мен бұрылыс үшін сары LED өрнек. "
+                   "Chevrolet Cobalt 2012+ үшін, зауыттық қосқыш. Жиынтықта 2 дана."),
+            'ky': ("Сары LED оймолуу линзалуу алдыңкы фаралар — Cobalt",
+                   "Кара корпус, линзалуу проектор жана күндүзгү жарык менен бурулуш үчүн сары LED оймо. "
+                   "Chevrolet Cobalt 2012+ үчүн, заводдук туташтыргыч. Комплектте 2 даана."),
+            'tg': ("Чароғҳои пеши бо нақши LED-и зард ва линза — Cobalt",
+                   "Корпуси сиёҳ, проектори линзадор ва нақши зарди LED барои чароғи рӯзона ва гардишнамо. "
+                   "Барои Chevrolet Cobalt 2012+, пайвасткунаки заводӣ. Маҷмӯа 2 адад."),
+        },
+    ),
+    dict(
+        key='cobalt-headlight-04',
+        car='cobalt',
+        file='cobalt/cobalt-headlight-04.webp',
+        brand='Eagle Eye-style',
+        price=280, install=30, stock=4,
+        attrs=dict(part='headlight', zone='front', style='Crystal LED ring', light_source='LED projector',
+                   drl='crystal LED segment ring', turn_signal='round amber', housing='black', set_of=2, warranty_months=12),
+        text={
+            'uz': ("Kristall LED halqali projektor oldi faralar — Cobalt",
+                   "Linza atrofida kristall LED bo'laklardan iborat kunduzgi chiroq halqasi, dumaloq sariq burilish chirog'i va qora korpus. "
+                   "Chevrolet Cobalt 2012+ uchun. Komplektda 2 dona."),
+            'ru': ("Фары с кристальным LED-кольцом и линзой — Cobalt",
+                   "Кольцо ДХО из кристальных LED-сегментов вокруг линзы, круглый жёлтый поворотник и чёрный корпус. "
+                   "Для Chevrolet Cobalt 2012+. В комплекте 2 шт."),
+            'en': ("Crystal LED ring projector headlights — Cobalt",
+                   "A daytime light ring of crystal LED segments around the projector, a round amber turn signal and a black housing. "
+                   "For Chevrolet Cobalt 2012+. Set of 2."),
+            'ar': ("مصابيح بعدسة وحلقة LED كريستالية — Cobalt",
+                   "حلقة ضوء نهاري من مقاطع LED كريستالية حول العدسة وإشارة انعطاف كهرمانية دائرية وهيكل أسود. "
+                   "لسيارة Chevrolet Cobalt 2012+. طقم من قطعتين."),
+            'tr': ("Kristal LED halkalı projektörlü ön farlar — Cobalt",
+                   "Mercek çevresinde kristal LED parçalardan gündüz farı halkası, yuvarlak amber sinyal ve siyah gövde. "
+                   "Chevrolet Cobalt 2012+ için. 2 adet takım."),
+            'kk': ("Кристалды LED сақиналы линзалы шамдар — Cobalt",
+                   "Линза айналасында кристалды LED бөліктерден күндізгі шам сақинасы, дөңгелек сары бұрылыс шамы және қара корпус. "
+                   "Chevrolet Cobalt 2012+ үшін. Жиынтықта 2 дана."),
+            'ky': ("Кристалл LED шакекчелүү линзалуу фаралар — Cobalt",
+                   "Линзанын айланасында кристалл LED бөлүктөрдөн күндүзгү жарык шакекчеси, тегерек сары бурулуш жарыгы жана кара корпус. "
+                   "Chevrolet Cobalt 2012+ үчүн. Комплектте 2 даана."),
+            'tg': ("Чароғҳои пеши бо ҳалқаи кристаллии LED ва линза — Cobalt",
+                   "Ҳалқаи чароғи рӯзона аз қисмҳои кристаллии LED дар атрофи линза, гардишнамои мудаввари зард ва корпуси сиёҳ. "
+                   "Барои Chevrolet Cobalt 2012+. Маҷмӯа 2 адад."),
+        },
+    ),
+    dict(
+        key='cobalt-headlight-05',
+        car='cobalt',
+        file='cobalt/cobalt-headlight-05.webp',
+        brand='DEPO-style',
+        price=250, install=30, stock=5,
+        attrs=dict(part='headlight', zone='front', style='Triple light guide', light_source='projector',
+                   drl='three white LED light guides', housing='black', set_of=2, warranty_months=12),
+        text={
+            'uz': ("Uch chiziqli LED DRL projektor oldi faralar — Cobalt",
+                   "Uchta oq LED yorug'lik chizig'idan iborat kunduzgi chiroq, linzali projektor va qora korpus. "
+                   "Chevrolet Cobalt 2012+ uchun, zavod ulagichiga mos. Komplektda 2 dona."),
+            'ru': ("Фары с тройной LED-полосой ДХО и линзой — Cobalt",
+                   "ДХО из трёх белых LED-световодов, линзованный проектор и чёрный корпус. "
+                   "Для Chevrolet Cobalt 2012+, штатный разъём. В комплекте 2 шт."),
+            'en': ("Triple-line LED DRL projector headlights — Cobalt",
+                   "Daytime light of three white LED light guides, a projector lens and a black housing. "
+                   "For Chevrolet Cobalt 2012+, factory connector. Set of 2."),
+            'ar': ("مصابيح بعدسة وضوء نهاري LED بثلاثة خطوط — Cobalt",
+                   "ضوء نهاري من ثلاثة أدلة ضوء LED بيضاء وعدسة بروجكتور وهيكل أسود. "
+                   "لسيارة Chevrolet Cobalt 2012+، موصل أصلي. طقم من قطعتين."),
+            'tr': ("Üç çizgili LED DRL projektörlü ön farlar — Cobalt",
+                   "Üç beyaz LED ışık çizgisinden gündüz farı, projektör mercek ve siyah gövde. "
+                   "Chevrolet Cobalt 2012+ için, orijinal soket. 2 adet takım."),
+            'kk': ("Үш сызықты LED DRL линзалы шамдар — Cobalt",
+                   "Үш ақ LED жарық сызығынан күндізгі шам, линзалы проектор және қара корпус. "
+                   "Chevrolet Cobalt 2012+ үшін, зауыттық қосқыш. Жиынтықта 2 дана."),
+            'ky': ("Үч сызыктуу LED DRL линзалуу фаралар — Cobalt",
+                   "Үч ак LED жарык сызыгынан күндүзгү жарык, линзалуу проектор жана кара корпус. "
+                   "Chevrolet Cobalt 2012+ үчүн, заводдук туташтыргыч. Комплектте 2 даана."),
+            'tg': ("Чароғҳои пеши бо DRL-и сехаттаи LED ва линза — Cobalt",
+                   "Чароғи рӯзона аз се хати сафеди рӯшноии LED, проектори линзадор ва корпуси сиёҳ. "
+                   "Барои Chevrolet Cobalt 2012+, пайвасткунаки заводӣ. Маҷмӯа 2 адад."),
+        },
+    ),
     # --------------------------------------------------------- Cobalt bumpers
     # Photos are of white cars with the number plate blurred. The bumper is sold unpainted and painted in the
     # customer's colour, so the texts name no colour (the render paints it in the car's colour too).
