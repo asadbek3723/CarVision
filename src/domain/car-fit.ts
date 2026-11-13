@@ -14,6 +14,17 @@ export interface FitProduct {
   compatibility?: Array<{ id: string; yearFrom?: number | null | undefined; yearTo?: number | null | undefined }> | undefined;
 }
 
+/** Oldest model year any picker accepts. */
+export const MIN_CAR_YEAR = 1950;
+
+/**
+ * Newest model year anyone can pick or save: the current year, read at call time so it moves on by
+ * itself every 1 January (never a hard-coded year). A fitment with no end year fits up to this one.
+ */
+export function maxCarYear(now: Date = new Date()): number {
+  return now.getFullYear();
+}
+
 /** `exact` — the workshop listed this car (and year); `universal` — fits every car; `null` — no claim. */
 export type CarFit = 'exact' | 'universal' | null;
 

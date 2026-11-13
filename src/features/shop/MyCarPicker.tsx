@@ -6,6 +6,7 @@ import { Car, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { geist, md } from '@/features/minimal/theme';
 import { useMyCar } from './useMyCar';
+import { MIN_CAR_YEAR, maxCarYear } from '@/domain/car-fit';
 
 interface ModelResult {
   id: string;
@@ -14,7 +15,7 @@ interface ModelResult {
 
 type Step = 'model' | 'year';
 
-const MIN_YEAR = 1950;
+const MIN_YEAR = MIN_CAR_YEAR;
 /** Quick picks in the year step: the latest model years, newest first. */
 const QUICK_YEARS = 12;
 
@@ -35,10 +36,10 @@ export function MyCarPicker() {
   const [picked, setPicked] = React.useState<ModelResult | null>(null);
   const [year, setYear] = React.useState('');
 
-  const maxYear = new Date().getFullYear() + 1;
+  const maxYear = maxCarYear();
   const yearNumber = Number(year);
   const yearValid = /^\d{4}$/.test(year) && yearNumber >= MIN_YEAR && yearNumber <= maxYear;
-  const quickYears = React.useMemo(() => Array.from({ length: QUICK_YEARS }, (_, i) => new Date().getFullYear() - i), []);
+  const quickYears = React.useMemo(() => Array.from({ length: QUICK_YEARS }, (_, i) => maxCarYear() - i), []);
 
   const openDialog = () => {
     setStep('model');

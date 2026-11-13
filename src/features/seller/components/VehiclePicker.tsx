@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus, Search, X } from 'lucide-react';
+import { MIN_CAR_YEAR, maxCarYear } from '@/domain/car-fit';
 
 export interface PickedVehicle {
   key: string;
@@ -71,8 +72,8 @@ export function VehiclePicker({ value, onChange }: Props) {
     <input
       type="number"
       inputMode="numeric"
-      min={1950}
-      max={2100}
+      min={MIN_CAR_YEAR}
+      max={maxCarYear()}
       value={current ?? ''}
       placeholder={placeholder}
       onChange={(e) => patch(key, { [field]: e.target.value ? Number(e.target.value) : undefined })}

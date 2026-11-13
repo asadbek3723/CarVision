@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { carFit, carSlug, factoryWheelFor, fitSummary, normalizePcd, wheelFit } from './car-fit';
+import { carFit, carSlug, factoryWheelFor, fitSummary, normalizePcd, maxCarYear, wheelFit } from './car-fit';
 
 const COBALT = { modelId: 'cobalt-id', label: 'Chevrolet Cobalt', year: 2020 };
 
@@ -92,5 +92,19 @@ describe('wheelFit', () => {
     expect(r.factory).toBeNull();
     expect(r.pcd.state).toBe('unknown');
     expect(r.diameter.state).toBe('unknown');
+  });
+});
+
+describe('maxCarYear', () => {
+  it('is the current calendar year and moves on by itself', () => {
+    expect(maxCarYear(new Date('2026-11-14T12:00:00Z'))).toBe(2026);
+    expect(maxCarYear(new Date('2027-06-01T12:00:00Z'))).toBe(2027);
+  });
+
+  it('an open-ended fitment fits every year up to now', () => {
+    const p = { compatibility: [{ id: 'cobalt', yearFrom: 2012, yearTo: null }] };
+    expect(carFit(p, { modelId: 'cobalt', label: 'Chevrolet Cobalt', year: maxCarYear() })).toBe('exact');
+    expect(carFit(p, { modelId: 'cobalt', label: 'Chevrolet Cobalt', year: 2012 })).toBe('exact');
+    expect(carFit(p, { modelId: 'cobalt', label: 'Chevrolet Cobalt', year: 2011 })).toBe(null);
   });
 });

@@ -8,6 +8,7 @@ import { useMyCar } from '@/features/shop/useMyCar';
 import { buttonClasses } from '@/components/ui';
 import { setCarCheckToken } from '@/features/visualizer/car-check';
 import { setCarViews } from '@/features/visualizer/car-views';
+import { maxCarYear } from '@/domain/car-fit';
 
 type Phase = 'scan' | 'confirm' | 'manual' | 'year' | 'done' | 'blocked';
 
@@ -64,7 +65,7 @@ export function CarIdentifyGate({ photo, photoId, angles, onRetake, onClose, onD
   const tCommon = useTranslations('common');
   const reduce = useReducedMotion();
   const { setCar } = useMyCar();
-  const maxYear = React.useMemo(() => new Date().getFullYear(), []);
+  const maxYear = React.useMemo(() => maxCarYear(), []);
 
   const [phase, setPhase] = React.useState<Phase>('scan');
   const [hint, setHint] = React.useState(0);
