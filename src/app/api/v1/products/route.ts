@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
       category = CATALOG_CATEGORIES.find((c) => c.slug === categoryParam)?.slug;
     }
 
+    const fitModelId = modelId && /^[0-9a-f-]{36}$/i.test(modelId) ? modelId : undefined;
+
     const db = createAdminClient();
     // Facets for the filter UI (independent of the current filters): fetched alongside the items.
     // (`.then` starts the request now; a bare query builder would only run when awaited.)
@@ -46,20 +48,23 @@ export async function GET(request: NextRequest) {
       ids: id ? [id] : ids,
       category,
       query,
+      fitModelId,
+      fitYear: year,
       limit: categoryParam && !category && categoryParam !== 'All' ? 200 : limit,
     });
     if (categoryParam && categoryParam !== 'All' && !category) {
       items = items.filter((i) => veloceCategory(i.category, i.attributes).toLowerCase() === categoryParam.toLowerCase()).slice(0, limit);
     }
 
-    // "My car" filter: universal items plus items whose fitment names this model (and year, if given)
-    if (modelId && /^[0-9a-f-]{36}$/i.test(modelId)) {
+    // "My car" filter: universal items plus items whose fitment names this model (and year, if given).
+    // The query already narrowed to these; this keeps the rule in one readable place.
+    if (fitModelId) {
       items = items.filter(
         (i) =>
           i.isUniversal ||
           i.fitment.some(
             (f) =>
-              f.modelId === modelId &&
+              f.modelId === fitModelId &&
               (!year || ((f.yearFrom === null || year >= f.yearFrom) && (f.yearTo === null || year <= f.yearTo)))
           )
       );

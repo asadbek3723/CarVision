@@ -151,7 +151,7 @@ export function VeloceCustomize() {
       try {
         if (!catalogLoadedOnce.current) setIsLoadingCatalog(true);
         // Workshop owners see only their own garage parts; regular users see every shop's parts that fit their car.
-        const endpoint = isSeller ? `/api/v1/seller/inventory?locale=${locale}` : `/api/v1/products?limit=120&locale=${locale}${filterQuery ? `&${filterQuery}` : ''}&v=${liveVersion()}`;
+        const endpoint = isSeller ? `/api/v1/seller/inventory?locale=${locale}` : `/api/v1/products?limit=${filterQuery ? 200 : 120}&locale=${locale}${filterQuery ? `&${filterQuery}` : ''}&v=${liveVersion()}`;
         const res = await fetch(endpoint, { cache: 'no-store' });
         const data = await res.json();
         if (isMounted) {
@@ -198,6 +198,22 @@ export function VeloceCustomize() {
       setSelectedPartIds(next);
     }
   }, [requestedPartId, catalogProducts, selectedPartIds, setSelectedPartIds]);
+
+  // Quick add from the shop (?partId=): open the tab of that part so it is in view at once, or say
+  // plainly that it is not listed for the chosen car instead of silently showing nothing.
+  const quickAddHandled = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!requestedPartId || isLoadingCatalog || isSeller || quickAddHandled.current === requestedPartId) return;
+    quickAddHandled.current = requestedPartId;
+    const part = catalogProducts.find((p) => p.id === requestedPartId);
+    if (part) {
+      const slot = partSlot(part);
+      const tab = CATEGORIES.find((c) => c.id.toLowerCase() === slot);
+      if (tab) setActiveCategory(tab.id);
+    } else if (myCar) {
+      setApplyError(t('partNotForCar', { car: myCar.label }));
+    }
+  }, [requestedPartId, isLoadingCatalog, isSeller, catalogProducts, myCar, t]);
 
   // Bring back the build saved with "Save config" (once, and only when nothing is picked yet).
   const restoredBuild = React.useRef(false);

@@ -16,6 +16,8 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import { VeloceProduct } from '@/domain/veloce-catalog';
+import { WheelFitTip } from '@/features/shop/WheelFitTip';
+import { wheelSpecs } from '@/domain/car-fit';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { ProductCard } from '@/components/veloce/ProductCard';
@@ -193,12 +195,14 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
   const normalizedUSD = product.price;
   const gallery = product.images && product.images.length > 0 ? product.images : product.image ? [product.image] : [];
   const attrs = product.attributes ?? {};
+  const wheel = wheelSpecs(attrs);
   const specChips: string[] = [
-    attrs['diameter'] ? `R${attrs['diameter']}` : '',
-    attrs['width'] ? `${attrs['width']}J` : '',
-    typeof attrs['pcd'] === 'string' ? (attrs['pcd'] as string) : '',
-    attrs['offset'] !== undefined ? `ET${attrs['offset']}` : '',
+    wheel.diameter !== null ? `R${wheel.diameter}` : '',
+    wheel.width !== null ? `${wheel.width}J` : '',
+    wheel.pcd ?? '',
+    wheel.offset !== null ? `ET${wheel.offset}` : '',
   ].filter(Boolean);
+  const isWheel = product.category.toLowerCase() === 'wheels';
   const outOfStock = (product.stock ?? 0) <= 0;
   const yearText = (from?: number | null, to?: number | null) =>
     from && to ? `${from}–${to}` : from ? `${from}+` : to ? t('yearsUpTo', { year: to }) : '';
@@ -323,11 +327,13 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
                 ))
               )}
             </div>
-            {specChips.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
+            {(specChips.length > 0 || isWheel) && (
+              <div className="flex flex-wrap items-center gap-2 pt-1">
                 {specChips.map((c) => (
                   <span key={c} className="rounded-full px-3 py-1 text-[11px] text-white/70">{c}</span>
                 ))}
+                {/* Wheels: how these sizes compare with the factory wheel of the customer's car */}
+                {isWheel && <WheelFitTip attributes={product.attributes} />}
               </div>
             )}
           </div>

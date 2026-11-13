@@ -493,11 +493,18 @@
       "title": "Shop",
       "subtitle": "Parts and services that fit your car.",
       "filters": "Filters",
-      "brands": "Brands"
+      "brands": "Brands",
+      "fitParts": "{count} fitting parts",
+      "fitServices": "{count} universal services",
+      "fitServicesOnly": "{count} universal services"
     },
     "card": {
       "allCars": "All cars",
-      "addToCart": "Add to cart: {name}"
+      "addToCart": "Add to cart: {name}",
+      "fitExact": "100% fit",
+      "fitUniversal": "Universal",
+      "tryOn": "Try on my car: {name}",
+      "tryOnShort": "Try on"
     },
     "detail": {
       "notFound": "Product not found.",
@@ -518,7 +525,24 @@
       "addToCart": "Add to cart",
       "goToCart": "Go to cart",
       "added": "Added to cart",
-      "securePurchase": "Secure payment"
+      "securePurchase": "Secure payment",
+      "wheelFit": {
+        "open": "Factory size fit",
+        "title": "Factory size fit",
+        "factoryFor": "{car}: factory wheel PCD {pcd}, {dia}.",
+        "unknownCar": "Factory sizes for {car} aren't in our database — see the rules below.",
+        "pickCar": "Choose your car in the shop to compare this wheel with the factory one.",
+        "pcdOk": "Bolt count and spacing ({pcd}) match the factory wheel.",
+        "pcdBad": "This wheel is {pcd}, your car is {factory}. It won't fit without adapters.",
+        "pcdExplain": "PCD is the number of bolts and the circle they sit on (e.g. 4x100). It must match the factory wheel exactly.",
+        "diameterTitle": "Diameter R{dia}",
+        "diameterTitleNone": "Diameter",
+        "diaOk": "A safe fit with the factory {factory}.",
+        "diaBig": "More than {plus}\" above the factory {factory}: needs low-profile tyres and an arch check.",
+        "diaSmall": "Smaller than the factory {factory}: may touch the brakes.",
+        "diaExplain": "A rim 0–2\" larger than the factory one usually fits without trouble.",
+        "offsetExplain": "ET is the wheel offset (mm). Stay within ±5 mm of the factory value; the workshop checks before fitting."
+      }
     },
     "cart": {
       "browse": "Browse parts",
@@ -819,7 +843,8 @@
     "partsHiddenAll": "The selected parts are not visible in your photos. Add a photo from the matching side (for example the rear for rear lights).",
     "partsHiddenSome": "These parts are not visible in your photos and won't be rendered: {names}. Add a photo from the matching side.",
     "errConfirmCar": "Confirm the car first",
-    "fitAll": "Fits all cars"
+    "fitAll": "Fits all cars",
+    "partNotForCar": "This part isn't listed for {car} — showing parts that fit."
   },
   "identify": {
     "dialog": "Identify your car",

@@ -493,11 +493,18 @@
       "title": "Mağaza",
       "subtitle": "Aracınıza uygun parçalar ve hizmetler.",
       "filters": "Filtreler",
-      "brands": "Markalar"
+      "brands": "Markalar",
+      "fitParts": "{count} uyumlu parça",
+      "fitServices": "{count} evrensel hizmet",
+      "fitServicesOnly": "{count} evrensel hizmet"
     },
     "card": {
       "allCars": "Tüm araçlar",
-      "addToCart": "Sepete ekle: {name}"
+      "addToCart": "Sepete ekle: {name}",
+      "fitExact": "%100 uyumlu",
+      "fitUniversal": "Evrensel",
+      "tryOn": "Aracımda dene: {name}",
+      "tryOnShort": "Dene"
     },
     "detail": {
       "notFound": "Ürün bulunamadı.",
@@ -518,7 +525,24 @@
       "addToCart": "Sepete ekle",
       "goToCart": "Sepete git",
       "added": "Sepete eklendi",
-      "securePurchase": "Güvenli ödeme"
+      "securePurchase": "Güvenli ödeme",
+      "wheelFit": {
+        "open": "Fabrika ölçüsüne uyum",
+        "title": "Fabrika ölçüsüne uyum",
+        "factoryFor": "{car}: fabrika jantı PCD {pcd}, {dia}.",
+        "unknownCar": "{car} için fabrika ölçüleri veritabanımızda yok — aşağıdaki kurallara bakın.",
+        "pickCar": "Bu jantı fabrika jantıyla karşılaştırmak için mağazada aracınızı seçin.",
+        "pcdOk": "Bijon sayısı ve aralığı ({pcd}) fabrika jantıyla aynı.",
+        "pcdBad": "Bu jant {pcd}, aracınız {factory}. Adaptör olmadan takılamaz.",
+        "pcdExplain": "PCD, bijon sayısı ve bijonların dizildiği çemberin çapıdır (ör. 4x100). Fabrika değeriyle birebir aynı olmalıdır.",
+        "diameterTitle": "Çap R{dia}",
+        "diameterTitleNone": "Çap",
+        "diaOk": "Fabrika {factory} ölçüsüyle güvenle uyumlu.",
+        "diaBig": "Fabrika {factory} ölçüsünden {plus} inçten fazla büyük: düşük profilli lastik ve çamurluk kontrolü gerekir.",
+        "diaSmall": "Fabrika {factory} ölçüsünden küçük: frenlere değebilir.",
+        "diaExplain": "Fabrikadan 0–2 inç büyük bir jant genellikle sorunsuz takılır.",
+        "offsetExplain": "ET, jantın ofsetidir (mm). Fabrika değerinden ±5 mm içinde kalın; atölye takmadan önce kontrol eder."
+      }
     },
     "cart": {
       "browse": "Parçalara göz at",
@@ -819,7 +843,8 @@
     "partsHiddenAll": "Seçilen parçalar fotoğraflarınızda görünmüyor. İlgili taraftan fotoğraf ekleyin (örneğin arka farlar için arka taraf).",
     "partsHiddenSome": "Bu parçalar fotoğraflarınızda görünmüyor ve işlenmeyecek: {names}. İlgili taraftan fotoğraf ekleyin.",
     "errConfirmCar": "Önce aracı doğrulayın",
-    "fitAll": "Tüm araçlara uygun"
+    "fitAll": "Tüm araçlara uygun",
+    "partNotForCar": "Bu parça {car} için listelenmemiş — uyumlu parçalar gösteriliyor."
   },
   "identify": {
     "dialog": "Aracı belirle",

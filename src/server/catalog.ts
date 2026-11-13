@@ -127,6 +127,26 @@ export interface LoadItemsOptions {
   category?: string | undefined;
   query?: string | undefined;
   limit?: number | undefined;
+  /**
+   * "My car": only universal items and items whose fitment names this model (and year). Applied in
+   * the query, before the limit, so a large catalog never cuts off parts that fit.
+   */
+  fitModelId?: string | undefined;
+  fitYear?: number | null | undefined;
+}
+
+/** Ids of items listed for a model (and year, when given). */
+async function fittingItemIds(db: Db, modelId: string, year: number | null | undefined): Promise<string[]> {
+  const { data, error } = await db.from('catalog_item_fitment').select('item_id, year_from, year_to').eq('model_id', modelId).limit(5000);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as Array<{ item_id: string; year_from: number | null; year_to: number | null }>;
+  return [
+    ...new Set(
+      rows
+        .filter((r) => !year || ((r.year_from === null || year >= r.year_from) && (r.year_to === null || year <= r.year_to)))
+        .map((r) => r.item_id)
+    ),
+  ];
 }
 
 /** Loads items with their images and fitment (labels resolved from the vehicle database). */
@@ -139,6 +159,7 @@ export function isMissingRelation(error: { code?: string | undefined; message?: 
 }
 
 export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<CatalogItemDTO[]> {
+  const fitIds = opts.fitModelId ? await fittingItemIds(db, opts.fitModelId, opts.fitYear) : null;
   const run = (table: string) => {
     let q = db
       .from(table)
@@ -152,6 +173,9 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
     if (opts.ids?.length) q = q.in('id', opts.ids);
     if (opts.statuses?.length) q = q.in('status', opts.statuses);
     if (opts.category) q = q.eq('category', opts.category);
+    if (fitIds) {
+      q = fitIds.length ? q.or(`id.in.(${fitIds.join(',')}),attributes->>universal.eq.true`) : q.eq('attributes->>universal', 'true');
+    }
     if (opts.query) {
       const safe = opts.query.replace(/[%,()]/g, ' ').trim();
       if (safe) q = q.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);

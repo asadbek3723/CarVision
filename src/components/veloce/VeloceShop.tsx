@@ -4,12 +4,13 @@ import * as React from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCategoryLabel } from '@/lib/category-label';
-import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Check, Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { MinimalProductCard } from '@/components/veloce/MinimalProductCard';
 import { MyCarPicker } from '@/features/shop/MyCarPicker';
 import { ShopBanner } from '@/features/shop/ShopBanner';
 import { useMyCar } from '@/features/shop/useMyCar';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
+import { carFit, fitSummary } from '@/domain/car-fit';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
 import { rememberProducts } from '@/features/shop/product-cache';
 import { liveVersion, useLiveTick, useRetryTick } from '@/lib/live';
@@ -26,6 +27,9 @@ interface Facets {
 const listCache = new Map<string, { products: VeloceProduct[]; facets: Facets }>();
 /** Cards drawn first; the rest follow as the visitor scrolls, so 120 products never block one frame. */
 const PAGE = 24;
+/** Without a car the shop shows the newest parts; with one, everything that fits it (API maximum). */
+const LIMIT_ALL = 120;
+const LIMIT_FOR_CAR = 200;
 
 export function VeloceShop() {
   const t = useTranslations('shop.list');
@@ -52,7 +56,7 @@ export function VeloceShop() {
 
   React.useEffect(() => {
     let cancelled = false;
-    const qs = ['limit=120', `locale=${locale}`, filterQuery].filter(Boolean).join('&');
+    const qs = [`limit=${filterQuery ? LIMIT_FOR_CAR : LIMIT_ALL}`, `locale=${locale}`, filterQuery].filter(Boolean).join('&');
     const cached = listCache.get(qs);
     if (cached) {
       setProducts(cached.products);
@@ -117,6 +121,7 @@ export function VeloceShop() {
     }`;
 
   const shown = filtered.slice(0, visible);
+  const summary = React.useMemo(() => fitSummary(filtered, car), [filtered, car]);
 
   return (
     <div className={`${geist.className} ${md.page} min-h-full`}>
@@ -178,6 +183,17 @@ export function VeloceShop() {
           </h2>
           <span className={`shrink-0 text-[13px] tabular-nums ${md.faint}`}>{loading ? t('loading') : t('count', { count: filtered.length })}</span>
         </div>
+        {car && !loading && !error && summary.parts + summary.services > 0 && (
+          <p className="-mt-2 mb-4 flex items-center gap-1.5 text-[12.5px] font-medium text-emerald-300">
+            <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} />
+            <span className="min-w-0 truncate">{[
+                summary.parts > 0 ? t('fitParts', { count: summary.parts }) : '',
+                summary.services > 0 ? t(summary.parts > 0 ? 'fitServices' : 'fitServicesOnly', { count: summary.services }) : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')}</span>
+          </p>
+        )}
 
         {/* Desktop: the advertising banner sits above the grid */}
         <ShopBanner className="mb-6 hidden md:block" />
@@ -198,7 +214,7 @@ export function VeloceShop() {
           <div className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-x-6 md:gap-y-10 xl:grid-cols-4">
             {shown.map((p, idx) => (
               <React.Fragment key={p.id}>
-                <MinimalProductCard p={p} i={idx} isNew={freshIds.has(p.id)} />
+                <MinimalProductCard p={p} i={idx} isNew={freshIds.has(p.id)} fit={carFit(p, car)} />
                 {/* Phones: the advertising banner after the first two cards */}
                 {idx === Math.min(1, shown.length - 1) && <ShopBanner className="col-span-full md:hidden" />}
               </React.Fragment>
