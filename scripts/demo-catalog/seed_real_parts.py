@@ -329,6 +329,77 @@ PARTS = [
                    "Chevrolet Cobalt 2012+. Қисми асосӣ ба ранги мошин ранг карда мешавад, диффузор сиёҳ мемонад."),
         },
     ),
+    # ----------------------------------------------------- Cobalt tail lights
+    dict(
+        key='cobalt-taillight-01',
+        car='cobalt',
+        file='cobalt/cobalt-taillight-01.webp',
+        brand='Sonar-style',
+        price=190, install=20, stock=6,
+        attrs=dict(part='taillight', zone='rear', style='C-shaped light bar', light_source='LED light guide',
+                   lens='smoked red', set_of=2, warranty_months=12),
+        text={
+            'uz': ("C shaklidagi LED lentali qoraytirilgan stoplar — Cobalt",
+                   "Ikki qavatli C shaklidagi LED yorug'lik lentasi va qoraytirilgan qizil shisha. Chevrolet Cobalt 2012+ uchun, "
+                   "zavod korpusi o'rniga tushadi. Komplektda 2 dona."),
+            'ru': ("Тонированные LED-фонари с C-образной полосой — Cobalt",
+                   "Двухъярусная C-образная LED-полоса и тонированное красное стекло. Для Chevrolet Cobalt 2012+, "
+                   "ставятся на место штатных. В комплекте 2 шт."),
+            'en': ("Smoked LED tail lights with C-shaped light bar — Cobalt",
+                   "Two-tier C-shaped LED light bar behind a smoked red lens. For Chevrolet Cobalt 2012+, "
+                   "replaces the factory units. Set of 2."),
+            'ar': ("مصابيح خلفية LED مدخنة بشريط ضوئي على شكل C — Cobalt",
+                   "شريط LED ضوئي من طبقتين على شكل C خلف عدسة حمراء مدخنة. لسيارة Chevrolet Cobalt 2012+، "
+                   "تحل محل المصابيح الأصلية. طقم من قطعتين."),
+            'tr': ("C şeklinde ışık bantlı füme LED stoplar — Cobalt",
+                   "İki katlı C şeklinde LED ışık bandı ve füme kırmızı cam. Chevrolet Cobalt 2012+ için, "
+                   "orijinal stopların yerine takılır. 2 adet takım."),
+            'kk': ("C пішінді LED жолақты күңгірт артқы шамдар — Cobalt",
+                   "Екі қабатты C пішінді LED жарық жолағы және күңгірт қызыл шыны. Chevrolet Cobalt 2012+ үшін, "
+                   "зауыттық шамдардың орнына қойылады. Жиынтықта 2 дана."),
+            'ky': ("C формасындагы LED тилкелүү күңүрт арткы фаралар — Cobalt",
+                   "Эки кабаттуу C формасындагы LED жарык тилкеси жана күңүрт кызыл айнек. Chevrolet Cobalt 2012+ үчүн, "
+                   "заводдук фаралардын ордуна коюлат. Комплектте 2 даана."),
+            'tg': ("Чароғҳои қафои LED-и тира бо хати рӯшноии C-шакл — Cobalt",
+                   "Хати дуқабатаи C-шакли рӯшноии LED ва шишаи сурхи тира. Барои Chevrolet Cobalt 2012+, "
+                   "ба ҷои чароғҳои заводӣ насб мешаванд. Маҷмӯа 2 адад."),
+        },
+    ),
+    dict(
+        key='cobalt-taillight-02',
+        car='cobalt',
+        file='cobalt/cobalt-taillight-02.webp',
+        brand='Eagle Eye-style',
+        price=175, install=20, stock=7,
+        attrs=dict(part='taillight', zone='rear', style='Triple LED bars', light_source='LED',
+                   lens='red', set_of=2, warranty_months=12),
+        text={
+            'uz': ("Uch qatorli LED stoplar — Cobalt",
+                   "Uchta gorizontal LED chiziqli stop va qizil shisha, pastida qaytarish chirog'i. Chevrolet Cobalt 2012+ uchun, "
+                   "zavod korpusi o'rniga tushadi. Komplektda 2 dona."),
+            'ru': ("Задние LED-фонари с тремя полосами — Cobalt",
+                   "Три горизонтальные LED-полосы, красное стекло и фонарь заднего хода внизу. Для Chevrolet Cobalt 2012+, "
+                   "ставятся на место штатных. В комплекте 2 шт."),
+            'en': ("Triple-bar LED tail lights — Cobalt",
+                   "Three horizontal LED bars behind a red lens, with the reversing light at the bottom. For Chevrolet Cobalt 2012+, "
+                   "replaces the factory units. Set of 2."),
+            'ar': ("مصابيح خلفية LED بثلاثة أشرطة — Cobalt",
+                   "ثلاثة أشرطة LED أفقية خلف عدسة حمراء وضوء الرجوع في الأسفل. لسيارة Chevrolet Cobalt 2012+، "
+                   "تحل محل المصابيح الأصلية. طقم من قطعتين."),
+            'tr': ("Üç bantlı LED stoplar — Cobalt",
+                   "Kırmızı cam arkasında üç yatay LED bant, altta geri vites lambası. Chevrolet Cobalt 2012+ için, "
+                   "orijinal stopların yerine takılır. 2 adet takım."),
+            'kk': ("Үш жолақты LED артқы шамдар — Cobalt",
+                   "Қызыл шыны артында үш көлденең LED жолақ, төменде артқа жүру шамы. Chevrolet Cobalt 2012+ үшін, "
+                   "зауыттық шамдардың орнына қойылады. Жиынтықта 2 дана."),
+            'ky': ("Үч тилкелүү LED арткы фаралар — Cobalt",
+                   "Кызыл айнектин артында үч туурасынан LED тилке, ылдыйда артка жүрүү жарыгы. Chevrolet Cobalt 2012+ үчүн, "
+                   "заводдук фаралардын ордуна коюлат. Комплектте 2 даана."),
+            'tg': ("Чароғҳои қафои LED бо се хат — Cobalt",
+                   "Се хати уфуқии LED дар паси шишаи сурх, чароғи ақибравӣ дар поён. Барои Chevrolet Cobalt 2012+, "
+                   "ба ҷои чароғҳои заводӣ насб мешаванд. Маҷмӯа 2 адад."),
+        },
+    ),
     # ------------------------------------------------------------------ Gentra
     dict(
         key='gentra-headlight-01',
