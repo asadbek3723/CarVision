@@ -126,8 +126,9 @@ export function VeloceShop() {
   return (
     <div className={`${geist.className} ${md.page} min-h-full`}>
       <div className="mx-auto max-w-7xl px-5 pb-6 pt-3 md:px-10 md:pt-8">
-        {/* Search + filters */}
+        {/* Search + filters; on desktop the car selector joins this row instead of a full-width photo banner */}
         <div className="flex items-center gap-2.5">
+          <MyCarPicker variant="compact" className="hidden w-[340px] shrink-0 lg:block" />
           <label className={`flex h-12 min-w-0 flex-1 cursor-text items-center gap-2.5 rounded-[14px] border px-3.5 transition focus-within:border-[#FDC902]/50 ${md.line} ${md.card}`}>
             <Search className={`h-[18px] w-[18px] shrink-0 ${md.faint}`} />
             <input
@@ -164,7 +165,7 @@ export function VeloceShop() {
           </div>
         )}
 
-        <div className="mt-3">
+        <div className="mt-3 lg:hidden">
           <MyCarPicker />
         </div>
 

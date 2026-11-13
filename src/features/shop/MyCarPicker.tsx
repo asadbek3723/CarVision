@@ -23,8 +23,11 @@ const QUICK_YEARS = 12;
  * "My car": a banner under the search that opens a two-step dialog,
  * first the make and model, then the production year. The choice is kept on this device until the
  * customer changes or removes it, and filters the shop to parts that fit it.
+ *
+ * `banner` (phones and tablets) is the photo card; `compact` (desktop) is a field-sized selector that
+ * sits in the search row, so a wide screen is not filled by one stretched photo.
  */
-export function MyCarPicker() {
+export function MyCarPicker({ variant = 'banner', className = '' }: { variant?: 'banner' | 'compact'; className?: string }) {
   const t = useTranslations('shop.myCar');
   const { car, setCar } = useMyCar();
 
@@ -91,8 +94,40 @@ export function MyCarPicker() {
 
   return (
     <>
-      {/* Banner: a dark car photo that dissolves into blur on the left, where the text sits. */}
-      <div className="relative isolate overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#0A0B0F] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.85)]">
+      {variant === 'compact' ? (
+        /* Desktop: same height, radius and surface as the search field beside it. */
+        <div className={`relative h-12 rounded-[14px] border transition hover:border-[#FDC902]/40 ${md.line} ${md.card} ${className}`}>
+          <button
+            type="button"
+            onClick={openDialog}
+            aria-label={car ? t('change') : t('chip')}
+            className={`flex h-full w-full items-center gap-3 rounded-[14px] ps-3.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FDC902]/60 ${car ? 'pe-12' : 'pe-3.5'}`}
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-[#D4AE62]/12 text-[#D4AE62]">
+              <Car className="h-4 w-4" strokeWidth={2} />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col leading-tight">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#D4AE62]">{car ? t('yourCar') : t('eyebrow')}</span>
+              <span className="truncate text-[14px] font-semibold text-white">
+                {car ? `${car.label}${car.year ? ` · ${car.year}` : ''}` : t('chip')}
+              </span>
+            </span>
+            {!car && <ChevronRight aria-hidden className="h-4 w-4 shrink-0 text-[#FDC902] rtl:rotate-180" />}
+          </button>
+          {car && (
+            <button
+              type="button"
+              onClick={() => setCar(null)}
+              aria-label={t('removeCar')}
+              className="absolute end-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-white/60 transition hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FDC902]/60"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      ) : (
+      /* Banner: a dark car photo that dissolves into blur on the left, where the text sits. */
+      <div className={`relative isolate overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#0A0B0F] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.85)] ${className}`}>
         <img
           src="/assets/car-banner-v1.webp"
           alt=""
@@ -143,6 +178,7 @@ export function MyCarPicker() {
           </button>
         )}
       </div>
+      )}
 
       <Sheet
         open={open}
