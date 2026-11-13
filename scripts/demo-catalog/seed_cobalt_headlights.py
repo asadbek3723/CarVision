@@ -4,8 +4,8 @@
     python3 -I scripts/demo-catalog/seed_cobalt_headlights.py           # add / replace
     python3 -I scripts/demo-catalog/seed_cobalt_headlights.py --purge   # remove them
 
-Both parts are fitted ONLY to `chevrolet-cobalt` (2012 onwards, no end year) and are not universal, so the shop and the
-visualizer list them only when the customer's car is a Cobalt (picked by hand or detected from a photo).
+Both parts are fitted ONLY to `chevrolet-cobalt` (2012 onwards, no end year) and are not universal: with no car chosen the
+shop lists them with every other part; once a car is chosen (by hand or from a photo) only a Cobalt keeps them.
 Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.local. Nothing secret is stored here.
 """
 import hashlib

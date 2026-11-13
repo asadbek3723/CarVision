@@ -50,9 +50,6 @@ export async function GET(request: NextRequest) {
       query,
       fitModelId,
       fitYear: year,
-      // Parts made for particular cars are listed only once the customer's car is known (picked or
-      // detected from a photo). A direct link to one part (id / ids) still opens it.
-      hideCarSpecific: !fitModelId && !id && !ids,
       limit: categoryParam && !category && categoryParam !== 'All' ? 200 : limit,
     });
     if (categoryParam && categoryParam !== 'All' && !category) {

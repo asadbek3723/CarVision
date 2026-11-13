@@ -136,12 +136,6 @@ export interface LoadItemsOptions {
    */
   fitModelId?: string | undefined;
   fitYear?: number | null | undefined;
-  /**
-   * No car chosen: leave out parts listed for particular cars (a Cobalt headlight is not shown to a
-   * customer whose car is unknown). Universal items and items without fitment stay. Ignored with
-   * `fitModelId`, which already narrows to the car.
-   */
-  hideCarSpecific?: boolean | undefined;
 }
 
 /** Ids of items listed for a model (and year, when given). */
@@ -169,14 +163,12 @@ export function isMissingRelation(error: { code?: string | undefined; message?: 
 
 export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<CatalogItemDTO[]> {
   const fitIds = opts.fitModelId ? await fittingItemIds(db, opts.fitModelId, opts.fitYear) : null;
-  const hideCarSpecific = Boolean(opts.hideCarSpecific && !opts.fitModelId);
-  const columns =
-    'id, shop_id, category, name, brand, description, price_cents, input_currency, input_price, stock, install_available, install_price_cents, attributes, status, cover_image_url, created_at';
   const run = (table: string) => {
     let q = db
       .from(table)
-      // The embedded fitment is only there for the anti-join below (rows without any fitment row).
-      .select(hideCarSpecific ? `${columns}, catalog_item_fitment(item_id)` : columns)
+      .select(
+        'id, shop_id, category, name, brand, description, price_cents, input_currency, input_price, stock, install_available, install_price_cents, attributes, status, cover_image_url, created_at'
+      )
       .order('created_at', { ascending: false })
       .limit(Math.min(opts.limit ?? 100, 200));
 
@@ -187,7 +179,6 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
     if (fitIds) {
       q = fitIds.length ? q.or(`id.in.(${fitIds.join(',')}),attributes->>universal.eq.true`) : q.eq('attributes->>universal', 'true');
     }
-    if (hideCarSpecific) q = q.or('catalog_item_fitment.is.null,attributes->>universal.eq.true');
     if (opts.query) {
       const safe = opts.query.replace(/[%,()]/g, ' ').trim();
       if (safe) q = q.or(`name.ilike.%${safe}%,brand.ilike.%${safe}%`);
@@ -203,7 +194,7 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
     ({ data: rows, error } = await run('catalog_items'));
   }
   if (error) throw new Error(error.message);
-  const items = (rows ?? []) as unknown as ItemRow[];
+  const items = (rows ?? []) as ItemRow[];
   if (items.length === 0) return [];
 
   const ids = items.map((i) => i.id);
