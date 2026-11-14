@@ -4,6 +4,7 @@ import {
   resolveImageToDataUri,
   executeDirectAiFitment,
   paintFinish,
+  tintVlt,
 } from './direct-fitment-engine';
 
 describe('direct-fitment-engine input safety', () => {
@@ -198,5 +199,31 @@ describe('paint colour renders', () => {
     expect(res.promptUsed).toContain('MATTE finish: no mirror-like reflections');
     expect(res.promptUsed).toContain('The paint finish becomes the matte finish');
     expect(res.promptUsed).not.toContain('The paint gloss level stays the same');
+  });
+});
+
+describe('window tint renders', () => {
+  const car = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+  const run = (name: string) =>
+    executeDirectAiFitment({ carPhoto: car, angleId: 'front-left', parts: [{ id: 't1', name, category: 'Tint' }] });
+
+  it('reads the film darkness from the name', () => {
+    expect(tintVlt({ name: 'Suntek Carbon 5% tonirovka — Cobalt' })).toBe(5);
+    expect(tintVlt({ name: 'XPEL Prime XR Plus 35 % — Gentra' })).toBe(35);
+    expect(tintVlt({ name: 'Tonirovka' })).toBeNull();
+  });
+
+  it('tints every window to the film darkness and leaves the rest of the car', async () => {
+    const dark = await run('Suntek Carbon 5% tonirovka — Cobalt');
+    expect(dark.promptUsed).toContain('to EVERY window of the car visible from this viewpoint: the windshield');
+    expect(dark.promptUsed).toContain('5% VLT, a "limo" tint');
+    expect(dark.promptUsed).toContain('the window glass except for the listed tint film');
+    const light = await run('3M Crystalline 70% tonirovka — Cobalt');
+    expect(light.promptUsed).toContain('70% VLT: a very light, almost clear film');
+  });
+
+  it('a build without tint still keeps the glass as it is', async () => {
+    const res = await executeDirectAiFitment({ carPhoto: car, parts: [{ id: 'w1', name: 'BBS CI-R 20"', category: 'Wheels' }] });
+    expect(res.promptUsed).toContain('number plate, glass, and all existing damage');
   });
 });

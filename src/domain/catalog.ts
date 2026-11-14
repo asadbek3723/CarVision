@@ -31,6 +31,8 @@ export function categoryLabel(slug: string): string {
  */
 export function veloceCategory(slug: string, attributes?: Record<string, unknown> | null): string {
   if (slug === 'body_kit' && attributes?.['slot'] === 'bumper') return 'Bumper';
+  // Window film is its own tab (and its own render slot: it shows from every angle, unlike "Performance").
+  if (attributes?.['part'] === 'window_tint') return 'Tint';
   return CATALOG_CATEGORIES.find((c) => c.slug === slug)?.veloce ?? 'Performance';
 }
 

@@ -57,6 +57,7 @@ const CATEGORIES = [
   { id: 'Performance', key: 'performance' },
   { id: 'Interior', key: 'interior' },
   { id: 'Color', key: 'color' },
+  { id: 'Tint', key: 'tint' },
   { id: 'Ceramic', key: 'ceramic' },
   { id: 'Polish', key: 'polish' },
 ] as const;

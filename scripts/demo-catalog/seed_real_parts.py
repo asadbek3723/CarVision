@@ -30,10 +30,21 @@ SHOP_NAME = 'Chevrolet Performance Tuning Center'
 # No end year: fits every car from year_from up to the current year (the app caps picks at maxCarYear()).
 # Gentra was sold as Daewoo Gentra in 2013-2015: same car, so both names get the fitment.
 CARS = {
-    'cobalt': [('chevrolet-cobalt', 2012, None)],
-    'gentra': [('chevrolet-gentra', 2013, None), ('daewoo-gentra', 2013, None)],
+    # Ravon / Daewoo badges of the same car (same body and glass) get the same fitment.
+    'cobalt': [('chevrolet-cobalt', 2012, None), ('ravon-r4', 2016, None)],
+    'gentra': [('chevrolet-gentra', 2013, None), ('daewoo-gentra', 2013, None), ('ravon-gentra', 2016, None)],
     # Services for every car (paint): no fitment rows, `attributes.universal = True` instead.
     'universal': [],
+    # Cars that so far only carry window tint packages.
+    'nexia1': [('chevrolet-nexia-1', 1995, 2008), ('daewoo-nexia', 1995, 2008)],
+    'nexia2': [('chevrolet-nexia-2', 2008, 2016)],
+    'nexia3': [('chevrolet-nexia-3', 2016, None), ('ravon-nexia-r3', 2016, None)],
+    'spark': [('chevrolet-spark', 2010, None), ('ravon-spark', 2016, None), ('ravon-r2', 2016, None)],
+    'matiz': [('chevrolet-matiz', 2001, None), ('daewoo-matiz', 1998, None), ('ravon-matiz', 2016, None)],
+    'malibu': [('chevrolet-malibu', 2012, None), ('chevrolet-malibu-2', 2012, None)],  # both generations, one glass set price
+    'onix': [('chevrolet-onix', 2020, None)],
+    'lacetti': [('chevrolet-lacetti', 2004, 2013), ('daewoo-lacetti', 2002, 2013)],
+    'captiva': [('chevrolet-captiva', 2006, 2018)],
 }
 
 # Stable keys: a re-run finds and replaces the same products. `file` is relative to assets/.
@@ -914,6 +925,76 @@ PARTS += [
     wheel('13', 'Chevrolet 12-spoke', 'OEM', 'silver_machined', 300),
     wheel('14', 'Chevrolet 6-spoke', 'OEM', 'silver', 240),
 ]
+
+# ---------------------------------------------------------------- window tint
+# Every car gets six full packages (windshield, rear window and every side window), one per film darkness.
+# The price is per car (bigger glass, more film and work) and per level (light films are ceramic or athermal
+# and cost more than dark carbon ones). The price includes the work, so there is no separate install price.
+TINT_CARS = [  # key, name, body, base price for the 5% carbon package (USD)
+    ('matiz', 'Matiz', 'hatch', 45), ('spark', 'Spark', 'hatch', 50), ('nexia1', 'Nexia 1', 'sedan', 55),
+    ('nexia2', 'Nexia 2', 'sedan', 55), ('nexia3', 'Nexia 3', 'sedan', 60), ('cobalt', 'Cobalt', 'sedan', 60),
+    ('gentra', 'Gentra', 'sedan', 60), ('lacetti', 'Lacetti', 'sedan', 60), ('onix', 'Onix', 'sedan', 60),
+    ('malibu', 'Malibu', 'sedan', 80), ('captiva', 'Captiva', 'suv', 95),
+]
+TINT_LEVELS = [  # vlt %, film, type, price factor, photo
+    (5, 'Suntek Carbon', 'carbon', 1.0, 'tint-01'),
+    (15, 'LLumar ATR', 'hybrid', 1.1, 'tint-02'),
+    (20, 'XPEL Prime XR', 'ceramic', 1.35, 'tint-03'),
+    (35, 'XPEL Prime XR', 'ceramic', 1.6, 'tint-04'),
+    (50, 'XPEL Prime XR Plus', 'nano_ceramic', 1.7, 'tint-05'),
+    (70, '3M Crystalline', 'athermal', 2.0, 'tint-02'),
+]
+TINT_BODY = {
+    'sedan': {'uz': 'sedan', 'ru': 'седан', 'en': 'sedan', 'ar': 'سيدان', 'tr': 'sedan', 'kk': 'седан', 'ky': 'седан', 'tg': 'седан'},
+    'hatch': {'uz': 'xetchbek', 'ru': 'хэтчбек', 'en': 'hatchback', 'ar': 'هاتشباك', 'tr': 'hatchback', 'kk': 'хэтчбек', 'ky': 'хэтчбек', 'tg': 'хэтчбек'},
+    'suv': {'uz': 'krossover', 'ru': 'кроссовер', 'en': 'crossover', 'ar': 'كروس أوفر', 'tr': 'crossover', 'kk': 'кроссовер', 'ky': 'кроссовер', 'tg': 'кроссовер'},
+}
+TINT_FILM = {
+    'carbon': {'uz': "karbon plyonka: rangi o'chmaydi, aloqa signaliga xalaqit bermaydi", 'ru': 'карбоновая плёнка: не выгорает и не мешает связи',
+               'en': 'carbon film: does not fade and does not block phone signal', 'ar': 'فيلم كربوني لا يبهت ولا يحجب إشارة الهاتف',
+               'tr': 'karbon film: solmaz, telefon sinyalini engellemez', 'kk': 'көміртекті плёнка: оңбайды, байланысқа кедергі келтірмейді',
+               'ky': 'көмүртек пленка: өңбөйт, байланышка тоскоол болбойт', 'tg': 'плёнкаи карбонӣ: ранг намепарад, ба алоқа халал намерасонад'},
+    'hybrid': {'uz': "gibrid plyonka: bo'yalgan va metallashtirilgan qatlam, yaxshi issiqlik to'sish", 'ru': 'гибридная плёнка: окрашенный и металлизированный слой, хорошая защита от жары',
+               'en': 'hybrid film: dyed and metallised layers for good heat rejection', 'ar': 'فيلم هجين بطبقات مصبوغة ومعدنية لعزل جيد للحرارة',
+               'tr': 'hibrit film: boyalı ve metalize katmanlar, iyi ısı yalıtımı', 'kk': 'гибридті плёнка: боялған және металданған қабат, ыстықтан жақсы қорғайды',
+               'ky': 'гибрид пленка: боёлгон жана металлдаштырылган катмар, ысыктан жакшы коргойт', 'tg': 'плёнкаи гибридӣ: қабати рангкарда ва металлӣ, муҳофизати хуб аз гармӣ'},
+    'ceramic': {'uz': "keramik plyonka: issiqlikni kuchli to'sadi, ko'rinish tiniq qoladi", 'ru': 'керамическая плёнка: сильно задерживает жару, обзор остаётся чётким',
+                'en': 'ceramic film: strong heat rejection with clear visibility', 'ar': 'فيلم سيراميك يعزل الحرارة بقوة مع رؤية واضحة',
+                'tr': 'seramik film: güçlü ısı yalıtımı, net görüş', 'kk': 'керамикалық плёнка: ыстықты қатты ұстайды, көрініс анық қалады',
+                'ky': 'керамикалык пленка: ысыкты катуу кармайт, көрүнүш так калат', 'tg': 'плёнкаи сафолӣ: гармиро сахт нигоҳ медорад, намуд равшан мемонад'},
+    'nano_ceramic': {'uz': "nano-keramik plyonka: och bo'lsa ham issiqlikni yaxshi to'sadi", 'ru': 'нанокерамическая плёнка: светлая, но хорошо задерживает жару',
+                     'en': 'nano-ceramic film: light yet strong on heat', 'ar': 'فيلم نانو سيراميك فاتح لكنه يعزل الحرارة جيدًا',
+                     'tr': 'nano seramik film: açık ama ısıyı iyi tutar', 'kk': 'нанокерамикалық плёнка: ашық бола тұра ыстықты жақсы ұстайды',
+                     'ky': 'нанокерамикалык пленка: ачык болсо да ысыкты жакшы кармайт', 'tg': 'плёнкаи нано-сафолӣ: равшан, вале гармиро хуб нигоҳ медорад'},
+    'athermal': {'uz': "atermal ko'p qatlamli plyonka: deyarli shaffof, lekin issiqlikni to'sadi", 'ru': 'атермальная многослойная плёнка: почти прозрачная, но задерживает жару',
+                 'en': 'athermal multilayer film: nearly clear, yet blocks heat', 'ar': 'فيلم أثيرمال متعدد الطبقات شبه شفاف لكنه يحجب الحرارة',
+                 'tr': 'atermal çok katmanlı film: neredeyse şeffaf ama ısıyı keser', 'kk': 'атермалды көп қабатты плёнка: дерлік мөлдір, бірақ ыстықты ұстайды',
+                 'ky': 'атермалдык көп катмарлуу пленка: дээрлик тунук, бирок ысыкты кармайт', 'tg': 'плёнкаи атермалии бисёрқабата: қариб шаффоф, вале гармиро нигоҳ медорад'},
+}
+TINT_TEXT = {
+    'uz': ("{film} {v}% tonirovka — {car}", "{car} ({body}) uchun to'liq tonirovka: old oyna, orqa oyna va barcha yon oynalar. {f}; {v}% yorug'lik o'tkazadi va UV nurlarining 99% ini to'sadi. Narx ish bilan birga. Old oynalar bo'yicha amaldagi qoidalar va ruxsatnomani oldindan tekshiring."),
+    'ru': ("Тонировка {film} {v}% — {car}", "Полная тонировка {car} ({body}): лобовое, заднее и все боковые стёкла. {f}; пропускает {v}% света и задерживает 99% УФ. Цена с работой. Заранее проверьте действующие правила и разрешение для передних стёкол."),
+    'en': ("{film} {v}% window tint — {car}", "Full tint for the {car} ({body}): windshield, rear window and every side window. {f}; lets through {v}% of light and blocks 99% of UV. Price includes the work. Check the current rules and permit for the front windows beforehand."),
+    'ar': ("تظليل {film} {v}% — {car}", "تظليل كامل لسيارة {car} ({body}): الزجاج الأمامي والخلفي وجميع النوافذ الجانبية. {f}؛ يمرر {v}% من الضوء ويحجب 99% من الأشعة فوق البنفسجية. السعر يشمل العمل. تحقق مسبقًا من القواعد والتصاريح الحالية للنوافذ الأمامية."),
+    'tr': ("{film} %{v} cam filmi — {car}", "{car} ({body}) için tam cam filmi: ön cam, arka cam ve tüm yan camlar. {f}; ışığın %{v}'ini geçirir, UV'nin %99'unu keser. Fiyata işçilik dahildir. Ön camlar için geçerli kuralları ve izni önceden kontrol edin."),
+    'kk': ("{film} {v}% тонировка — {car}", "{car} ({body}) үшін толық тонировка: алдыңғы, артқы және барлық бүйір әйнектер. {f}; жарықтың {v}%-ын өткізеді, UV-ның 99%-ын ұстайды. Баға жұмыспен бірге. Алдыңғы әйнектерге қатысты қолданыстағы ережелер мен рұқсатты алдын ала тексеріңіз."),
+    'ky': ("{film} {v}% тонировка — {car}", "{car} ({body}) үчүн толук тонировка: алдыңкы, арткы жана бардык каптал айнектер. {f}; жарыктын {v}%ын өткөрөт, UVнын 99%ын кармайт. Баа иши менен. Алдыңкы айнектер боюнча колдонуудагы эрежелерди жана уруксатты алдын ала текшериңиз."),
+    'tg': ("Тонировкаи {film} {v}% — {car}", "Тонировкаи пурра барои {car} ({body}): шишаи пеш, қафо ва ҳамаи шишаҳои паҳлӯ. {f}; {v}% рӯшноиро мегузаронад ва 99% UV-ро нигоҳ медорад. Нарх бо кор. Қоидаҳо ва иҷозатномаи амалкунандаро барои шишаҳои пеш пешакӣ санҷед."),
+}
+
+
+def tint(car, car_name, body, base, vlt, film, film_type, factor, photo):
+    return dict(
+        key=f'{car}-tint-{vlt:02d}', car=car, category='other', file=f'universal/{photo}.webp',
+        brand=film.split()[0], price=int(round(base * factor / 5.0) * 5), install=0, stock=99,
+        attrs=dict(part='window_tint', vlt_percent=vlt, film_type=film_type, film=film, coverage='full: windshield, rear and all side windows',
+                   uv_reject_percent=99),
+        text={l: (TINT_TEXT[l][0].format(film=film, v=vlt, car=car_name),
+                  TINT_TEXT[l][1].format(car=car_name, body=TINT_BODY[body][l], f=TINT_FILM[film_type][l][:1].upper() + TINT_FILM[film_type][l][1:], v=vlt)) for l in TINT_TEXT},
+    )
+
+
+PARTS += [tint(c, n, b, base, *lvl) for c, n, b, base in TINT_CARS for lvl in TINT_LEVELS]
 
 env = {}
 for line in open(os.path.join(ROOT, '.env.local'), encoding='utf-8'):

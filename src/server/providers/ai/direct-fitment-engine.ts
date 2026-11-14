@@ -198,6 +198,40 @@ function paintInstruction(p: { name: string; spec?: string | undefined; swatch?:
   ].join(' ');
 }
 
+/** Window film: the "Tint" category, or a part named as one in the shop languages. */
+export function isTint(p: { category: string; name: string }): boolean {
+  return /tint|tonir|тонир|cam filmi|تظليل/i.test(`${p.category} ${p.name}`);
+}
+
+/** Visible light transmission of a film, e.g. "XPEL ... 35% ..." -> 35. Null when the text names none. */
+export function tintVlt(p: { name: string; spec?: string | undefined }): number | null {
+  const m = `${p.name} ${p.spec ?? ''}`.match(/(\d{1,2})\s?%/);
+  const v = m ? Number(m[1]) : NaN;
+  return v >= 1 && v <= 95 ? v : null;
+}
+
+function tintInstruction(p: { name: string; spec?: string | undefined }): string {
+  const vlt = tintVlt(p);
+  const look =
+    vlt === null
+      ? 'a clearly darker, neutral smoke-grey tint'
+      : vlt <= 10
+        ? `${vlt}% VLT, a "limo" tint: the glass looks almost black from outside, the interior is barely visible, only bright reflections show on it`
+        : vlt <= 25
+          ? `${vlt}% VLT: dark smoke-grey glass, the interior is only faintly visible as dim shapes`
+          : vlt <= 40
+            ? `${vlt}% VLT: medium smoke-grey glass, seats and headrests stay visible but darker`
+            : vlt <= 60
+              ? `${vlt}% VLT: light smoke-grey glass, the interior stays clearly visible, only slightly darker`
+              : `${vlt}% VLT: a very light, almost clear film with a faint neutral tint, the glass looks nearly as in the photo`;
+  return [
+    `Apply the window tint film "${p.name}" to EVERY window of the car visible from this viewpoint: the windshield, the front and rear side windows, the rear window and any small quarter glass, all with the same film.`,
+    `Film darkness: ${look}.`,
+    'The film is on the inside of the glass: keep every reflection on the glass (sky, trees, buildings, lights) exactly where it is and as bright as it is; the darkening sits behind those reflections. The tint is neutral grey, never blue, green, purple or mirrored, and has no bubbles, creases or visible edges.',
+    'Change nothing else: window frames, rubber seals, chrome and black trim, pillars, paint, lamps and the rest of the car stay exactly as in the photo',
+  ].join(' ');
+}
+
 function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
   const angleDescriptions: Record<string, string> = {
     front: 'front 0-degree symmetrical studio view',
@@ -238,6 +272,9 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
     }
     if (isColor(p)) {
       return paintInstruction(p);
+    }
+    if (isTint(p)) {
+      return tintInstruction(p);
     }
     if (cat.includes('wheel') || cat.includes('disk')) {
       return `Replace EVERY visible wheel (front and rear, near side and far side) with "${p.name}"${specText}. All wheels get the identical new design and finish: the exact spoke geometry, the exact colour and finish of the part photo applied over the WHOLE wheel face: spokes, centre, hub, centre cap, lug nuts area, barrel and lip. No part of any wheel keeps the old wheel's colour or design (no silver, white or chrome centre left over unless the part photo has it). Same wheel size and position, tyres and brake calipers kept, realistic contact shadow`;
@@ -280,7 +317,7 @@ function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
       : '',
     `CAMERA: the result must show exactly the same side of the car from exactly the same camera position as the FIRST input image (the customer photo, ${angleText}). If the customer photo shows the front, the result shows the front; if it shows the side, the result shows the same side. Never rotate, turn or re-pose the car.`,
     `Only modify what is actually visible from this ${angleText}; do not invent parts that are hidden from this viewpoint.`,
-    'KEEP EXACTLY AS IN THE ORIGINAL PHOTO: car make, model and body shape, camera angle, framing, background, lighting, shadows, number plate, glass, and all existing damage and wear: dents, dings, creases, scratches, scuffs, chips, rust, dirt, stickers.',
+    `KEEP EXACTLY AS IN THE ORIGINAL PHOTO: car make, model and body shape, camera angle, framing, background, lighting, shadows, number plate, ${req.parts.some(isTint) ? 'the window glass except for the listed tint film' : 'glass'}, and all existing damage and wear: dents, dings, creases, scratches, scuffs, chips, rust, dirt, stickers.`,
     'Never repair, clean, smooth, retouch or beautify anything that was not listed above.',
     refinesPaint
       ? 'Outside the listed paint finish work, change nothing about the paint.'

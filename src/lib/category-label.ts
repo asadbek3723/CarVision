@@ -14,6 +14,7 @@ const KEY: Record<string, string> = {
   Color: 'color',
   Ceramic: 'ceramic',
   Polish: 'polish',
+  Tint: 'tint',
 };
 
 /** Translated label for a category id; unknown ids are shown as they are. */

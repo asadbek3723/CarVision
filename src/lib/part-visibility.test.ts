@@ -46,3 +46,12 @@ describe('part visibility per camera angle', () => {
     expect(visibleParts(parts, 'rear')).toHaveLength(3);
   });
 });
+
+describe('window tint', () => {
+  it('shows from every angle, unlike a Performance part', () => {
+    for (const angle of ['front', 'front-left', 'right', 'rear', 'rear-right']) {
+      expect(isPartVisibleFromAngle({ category: 'Tint', name: 'XPEL Prime XR 35% tonirovka' }, angle)).toBe(true);
+    }
+    expect(isPartVisibleFromAngle({ category: 'Performance', name: 'Exhaust' }, 'front')).toBe(false);
+  });
+});
