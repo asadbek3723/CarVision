@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ArrowUpRight, Check, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Check } from 'lucide-react';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
 import type { CarFit } from '@/domain/car-fit';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -26,7 +26,7 @@ export function MinimalProductCard({
   p: VeloceProduct;
   i?: number;
   isNew?: boolean;
-  /** How the part fits the customer's chosen car: shows the green badge and the one-tap try-on. */
+  /** How the part fits the customer's chosen car: shows the green badge badge. */
   fit?: CarFit;
 }) {
   const t = useTranslations('shop.card');
@@ -77,22 +77,11 @@ export function MinimalProductCard({
       </Link>
 
       {fit && (
-        <>
-          {/* Green badge: the workshop listed this car (or the item fits every car). */}
-          <span className="pointer-events-none absolute start-2 top-2 inline-flex max-w-[calc(100%-3.5rem)] items-center gap-1 rounded-full border border-emerald-400/30 bg-[#0A0A0A]/70 px-2 py-1 text-[10.5px] font-semibold leading-none text-emerald-300 backdrop-blur-md">
+        /* Green badge: the workshop listed this car (or the item fits every car). */
+          <span className="pointer-events-none absolute start-2 top-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full border border-emerald-400/30 bg-[#0A0A0A]/70 px-2 py-1 text-[10.5px] font-semibold leading-none text-emerald-300 backdrop-blur-md">
             <Check className="h-3 w-3 shrink-0" strokeWidth={3} />
             <span className="truncate">{fit === 'exact' ? t('fitExact') : t('fitUniversal')}</span>
           </span>
-          {/* One tap: open the visualizer with this part already on the car. A sibling of the card link, never inside it. */}
-          <Link
-            href={`/${locale}/customize?partId=${encodeURIComponent(p.id)}`}
-            aria-label={t('tryOn', { name: p.name })}
-            title={t('tryOnShort')}
-            className={`absolute end-2 top-2 grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-[#0A0A0A]/70 text-[#FDC902] backdrop-blur-md transition hover:bg-[#0A0A0A]/90 active:scale-95 ${mdFocus}`}
-          >
-            <Sparkles className="h-4 w-4" />
-          </Link>
-        </>
       )}
     </div>
   );
