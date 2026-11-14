@@ -1042,7 +1042,7 @@
     "hero": {
       "alt": "Black sports car in golden light",
       "title1": "Your dream",
-      "title2": "car.",
+      "title2": "car",
       "text": "Try wheels, paint and body kits on your own car in 4K realism — without spending a cent.",
       "ctaVision": "IGNITE YOUR VISION",
       "ctaApp": "GET THE APP",
@@ -1053,8 +1053,8 @@
     },
     "viz": {
       "eyebrow": "01 — VISUALIZER",
-      "title": "Stock condition.",
-      "gold": "To 4K realism.",
+      "title": "Stock condition",
+      "gold": "To 4K realism",
       "text": "Try custom wheels, wrap and body styling on your very own car — fast, easy and 100% safe.",
       "f1": "Exact wheel size (fitment)",
       "f2": "500+ brand catalog",
@@ -1067,8 +1067,8 @@
     },
     "how": {
       "eyebrow": "02 — HOW IT WORKS",
-      "title": "Your dream car.",
-      "gold": "In three simple steps.",
+      "title": "Your dream car",
+      "gold": "In three simple steps",
       "s1t": "Take a photo",
       "s1d": "Upload your car with a single side-view photo.",
       "s2t": "Choose",
@@ -1078,8 +1078,8 @@
     },
     "aud": {
       "eyebrow": "03 — WHO IT’S FOR",
-      "title": "Built for studios.",
-      "gold": "Tailored for owners.",
+      "title": "Built for studios",
+      "gold": "Tailored for owners",
       "c1": {
         "tag": "FOR WORKSHOPS",
         "t": "Commercial tuning ateliers",
@@ -1102,8 +1102,8 @@
     },
     "pricing": {
       "eyebrow": "04 — PRICING",
-      "title": "Transparent pricing.",
-      "gold": "For every project.",
+      "title": "Transparent pricing",
+      "gold": "For every project",
       "monthly": "Monthly",
       "annual": "Yearly −20%",
       "popular": "MOST POPULAR",
@@ -1145,7 +1145,7 @@
     "reviews": {
       "eyebrow": "CUSTOMER REVIEWS",
       "title": "Trusted by those",
-      "gold": "who believed in us.",
+      "gold": "who believed in us",
       "r1": {
         "role": "Auto Lux Tashkent, owner",
         "text": "We show customers their car with new wheels and the deal closes on the spot. Our sales went up noticeably."
@@ -1165,7 +1165,7 @@
     },
     "app": {
       "eyebrow": "05 — MOBILE APP",
-      "gold": "in your pocket.",
+      "gold": "in your pocket",
       "text": "Download our app — photograph your car and see its new look in seconds.",
       "rating": "4.9 · 12,000+ users",
       "alt": "CarVision mobile app",
@@ -1174,7 +1174,7 @@
     "faq": {
       "eyebrow": "06 — QUESTIONS",
       "title": "Have questions?",
-      "gold": "We have answers.",
+      "gold": "We have answers",
       "q1": "How close is the 4K result to the real parts?",
       "a1": "Our neural network accounts for light, reflections and shadows, producing a result almost indistinguishable from a real photo.",
       "q2": "How is my payment protected?",
@@ -1187,7 +1187,7 @@
     "cta": {
       "alt": "CarVision grand call to action",
       "title": "Ready for a change?",
-      "gold": "Ignite your vision.",
+      "gold": "Ignite your vision",
       "button": "START NOW"
     },
     "footer": {

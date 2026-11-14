@@ -32,18 +32,19 @@ export function VisualizerBeforeAfter() {
   return (
     <section
       id="visualizer"
-      className="relative mx-auto grid max-w-7xl items-center gap-12 lg:gap-16 px-6 py-20 sm:py-32 lg:grid-cols-[1fr_1.4fr]"
+      className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 sm:py-32 lg:grid-cols-[1fr_1.2fr] lg:gap-20 xl:gap-24"
     >
       <div>
         <SectionHeading
           eyebrow={t('eyebrow')}
           title={t('title')}
           gold={t('gold')}
+          compact
         />
-        <p className="reveal mt-6 text-muted-foreground">
+        <p className="reveal mt-8 max-w-md leading-relaxed text-muted-foreground">
           {t('text')}
         </p>
-        <ul className="reveal mt-8 space-y-3 text-sm">
+        <ul className="reveal mt-10 space-y-4 text-sm">
           {(['f1', 'f2', 'f3'] as const).map((k) => t(k)).map((item) => (
             <li key={item} className="flex items-center gap-3">
               <Check className="h-4 w-4 text-primary" />

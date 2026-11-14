@@ -1042,7 +1042,7 @@
     "hero": {
       "alt": "Qora sport avtomobil oltin yorugʻlikda",
       "title1": "Orzuingizdagi",
-      "title2": "avtomobil.",
+      "title2": "avtomobil",
       "text": "Diskalar, rang va body kitni oʻz mashinangizda 4K realizmda — bir tiyin sarflamasdan koʻring.",
       "ctaVision": "VIZIONNI YOQING",
       "ctaApp": "ILOVANI YUKLASH",
@@ -1053,8 +1053,8 @@
     },
     "viz": {
       "eyebrow": "01 — VIZUALIZATOR",
-      "title": "Zavod holati.",
-      "gold": "4K realizmgacha.",
+      "title": "Zavod holati",
+      "gold": "4K realizmgacha",
       "text": "Maxsus diskalar, plyonka va body stylingni aynan sizning mashinangizda sinab koʻring — tez, oson va 100% xavfsiz.",
       "f1": "Aniq disk oʻlchami (fitment)",
       "f2": "500+ brend katalogi",
@@ -1067,8 +1067,8 @@
     },
     "how": {
       "eyebrow": "02 — QANDAY ISHLAYDI",
-      "title": "Orzuingizdagi mashina.",
-      "gold": "Uch oddiy qadamda.",
+      "title": "Orzuingizdagi mashina",
+      "gold": "Uch oddiy qadamda",
       "s1t": "Suratga oling",
       "s1d": "Mashinangizni yon tomondan bitta surat bilan yuklang.",
       "s2t": "Tanlang",
@@ -1078,8 +1078,8 @@
     },
     "aud": {
       "eyebrow": "03 — KIM UCHUN",
-      "title": "Studiyalar uchun yaratilgan.",
-      "gold": "Egalar uchun moslangan.",
+      "title": "Studiyalar uchun yaratilgan",
+      "gold": "Egalar uchun moslangan",
       "c1": {
         "tag": "USTAXONALAR UCHUN",
         "t": "Tijorat tuning atelyelari",
@@ -1102,8 +1102,8 @@
     },
     "pricing": {
       "eyebrow": "04 — NARXLAR",
-      "title": "Shaffof narxlar.",
-      "gold": "Har bir loyiha uchun.",
+      "title": "Shaffof narxlar",
+      "gold": "Har bir loyiha uchun",
       "monthly": "Oylik",
       "annual": "Yillik −20%",
       "popular": "ENG MASHHUR",
@@ -1145,7 +1145,7 @@
     "reviews": {
       "eyebrow": "MIJOZLAR FIKRI",
       "title": "Bizga ishonch",
-      "gold": "bildirganlar.",
+      "gold": "bildirganlar",
       "r1": {
         "role": "Auto Lux Tashkent, egasi",
         "text": "Mijozlarga mashinasini yangi disklarda koʻrsatamiz — shartnoma joyida yopiladi. Sotuvlarimiz sezilarli oshdi."
@@ -1165,7 +1165,7 @@
     },
     "app": {
       "eyebrow": "05 — MOBIL ILOVA",
-      "gold": "choʻntagingizda.",
+      "gold": "choʻntagingizda",
       "text": "Ilovamizni yuklab oling — mashinangizni suratga oling va soniyalar ichida yangi qiyofasini koʻring.",
       "rating": "4.9 · 12 000+ foydalanuvchi",
       "alt": "CarVision mobil ilovasi",
@@ -1174,7 +1174,7 @@
     "faq": {
       "eyebrow": "06 — SAVOLLAR",
       "title": "Savollaringiz bormi?",
-      "gold": "Javoblarimiz tayyor.",
+      "gold": "Javoblarimiz tayyor",
       "q1": "4K natija haqiqiy detallarga qanchalik oʻxshaydi?",
       "a1": "Neyron tarmogʻimiz yorugʻlik, aks va soyalarni hisobga olib, haqiqiy fotosuratdan deyarli farqlanmaydigan natija beradi.",
       "q2": "To‘lovim qanday himoyalangan?",
@@ -1187,7 +1187,7 @@
     "cta": {
       "alt": "CarVision Grand CTA",
       "title": "Oʻzgarishga tayyormisiz?",
-      "gold": "Vizioningizni yoqing.",
+      "gold": "Vizioningizni yoqing",
       "button": "HOZIROQ BOSHLASH"
     },
     "footer": {

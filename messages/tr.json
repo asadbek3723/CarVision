@@ -1042,7 +1042,7 @@
     "hero": {
       "alt": "Altın ışıkta siyah spor otomobil",
       "title1": "Hayalinizdeki",
-      "title2": "otomobil.",
+      "title2": "otomobil",
       "text": "Jant, renk ve body kiti kendi aracınızda 4K gerçekçilikte deneyin — tek kuruş harcamadan.",
       "ctaVision": "VİZYONUNUZU ATEŞLEYİN",
       "ctaApp": "UYGULAMAYI İNDİR",
@@ -1053,8 +1053,8 @@
     },
     "viz": {
       "eyebrow": "01 — GÖRSELLEŞTİRİCİ",
-      "title": "Fabrika hali.",
-      "gold": "4K gerçekçiliğe.",
+      "title": "Fabrika hali",
+      "gold": "4K gerçekçiliğe",
       "text": "Özel jantları, folyoyu ve body stilini tam olarak kendi aracınızda deneyin — hızlı, kolay ve %100 güvenli.",
       "f1": "Tam jant ölçüsü (fitment)",
       "f2": "500+ marka kataloğu",
@@ -1067,8 +1067,8 @@
     },
     "how": {
       "eyebrow": "02 — NASIL ÇALIŞIR",
-      "title": "Hayalinizdeki araç.",
-      "gold": "Üç basit adımda.",
+      "title": "Hayalinizdeki araç",
+      "gold": "Üç basit adımda",
       "s1t": "Fotoğraf çekin",
       "s1d": "Aracınızı yandan tek bir fotoğrafla yükleyin.",
       "s2t": "Seçin",
@@ -1078,8 +1078,8 @@
     },
     "aud": {
       "eyebrow": "03 — KİMLER İÇİN",
-      "title": "Stüdyolar için yapıldı.",
-      "gold": "Sahiplere göre uyarlandı.",
+      "title": "Stüdyolar için yapıldı",
+      "gold": "Sahiplere göre uyarlandı",
       "c1": {
         "tag": "ATÖLYELER İÇİN",
         "t": "Ticari tuning atölyeleri",
@@ -1102,8 +1102,8 @@
     },
     "pricing": {
       "eyebrow": "04 — FİYATLAR",
-      "title": "Şeffaf fiyatlar.",
-      "gold": "Her proje için.",
+      "title": "Şeffaf fiyatlar",
+      "gold": "Her proje için",
       "monthly": "Aylık",
       "annual": "Yıllık −%20",
       "popular": "EN POPÜLER",
@@ -1145,7 +1145,7 @@
     "reviews": {
       "eyebrow": "MÜŞTERİ YORUMLARI",
       "title": "Bize güvenenler",
-      "gold": "inananlar.",
+      "gold": "inananlar",
       "r1": {
         "role": "Auto Lux Tashkent, sahibi",
         "text": "Müşterilere araçlarını yeni jantlarla gösteriyoruz — sözleşme yerinde kapanıyor. Satışlarımız belirgin şekilde arttı."
@@ -1165,7 +1165,7 @@
     },
     "app": {
       "eyebrow": "05 — MOBİL UYGULAMA",
-      "gold": "cebinizde.",
+      "gold": "cebinizde",
       "text": "Uygulamamızı indirin — aracınızın fotoğrafını çekin ve saniyeler içinde yeni görünümünü görün.",
       "rating": "4,9 · 12.000+ kullanıcı",
       "alt": "CarVision mobil uygulaması",
@@ -1174,7 +1174,7 @@
     "faq": {
       "eyebrow": "06 — SORULAR",
       "title": "Sorularınız mı var?",
-      "gold": "Cevaplarımız hazır.",
+      "gold": "Cevaplarımız hazır",
       "q1": "4K sonuç gerçek parçalara ne kadar benziyor?",
       "a1": "Sinir ağımız ışığı, yansımaları ve gölgeleri hesaba katarak gerçek fotoğraftan neredeyse ayırt edilemeyen bir sonuç verir.",
       "q2": "Ödemem nasıl korunuyor?",
@@ -1187,7 +1187,7 @@
     "cta": {
       "alt": "CarVision büyük çağrı",
       "title": "Değişime hazır mısınız?",
-      "gold": "Vizyonunuzu ateşleyin.",
+      "gold": "Vizyonunuzu ateşleyin",
       "button": "HEMEN BAŞLA"
     },
     "footer": {
