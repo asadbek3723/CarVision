@@ -4,6 +4,8 @@ import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { requestMotionAccess } from '@/features/camera/hooks/useDeviceLevel';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { useCartSync } from '@/features/shop/useCartSync';
 
 type CameraModalComponent = typeof import('@/components/camera/VeloceSmartCameraModal').VeloceSmartCameraModal;
 
@@ -145,6 +147,22 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     }
     setHydrated(true);
   }, []);
+
+  // The cart follows the account across devices (saved on the server, local copy for guests/offline).
+  const { user } = useAuth();
+  const applyCart = React.useCallback((next: { items: Record<string, number>; unselected: string[] }) => {
+    setCart(next.items);
+    setCartUnselected(next.unselected);
+    try {
+      if (Object.keys(next.items).length === 0) localStorage.removeItem('veloce_cart');
+      else localStorage.setItem('veloce_cart', JSON.stringify(next.items));
+      if (next.unselected.length === 0) localStorage.removeItem('veloce_cart_unselected');
+      else localStorage.setItem('veloce_cart_unselected', JSON.stringify(next.unselected));
+    } catch {
+      // Ignore
+    }
+  }, []);
+  useCartSync({ userId: user?.id ?? null, hydrated, cart, unselected: cartUnselected, apply: applyCart });
 
   const setPhoto = React.useCallback((p: string | null) => {
     setPhotoState(p);

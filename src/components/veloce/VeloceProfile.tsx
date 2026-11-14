@@ -1,5 +1,6 @@
 'use client';
 
+import { AvatarImage } from '@/features/account/AvatarImage';
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -10,7 +11,7 @@ import { isSellerUser } from '@/features/auth/roles';
 import { useVeloceStore } from '@/context/VeloceStore';
 import { useCurrency } from '@/context/CurrencyContext';
 import { BOOKING_STATUS_STYLE, type BookingView } from '@/features/shop/BookingCard';
-import { initialsOf, LANGUAGES } from '@/features/account/preferences';
+import { LANGUAGES } from '@/features/account/preferences';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
 import { PushToggle } from '@/components/pwa/PushToggle';
 import { useLiveTick } from '@/lib/live';
@@ -146,7 +147,7 @@ export function VeloceProfile() {
         <section className="flex flex-col gap-6 pt-2">
           <div className="flex min-w-0 items-center gap-4">
             <div aria-hidden className={`relative grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-full text-[24px] font-semibold uppercase text-[#0A0A0A] ring-1 ring-white/10 ${md.accentBg}`}>
-              {user.avatar_url ? <img src={user.avatar_url} alt="" className="h-full w-full object-cover" draggable={false} /> : initialsOf(user.full_name)}
+              <AvatarImage src={user.avatar_url} name={user.full_name} className="h-full w-full object-cover" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[22px] font-semibold leading-tight tracking-[-0.01em] text-white">{name}</p>

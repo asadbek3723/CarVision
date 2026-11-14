@@ -4,7 +4,13 @@ import { requireUser } from '@/server/auth/guards';
 
 export const dynamic = 'force-dynamic';
 
-const BUCKET = 'catalog';
+/**
+ * Profile photos have their own public bucket. They used to live in `catalog` next to product
+ * photos, and a catalog re-seed that emptied that bucket deleted every avatar with it.
+ */
+const BUCKET = 'avatars';
+/** Where avatars were kept before; cleaned up when a user replaces or removes their photo. */
+const LEGACY_BUCKET = 'catalog';
 const MAX_BYTES = 1_500_000;
 
 const fail = (status: number, code: string, error: string) => NextResponse.json({ success: false, code, error }, { status });
@@ -16,7 +22,7 @@ function isJpeg(b: Buffer): boolean {
 
 /**
  * Profile photo. The browser crops it square, resizes it to 512 px and sends a JPEG; it is stored in the
- * public `catalog` bucket under avatars/<user id>.jpg (one file per user, replaced on every upload) and
+ * public `avatars` bucket as <user id>.jpg (one file per user, replaced on every upload) and
  * its public URL is kept in the user's Supabase Auth metadata, so no database change is needed.
  */
 export async function POST(request: NextRequest) {
@@ -32,7 +38,7 @@ export async function POST(request: NextRequest) {
   if (!isJpeg(bytes)) return fail(400, 'INVALID_IMAGE', 'Rasm formati noto‘g‘ri');
 
   const db = createAdminClient();
-  const path = `avatars/${userId}.jpg`;
+  const path = `${userId}.jpg`;
   const { error: upErr } = await db.storage.from(BUCKET).upload(path, bytes, { contentType: 'image/jpeg', upsert: true, cacheControl: '3600' });
   if (upErr) {
     console.error('avatar upload failed:', upErr.message);
@@ -48,6 +54,7 @@ export async function POST(request: NextRequest) {
     console.error('avatar metadata failed:', error.message);
     return fail(500, 'SAVE_FAILED', 'Saqlab bo‘lmadi');
   }
+  await db.storage.from(LEGACY_BUCKET).remove([`avatars/${userId}.jpg`]).catch(() => undefined);
   return NextResponse.json({ success: true, avatar_url: url });
 }
 
@@ -63,6 +70,7 @@ export async function DELETE() {
   delete meta['avatar_url'];
   const { error } = await db.auth.admin.updateUserById(userId, { user_metadata: meta });
   if (error) return fail(500, 'SAVE_FAILED', 'Saqlab bo‘lmadi');
-  await db.storage.from(BUCKET).remove([`avatars/${userId}.jpg`]).catch(() => undefined);
+  await db.storage.from(BUCKET).remove([`${userId}.jpg`]).catch(() => undefined);
+  await db.storage.from(LEGACY_BUCKET).remove([`avatars/${userId}.jpg`]).catch(() => undefined);
   return NextResponse.json({ success: true });
 }

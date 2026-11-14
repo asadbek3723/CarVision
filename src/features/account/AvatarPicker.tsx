@@ -6,7 +6,7 @@ import { Camera, Loader2 } from 'lucide-react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { loadImageFromBlob } from '@/features/seller/lib/image-tools';
 import { toast } from '@/components/ui/Toaster';
-import { initialsOf } from '@/features/account/preferences';
+import { AvatarImage } from '@/features/account/AvatarImage';
 
 const SIZE = 512;
 
@@ -84,11 +84,9 @@ export function AvatarPicker({ name }: { name: string }) {
         className="group relative h-28 w-28 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FDC902]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
       >
         <span className="absolute inset-0 overflow-hidden rounded-full bg-[#FDC902] ring-1 ring-white/10">
-          {photo ? (
-            <img src={photo} alt="" className="h-full w-full object-cover" draggable={false} />
-          ) : (
-            <span className="grid h-full w-full place-items-center text-[40px] font-semibold uppercase text-[#0A0A0A]">{initialsOf(name)}</span>
-          )}
+          <span className="grid h-full w-full place-items-center text-[40px] font-semibold uppercase text-[#0A0A0A]">
+            <AvatarImage src={photo} name={name} className="h-full w-full object-cover" />
+          </span>
           {busy && (
             <span className="absolute inset-0 grid place-items-center bg-black/45">
               <Loader2 className="h-7 w-7 animate-spin text-white" />
