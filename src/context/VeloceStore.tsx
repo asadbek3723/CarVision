@@ -7,6 +7,9 @@ import { requestMotionAccess } from '@/features/camera/hooks/useDeviceLevel';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCartSync } from '@/features/shop/useCartSync';
 
+/** Part the customer wanted before photographing the side that shows it (picked once the photo is in). */
+export const PENDING_PART_KEY = 'carvision_pending_part';
+
 type CameraModalComponent = typeof import('@/components/camera/VeloceSmartCameraModal').VeloceSmartCameraModal;
 
 // The camera (≈800 lines + animation + QR code) is not part of every page. It is downloaded quietly
@@ -48,6 +51,11 @@ interface VeloceStoreContextType {
   /** Changes with every new photo set; lets screens know the car must be re-confirmed. */
   captureStamp: string;
   openCamera: () => void;
+  /**
+   * Opens the camera for one side only (e.g. `rear`). The new photo is added to the ones already
+   * taken; `pendingPartId` is remembered so the studio can pick that part once the photo is in.
+   */
+  openCameraForSide: (side: string, pendingPartId?: string) => void;
   closeCamera: () => void;
   isCameraOpen: boolean;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -321,15 +329,36 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
     setIsCameraOpen(true);
   }, []);
 
+  const [cameraOnly, setCameraOnly] = React.useState<string | null>(null);
+  const openCameraForSide = React.useCallback((side: string, pendingPartId?: string) => {
+    requestMotionAccess();
+    try {
+      // Remembered with the current photo set: the studio acts on it only once a new photo is in.
+      if (pendingPartId) sessionStorage.setItem(PENDING_PART_KEY, JSON.stringify({ partId: pendingPartId, stamp: captureStamp }));
+    } catch {
+      // the part simply is not picked automatically
+    }
+    setCameraOnly(side);
+    setIsCameraOpen(true);
+  }, [captureStamp]);
+
   const closeCamera = React.useCallback(() => {
     setIsCameraOpen(false);
+    setCameraOnly(null);
   }, []);
 
   const handleCameraCaptured = React.useCallback(
     (dataUrl: string, angles: Record<string, string>) => {
       const stamp = Date.now().toString();
-      setPhoto(dataUrl);
-      setMultiAngles(angles);
+      if (cameraOnly) {
+        // One extra side: keep every photo already taken and add this one.
+        if (!photo) setPhoto(dataUrl);
+        setMultiAngles({ ...multiAngles, ...angles });
+      } else {
+        setPhoto(dataUrl);
+        setMultiAngles(angles);
+      }
+      setCameraOnly(null);
       setCaptureStamp(stamp);
       try {
         sessionStorage.setItem('carvision_captured_at', stamp);
@@ -339,7 +368,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
       setIsCameraOpen(false);
       router.push(`/${locale}/customize?captured=1`);
     },
-    [locale, router, setPhoto, setMultiAngles]
+    [locale, router, setPhoto, setMultiAngles, cameraOnly, photo, multiAngles]
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,6 +400,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
         setGeneratedAngles,
         captureStamp,
         openCamera,
+        openCameraForSide,
         closeCamera,
         isCameraOpen,
         fileInputRef,
@@ -385,7 +415,7 @@ export function VeloceStoreProvider({ children }: { children: React.ReactNode })
         onChange={handleFileChange}
       />
       {children}
-      {CameraModal && <CameraModal isOpen={isCameraOpen} onClose={closeCamera} onCaptured={handleCameraCaptured} />}
+      {CameraModal && <CameraModal isOpen={isCameraOpen} onClose={closeCamera} onCaptured={handleCameraCaptured} onlySlug={cameraOnly} />}
       {/* Tapped before the camera arrived (slow connection): show something at once, never a frozen screen. */}
       {isCameraOpen && !CameraModal && (
         <div role="dialog" aria-modal="true" aria-busy="true" aria-label={tCommon('loading')} className="fixed inset-0 z-[70] grid place-items-center bg-[#050507]">

@@ -6,7 +6,9 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
+  Camera as CameraIcon,
   Check,
+  EyeOff,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -16,7 +18,8 @@ import {
   Maximize2,
   X,
 } from 'lucide-react';
-import { useVeloceStore } from '@/context/VeloceStore';
+import { PENDING_PART_KEY, useVeloceStore } from '@/context/VeloceStore';
+import { isPartVisibleFromAngle, sideToPhotograph } from '@/lib/part-visibility';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useMyCar } from '@/features/shop/useMyCar';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -28,7 +31,7 @@ import { AngleStage } from './AngleStage';
 import { BuildStrip } from './BuildStrip';
 import { onePerSlot, partSlot, toggleInSlot } from '@/lib/part-slot';
 import { RenderProgress } from '@/features/visualizer/RenderProgress';
-import { planRender, type PlanAngle } from '@/features/visualizer/render-plan';
+import { planRender, sideOf, type PlanAngle } from '@/features/visualizer/render-plan';
 import { useRenderBuild, type BuildPart } from '@/features/visualizer/useRenderBuild';
 import { getCarViews } from '@/features/visualizer/car-views';
 
@@ -115,6 +118,7 @@ export function VeloceCustomize() {
     generatedAngles,
     setGeneratedAngles,
     openCamera,
+    openCameraForSide,
   } = useVeloceStore();
   const { user, refreshProfile } = useAuth();
   const { car: myCar, filterQuery } = useMyCar();
@@ -210,14 +214,10 @@ export function VeloceCustomize() {
     [selectedPartIds, catalogProducts, setSelectedPartIds, generatedAngles, setGeneratedAngles]
   );
 
-  // Pre-select requestedPartId if passed in URL and not yet selected; tidy older multi-picks per slot.
+  // Tidy older multi-picks per slot (the ?partId= quick add is handled once the photos are known, below).
   React.useEffect(() => {
     if (catalogProducts.length === 0) return;
-    let next = selectedPartIds;
-    if (requestedPartId && catalogProducts.some((p) => p.id === requestedPartId) && !next.includes(requestedPartId)) {
-      next = toggleInSlot(next, requestedPartId, catalogProducts);
-    }
-    next = onePerSlot(next, catalogProducts);
+    const next = onePerSlot(selectedPartIds, catalogProducts);
     if (next.length !== selectedPartIds.length || next.some((id, i) => id !== selectedPartIds[i])) {
       setSelectedPartIds(next);
     }
@@ -398,6 +398,73 @@ export function VeloceCustomize() {
     () => planRender(planAngles, selectedProducts.map((p) => ({ id: p.id, category: p.category, name: p.name, spec: p.spec, zone: partZoneOf(p) }))),
     [planAngles, selectedProducts]
   );
+  // Parts that no photographed side can show are blocked: picking one explains which side is
+  // missing and offers to photograph it (no long warning under the button any more).
+  const photographedSides = React.useMemo(
+    () => planAngles.filter((a) => typeof a.photo === 'string' && a.photo.length > 5).map(sideOf),
+    [planAngles]
+  );
+  const visibilityOf = (p: VeloceProduct) => ({ category: p.category, name: p.name, spec: p.spec, zone: partZoneOf(p) });
+  const isBlocked = React.useCallback(
+    (p: VeloceProduct) => photographedSides.length > 0 && !photographedSides.some((side) => isPartVisibleFromAngle(visibilityOf(p), side)),
+     
+    [photographedSides]
+  );
+  const blockedIds = React.useMemo(() => catalogProducts.filter(isBlocked).map((p) => p.id), [catalogProducts, isBlocked]);
+  const [sideNotice, setSideNotice] = React.useState<{ partId: string; side: string | null } | null>(null);
+  React.useEffect(() => {
+    if (!sideNotice) return;
+    const id = window.setTimeout(() => setSideNotice(null), 7000);
+    return () => window.clearTimeout(id);
+  }, [sideNotice]);
+  const pickPart = React.useCallback(
+    (id: string) => {
+      const part = catalogProducts.find((p) => p.id === id);
+      if (part && !selectedPartIds.includes(id) && isBlocked(part)) {
+        setSideNotice({ partId: id, side: sideToPhotograph(visibilityOf(part)) });
+        vibrate(15);
+        return;
+      }
+      togglePart(id);
+    },
+     
+    [catalogProducts, selectedPartIds, isBlocked, togglePart]
+  );
+  // Quick add from the shop (?partId=): pick it once, or explain which side photo it needs.
+  const quickPicked = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!requestedPartId || catalogProducts.length === 0 || quickPicked.current === requestedPartId) return;
+    const part = catalogProducts.find((p) => p.id === requestedPartId);
+    if (!part) return;
+    quickPicked.current = requestedPartId;
+    if (selectedPartIds.includes(part.id)) return;
+    if (isBlocked(part)) setSideNotice({ partId: part.id, side: sideToPhotograph(visibilityOf(part)) });
+    else setSelectedPartIds(toggleInSlot(selectedPartIds, part.id, catalogProducts));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedPartId, catalogProducts, isBlocked]);
+
+  // Back from photographing the missing side: pick the part if the new photo really shows it.
+  React.useEffect(() => {
+    if (!carConfirmed || catalogProducts.length === 0) return;
+    let pending: { partId?: string; stamp?: string } | null = null;
+    try {
+      pending = JSON.parse(sessionStorage.getItem(PENDING_PART_KEY) ?? 'null');
+    } catch {
+      pending = null;
+    }
+    if (!pending?.partId || pending.stamp === captureStamp) return;
+    try {
+      sessionStorage.removeItem(PENDING_PART_KEY);
+    } catch {
+      // nothing to clear
+    }
+    const part = catalogProducts.find((p) => p.id === pending?.partId);
+    if (!part) return;
+    if (isBlocked(part)) setSideNotice({ partId: part.id, side: sideToPhotograph(visibilityOf(part)) });
+    else if (!selectedPartIds.includes(part.id)) setSelectedPartIds(toggleInSlot(selectedPartIds, part.id, catalogProducts));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carConfirmed, captureStamp, catalogProducts, isBlocked]);
+
   const creditsLeft = user?.credits_balance ?? 0;
   const notEnoughCredits = Boolean(user) && renderPlan.creditsNeeded > creditsLeft;
 
@@ -500,14 +567,8 @@ export function VeloceCustomize() {
       <ChevronRight className="relative h-4 w-4 rtl:rotate-180" strokeWidth={2.5} />
     </button>
   );
-  const hiddenNames = selectedProducts.filter((p) => renderPlan.hiddenPartIds.includes(p.id)).map((p) => p.name).join(', ');
   const creditsNote = (
     <>
-      {renderPlan.noneVisible ? (
-        <p className="mb-2 px-2 text-[11px] text-amber-300">{t('partsHiddenAll')}</p>
-      ) : (
-        hiddenNames && <p className="mb-2 px-2 text-[11px] text-amber-300">{t('partsHiddenSome', { names: hiddenNames })}</p>
-      )}
       {notEnoughCredits && (
         <p className="mb-2 px-2 text-[11px] text-amber-300">
           {t('creditsNeeded', { needed: renderPlan.creditsNeeded, left: creditsLeft })}{' '}
@@ -712,7 +773,8 @@ export function VeloceCustomize() {
                 orientation="vertical"
                 items={filteredProducts}
                 selectedIds={selectedPartIds}
-                onToggle={togglePart}
+                onToggle={pickPart}
+                disabledIds={blockedIds}
                 onCurrentChange={setFocusedPart}
                 onTick={playTick}
                 onPointerStart={unlockAudio}
@@ -836,13 +898,18 @@ export function VeloceCustomize() {
                     <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-white/45">{[focusedPart.spec, fit].filter(Boolean).join(' · ')}</p>
                     <button
                       type="button"
-                      onClick={() => togglePart(focusedPart.id)}
+                      onClick={() => pickPart(focusedPart.id)}
                       aria-pressed={picked}
                       className={`mt-4 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full text-[12px] font-semibold uppercase tracking-[0.14em] transition ${
-                        picked ? 'bg-gold-500/[0.14] text-gold-500 hover:bg-gold-500/[0.22]' : 'bg-white/[0.06] text-white hover:bg-white/[0.1]'
+                        picked
+                          ? 'bg-gold-500/[0.14] text-gold-500 hover:bg-gold-500/[0.22]'
+                          : blockedIds.includes(focusedPart.id)
+                            ? 'bg-white/[0.03] text-white/35 hover:bg-white/[0.06]'
+                            : 'bg-white/[0.06] text-white hover:bg-white/[0.1]'
                       }`}
                     >
                       {picked && <Check className="h-4 w-4" strokeWidth={2.6} />}
+                      {!picked && blockedIds.includes(focusedPart.id) && <EyeOff className="h-4 w-4" />}
                       {picked ? t('selected') : t('select')}
                     </button>
                   </section>
@@ -1117,7 +1184,8 @@ export function VeloceCustomize() {
           <PartReel
             items={filteredProducts}
             selectedIds={selectedPartIds}
-            onToggle={togglePart}
+            onToggle={pickPart}
+            disabledIds={blockedIds}
             onTick={playTick}
             onPointerStart={unlockAudio}
             onRelease={hapticOnRelease}
@@ -1144,6 +1212,39 @@ export function VeloceCustomize() {
       </div>
         </>
       )}
+      {/* A part no photo can show: say which side is missing, offer to photograph just that side */}
+      {sideNotice && (() => {
+        const part = catalogProducts.find((p) => p.id === sideNotice.partId);
+        const ang = FIVE_CAR_ANGLES.find((a) => a.id === sideNotice.side);
+        const sideLabel = ang ? t(`angles.${ang.key}`) : '';
+        return (
+          <div role="status" aria-live="polite" className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+96px)] z-[90] flex justify-center px-4 lg:bottom-8">
+            <div className="flex w-full max-w-md items-center gap-3 rounded-2xl bg-[#16181F]/95 py-2.5 pe-2 ps-4 text-white shadow-[0_18px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+              <EyeOff className="h-4 w-4 shrink-0 text-gold-500" />
+              <p className="min-w-0 flex-1 text-[13px] leading-snug text-white/85">
+                {ang ? t('hiddenPart', { side: sideLabel }) : t('hiddenPartNoSide')}
+                {part && <span className="block truncate text-[11px] text-white/45">{part.name}</span>}
+              </p>
+              {ang && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSideNotice(null);
+                    openCameraForSide(ang.id, sideNotice.partId);
+                  }}
+                  className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-gold-500 px-3.5 text-[12px] font-semibold text-black transition hover:brightness-105"
+                >
+                  <CameraIcon className="h-4 w-4" />
+                  {t('shootSide')}
+                </button>
+              )}
+              <button type="button" onClick={() => setSideNotice(null)} aria-label={t('close')} className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

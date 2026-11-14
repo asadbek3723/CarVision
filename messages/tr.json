@@ -845,7 +845,10 @@
     "partsHiddenSome": "Bu parçalar fotoğraflarınızda görünmüyor ve işlenmeyecek: {names}. İlgili taraftan fotoğraf ekleyin.",
     "errConfirmCar": "Önce aracı doğrulayın",
     "fitAll": "Tüm araçlara uygun",
-    "partNotForCar": "Bu parça {car} için listelenmemiş — uyumlu parçalar gösteriliyor."
+    "partNotForCar": "Bu parça {car} için listelenmemiş — uyumlu parçalar gösteriliyor.",
+    "hiddenPart": "{side} fotoğrafı yok — bu parça görünmez",
+    "hiddenPartNoSide": "Bu parça dış fotoğraflarda görünmez",
+    "shootSide": "Fotoğraf çek"
   },
   "identify": {
     "dialog": "Aracı belirle",
@@ -990,7 +993,8 @@
     },
     "skipAngle": "Bu açıyı atla",
     "continueWith": "{count} fotoğrafla devam et",
-    "optionalHint": "1 ile 5 arasında fotoğraf yükleyin, istediğiniz açıyı atlayın. Yapay zekâ aracın hangi tarafının göründüğünü kendisi belirler."
+    "optionalHint": "1 ile 5 arasında fotoğraf yükleyin, istediğiniz açıyı atlayın. Yapay zekâ aracın hangi tarafının göründüğünü kendisi belirler.",
+    "onlySide": "Yalnızca bu taraf gerekli: {angle}"
   },
   "scanLive": {
     "compassLabel": "Pusula rehberi: {angle}",

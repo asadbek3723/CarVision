@@ -61,3 +61,16 @@ describe('window tint', () => {
     expect(isPartVisibleFromAngle({ category: 'Performance', name: 'Exhaust' }, 'front')).toBe(false);
   });
 });
+
+describe('sideToPhotograph', () => {
+  it('asks for the rear for rear lights and spoilers, the front for front lights', async () => {
+    const { sideToPhotograph } = await import('./part-visibility');
+    expect(sideToPhotograph({ category: 'Lights', name: 'Twin round red lamps', zone: 'rear' } as never)).toBe('rear');
+    expect(sideToPhotograph({ category: 'Spoiler', name: 'Carbon GT wing' } as never)).toBe('rear');
+    expect(sideToPhotograph({ category: 'Lights', name: 'LED headlights', zone: 'front' } as never)).toBe('front');
+  });
+  it('needs no particular side for wheels or colour', async () => {
+    const { sideToPhotograph } = await import('./part-visibility');
+    expect(sideToPhotograph({ category: 'Wheels', name: 'BBS wheels' } as never)).toBeNull();
+  });
+});

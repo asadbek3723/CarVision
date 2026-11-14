@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, EyeOff } from 'lucide-react';
 import { type VeloceProduct } from '@/domain/veloce-catalog';
 
 interface PartReelProps {
@@ -35,6 +35,8 @@ interface PartReelProps {
    * the details of the centred part are not drawn here, the page shows them via `onCurrentChange`.
    */
   orientation?: 'horizontal' | 'vertical';
+  /** Parts no photographed side can show: drawn dimmed with a hidden-eye mark (tapping still reports them). */
+  disabledIds?: string[];
   /** The part in the middle, on first paint and every time it changes. */
   onCurrentChange?: (part: VeloceProduct) => void;
 }
@@ -123,6 +125,7 @@ export function PartReel({
   ariaLabel,
   orientation = 'horizontal',
   onCurrentChange,
+  disabledIds,
 }: PartReelProps) {
   const vertical = orientation === 'vertical';
   const n = items.length;
@@ -480,6 +483,7 @@ export function PartReel({
           {slides.map((k) => {
             const part = items[mod(k, n)]!;
             const picked = selectedIds.includes(part.id);
+            const disabled = !picked && Boolean(disabledIds?.includes(part.id));
             return (
               <div
                 key={k}
@@ -489,6 +493,7 @@ export function PartReel({
                 }}
                 role="option"
                 aria-selected={picked}
+                aria-disabled={disabled || undefined}
                 aria-label={part.name}
                 onClick={() => {
                   if (drag.current.moved) return;
@@ -512,9 +517,14 @@ export function PartReel({
                   className="relative h-full w-full overflow-hidden rounded-[22px] bg-surface-1 transition-[box-shadow,border-color] duration-300 data-[active=1]:border-gold-500 data-[active=1]:shadow-[0_0_0_4px_rgba(232,191,116,0.08),0_18px_44px_-10px_rgba(232,191,116,0.4)] lg:rounded-[28px]"
                 >
                   {part.swatch ? (
-                    <div className="h-full w-full" style={{ background: part.swatch }} />
+                    <div className={`h-full w-full ${disabled ? 'opacity-40 grayscale' : ''}`} style={{ background: part.swatch }} />
                   ) : (
-                    <img src={part.image} alt="" draggable={false} loading="lazy" className="pointer-events-none h-full w-full object-cover" />
+                    <img src={part.image} alt="" draggable={false} loading="lazy" className={`pointer-events-none h-full w-full object-cover ${disabled ? 'opacity-40 grayscale' : ''}`} />
+                  )}
+                  {disabled && (
+                    <span aria-hidden className="absolute start-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white/80 backdrop-blur-md lg:h-7 lg:w-7">
+                      <EyeOff className="h-3.5 w-3.5" />
+                    </span>
                   )}
                   <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                   {picked && (

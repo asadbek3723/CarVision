@@ -34,13 +34,18 @@ interface VeloceSmartCameraModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCaptured: (dataUrl: string, angles: Record<string, string>) => void;
+  /** Ask for one side only (`front` | `rear` | `right` | `rear-right` | `front-left`). */
+  onlySlug?: string | null | undefined;
 }
 
 export function VeloceSmartCameraModal({
   isOpen,
   onClose,
   onCaptured,
+  onlySlug,
 }: VeloceSmartCameraModalProps) {
+  const onlyAngle = onlySlug ? GUIDED_SCAN_ANGLES.find((a) => a.slug === onlySlug) : undefined;
+  const onlyIndex = onlyAngle ? GUIDED_SCAN_ANGLES.indexOf(onlyAngle) : -1;
   const t = useTranslations('scanModal');
   const params = useParams();
   const locale = (params?.['locale'] as string) || 'uz';
@@ -115,13 +120,13 @@ export function VeloceSmartCameraModal({
   React.useEffect(() => {
     if (isOpen) {
       setDesktopView('initial-choice');
-      setCurrentStepIndex(0);
+      setCurrentStepIndex(Math.max(0, onlyIndex));
       setUploadedAngles({});
       mobileAnglesRef.current = {};
       setRemoteCapturedCount(0);
       setIsProcessing(false);
     }
-  }, [isOpen]);
+  }, [isOpen, onlyIndex]);
 
   // Create hand-off session for phone QR
   React.useEffect(() => {
@@ -233,7 +238,7 @@ export function VeloceSmartCameraModal({
 
   const sessionUrl =
     typeof window !== 'undefined' && sessionId
-      ? `${window.location.origin}/${locale}/scan/${sessionId}`
+      ? `${window.location.origin}/${locale}/scan/${sessionId}${onlyAngle ? `?only=${onlyAngle.slug}` : ''}`
       : '';
 
   const handleCopyLink = () => {
@@ -251,8 +256,8 @@ export function VeloceSmartCameraModal({
         const targetAngleId = currentAngle.id;
         const next = { ...uploadedAngles, [targetAngleId]: dataUrl };
         setUploadedAngles(next);
-        // Last required photo in: go straight to the studio (no Continue button).
-        if (Object.keys(next).length >= REQUIRED_ANGLE_COUNT) {
+        // Last required photo in (or the one side that was asked for): straight to the studio.
+        if (onlyAngle || Object.keys(next).length >= REQUIRED_ANGLE_COUNT) {
           setTimeout(() => handleProceedToStudio(next[1] || dataUrl, next), 350);
           return;
         }
@@ -346,7 +351,10 @@ export function VeloceSmartCameraModal({
       handleProceedToStudio(next[1] || Object.values(next)[0], next);
     });
   };
-  const skipDesktopStep = () => setCurrentStepIndex((i) => nextOpenStep(i, uploadedAngles) ?? (i + 1) % GUIDED_SCAN_ANGLES.length);
+  const skipDesktopStep = () => {
+    if (onlyAngle) return;
+    setCurrentStepIndex((i) => nextOpenStep(i, uploadedAngles) ?? (i + 1) % GUIDED_SCAN_ANGLES.length);
+  };
   const uploadedCount = Object.keys(uploadedAngles).length;
 
   return (
@@ -359,6 +367,7 @@ export function VeloceSmartCameraModal({
             onPhotoCaptured={handleMobilePhotoCaptured}
             onFinish={handleMobileFinish}
             onClose={onClose}
+            onlyAngleId={onlyAngle?.id}
             className="w-full h-full"
           />
         </div>
@@ -386,6 +395,11 @@ export function VeloceSmartCameraModal({
               {desktopView === 'initial-choice' && (
                 <div>
                   <h1 className="text-xl sm:text-2xl font-light tracking-wide text-foreground">{t('titleChoice')}</h1>
+                  {onlyAngle && (
+                    <p className="mt-1 inline-flex items-center gap-2 rounded-full bg-gold-500/[0.14] px-3 py-1 text-[12px] font-medium text-gold-500">
+                      {t('onlySide', { angle: t(`angles.${onlyAngle.key}.title`) })}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-0.5">{t('subChoice')}</p>
                 </div>
               )}

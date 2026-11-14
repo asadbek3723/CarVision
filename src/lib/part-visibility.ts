@@ -73,3 +73,16 @@ export function isPartVisibleFromAngle(part: VisibilityPart, angleId: string): b
 export function visibleParts<T extends VisibilityPart>(parts: T[], angleId: string): T[] {
   return parts.filter((p) => isPartVisibleFromAngle(p, angleId));
 }
+
+/** Camera sides of the guided scan, best first for asking the customer to photograph one. */
+const SHOOT_ORDER = ['rear', 'front', 'right', 'rear-right', 'front-left'];
+
+/**
+ * The scan side to photograph so `part` becomes visible, or null when no outside photo can show it
+ * (interior) or every side already would.
+ */
+export function sideToPhotograph(part: VisibilityPart): string | null {
+  const views = visibleFrom(part);
+  if (views === null || views.length === 0) return null;
+  return SHOOT_ORDER.find((side) => views.includes(side)) ?? null;
+}

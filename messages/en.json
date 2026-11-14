@@ -845,7 +845,10 @@
     "partsHiddenSome": "These parts are not visible in your photos and won't be rendered: {names}. Add a photo from the matching side.",
     "errConfirmCar": "Confirm the car first",
     "fitAll": "Fits all cars",
-    "partNotForCar": "This part isn't listed for {car} — showing parts that fit."
+    "partNotForCar": "This part isn't listed for {car} — showing parts that fit.",
+    "hiddenPart": "No {side} photo — this part won’t show",
+    "hiddenPartNoSide": "This part doesn’t show in outside photos",
+    "shootSide": "Take photo"
   },
   "identify": {
     "dialog": "Identify your car",
@@ -990,7 +993,8 @@
     },
     "skipAngle": "Skip this angle",
     "continueWith": "{count, plural, one {Continue with # photo} other {Continue with # photos}}",
-    "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible."
+    "optionalHint": "Upload 1 to 5 photos and skip any angle. The AI detects which side of the car is visible.",
+    "onlySide": "Only this side is needed: {angle}"
   },
   "scanLive": {
     "compassLabel": "Compass guide: {angle}",

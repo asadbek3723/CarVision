@@ -845,7 +845,10 @@
     "partsHiddenSome": "Bu detallar rasmlaringizda ko'rinmaydi va yaratilmaydi: {names}. Mos tomondan rasm qo'shing.",
     "errConfirmCar": "Avval mashinani tasdiqlang",
     "fitAll": "Barcha mashinalarga",
-    "partNotForCar": "Bu detal {car} uchun belgilanmagan — mos detallar koʻrsatilmoqda."
+    "partNotForCar": "Bu detal {car} uchun belgilanmagan — mos detallar koʻrsatilmoqda.",
+    "hiddenPart": "{side} rasmi yo‘q — bu detal ko‘rinmaydi",
+    "hiddenPartNoSide": "Bu detal tashqi rasmlarda ko‘rinmaydi",
+    "shootSide": "Suratga olish"
   },
   "identify": {
     "dialog": "Mashinani aniqlash",
@@ -990,7 +993,8 @@
     },
     "skipAngle": "Bu tomonni o'tkazib yuborish",
     "continueWith": "{count} ta rasm bilan davom etish",
-    "optionalHint": "1 tadan 5 tagacha rasm yuklash mumkin: istalgan tomonni o'tkazib yuboring. AI qaysi tomon ko'rinayotganini o'zi aniqlaydi."
+    "optionalHint": "1 tadan 5 tagacha rasm yuklash mumkin: istalgan tomonni o'tkazib yuboring. AI qaysi tomon ko'rinayotganini o'zi aniqlaydi.",
+    "onlySide": "Faqat shu tomon kerak: {angle}"
   },
   "scanLive": {
     "compassLabel": "Kompas yoʻriqnomasi: {angle}",

@@ -214,6 +214,8 @@ interface SmartCameraLandscapeViewProps {
   onFinish?: (allCaptured: Record<number, CompressResult>) => void;
   onClose?: () => void;
   className?: string;
+  /** Ask for this one side only (scan angle id): after its photo the camera finishes by itself. */
+  onlyAngleId?: number | undefined;
 }
 
 export function SmartCameraLandscapeView({
@@ -222,6 +224,7 @@ export function SmartCameraLandscapeView({
   onFinish,
   onClose,
   className = '',
+  onlyAngleId,
 }: SmartCameraLandscapeViewProps) {
   const t = useTranslations('scanLive');
   const tAngle = useTranslations('scanModal.angles');
@@ -230,7 +233,9 @@ export function SmartCameraLandscapeView({
   const bgVideoRef = React.useRef<HTMLVideoElement | null>(null);
 
   // Strictly sequential program-controlled step index (0 -> 1 -> ... -> 4)
-  const [currentStepIndex, setCurrentStepIndex] = React.useState<number>(0);
+  const [currentStepIndex, setCurrentStepIndex] = React.useState<number>(() =>
+    Math.max(0, onlyAngleId ? SCAN_5_ANGLES.findIndex((a) => a.id === onlyAngleId) : 0)
+  );
   const [capturedResults, setCapturedResults] = React.useState<Record<number, CompressResult>>({});
   const [isCapturing, setIsCapturing] = React.useState(false);
   const [flash, setFlash] = React.useState(false);
@@ -460,6 +465,14 @@ export function SmartCameraLandscapeView({
 
           // Notify parent of this single angle capture
           onPhotoCaptured(frameResult, activeAngle.id, updatedMap);
+
+          // Only this side was asked for: done.
+          if (onlyAngleId) {
+            playLock();
+            vibrate([40, 60, 40]);
+            (onFinish ?? onAllPhotosCaptured)?.(updatedMap);
+            return;
+          }
 
           // Next angle not taken yet (skipped ones included), going round once.
           const nextStepIndex = nextOpenStep(currentStepIndex, updatedMap);
@@ -743,7 +756,7 @@ export function SmartCameraLandscapeView({
                   {t('finishWith', { count: capturedCount })}
                 </button>
               )}
-              {capturedCount < SCAN_5_ANGLES.length && (
+              {capturedCount < SCAN_5_ANGLES.length && !onlyAngleId && (
                 <button
                   type="button"
                   onClick={skipStep}

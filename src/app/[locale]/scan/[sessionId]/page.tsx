@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { GUIDED_SCAN_ANGLES } from '@/components/camera/scan-angles';
 import { useTranslations } from 'next-intl';
 import {
   SmartCameraLandscapeView,
@@ -32,6 +33,9 @@ export default function MobileScanSessionPage() {
   const t = useTranslations('scanLive');
   const tAcc = useTranslations('account');
   const params = useParams();
+  // The computer asked for one side only (`?only=rear`): the camera opens on it and finishes after it.
+  const onlySlug = useSearchParams()?.get('only');
+  const onlyAngleId = GUIDED_SCAN_ANGLES.find((a) => a.slug === onlySlug)?.id;
   const sessionId = params?.['sessionId'] as string;
 
   const [isTransferred, setIsTransferred] = React.useState(false);
@@ -343,6 +347,7 @@ export default function MobileScanSessionPage() {
       <SmartCameraLandscapeView
         onPhotoCaptured={handlePhotoCaptured}
         onFinish={() => void handleFinish()}
+        onlyAngleId={onlyAngleId}
         className="w-full h-full"
       />
 
