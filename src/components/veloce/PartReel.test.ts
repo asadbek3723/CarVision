@@ -23,3 +23,15 @@ describe('PartReel card shape', () => {
     expect(desk.height).toBe(narrowDesk.height);
   });
 });
+
+describe('PartReel upright (desktop side column)', () => {
+  it('uses landscape 4:3 cards that stay inside the column when enlarged', async () => {
+    const { measureVertical } = await import('./PartReel');
+    for (const w of [180, 210, 230]) {
+      const m = measureVertical(w, 600);
+      expect(m.cardW / m.size).toBeCloseTo(4 / 3, 1);
+      expect(m.cardW * 1.18).toBeLessThanOrEqual(w);
+      expect(m.slot).toBeGreaterThan(m.size);
+    }
+  });
+});
