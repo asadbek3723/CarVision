@@ -2,6 +2,28 @@ import { defineConfig, devices } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
 
+/**
+ * The dev server for the tests runs with every AI key blanked (an empty variable is not replaced by
+ * .env.local), so no test can ever spend a real AI call; the tests mock the AI answers in the browser.
+ */
+const NO_AI_KEYS = Object.fromEntries(
+  [
+    'GEMINI_API_KEY',
+    'GEMINI_API_KEYS',
+    'GOOGLE_API_KEY',
+    'OPENROUTER_API_KEY',
+    'OPENROUTER_API_KEYS',
+    'FAL_KEY',
+    'FAL_KEYS',
+    'FAL_API_KEY',
+    'OPENAI_API_KEY',
+    'OPENAI_API_KEYS',
+    'CLOUDFLARE_API_TOKEN',
+    'CLOUDFLARE_API_TOKENS',
+    'CLOUDFLARE_ACCOUNT_ID',
+  ].map((k) => [k, ''])
+);
+
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30 * 1000,
@@ -27,7 +49,9 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     port: 3000,
+    // A server already running on :3000 may have real AI keys: the tests mock every AI route anyway.
     reuseExistingServer: !isCI,
     timeout: 120 * 1000,
+    env: NO_AI_KEYS,
   },
 });

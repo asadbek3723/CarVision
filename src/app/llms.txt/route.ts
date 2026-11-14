@@ -1,5 +1,6 @@
 import { CATALOG_CATEGORIES, type CatalogCategory, type CatalogItemDTO } from '@/domain/catalog';
 import { CATEGORY_NAMES, categoryUrlSlug, seoCategory } from '@/lib/seo/categories';
+import { carModels } from '@/lib/seo/cars';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { SITE_NAME, absoluteUrl } from '@/lib/seo/site';
 import { itemFitLabels, listAllPublishedItems } from '@/server/catalog-seo';
@@ -20,6 +21,7 @@ export async function GET(): Promise<Response> {
   const byCategory = new Map<CatalogCategory, CatalogItemDTO[]>();
   for (const i of items) byCategory.set(seoCategory(i), [...(byCategory.get(seoCategory(i)) ?? []), i]);
 
+  const models = carModels(items);
   const lines: string[] = [
     `# ${SITE_NAME}`,
     '',
@@ -38,6 +40,14 @@ export async function GET(): Promise<Response> {
       (c) =>
         `- [${CATEGORY_NAMES.en[c.slug]} / ${CATEGORY_NAMES.uz[c.slug]} / ${CATEGORY_NAMES.ru[c.slug]}](${absoluteUrl(`/en/catalog/${categoryUrlSlug(c.slug)}`)}): ${byCategory.get(c.slug)?.length ?? 0} parts`
     ),
+    ...(models.length
+      ? [
+          '',
+          '## Parts by car model',
+          `- [All car models](${absoluteUrl('/en/cars')})`,
+          ...models.map((m) => `- [${m.label}](${absoluteUrl(`/en/cars/${m.slug}`)}): ${m.count} parts listed for this model`),
+        ]
+      : []),
   ];
 
   for (const c of CATALOG_CATEGORIES) {

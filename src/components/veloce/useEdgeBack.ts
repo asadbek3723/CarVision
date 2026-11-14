@@ -98,6 +98,10 @@ export function useEdgeBack(
     let reveal = false;
     let stop: (() => void) | null = null;
     let timer = 0;
+    // The screen underneath and its veil that this gesture actually styled: the cleanup resets exactly
+    // those elements (the refs may point elsewhere by then).
+    let styledUnder: HTMLElement | null = null;
+    let styledShade: HTMLElement | null = null;
 
     /** Puts the top screen `x` px to the side and keeps the screen underneath in step. */
     const apply = (x: number) => {
@@ -106,9 +110,15 @@ export function useEdgeBack(
       el.style.boxShadow = x ? `${rtl ? '' : '-'}18px 0 40px rgba(0,0,0,0.45)` : '';
       const p = Math.min(1, Math.abs(x) / w);
       const u = under?.current;
-      if (u && reveal) u.style.transform = `translate3d(${(rtl ? 1 : -1) * (1 - p) * w * PARALLAX}px,0,0)`;
+      if (u && reveal) {
+        u.style.transform = `translate3d(${(rtl ? 1 : -1) * (1 - p) * w * PARALLAX}px,0,0)`;
+        styledUnder = u;
+      }
       const s = shade?.current;
-      if (s && reveal) s.style.opacity = String(SHADE * (1 - p));
+      if (s && reveal) {
+        s.style.opacity = String(SHADE * (1 - p));
+        styledShade = s;
+      }
     };
     const hideUnder = () => {
       const u = under?.current;
@@ -168,7 +178,10 @@ export function useEdgeBack(
         const can = Boolean(canRevealRef.current?.());
         const u = under?.current;
         reveal = Boolean(u && can);
-        if (u && reveal) u.style.visibility = 'visible';
+        if (u && reveal) {
+          u.style.visibility = 'visible';
+          styledUnder = u;
+        }
       }
       // Only towards "back" (right in LTR, left in RTL).
       dx = rtl ? Math.min(0, ddx) : Math.max(0, ddx);
@@ -250,8 +263,8 @@ export function useEdgeBack(
       el.removeEventListener('pointercancel', up);
       el.style.transform = '';
       el.style.boxShadow = '';
-      if (under?.current) under.current.style.transform = '';
-      if (shade?.current) shade.current.style.opacity = '0';
+      if (styledUnder) styledUnder.style.transform = '';
+      if (styledShade) styledShade.style.opacity = '0';
     };
   }, [ref, enabled, rtl, under, shade, resetKey]);
 }

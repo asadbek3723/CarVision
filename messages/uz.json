@@ -1676,7 +1676,32 @@
       "COMMITTED": "kredit yechildi",
       "REFUNDED": "kredit qaytarildi",
       "RESERVED": "kredit band",
-      "NONE": "kreditsiz"
+      "NONE": "kreditsiz",
+      "quality": "Natija sifati",
+      "qualitySub": "Soʻnggi 30 kun: ikkinchi tekshiruv topgan xatolar va mijozlarning “Yoqmadi” belgilari",
+      "byModel": "Model boʻyicha",
+      "byPart": "Detal turi boʻyicha",
+      "checked": "tekshirilgan",
+      "faults": "xato",
+      "disliked": "yoqmadi",
+      "retried": "qayta",
+      "colRenders": "Renderlar",
+      "colFaults": "Tekshiruv xatosi",
+      "colDisliked": "Yoqmadi",
+      "noQuality": "Hali sifat maʼlumoti yoʻq. Renderlar tekshirilgach shu yerda koʻrinadi.",
+      "DISLIKED": "Yoqmadi",
+      "checkView": "boshqa tomon",
+      "checkCar": "boshqa mashina",
+      "checkRest": "ortiqcha oʻzgarish",
+      "checkParts": "detal chala",
+      "reasons": {
+        "wrong_part": "Detal boshqacha",
+        "wrong_color": "Rang noto'g'ri",
+        "other_car": "Boshqa mashina chiqdi",
+        "wrong_angle": "Boshqa tomondan",
+        "not_realistic": "Real emas",
+        "other": "Boshqa"
+      }
     },
     "security": {
       "title": "Xavfsizlik va audit",
@@ -2578,5 +2603,24 @@
     "descPlaceholder": "Masalan:\nHolati: yangi, qutida\nKomplekt: 4 dona",
     "honest": "Kamchilik boʻlsa, ochiq yozing: xaridor ishonadi va qaytarishlar kamayadi.",
     "photos": "Kamera {count} ta rasmni qaysi burchakdan va qancha masofadan olishni koʻrsatadi. Asosiy rasm: 45° burchakdan."
+  },
+  "renderFeedback": {
+    "button": "Yoqmadi",
+    "sent": "Yuborildi",
+    "title": "Natija nimasi bilan yoqmadi?",
+    "subtitle": "Sababini tanlang: bu AI natijasini yaxshilashga yordam beradi. Kredit o'zgarmaydi.",
+    "reasonLabel": "Sabab",
+    "noteLabel": "Izoh (ixtiyoriy)",
+    "send": "Yuborish",
+    "thanks": "Rahmat! Fikringiz qabul qilindi",
+    "failed": "Yuborib bo'lmadi, qayta urinib ko'ring",
+    "reasons": {
+      "wrong_part": "Detal boshqacha",
+      "wrong_color": "Rang noto'g'ri",
+      "other_car": "Boshqa mashina chiqdi",
+      "wrong_angle": "Boshqa tomondan",
+      "not_realistic": "Real emas",
+      "other": "Boshqa"
+    }
   }
 }

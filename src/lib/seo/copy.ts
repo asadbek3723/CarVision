@@ -10,7 +10,7 @@ export interface SeoCopy {
   ogSubline: string;
   home: { title: string; description: string };
   shop: { title: string; description: string };
-  plans: { title: string; description: string };
+  plans: { title: string; description: string; productName: string; credits: (n: number) => string };
   productDescription: (name: string, brand: string, category: string) => string;
   breadcrumbHome: string;
   breadcrumbShop: string;
@@ -21,7 +21,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
     tagline: 'AI yordamida avto tyuning vizualizatori',
     ogSubline: 'Disklar · Kuzov kit · Plyonka',
     home: {
-      title: 'CarVision — avto tyuning vizualizatori | Disk, kuzov kit, plyonka',
+      title: 'CarVision — avto tyuning AI vizualizatori: disk, bamper',
       description:
         'Mashinangizni suratga oling va disk, kuzov kit, plyonkani avtomobilingizda AI yordamida oldindan ko‘ring. Ustaxonalardan qismlarni band qiling.',
     },
@@ -34,6 +34,8 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
       title: 'Tariflar va narxlar — ustaxonalar uchun CarVision',
       description:
         'Tuning ustaxonalari uchun CarVision tariflari: kreditlar, ombor, buyurtmalar va AI vizualizator. Bepul boshlang va biznesingizni kengaytiring.',
+      productName: 'CarVision ustaxona tariflari',
+      credits: (n) => `${n} ta AI render krediti`,
     },
     productDescription: (n, b, c) => `${b ? `${b} ` : ''}${n} — ${c}. Avtomobilingizga AI orqali sinab ko‘ring va CarVision orqali band qiling.`,
     breadcrumbHome: 'Bosh sahifa',
@@ -43,7 +45,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
     tagline: 'AI-визуализатор тюнинга автомобилей',
     ogSubline: 'Диски · Обвесы · Плёнка',
     home: {
-      title: 'CarVision — визуализатор тюнинга авто | Диски, обвесы, плёнка',
+      title: 'CarVision — AI визуализатор тюнинга: диски, обвесы',
       description:
         'Сфотографируйте свой автомобиль и примерьте диски, обвес и плёнку с помощью AI до покупки. Бронируйте детали в проверенных мастерских.',
     },
@@ -56,6 +58,8 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
       title: 'Тарифы и цены — CarVision для мастерских',
       description:
         'Тарифы CarVision для тюнинг-мастерских: кредиты, склад, заказы и AI-визуализатор. Начните бесплатно и развивайте свой бизнес.',
+      productName: 'Тарифы CarVision для мастерских',
+      credits: (n) => `${n} AI-рендеров`,
     },
     productDescription: (n, b, c) => `${b ? `${b} ` : ''}${n} — ${c}. Примерьте на своём авто с помощью AI и забронируйте через CarVision.`,
     breadcrumbHome: 'Главная',
@@ -65,7 +69,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
     tagline: 'AI car tuning visualizer',
     ogSubline: 'Wheels · Body kits · Wraps',
     home: {
-      title: 'CarVision — AI Car Tuning Visualizer | Wheels, Body Kits, Wraps',
+      title: 'CarVision — AI Car Tuning Visualizer: Wheels, Body Kits',
       description:
         'Photograph your car and preview wheels, body kits and wraps on it with AI before you buy. Reserve parts from trusted tuning workshops.',
     },
@@ -78,6 +82,8 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
       title: 'Plans & Pricing — CarVision for Tuning Workshops',
       description:
         'CarVision plans for tuning workshops: credits, inventory, orders and the AI visualizer. Start free and grow your business.',
+      productName: 'CarVision workshop plans',
+      credits: (n) => `${n} AI render credits`,
     },
     productDescription: (n, b, c) => `${b ? `${b} ` : ''}${n} — ${c}. Try it on your car with AI and reserve it through CarVision.`,
     breadcrumbHome: 'Home',
@@ -100,6 +106,8 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
       title: 'الباقات والأسعار — CarVision لورش التعديل',
       description:
         'باقات CarVision لورش التعديل: رصيد ومخزون وطلبات ومحاكي الذكاء الاصطناعي. ابدأ مجانًا ووسّع عملك.',
+      productName: 'باقات CarVision للورش',
+      credits: (n) => `${n} رصيد عرض بالذكاء الاصطناعي`,
     },
     productDescription: (n, b, c) => `${b ? `${b} ` : ''}${n} — ${c}. جرّبها على سيارتك بالذكاء الاصطناعي واحجزها عبر CarVision.`,
     breadcrumbHome: 'الرئيسية',
@@ -109,7 +117,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
     tagline: 'Yapay zekâ ile araç tuning görselleştirici',
     ogSubline: 'Jantlar · Body kit · Kaplama',
     home: {
-      title: 'CarVision — Araç Tuning Görselleştirici | Jant, Body Kit, Kaplama',
+      title: 'CarVision — AI Araç Tuning Görselleştirici: Jant, Body Kit',
       description:
         'Aracınızın fotoğrafını çekin; jant, body kit ve kaplamayı satın almadan önce yapay zekâ ile aracınızda görün. Parçaları atölyelerden ayırtın.',
     },
@@ -122,6 +130,8 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
       title: 'Paketler ve Fiyatlar — Tuning Atölyeleri için CarVision',
       description:
         'Tuning atölyeleri için CarVision paketleri: kredi, stok, siparişler ve yapay zekâ görselleştirici. Ücretsiz başlayın.',
+      productName: 'CarVision atölye paketleri',
+      credits: (n) => `${n} yapay zekâ görsel kredisi`,
     },
     productDescription: (n, b, c) => `${b ? `${b} ` : ''}${n} — ${c}. Yapay zekâ ile aracınızda deneyin ve CarVision ile ayırtın.`,
     breadcrumbHome: 'Ana sayfa',
@@ -144,6 +154,8 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
       title: 'Тарифтер мен бағалар — шеберханаларға арналған CarVision',
       description:
         'Тюнинг шеберханаларына арналған CarVision тарифтері: кредиттер, қойма, тапсырыстар және AI визуализатор. Тегін бастаңыз.',
+      productName: 'CarVision шеберханаларға арналған тарифтер',
+      credits: (n) => `${n} AI рендер кредиті`,
     },
     productDescription: (n, b, c) => `${b ? `${b} ` : ''}${n} — ${c}. Көлігіңізде AI арқылы көріп, CarVision арқылы брондаңыз.`,
     breadcrumbHome: 'Басты бет',
@@ -166,6 +178,8 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
       title: 'Тарифтер жана баалар — устаканалар үчүн CarVision',
       description:
         'Тюнинг устаканалары үчүн CarVision тарифтери: кредиттер, кампа, буйрутмалар жана AI визуализатор. Бекер баштаңыз.',
+      productName: 'CarVision устаканалар үчүн тарифтер',
+      credits: (n) => `${n} AI рендер кредити`,
     },
     productDescription: (n, b, c) => `${b ? `${b} ` : ''}${n} — ${c}. Унааңызда AI менен көрүп, CarVision аркылуу брондоңуз.`,
     breadcrumbHome: 'Башкы бет',
@@ -188,6 +202,8 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
       title: 'Тарифҳо ва нархҳо — CarVision барои устохонаҳо',
       description:
         'Тарифҳои CarVision барои устохонаҳои тюнинг: кредитҳо, анбор, фармоишҳо ва визуализатори AI. Ройгон оғоз кунед.',
+      productName: 'Тарифҳои CarVision барои устохонаҳо',
+      credits: (n) => `${n} кредити рендери AI`,
     },
     productDescription: (n, b, c) => `${b ? `${b} ` : ''}${n} — ${c}. Дар мошини худ бо AI санҷед ва тавассути CarVision брон кунед.`,
     breadcrumbHome: 'Саҳифаи асосӣ',

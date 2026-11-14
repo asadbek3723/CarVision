@@ -1676,7 +1676,32 @@
       "COMMITTED": "credit charged",
       "REFUNDED": "credit refunded",
       "RESERVED": "credit reserved",
-      "NONE": "no credit"
+      "NONE": "no credit",
+      "quality": "Result quality",
+      "qualitySub": "Last 30 days: faults found by the second check and customers’ “Not right” marks",
+      "byModel": "By model",
+      "byPart": "By part type",
+      "checked": "checked",
+      "faults": "faults",
+      "disliked": "disliked",
+      "retried": "retried",
+      "colRenders": "Renders",
+      "colFaults": "Check faults",
+      "colDisliked": "Disliked",
+      "noQuality": "No quality data yet. It appears once renders are checked.",
+      "DISLIKED": "Disliked",
+      "checkView": "other side",
+      "checkCar": "other car",
+      "checkRest": "unwanted change",
+      "checkParts": "part unfinished",
+      "reasons": {
+        "wrong_part": "Wrong part",
+        "wrong_color": "Wrong colour",
+        "other_car": "A different car",
+        "wrong_angle": "Different angle",
+        "not_realistic": "Not realistic",
+        "other": "Other"
+      }
     },
     "security": {
       "title": "Security & audit",
@@ -2578,5 +2603,24 @@
     "descPlaceholder": "E.g.\nCondition: new, boxed\nSet: 4 pcs",
     "honest": "If there are flaws, say so: buyers trust you and returns drop.",
     "photos": "The camera shows the angle and distance for {count} photos. Main photo: from a 45° angle."
+  },
+  "renderFeedback": {
+    "button": "Not right",
+    "sent": "Sent",
+    "title": "What is wrong with the result?",
+    "subtitle": "Pick a reason: it helps us improve the AI results. Your credits do not change.",
+    "reasonLabel": "Reason",
+    "noteLabel": "Comment (optional)",
+    "send": "Send",
+    "thanks": "Thank you! Your feedback was received",
+    "failed": "Could not send it, please try again",
+    "reasons": {
+      "wrong_part": "Wrong part",
+      "wrong_color": "Wrong colour",
+      "other_car": "A different car",
+      "wrong_angle": "Different angle",
+      "not_realistic": "Not realistic",
+      "other": "Other"
+    }
   }
 }

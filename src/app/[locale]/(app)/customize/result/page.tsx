@@ -23,6 +23,7 @@ import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { vibrate } from '@/features/camera/lib/fx';
 import { buttonClasses } from '@/components/ui';
 import { CompareImages, useCompareSlider } from '@/components/ui/CompareImages';
+import { RenderFeedback } from '@/features/visualizer/RenderFeedback';
 
 /** Catalog prices are already stored in USD; never guess a currency from the size of the number. */
 const getUSDPrice = (raw?: number) => {
@@ -180,6 +181,7 @@ export default function CustomizeResultPage() {
           </button>
 
           <div className="flex items-center gap-1.5">
+            {hasResults && user && <RenderFeedback url={afterUrl} className={ghostBtn} />}
             <button type="button" onClick={handleDownloadImage} disabled={!hasResults} className={ghostBtn}>
               <Download className="h-4 w-4 text-gold-500" />
               <span className="hidden sm:inline">{t('download')}</span>

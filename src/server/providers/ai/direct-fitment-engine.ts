@@ -50,6 +50,8 @@ export interface DirectFitmentResponse {
   outcome?: 'no_provider' | 'failed' | 'busy' | 'no_quota' | 'blocked' | 'invalid_image' | 'wrong_view' | 'wrong_car' | undefined;
   /** What the second-look check said about the delivered picture (absent when it did not run). */
   check?: RenderCheck | undefined;
+  /** A second render was made because the check found a fault in the first one. */
+  retried?: boolean | undefined;
 }
 
 const PROVIDER_LABEL: Record<ProviderId, Exclude<DirectFitmentResponse['providerUsed'], 'local-neural-compositor'>> = {
@@ -584,6 +586,7 @@ export async function executeDirectAiFitment(
 
     let chain = await render(promptUsed, referenceDataUri);
     let check: RenderCheck | null = null;
+    let retried = false;
 
     // Second look: same side and same car as the customer photo, nothing changed that was not asked
     // for (paint, lamps, wheels of a part photo), and every wheel / lamp fully changed?
@@ -598,6 +601,7 @@ export async function executeDirectAiFitment(
           : !check.keepsRest
             ? `IMPORTANT: a previous attempt changed something that was not asked for (${check.problem || 'it copied the paint or lamps of a part photo'}). Keep ${keep.join(', ')}.`
             : `IMPORTANT: a previous attempt left a part unfinished (${check.problem || 'one instance kept the old part or colour'}). Change every instance completely.`;
+        retried = true;
         const retry = await render(`${promptUsed} ${fix}`, check.sameView && check.sameCar ? referenceDataUri : null);
         if (retry.ok) {
           const retryUri = await resolveImageToDataUri(retry.image);
@@ -620,6 +624,7 @@ export async function executeDirectAiFitment(
           durationMs: Date.now() - startMs,
           outcome: check.sameView ? 'wrong_car' : 'wrong_view',
           check,
+          retried,
         };
       }
     }
@@ -633,6 +638,7 @@ export async function executeDirectAiFitment(
         promptUsed,
         durationMs: Date.now() - startMs,
         check: check ?? undefined,
+        retried,
       };
     }
     console.warn(

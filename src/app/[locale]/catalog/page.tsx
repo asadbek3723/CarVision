@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { CatalogDirectory } from '@/components/seo/CatalogDirectory';
 import { JsonLd, breadcrumbLd, itemListLd } from '@/lib/seo/jsonld';
 import { CATALOG_COPY, seoCategory } from '@/lib/seo/categories';
+import { carModels } from '@/lib/seo/cars';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { DEFAULT_LOCALE, isLocale, localePath } from '@/lib/seo/site';
@@ -47,7 +48,7 @@ export default async function CatalogPage({ params }: Props) {
           ]),
         ]}
       />
-      <CatalogDirectory locale={l} items={items} counts={counts} active={null} />
+      <CatalogDirectory locale={l} items={items} counts={counts} active={null} cars={carModels(items)} />
     </>
   );
 }

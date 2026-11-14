@@ -1676,7 +1676,32 @@
       "COMMITTED": "kredi düşüldü",
       "REFUNDED": "kredi iade edildi",
       "RESERVED": "kredi ayrıldı",
-      "NONE": "kredisiz"
+      "NONE": "kredisiz",
+      "quality": "Sonuç kalitesi",
+      "qualitySub": "Son 30 gün: ikinci kontrolün bulduğu hatalar ve müşterilerin “Beğenmedim” işaretleri",
+      "byModel": "Modele göre",
+      "byPart": "Parça türüne göre",
+      "checked": "kontrol edildi",
+      "faults": "hata",
+      "disliked": "beğenilmedi",
+      "retried": "tekrar",
+      "colRenders": "Görseller",
+      "colFaults": "Kontrol hatası",
+      "colDisliked": "Beğenilmedi",
+      "noQuality": "Henüz kalite verisi yok. Görseller kontrol edildikçe burada görünür.",
+      "DISLIKED": "Beğenilmedi",
+      "checkView": "başka taraf",
+      "checkCar": "başka araç",
+      "checkRest": "istenmeyen değişiklik",
+      "checkParts": "parça eksik",
+      "reasons": {
+        "wrong_part": "Parça farklı",
+        "wrong_color": "Renk yanlış",
+        "other_car": "Başka bir araç",
+        "wrong_angle": "Farklı açı",
+        "not_realistic": "Gerçekçi değil",
+        "other": "Diğer"
+      }
     },
     "security": {
       "title": "Güvenlik ve denetim",
@@ -2578,5 +2603,24 @@
     "descPlaceholder": "Örn.:\nDurum: sıfır, kutusunda\nSet: 4 adet",
     "honest": "Kusur varsa açıkça yazın: alıcı güvenir, iadeler azalır.",
     "photos": "Kamera {count} fotoğraf için açıyı ve mesafeyi gösterir. Ana fotoğraf: 45° açıdan."
+  },
+  "renderFeedback": {
+    "button": "Beğenmedim",
+    "sent": "Gönderildi",
+    "title": "Sonuçta ne yanlış?",
+    "subtitle": "Bir neden seçin: yapay zekâ sonuçlarını iyileştirmemize yardımcı olur. Krediniz değişmez.",
+    "reasonLabel": "Neden",
+    "noteLabel": "Yorum (isteğe bağlı)",
+    "send": "Gönder",
+    "thanks": "Teşekkürler! Geri bildiriminiz alındı",
+    "failed": "Gönderilemedi, tekrar deneyin",
+    "reasons": {
+      "wrong_part": "Parça farklı",
+      "wrong_color": "Renk yanlış",
+      "other_car": "Başka bir araç",
+      "wrong_angle": "Farklı açı",
+      "not_realistic": "Gerçekçi değil",
+      "other": "Diğer"
+    }
   }
 }

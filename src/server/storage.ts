@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { isAllowedRemoteImageUrl } from '@/server/providers/ai/direct-fitment-engine';
 import { sniffImage } from '@/server/providers/ai/image-info';
+import { cropToAspect } from '@/server/image-fit';
 
 const BUCKET = 'generations';
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -34,7 +35,13 @@ export type PersistResult = { ok: true; url: string } | { ok: false; reason: 'in
  * permanent URL. Provider URLs expire, so every finished render is copied here.
  * `invalid` = the provider's answer is not a real image; `upload` = storage failed (one retry is made).
  */
-export async function persistGenerationImage(userId: string, generationId: string, source: string): Promise<PersistResult> {
+export async function persistGenerationImage(
+  userId: string,
+  generationId: string,
+  source: string,
+  /** Width / height of the customer's photo: the render is cropped to it (centred) when it differs. */
+  photoAspect: number | null = null
+): Promise<PersistResult> {
   let decoded: DecodedImage | null;
   try {
     decoded = await decodeImage(source);
@@ -42,6 +49,7 @@ export async function persistGenerationImage(userId: string, generationId: strin
     return { ok: false, reason: 'upload' };
   }
   if (!decoded) return { ok: false, reason: 'invalid' };
+  decoded = { ...decoded, ...(await cropToAspect(decoded.buffer, decoded.contentType, photoAspect)) };
 
   const ext = decoded.contentType === 'image/png' ? 'png' : decoded.contentType === 'image/webp' ? 'webp' : 'jpg';
   const path = `${userId}/${generationId}.${ext}`;

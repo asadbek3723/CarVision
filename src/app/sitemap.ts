@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { CATALOG_CATEGORIES } from '@/domain/catalog';
 import { categoryUrlSlug, seoCategory } from '@/lib/seo/categories';
+import { carModels, partsForCar } from '@/lib/seo/cars';
 import { absoluteUrl, languageAlternates, localePath } from '@/lib/seo/site';
 import { itemImageUrls, listAllPublishedItems } from '@/server/catalog-seo';
 
@@ -62,5 +63,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   });
 
-  return [...staticEntries, ...categoryEntries, ...productEntries];
+  // Car model pages ("Chevrolet Gentra uchun disklar"): only models and sections with parts listed for them.
+  const models = carModels(items);
+  const carEntries = [
+    ...(models.length ? perLocale('/cars', { lastModified: newest, changeFrequency: 'daily', priority: 0.8 }) : []),
+    ...models.flatMap((car) => {
+      const { listed } = partsForCar(items, car.slug);
+      const newestForCar = listed[0] ? new Date(listed[0].createdAt) : newest;
+      const sections = CATALOG_CATEGORIES.filter((c) => listed.some((i) => seoCategory(i) === c.slug));
+      return [
+        ...perLocale(`/cars/${car.slug}`, { lastModified: newestForCar, changeFrequency: 'daily', priority: 0.8 }),
+        ...sections.flatMap((c) =>
+          perLocale(`/cars/${car.slug}/${categoryUrlSlug(c.slug)}`, { lastModified: newestForCar, changeFrequency: 'daily', priority: 0.75 })
+        ),
+      ];
+    }),
+  ];
+
+  return [...staticEntries, ...categoryEntries, ...carEntries, ...productEntries];
 }

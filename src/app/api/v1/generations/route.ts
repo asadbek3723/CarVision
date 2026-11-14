@@ -12,6 +12,7 @@ import {
 import { persistGenerationImage } from '@/server/storage';
 import { visibleParts } from '@/lib/part-visibility';
 import { carCheckRequired, verifyCarCheck } from '@/server/car-check';
+import { dataUriBytes, readImageDims } from '@/server/providers/ai/image-info';
 
 export const maxDuration = 60;
 
@@ -359,6 +360,16 @@ export async function POST(request: NextRequest) {
       });
     }
     const ai = raced;
+    // What the second-look check said, for the admin quality stats. Written on its own, after the
+    // render is settled, so a database without the column (migration not applied yet) never breaks a render.
+    const saveCheck = async () => {
+      if (!ai.check) return;
+      const { error } = await db
+        .from('generations')
+        .update({ render_check: { ...ai.check, retried: Boolean(ai.retried) } })
+        .eq('id', generationId);
+      if (error) console.warn('render_check not saved:', error.message);
+    };
 
     if (!ai.afterImageUrl) {
       await refund(
@@ -372,6 +383,7 @@ export async function POST(request: NextRequest) {
               : 'AI provider failed'
       );
       reserved = null;
+      await saveCheck();
       if (ai.outcome === 'no_quota') {
         return errorResponse(503, 'AI_NO_QUOTA', "AI kalitida rasm yaratish limiti yo'q (to'lov/billing yoqilmagan). Kredit qaytarildi", {
           creditsRemaining: currentBalance,
@@ -402,7 +414,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const stored = await persistGenerationImage(session.userId, generationId, ai.afterImageUrl);
+    // The render is stored with the customer's photo aspect ratio, so before and after lie on top of each other.
+    const photoBytes = dataUriBytes(input.photo);
+    const photoDims = photoBytes ? readImageDims(photoBytes) : null;
+    const photoAspect = photoDims && photoDims.height > 0 ? photoDims.width / photoDims.height : null;
+    const stored = await persistGenerationImage(session.userId, generationId, ai.afterImageUrl, photoAspect);
     if (!stored.ok && stored.reason === 'invalid') {
       // The provider answered with something that is not a picture: never show it, never charge for it.
       await refund(db, session, generationId, 'AI answer was not a valid image');
@@ -453,6 +469,7 @@ export async function POST(request: NextRequest) {
     if (updateErr) updateErr = (await db.from('generations').update(completed).eq('id', generationId)).error;
     if (updateErr) console.error('generation update failed:', updateErr.message);
     reserved = null;
+    await saveCheck();
 
     const payload: GenerationPayload = {
       id: generationId,

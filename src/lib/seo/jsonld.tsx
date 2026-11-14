@@ -64,6 +64,49 @@ export function softwareApplicationLd(locale: Locale): Json {
   };
 }
 
+/**
+ * The workshop plans as one product with an offer per plan, so search engines can show the prices.
+ * `plans` comes from the database (the same list the page shows).
+ */
+export function plansLd(
+  locale: Locale,
+  plans: Array<{ code: string; name: string; priceUSD: number; credits: number; durationDays: number }>,
+  copy: { name: string; description: string; credits: (n: number) => string }
+): Json | null {
+  if (plans.length === 0) return null;
+  const url = absoluteUrl(localePath(locale, '/plans'));
+  const prices = plans.map((p) => p.priceUSD);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': `${url}#plans`,
+    name: copy.name,
+    description: copy.description,
+    url,
+    inLanguage: locale,
+    brand: { '@type': 'Brand', name: SITE_NAME },
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'USD',
+      lowPrice: Math.min(...prices).toFixed(2),
+      highPrice: Math.max(...prices).toFixed(2),
+      offerCount: plans.length,
+      offers: plans.map((p) => ({
+        '@type': 'Offer',
+        name: p.name,
+        description: copy.credits(p.credits),
+        sku: p.code,
+        price: p.priceUSD.toFixed(2),
+        priceCurrency: 'USD',
+        url,
+        availability: 'https://schema.org/InStock',
+        ...(p.durationDays > 0 ? { eligibleDuration: { '@type': 'QuantitativeValue', value: p.durationDays, unitCode: 'DAY' } } : {}),
+        seller: { '@id': `${SITE_URL}/#organization` },
+      })),
+    },
+  };
+}
+
 export function faqLd(items: Array<{ q: string; a: string }>): Json {
   return {
     '@context': 'https://schema.org',
