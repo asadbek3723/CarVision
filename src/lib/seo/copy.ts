@@ -6,6 +6,8 @@ import type { Locale } from '@/i18n/routing';
  */
 export interface SeoCopy {
   tagline: string;
+  /** Short line under the tagline on the link-preview image. */
+  ogSubline: string;
   home: { title: string; description: string };
   shop: { title: string; description: string };
   plans: { title: string; description: string };
@@ -17,6 +19,7 @@ export interface SeoCopy {
 export const SEO_COPY: Record<Locale, SeoCopy> = {
   uz: {
     tagline: 'AI yordamida avto tyuning vizualizatori',
+    ogSubline: 'Disklar · Kuzov kit · Plyonka',
     home: {
       title: 'CarVision — avto tyuning vizualizatori | Disk, kuzov kit, plyonka',
       description:
@@ -38,6 +41,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
   },
   ru: {
     tagline: 'AI-визуализатор тюнинга автомобилей',
+    ogSubline: 'Диски · Обвесы · Плёнка',
     home: {
       title: 'CarVision — визуализатор тюнинга авто | Диски, обвесы, плёнка',
       description:
@@ -59,6 +63,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
   },
   en: {
     tagline: 'AI car tuning visualizer',
+    ogSubline: 'Wheels · Body kits · Wraps',
     home: {
       title: 'CarVision — AI Car Tuning Visualizer | Wheels, Body Kits, Wraps',
       description:
@@ -80,6 +85,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
   },
   ar: {
     tagline: 'محاكي تعديل السيارات بالذكاء الاصطناعي',
+    ogSubline: 'جنوط · أطقم هيكل · تغليف',
     home: {
       title: 'CarVision — محاكي تعديل السيارات | جنوط وبودي كيت وتغليف',
       description:
@@ -101,6 +107,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
   },
   tr: {
     tagline: 'Yapay zekâ ile araç tuning görselleştirici',
+    ogSubline: 'Jantlar · Body kit · Kaplama',
     home: {
       title: 'CarVision — Araç Tuning Görselleştirici | Jant, Body Kit, Kaplama',
       description:
@@ -122,6 +129,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
   },
   kk: {
     tagline: 'AI арқылы көлік тюнингін визуализациялау',
+    ogSubline: 'Дискілер · Бодикит · Пленка',
     home: {
       title: 'CarVision — көлік тюнингін визуализациялау | Дискілер, обвес',
       description:
@@ -143,6 +151,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
   },
   ky: {
     tagline: 'AI менен унаа тюнингин визуалдаштыруу',
+    ogSubline: 'Дисктер · Бодикит · Пленка',
     home: {
       title: 'CarVision — унаа тюнингин визуалдаштыруу | Дисктер, обвес',
       description:
@@ -164,6 +173,7 @@ export const SEO_COPY: Record<Locale, SeoCopy> = {
   },
   tg: {
     tagline: 'Визуализатори тюнинги мошин бо AI',
+    ogSubline: 'Дискҳо · Бодикит · Плёнка',
     home: {
       title: 'CarVision — визуализатори тюнинги мошин | Дискҳо, обвес',
       description:

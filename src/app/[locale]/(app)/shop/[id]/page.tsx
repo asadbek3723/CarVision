@@ -42,8 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     path: `/shop/${id}`,
     title,
     description,
-    image: `/${l}/shop/${id}/opengraph-image`,
-    imageAlt: text.name,
+    // The product image lives under the (app) route group, so Next picks its (hashed) URL itself.
+    imageFromFile: true,
   });
 }
 

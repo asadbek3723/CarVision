@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const l = isLocale(locale) ? locale : DEFAULT_LOCALE;
   const { title, description } = SEO_COPY[l].home;
-  return buildMetadata({ locale: l, path: '', title, description, image: `/${l}/opengraph-image` });
+  return buildMetadata({ locale: l, path: '', title, description });
 }
 
 export default async function HomePage({ params }: Props) {

@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const l = isLocale(locale) ? locale : DEFAULT_LOCALE;
   const { title, description } = SEO_COPY[l].plans;
-  return buildMetadata({ locale: l, path: '/plans', title, description, image: `/${l}/opengraph-image` });
+  return buildMetadata({ locale: l, path: '/plans', title, description });
 }
 
 export default function PlansLayout({ children }: { children: ReactNode }) {

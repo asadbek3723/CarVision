@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const l = isLocale(locale) ? locale : DEFAULT_LOCALE;
   const { title, description } = SEO_COPY[l].shop;
-  return buildMetadata({ locale: l, path: '/shop', title, description, image: `/${l}/opengraph-image` });
+  return buildMetadata({ locale: l, path: '/shop', title, description });
 }
 
 export default function ShopPage() {

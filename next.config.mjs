@@ -68,6 +68,10 @@ const nextConfig = {
   // This folder is the project root, even when it sits inside another checkout (git worktree)
   // that has its own lockfile.
   outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
+  // Link-preview images read their fonts and car photo from disk at request time; ship them with those routes.
+  outputFileTracingIncludes: {
+    '/**/opengraph-image*': ['./src/lib/og/**/*'],
+  },
   images: {
     qualities: [70, 75],
     // AVIF/WebP are 30-60% smaller than the original JPEG/PNG; optimized copies are cached for 30 days.
