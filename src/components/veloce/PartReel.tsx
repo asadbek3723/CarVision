@@ -398,8 +398,8 @@ export function PartReel({
   for (let k = centerK - half; k <= centerK + half; k++) slides.push(k);
 
   return (
-    <div className="select-none lg:grid lg:grid-cols-5 lg:items-center lg:gap-6">
-      <div className="relative isolate lg:col-span-3">
+    <div className="select-none xl:grid xl:grid-cols-5 xl:items-center xl:gap-6">
+      <div className="relative isolate xl:col-span-3">
         {/* Edge fades hint that the strip goes on */}
         <div aria-hidden className="pointer-events-none absolute inset-y-0 start-0 z-[200] w-10 bg-gradient-to-r from-[#0D0E12] to-transparent lg:w-28 rtl:bg-gradient-to-l" />
         <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 z-[200] w-10 bg-gradient-to-l from-[#0D0E12] to-transparent lg:w-28 rtl:bg-gradient-to-r" />
@@ -493,13 +493,13 @@ export function PartReel({
 
       {/* Details of the centred part */}
       {current && (
-        <div className="mx-auto mt-1 max-w-sm px-6 text-center lg:col-span-2 lg:mx-0 lg:mt-0 lg:max-w-none lg:px-6 lg:text-start xl:px-10" aria-live="polite">
-          <h3 className="truncate font-display text-lg font-medium uppercase tracking-[0.14em] text-white lg:whitespace-normal lg:text-2xl lg:leading-snug lg:tracking-[0.1em] lg:[display:-webkit-box] lg:[-webkit-box-orient:vertical] lg:[-webkit-line-clamp:3]">{current.name}</h3>
-          <p className="mt-1 truncate text-xs text-white/50 lg:mt-3 lg:whitespace-normal lg:text-[15px] lg:leading-relaxed lg:text-white/60 lg:[display:-webkit-box] lg:[-webkit-box-orient:vertical] lg:[-webkit-line-clamp:5]">{[current.spec, currentFit].filter(Boolean).join(' · ')}</p>
-          <div className="mt-2 flex items-center justify-center gap-3 lg:mt-5 lg:justify-start lg:gap-5">
-            <span className="text-base font-semibold tabular-nums text-gold-500 lg:text-3xl">{formatPrice(Number(current.price) || 0)}</span>
+        <div className="mx-auto mt-1 max-w-sm px-6 text-center xl:col-span-2 xl:mx-0 xl:mt-0 xl:max-w-none xl:px-6 xl:text-start 2xl:px-10" aria-live="polite">
+          <h3 className="truncate font-display text-lg font-medium uppercase tracking-[0.14em] text-white xl:whitespace-normal xl:text-2xl xl:leading-snug xl:tracking-[0.1em] xl:[display:-webkit-box] xl:[-webkit-box-orient:vertical] xl:[-webkit-line-clamp:3]">{current.name}</h3>
+          <p className="mt-1 truncate text-xs text-white/50 xl:mt-3 xl:whitespace-normal xl:text-[15px] xl:leading-relaxed xl:text-white/60 xl:[display:-webkit-box] xl:[-webkit-box-orient:vertical] xl:[-webkit-line-clamp:5]">{[current.spec, currentFit].filter(Boolean).join(' · ')}</p>
+          <div className="mt-2 flex items-center justify-center gap-3 xl:mt-5 xl:justify-start xl:gap-5">
+            <span className="text-base font-semibold tabular-nums text-gold-500 xl:text-3xl">{formatPrice(Number(current.price) || 0)}</span>
           </div>
-          <p className="mt-2 hidden text-[11px] tabular-nums tracking-[0.2em] text-white/30 lg:mt-4 lg:block">
+          <p className="mt-2 hidden text-[11px] tabular-nums tracking-[0.2em] text-white/30 xl:mt-4 xl:block">
             {activeIdx + 1} / {n}
           </p>
         </div>

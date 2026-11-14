@@ -463,7 +463,7 @@ export function VeloceCustomize() {
   const showGate = carChecked && !carConfirmed && Boolean(user) && Boolean(photo);
 
   return (
-    <div className="mx-auto flex h-[100dvh] max-w-3xl flex-col overflow-hidden px-4 pt-[max(env(safe-area-inset-top),12px)] md:h-[calc(100dvh-81px)] md:px-8 md:pt-4 lg:max-w-[1680px] lg:px-10 lg:pb-5 xl:px-14">
+    <div className="mx-auto flex h-[100dvh] max-w-3xl flex-col overflow-hidden px-4 [@media(max-height:640px)]:overflow-y-auto pt-[max(env(safe-area-inset-top),12px)] md:h-[calc(100dvh-81px)] md:px-8 md:pt-4 lg:max-w-[1680px] lg:px-10 lg:pb-5 xl:px-14">
       {showProgress && (
         <RenderProgress
           states={render.states}
@@ -509,9 +509,13 @@ export function VeloceCustomize() {
 
       </div>
 
-      <div className="mt-2 min-h-[130px] flex-1 lg:mt-3 lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+      {/* Desktop: the build panel runs the full height on the right; photo, category tabs and the parts
+          reel share the left column. (The panel used to sit beside the photo only, so on a short
+          window its list collapsed to nothing and its button covered the category tabs.) */}
+      <div className="mt-2 flex flex-1 flex-col lg:mt-3 lg:min-h-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="flex flex-1 flex-col lg:min-h-0">
       {/* Car viewport */}
-      <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] lg:mt-0 bg-surface-1 shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
+      <div ref={stageRef} className="relative min-h-[130px] flex-1 overflow-hidden rounded-[28px] lg:mt-0 lg:min-h-[200px] bg-surface-1 shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(232,191,116,0.10),transparent_70%)] lg:hidden" />
         <div
           ref={slider.ref}
@@ -621,63 +625,6 @@ export function VeloceCustomize() {
         </div>
       </div>
 
-      {/* Desktop build panel: what is on the car right now, one part per slot */}
-      <aside className="mt-0 hidden min-h-0 flex-col rounded-[28px] bg-gradient-to-b from-[#14171F] to-[#0E1016] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.5)] lg:flex">
-        <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-3 font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white"><span aria-hidden className="h-5 w-[3px] rounded-full bg-gold-500" />{t('yourBuild')}</h2>
-          <button
-            type="button"
-            onClick={() => setSelectedPartIds([])}
-            disabled={selectedProducts.length === 0}
-            aria-label={t('clearBuild')}
-            title={t('clearBuild')}
-            className="grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/55 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
-          >
-            <MoreHorizontal className="h-5 w-5" />
-          </button>
-        </div>
-        <ul className="mt-5 flex-1 space-y-3 overflow-y-auto pe-1">
-          {selectedProducts.length === 0 && <li className="py-6 text-center text-sm text-white/45">{t('pickParts')}</li>}
-          {selectedProducts.map((p) => (
-            <li key={p.id} className="flex items-center gap-4 rounded-[20px] bg-white/[0.03] p-2.5">
-              <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-surface-1">
-                {p.swatch && !p.image ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-medium text-white">{p.name}</span>
-                <span className="mt-0.5 block text-sm tabular-nums text-gold-500">{formatPrice(getUSDPrice(p.price))}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => togglePart(p.id)}
-                aria-label={`${t('removePart')}: ${p.name}`}
-                className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-white/45 transition hover:bg-white/[0.08] hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5 pt-5">
-          {selectedProducts.length > 0 && (
-            <div className="mb-4 flex items-center justify-between px-1 text-sm">
-              <span className="text-white/45">{t('selectedCount', { count: selectedProducts.length })}</span>
-              <span className="text-[17px] tabular-nums text-white/85">
-                {t('total', { amount: '§' }).split('§')[0]}
-                <span className="text-[22px] font-semibold text-white">{formatPrice(totalSelectedUSD)}</span>
-                {t('total', { amount: '§' }).split('§')[1]}
-              </span>
-            </div>
-          )}
-          {creditsNote}
-          {applyButtonDesktop}
-          {renderPlan.creditsNeeded > 0 && (
-            <p className="mt-2 text-center text-[11px] text-white/40">{t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}</p>
-          )}
-        </div>
-      </aside>
-      </div>
-
       {/* Category tabs */}
       <div role="tablist" aria-label={t('subtitle')} className="mt-2 flex shrink-0 touch-pan-x gap-6 overflow-x-auto overflow-y-hidden overscroll-none px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*:first-child]:ms-auto [&>*:last-child]:me-auto">
         {visibleCategories.map((cat) => {
@@ -739,6 +686,64 @@ export function VeloceCustomize() {
             ariaLabel={t('pickFromStrip')}
           />
         )}
+      </div>
+      </div>
+
+      {/* Desktop build panel: what is on the car right now, one part per slot */}
+      <aside className="mt-0 hidden min-h-0 flex-col rounded-[28px] bg-gradient-to-b from-[#14171F] to-[#0E1016] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.5)] lg:flex">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-3 font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white"><span aria-hidden className="h-5 w-[3px] rounded-full bg-gold-500" />{t('yourBuild')}</h2>
+          <button
+            type="button"
+            onClick={() => setSelectedPartIds([])}
+            disabled={selectedProducts.length === 0}
+            aria-label={t('clearBuild')}
+            title={t('clearBuild')}
+            className="grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/55 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
+        </div>
+        <ul className="mt-5 flex-1 space-y-3 overflow-y-auto pe-1">
+          {selectedProducts.length === 0 && <li className="py-6 text-center text-sm text-white/45">{t('pickParts')}</li>}
+          {selectedProducts.map((p) => (
+            <li key={p.id} className="flex items-center gap-4 rounded-[20px] bg-white/[0.03] p-2.5">
+              <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-surface-1">
+                {p.swatch && !p.image ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-medium text-white">{p.name}</span>
+                <span className="mt-0.5 block text-sm tabular-nums text-gold-500">{formatPrice(getUSDPrice(p.price))}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => togglePart(p.id)}
+                aria-label={`${t('removePart')}: ${p.name}`}
+                className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-white/45 transition hover:bg-white/[0.08] hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-5 pt-5">
+          {selectedProducts.length > 0 && (
+            <div className="mb-4 flex items-center justify-between px-1 text-sm">
+              <span className="text-white/45">{t('selectedCount', { count: selectedProducts.length })}</span>
+              <span className="text-[17px] tabular-nums text-white/85">
+                {t('total', { amount: '§' }).split('§')[0]}
+                <span className="text-[22px] font-semibold text-white">{formatPrice(totalSelectedUSD)}</span>
+                {t('total', { amount: '§' }).split('§')[1]}
+              </span>
+            </div>
+          )}
+          {creditsNote}
+          {applyButtonDesktop}
+          {renderPlan.creditsNeeded > 0 && (
+            <p className="mt-2 text-center text-[11px] text-white/40">{t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}</p>
+          )}
+        </div>
+      </aside>
       </div>
 
       {/* Apply changes: pinned to the bottom of the screen on phones / tablets, lives in the build panel on desktop */}
