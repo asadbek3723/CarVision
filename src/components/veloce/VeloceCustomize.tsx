@@ -641,7 +641,7 @@ export function VeloceCustomize() {
           {selectedProducts.map((p) => (
             <li key={p.id} className="flex items-center gap-4 rounded-[20px] bg-white/[0.03] p-2.5">
               <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-surface-1">
-                {p.swatch ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
+                {p.swatch && !p.image ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[15px] font-medium text-white">{p.name}</span>

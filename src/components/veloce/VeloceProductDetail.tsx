@@ -209,7 +209,9 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
 
   const inCart = cart[product.id] ?? 0;
   const atMax = product.stock > 0 && inCart >= product.stock;
-  const coverSrc = product.swatch ? null : (gallery[Math.min(activeImg, gallery.length - 1)] ?? null);
+  // A colour with a photo shows the photo; the swatch gradient is only for colours without one.
+  const swatchOnly = Boolean(product.swatch) && gallery.length === 0;
+  const coverSrc = swatchOnly ? null : (gallery[Math.min(activeImg, gallery.length - 1)] ?? null);
 
   const handleAddToCart = () => {
     if (outOfStock || atMax) return;
@@ -233,7 +235,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
         <div className="lg:col-span-6">
         {/* Image Visual */}
         <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-[#11131A] shadow-[0_24px_60px_rgba(0,0,0,0.65)]">
-          {product.swatch ? (
+          {swatchOnly ? (
             <div
               className="h-full w-full"
               style={{ background: `radial-gradient(circle at 30% 30%, ${product.swatch}, oklch(0.08 0 0))` }}
@@ -255,7 +257,7 @@ export function VeloceProductDetail({ id, initialProduct }: VeloceProductDetailP
           </span>
         </div>
 
-        {gallery.length > 1 && !product.swatch && (
+        {gallery.length > 1 && !swatchOnly && (
           <div className="mt-3 flex gap-2">
             {gallery.map((src, idx) => (
               <button

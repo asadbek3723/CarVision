@@ -50,7 +50,8 @@ export function MinimalProductCard({
         style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
       >
         <div className={`relative aspect-square overflow-hidden rounded-[18px] ${md.card}`}>
-          {p.swatch ? (
+          {/* A colour shows its photo of real painted metal; the swatch gradient is only the fallback */}
+          {p.swatch && (imgFailed || !p.image) ? (
             <div className="h-full w-full" style={{ background: `radial-gradient(circle at 30% 30%, ${p.swatch}, #0A0A0A)` }} />
           ) : imgFailed || !p.image ? (
             <div className={`h-full w-full ${md.card}`} />

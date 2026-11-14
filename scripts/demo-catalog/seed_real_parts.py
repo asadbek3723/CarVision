@@ -829,7 +829,7 @@ FINISH_TEXT = {
 
 def paint(n, swatch, finish, price, names):
     return dict(
-        key=f'universal-paint-{n}', car='universal', category='wrap_paint', file=f'universal/universal-paint-{n}.webp',
+        key=f'universal-paint-{n}', car='universal', category='wrap_paint', file=f'universal/universal-paint-v2-{n}.webp',
         brand='CarVision Paint', price=price, install=0, stock=99,
         attrs=dict(universal=True, swatch=swatch, finish=finish, method='full_repaint', color_name=names['en']),
         text={l: (PAINT_TEXT[l][0].format(c=names[l]), PAINT_TEXT[l][1].format(f=FINISH_TEXT[finish][l])) for l in PAINT_TEXT},

@@ -48,7 +48,8 @@ export function ProductCard({ p, i = 0, showPrice = true }: ProductCardProps) {
     >
       <div className="block">
         <div className="relative aspect-square overflow-hidden md:aspect-[4/3]">
-          {p.swatch ? (
+          {/* A colour shows its photo of real painted metal; the swatch gradient is only the fallback */}
+          {p.swatch && (imgFailed || !p.image) ? (
             <div
               className="h-full w-full transition duration-700 md:group-hover:scale-110"
               style={{ background: `radial-gradient(circle at 30% 30%, ${p.swatch}, oklch(0.08 0 0))` }}
