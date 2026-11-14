@@ -24,8 +24,8 @@ export function CtaBanner({ locale }: { locale: string }) {
         }}
       />
 
-      <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
-        <h2 className="reveal font-display text-5xl font-light leading-[1.02] sm:text-7xl">
+      <div className="relative z-10 mx-auto max-w-5xl px-6 text-center">
+        <h2 className="reveal font-display text-4xl font-light leading-[1.12] sm:text-6xl lg:text-7xl">
           {t('title')} <br />
           <span className="shimmer-text italic">{t('gold')}</span>
         </h2>

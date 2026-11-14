@@ -100,12 +100,14 @@ export function SectionHeading({
   compact,
 }: SectionHeadingProps) {
   return (
-    <div className={`reveal ${center ? 'mx-auto text-center' : ''} max-w-3xl`}>
+    // Wide enough that each phrase usually stays on one line: a 72px heading squeezed into 768px
+    // broke into four lines whose letters touched.
+    <div className={`reveal ${center ? 'mx-auto text-center' : ''} ${compact ? 'max-w-3xl' : 'max-w-5xl'}`}>
       <p className="text-[11px] tracking-lux text-primary">{eyebrow}</p>
       <h2
         className={`mt-5 font-display font-light ${
           // Beside a picture the column is narrow: a smaller size keeps each phrase on one line.
-          compact ? 'text-4xl leading-[1.1] sm:text-5xl xl:text-[3.5rem]' : 'text-4xl leading-[1.05] sm:text-6xl lg:text-7xl'
+          compact ? 'text-4xl leading-[1.1] sm:text-5xl xl:text-[3.5rem]' : 'text-4xl leading-[1.12] sm:text-5xl lg:text-6xl'
         }`}
       >
         {title} <br />
