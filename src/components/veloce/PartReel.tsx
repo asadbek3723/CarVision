@@ -33,7 +33,8 @@ interface PartReelProps {
 }
 
 interface Metrics {
-  size: number; // card edge, px
+  size: number; // card height, px
+  cardW: number; // card width, px (4:3 on desktop, square on phones and tablets)
   slot: number; // distance between two neighbouring card centres, px
   step: number; // wheel rotation per card, radians
   top: number; // gap above the cards (room for the enlarged middle card), px
@@ -43,17 +44,21 @@ interface Metrics {
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-function measure(width: number, viewportH = 900): Metrics {
+/** Desktop (lg and up) shows landscape 4:3 cards; smaller screens keep them square. */
+const DESKTOP_MIN_VIEWPORT = 1024;
+
+export function measure(width: number, viewportH = 900, viewportW = 0): Metrics {
   const wide = width >= 900;
   const mid = width >= 560;
   const byWidth = wide ? 200 : mid ? 168 : clamp(width * 0.31, 104, 156);
   // The page never scrolls: on short screens the cards shrink so everything still fits.
   const size = Math.round(clamp(Math.min(byWidth, viewportH * (wide ? 0.155 : 0.19)), 84, byWidth));
+  const cardW = viewportW >= DESKTOP_MIN_VIEWPORT ? Math.round((size * 4) / 3) : size;
   const gap = wide ? 28 : 12;
-  const slot = size * 1.04 + gap;
+  const slot = cardW * 1.04 + gap;
   const step = wide ? 0.13 : 0.085;
   const top = Math.round(size * 0.09) + 12;
-  return { size, slot, step, top, height: Math.round(top + size * 1.09 + (wide ? 70 : 52)) };
+  return { size, cardW, slot, step, top, height: Math.round(top + size * 1.09 + (wide ? 70 : 52)) };
 }
 
 // Spring that overshoots a little: the strip "clicks" onto the next tooth like a cog.
@@ -234,11 +239,13 @@ export function PartReel({
     const stage = stageRef.current;
     if (!stage) return;
     const apply = () => {
-      const next = measure(stage.clientWidth || 360, window.innerHeight);
+      const next = measure(stage.clientWidth || 360, window.innerHeight, window.innerWidth);
       widthRef.current = stage.clientWidth || 360;
       dirRef.current = getComputedStyle(stage).direction === 'rtl' ? -1 : 1;
       metricsRef.current = next;
-      setMetrics((prev) => (prev.size === next.size && prev.slot === next.slot && prev.step === next.step ? prev : next));
+      setMetrics((prev) =>
+        prev.size === next.size && prev.cardW === next.cardW && prev.slot === next.slot && prev.step === next.step ? prev : next
+      );
       paint();
     };
     apply();
@@ -433,9 +440,9 @@ export function PartReel({
                   position: 'absolute',
                   top: metrics.top,
                   insetInlineStart: '50%',
-                  width: metrics.size,
+                  width: metrics.cardW,
                   height: metrics.size,
-                  marginInlineStart: -metrics.size / 2,
+                  marginInlineStart: -metrics.cardW / 2,
                   willChange: 'transform, opacity, filter',
                   opacity: 0,
                 }}
