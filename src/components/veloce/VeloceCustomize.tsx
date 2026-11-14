@@ -12,6 +12,7 @@ import {
   Download,
   Camera,
   Layers,
+  MoreHorizontal,
   Maximize2,
   X,
 } from 'lucide-react';
@@ -625,7 +626,7 @@ export function VeloceCustomize() {
 
 
   return (
-    <div className="mx-auto flex h-[100dvh] max-w-3xl flex-col overflow-hidden px-4 [@media(max-height:640px)]:overflow-y-auto pt-[max(env(safe-area-inset-top),12px)] md:h-[calc(100dvh-81px)] md:px-8 md:pt-4 lg:max-w-[1680px] lg:px-10 lg:pb-5 xl:px-14">
+    <div className="mx-auto flex h-[100dvh] max-w-3xl flex-col overflow-hidden px-4 pt-[max(env(safe-area-inset-top),12px)] md:h-[calc(100dvh-81px)] md:px-8 md:pt-4 lg:max-w-[1680px] lg:px-10 lg:pb-5 xl:px-14">
       {showProgress && (
         <RenderProgress
           states={render.states}
@@ -880,15 +881,174 @@ export function VeloceCustomize() {
         </div>
       ) : (
         <>
-      {/* Desktop: the build panel runs the full height on the right; photo, category tabs and the parts
-          reel share the left column. (The panel used to sit beside the photo only, so on a short
-          window its list collapsed to nothing and its button covered the category tabs.) */}
-      <div className="mt-2 flex flex-1 flex-col lg:mt-3 lg:min-h-0 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
-      <div className="flex flex-1 flex-col lg:min-h-0">
+          {/* Phones and tablets: the original layout, unchanged */}
+      <div className="mt-2 min-h-[130px] flex-1 lg:mt-3 lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1 lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
       {/* Car viewport */}
-      <div ref={stageRef} className="relative min-h-[130px] flex-1 overflow-hidden rounded-[28px] lg:mt-0 lg:min-h-[200px] bg-surface-1 shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
+      <div ref={stageRef} className="relative h-full min-h-0 overflow-hidden rounded-[28px] lg:mt-0 bg-surface-1 shadow-[0_28px_80px_rgba(0,0,0,0.75)]">
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_60%_at_50%_45%,rgba(232,191,116,0.10),transparent_70%)] lg:hidden" />
-        {renderStageMedia(false)}
+        <div
+          ref={slider.ref}
+          {...(hasAfter
+            ? {
+                ...slider.handlers,
+                role: 'slider',
+                tabIndex: 0,
+                'aria-label': `${t('before')} / ${t('after')}`,
+                'aria-valuemin': 0,
+                'aria-valuemax': 100,
+                'aria-valuenow': Math.round(sliderPos),
+              }
+            : {})}
+          className={`relative h-full w-full overflow-hidden ${hasAfter ? 'cursor-ew-resize touch-none select-none outline-none focus-visible:ring-2 focus-visible:ring-gold-500/70' : ''}`}
+        >
+          {hasAfter ? (
+            <>
+              <CompareImages
+                beforeUrl={currentAnglePhoto}
+                afterUrl={afterPhoto}
+                pos={sliderPos}
+                beforeAlt={tr('beforeAlt')}
+                afterAlt={tr('afterAlt')}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 z-[2] w-0.5 bg-gold-500 shadow-[0_0_20px_rgba(232,191,116,0.9)]"
+                style={{ insetInlineStart: `${sliderPos}%`, marginInlineStart: '-1px' }}
+              >
+                <div className="absolute start-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-500 text-sm font-black text-black shadow-[0_0_24px_rgba(232,191,116,0.9)]">‹ ›</div>
+              </div>
+              <span className="pointer-events-none absolute start-3 top-3 z-[3] rounded-full bg-black/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/85 backdrop-blur-md">{t('before')}</span>
+              <span className="pointer-events-none absolute end-3 top-3 z-[3] rounded-full bg-gold-500 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-black">{t('after')}</span>
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => void saveAfter()}
+                aria-label={tr('download')}
+                className="absolute end-3 top-12 z-[3] grid h-11 w-11 cursor-pointer place-items-center rounded-full bg-black/65 text-gold-500 backdrop-blur-md transition hover:bg-black/85"
+              >
+                <Download className="h-[18px] w-[18px]" />
+              </button>
+            </>
+          ) : (
+            <>
+              <img src={currentAnglePhoto} alt={t('photoAlt')} className="h-full w-full object-cover transition-opacity duration-300" />
+            </>
+          )}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0B0D13] via-[#0B0D13]/40 to-transparent lg:hidden" />
+
+          {/* Other sides */}
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => stepAngle(-1)}
+            aria-label={tr('prevAngle')}
+            className="absolute start-2 top-1/2 z-[3] grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/25 text-white/45 opacity-60 backdrop-blur-sm transition hover:bg-black/60 hover:text-white hover:opacity-100 active:opacity-100 lg:start-6 lg:h-12 lg:w-12 lg:bg-black/40"
+          >
+            <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
+          </button>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => stepAngle(1)}
+            aria-label={tr('nextAngle')}
+            className="absolute end-2 top-1/2 z-[3] grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/25 text-white/45 opacity-60 backdrop-blur-sm transition hover:bg-black/60 hover:text-white hover:opacity-100 active:opacity-100 lg:end-6 lg:h-12 lg:w-12 lg:bg-black/40"
+          >
+            <ChevronRight className="h-5 w-5 rtl:rotate-180" />
+          </button>
+
+          {!hasAfter && (
+            <div onPointerDown={(e) => e.stopPropagation()} className="absolute end-5 top-4 z-[3] hidden items-center gap-1 lg:flex">
+              <button type="button" onClick={toggleFullscreen} aria-label={tr('fullscreen')} className="grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white">
+                <Maximize2 className="h-[18px] w-[18px]" />
+              </button>
+              <button type="button" onClick={openCamera} aria-label={t('refreshPhoto')} className="grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white">
+                <Camera className="h-[18px] w-[18px]" />
+              </button>
+            </div>
+          )}
+
+
+          {/* Angle pills */}
+          <div onPointerDown={(e) => e.stopPropagation()} className="absolute inset-x-3 bottom-3 z-[2] flex items-center gap-1 overflow-x-auto rounded-full bg-[#090A0F]/35 p-1 opacity-55 backdrop-blur-sm transition-opacity duration-ui hover:opacity-100 focus-within:opacity-100 active:opacity-100 lg:opacity-100 lg:inset-x-auto lg:bottom-5 lg:start-5 lg:max-w-[calc(100%-2.5rem)] lg:gap-2 lg:bg-transparent lg:p-0 lg:backdrop-blur-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {FIVE_CAR_ANGLES.map((ang) => {
+              const isActive = activeAngleId === ang.id;
+              const hasCaptured = Boolean(multiAngles[ang.id]);
+              return (
+                <button
+                  key={ang.id}
+                  type="button"
+                  onClick={() => setActiveAngleId(ang.id)}
+                  aria-pressed={isActive}
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap transition lg:gap-2 lg:border lg:px-4 lg:py-2.5 lg:text-[13px] lg:font-medium ${
+ isActive ? 'bg-gold-500 text-black lg:border-gold-500' : 'text-white/70 hover:text-white lg:bg-black/35'
+                  }`}
+                >
+                  <span aria-hidden className={`hidden h-2 w-2 rounded-full lg:block ${isActive ? 'bg-black/70' : hasCaptured ? 'bg-emerald-400' : 'bg-white/25'}`} />
+                  <span>{t(`anglesShort.${ang.key}`)}</span>
+                  {hasCaptured && <span className={`h-1.5 w-1.5 rounded-full lg:hidden ${isActive ? 'bg-black' : 'bg-emerald-400'}`} />}
+                  <span aria-hidden className={`hidden h-1.5 w-1.5 rounded-full lg:block ${isActive ? 'bg-black/60' : 'bg-gold-500'}`} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop build panel: what is on the car right now, one part per slot */}
+      <aside className="mt-0 hidden min-h-0 flex-col rounded-[28px] bg-gradient-to-b from-[#14171F] to-[#0E1016] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.5)] lg:flex">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-3 font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white"><span aria-hidden className="h-5 w-[3px] rounded-full bg-gold-500" />{t('yourBuild')}</h2>
+          <button
+            type="button"
+            onClick={() => setSelectedPartIds([])}
+            disabled={selectedProducts.length === 0}
+            aria-label={t('clearBuild')}
+            title={t('clearBuild')}
+            className="grid h-11 w-11 cursor-pointer place-items-center rounded-full text-white/55 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
+        </div>
+        <ul className="mt-5 flex-1 space-y-3 overflow-y-auto pe-1">
+          {selectedProducts.length === 0 && <li className="py-6 text-center text-sm text-white/45">{t('pickParts')}</li>}
+          {selectedProducts.map((p) => (
+            <li key={p.id} className="flex items-center gap-4 rounded-[20px] bg-white/[0.03] p-2.5">
+              <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-surface-1">
+                {p.swatch && !p.image ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-medium text-white">{p.name}</span>
+                <span className="mt-0.5 block text-sm tabular-nums text-gold-500">{formatPrice(getUSDPrice(p.price))}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => togglePart(p.id)}
+                aria-label={`${t('removePart')}: ${p.name}`}
+                className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-white/45 transition hover:bg-white/[0.08] hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-5 pt-5">
+          {selectedProducts.length > 0 && (
+            <div className="mb-4 flex items-center justify-between px-1 text-sm">
+              <span className="text-white/45">{t('selectedCount', { count: selectedProducts.length })}</span>
+              <span className="text-[17px] tabular-nums text-white/85">
+                {t('total', { amount: '§' }).split('§')[0]}
+                <span className="text-[22px] font-semibold text-white">{formatPrice(totalSelectedUSD)}</span>
+                {t('total', { amount: '§' }).split('§')[1]}
+              </span>
+            </div>
+          )}
+          {creditsNote}
+          {applyButtonDesktop}
+          {renderPlan.creditsNeeded > 0 && (
+            <p className="mt-2 text-center text-[11px] text-white/40">{t('angleCredits', { angles: renderPlan.order.length, credits: renderPlan.creditsNeeded })}</p>
+          )}
+        </div>
+      </aside>
       </div>
 
       {/* Category tabs */}
@@ -952,9 +1112,6 @@ export function VeloceCustomize() {
             ariaLabel={t('pickFromStrip')}
           />
         )}
-      </div>
-      </div>
-
       </div>
 
       {/* Apply changes: pinned to the bottom of the screen on phones / tablets, lives in the build panel on desktop */}
