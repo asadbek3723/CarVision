@@ -58,18 +58,18 @@ export default async function ProductOpengraphImage({ params }: { params: Promis
         <div
           style={{
             position: 'absolute',
-            left: 84,
+            left: 76,
             top: 80,
             bottom: 80,
-            width: 470,
+            width: 340,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', fontSize: 40, fontWeight: 700, letterSpacing: -1 }}>
-            <span>Car</span>
-            <span style={{ color: OG_COLORS.accent }}>Vision</span>
+          <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, letterSpacing: -0.5 }}>
+            <span>CAR</span>
+            <span style={{ color: OG_COLORS.accent }}>VISION</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {item ? (
@@ -81,7 +81,7 @@ export default async function ProductOpengraphImage({ params }: { params: Promis
               style={{
                 display: 'flex',
                 marginTop: 14,
-                fontSize: name.length > 34 ? 42 : name.length > 22 ? 48 : 56,
+                fontSize: name.length > 34 ? 32 : name.length > 22 ? 38 : 46,
                 fontWeight: 700,
                 lineHeight: 1.1,
                 letterSpacing: -1.5,

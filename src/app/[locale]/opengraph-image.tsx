@@ -9,16 +9,13 @@ export const contentType = 'image/png';
 
 /**
  * Link preview for Telegram, WhatsApp, Instagram, X, Facebook, LinkedIn (1200x630).
- * One cinematic car on the right, the wordmark and a short line on the left. No frames, cards or boxes.
+ * A large, sharp car fills the right, the CAR / VISION wordmark holds the left. Almost no text, no boxes.
  */
 export default async function OpengraphImage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   // Satori cannot shape Arabic script, so the Arabic preview uses the English line.
   const copy = SEO_COPY[!isLocale(locale) ? DEFAULT_LOCALE : locale === 'ar' ? 'en' : locale];
   const [fonts, car] = await Promise.all([loadOgFonts(), loadOgCar()]);
-  // Long single words (Cyrillic) must still fit the left column without running into the car.
-  const longestWord = Math.max(...copy.tagline.split(/\s+/).map((w) => w.length));
-  const headlineSize = longestWord > 14 ? 42 : longestWord > 12 ? 46 : longestWord > 10 ? 50 : 54;
 
   return new ImageResponse(
     (
@@ -34,66 +31,46 @@ export default async function OpengraphImage({ params }: { params: Promise<{ loc
         }}
       >
         <img src={car} alt="" width={OG_SIZE.width} height={OG_SIZE.height} style={{ position: 'absolute', inset: 0 }} />
-        {/* Quiet the left half so the type sits on pure black, and settle the floor. */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            background: 'linear-gradient(90deg, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.7) 34%, rgba(10,10,10,0) 58%)',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            background: 'linear-gradient(0deg, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0) 22%)',
-          }}
-        />
 
         <div
           style={{
             position: 'absolute',
-            left: 84,
-            top: 80,
-            bottom: 80,
-            width: 470,
+            left: 76,
+            top: 0,
+            bottom: 0,
+            width: 380,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
           }}
         >
-          <div style={{ display: 'flex', fontSize: 40, fontWeight: 700, letterSpacing: -1 }}>
-            <span>Car</span>
-            <span style={{ color: OG_COLORS.accent }}>Vision</span>
+          <div style={{ display: 'flex', fontSize: 96, fontWeight: 700, lineHeight: 0.92, letterSpacing: -2 }}>CAR</div>
+          <div
+            style={{
+              display: 'flex',
+              fontSize: 96,
+              fontWeight: 700,
+              lineHeight: 0.92,
+              letterSpacing: -2,
+              color: OG_COLORS.accent,
+            }}
+          >
+            VISION
           </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ width: 48, height: 3, background: OG_COLORS.accent, marginBottom: 30 }} />
-            <div
-              style={{
-                display: 'flex',
-                fontSize: headlineSize,
-                fontWeight: 700,
-                lineHeight: 1.12,
-                letterSpacing: -1.5,
-              }}
-            >
-              {copy.tagline}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                marginTop: 26,
-                fontSize: 24,
-                fontWeight: 500,
-                color: OG_COLORS.muted,
-                letterSpacing: 0.5,
-              }}
-            >
-              {copy.ogSubline}
-            </div>
+          <div style={{ width: 56, height: 2, background: OG_COLORS.accent, marginTop: 40, marginBottom: 22 }} />
+          <div
+            style={{
+              display: 'flex',
+              fontSize: 17,
+              fontWeight: 500,
+              lineHeight: 1.6,
+              letterSpacing: 4,
+              textTransform: 'uppercase',
+              color: OG_COLORS.muted,
+              width: 330,
+            }}
+          >
+            {copy.tagline}
           </div>
         </div>
       </div>

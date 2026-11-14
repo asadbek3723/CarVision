@@ -18,7 +18,7 @@ export const SITE_URL = resolveSiteUrl().replace(/\/+$/, '');
  * Bump when the link-preview design changes: Telegram, WhatsApp and Facebook cache previews by image URL,
  * so a new query string makes them fetch the new picture.
  */
-export const OG_IMAGE_VERSION = '2';
+export const OG_IMAGE_VERSION = '3';
 
 /** The brand link-preview image for a locale (rendered by app/[locale]/opengraph-image.tsx). */
 export function brandOgImagePath(locale: Locale): string {
