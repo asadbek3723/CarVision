@@ -446,12 +446,8 @@ export function PartReel({
     <div className={vertical ? 'h-full select-none' : 'select-none xl:grid xl:grid-cols-5 xl:items-center xl:gap-6'}>
       <div className={vertical ? 'relative isolate h-full' : 'relative isolate xl:col-span-3'}>
         {/* Edge fades hint that the strip goes on */}
-        {vertical ? (
-          <>
-            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[200] h-20 bg-gradient-to-b from-[#0D0E12] to-transparent" />
-            <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-[200] h-20 bg-gradient-to-t from-[#0D0E12] to-transparent" />
-          </>
-        ) : (
+        {/* Upright: the ends fade through a mask instead, so there is no box against the page */}
+        {vertical ? null : (
           <>
             <div aria-hidden className="pointer-events-none absolute inset-y-0 start-0 z-[200] w-10 bg-gradient-to-r from-[#0D0E12] to-transparent lg:w-28 rtl:bg-gradient-to-l" />
             <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 z-[200] w-10 bg-gradient-to-l from-[#0D0E12] to-transparent lg:w-28 rtl:bg-gradient-to-r" />
@@ -469,7 +465,16 @@ export function PartReel({
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onKeyDown={onKeyDown}
-          style={vertical ? { height: '100%', touchAction: 'pan-x' } : { height: metrics.height, touchAction: 'pan-y' }}
+          style={
+            vertical
+              ? {
+                  height: '100%',
+                  touchAction: 'pan-x',
+                  maskImage: 'linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%)',
+                  WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%)',
+                }
+              : { height: metrics.height, touchAction: 'pan-y' }
+          }
           className="relative cursor-grab overflow-hidden outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-gold-500/50"
         >
           {slides.map((k) => {
@@ -530,7 +535,7 @@ export function PartReel({
               type="button"
               onClick={() => goBy(-1)}
               aria-label={prevLabel}
-              className="absolute start-1/2 top-2 z-[210] grid h-10 w-10 -translate-x-1/2 rtl:translate-x-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/80 backdrop-blur-md transition hover:bg-black/75 hover:text-white"
+              className="absolute start-1/2 top-1 z-[210] grid h-10 w-10 -translate-x-1/2 rtl:translate-x-1/2 cursor-pointer place-items-center rounded-full bg-white/[0.06] text-white/60 opacity-60 backdrop-blur-md transition hover:bg-white/[0.12] hover:text-white hover:opacity-100 focus-visible:opacity-100"
             >
               <ChevronUp className="h-5 w-5" />
             </button>
@@ -538,7 +543,7 @@ export function PartReel({
               type="button"
               onClick={() => goBy(1)}
               aria-label={nextLabel}
-              className="absolute bottom-2 start-1/2 z-[210] grid h-10 w-10 -translate-x-1/2 rtl:translate-x-1/2 cursor-pointer place-items-center rounded-full bg-black/55 text-white/80 backdrop-blur-md transition hover:bg-black/75 hover:text-white"
+              className="absolute bottom-1 start-1/2 z-[210] grid h-10 w-10 -translate-x-1/2 rtl:translate-x-1/2 cursor-pointer place-items-center rounded-full bg-white/[0.06] text-white/60 opacity-60 backdrop-blur-md transition hover:bg-white/[0.12] hover:text-white hover:opacity-100 focus-visible:opacity-100"
             >
               <ChevronDown className="h-5 w-5" />
             </button>

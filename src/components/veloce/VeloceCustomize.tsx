@@ -24,6 +24,8 @@ import { type VeloceProduct } from '@/domain/veloce-catalog';
 import { hapticOnRelease, playTick, unlockAudio, vibrate } from '@/features/camera/lib/fx';
 import { CarIdentifyGate } from './CarIdentifyGate';
 import { PartReel } from './PartReel';
+import { AngleStage } from './AngleStage';
+import { BuildStrip } from './BuildStrip';
 import { onePerSlot, partSlot, toggleInSlot } from '@/lib/part-slot';
 import { RenderProgress } from '@/features/visualizer/RenderProgress';
 import { planRender, type PlanAngle } from '@/features/visualizer/render-plan';
@@ -318,6 +320,15 @@ export function VeloceCustomize() {
     return () => ro.disconnect();
   }, [isDesktop]);
   const stageBox = fitBox(photoRatio, fitArea.w, fitArea.h);
+  // Desktop photo carousel: the sides that were photographed (or rendered); a single plain photo is one slide.
+  const desktopAngleIds = React.useMemo(() => {
+    const ids = FIVE_CAR_ANGLES.filter((a) => multiAngles[a.id] || generatedAngles[a.id]).map((a) => a.id as string);
+    return ids.length > 0 ? ids : ['front-left'];
+  }, [multiAngles, generatedAngles]);
+  React.useEffect(() => {
+    if (isDesktop && !desktopAngleIds.includes(activeAngleId)) setActiveAngleId(desktopAngleIds[0] ?? 'front-left');
+  }, [isDesktop, desktopAngleIds, activeAngleId]);
+  const anglePhoto = (id: string) => multiAngles[id] || photo || '/assets/car-CjioCIbt.jpg';
   // The part in the middle of the desktop reel, shown in full in the side panel.
   const [focusedPart, setFocusedPart] = React.useState<VeloceProduct | null>(null);
   const toggleFullscreen = () => {
@@ -653,6 +664,8 @@ export function VeloceCustomize() {
         />
       )}
 
+      {!isDesktop && (
+        <>
       {/* Top bar: back, title, photo counter */}
       <div className="grid grid-cols-[44px_1fr_44px] items-center gap-2 lg:grid-cols-[44px_1fr] lg:gap-10 lg:pt-1">
         <Link
@@ -671,19 +684,21 @@ export function VeloceCustomize() {
         </div>
 
       </div>
+        </>
+      )}
 
       {isDesktop ? (
-        <div className="mt-4 grid min-h-0 flex-1 grid-cols-[180px_minmax(0,1fr)_300px] gap-5 xl:grid-cols-[210px_minmax(0,1fr)_340px] xl:gap-6 2xl:grid-cols-[230px_minmax(0,1fr)_380px] 2xl:gap-8">
-          {/* Parts: an upright wheel down the left side */}
-          <div className="relative min-h-0 overflow-hidden rounded-[28px] bg-[#0D0E12] ring-1 ring-white/[0.05]">
+        <div className="grid min-h-0 flex-1 grid-cols-[190px_minmax(0,1fr)_300px] gap-6 xl:grid-cols-[220px_minmax(0,1fr)_340px] xl:gap-8 2xl:grid-cols-[240px_minmax(0,1fr)_380px] 2xl:gap-10">
+          {/* Parts: an upright wheel running the full height, no box around it */}
+          <div className="relative min-h-0">
             {isLoadingCatalog ? (
-              <div className="flex h-full flex-col items-center justify-center gap-4 px-5" aria-hidden>
-                {[0.5, 1, 0.5].map((o, n) => (
-                  <div key={n} className="aspect-[4/3] w-full animate-pulse rounded-[22px] bg-[#12151E]" style={{ opacity: o }} />
+              <div className="flex h-full flex-col items-center justify-center gap-5 px-3" aria-hidden>
+                {[0.4, 1, 0.4].map((o, n) => (
+                  <div key={n} className="aspect-[4/3] w-full animate-pulse rounded-[22px] bg-white/[0.04]" style={{ opacity: o }} />
                 ))}
               </div>
             ) : catalogProducts.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center px-5 text-center">
+              <div className="flex h-full flex-col items-center justify-center px-3 text-center">
                 <p className="text-sm font-semibold text-white">{isSeller ? t('emptySeller') : t('emptyUser')}</p>
                 <p className="mt-2 text-xs text-white/55">{isSeller ? t('emptySellerHint') : t('emptyUserHint')}</p>
                 <Link href={isSeller ? `/${locale}/seller/new-part` : `/${locale}/shop`} className={buttonClasses({ size: 'sm', className: 'mt-4' })}>
@@ -691,7 +706,7 @@ export function VeloceCustomize() {
                 </Link>
               </div>
             ) : filteredProducts.length === 0 ? (
-              <p className="flex h-full items-center justify-center px-5 text-center text-sm text-white/45">{t('noPartsInCategory')}</p>
+              <p className="flex h-full items-center justify-center px-3 text-center text-sm text-white/45">{t('noPartsInCategory')}</p>
             ) : (
               <PartReel
                 orientation="vertical"
@@ -712,9 +727,23 @@ export function VeloceCustomize() {
             )}
           </div>
 
-          {/* Middle: categories, the photo at its own proportions, and the sides of the car */}
+          {/* Middle: title, categories, the photo (swipe between sides) and the side thumbnails */}
           <div className="flex min-h-0 flex-col">
-            <div role="tablist" aria-label={t('subtitle')} className="flex shrink-0 gap-7 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex shrink-0 items-center gap-5">
+              <Link
+                href={isSeller ? `/${locale}/dashboard` : `/${locale}/shop`}
+                aria-label={t('back')}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-white/70 transition hover:bg-white/[0.07] hover:text-white"
+              >
+                <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
+              </Link>
+              <div className="min-w-0">
+                <h1 className="truncate font-display text-[17px] font-light uppercase tracking-[0.42em] text-white">{isSeller ? t('titleSeller') : t('titleUser')}</h1>
+                <p className="mt-1 truncate text-sm text-white/40">{myCar ? `${myCar.label}${myCar.year ? ` · ${myCar.year}` : ''}` : t('subtitle')}</p>
+              </div>
+            </div>
+
+            <div role="tablist" aria-label={t('subtitle')} className="mt-4 flex shrink-0 gap-7 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {visibleCategories.map((cat) => {
                 const active = activeCategory === cat.id;
                 return (
@@ -733,135 +762,123 @@ export function VeloceCustomize() {
               })}
             </div>
 
-            <div ref={fitRef} className="mt-4 flex min-h-0 flex-1 items-center justify-center">
-              <div
-                ref={stageRef}
-                style={{ width: stageBox.width || undefined, height: stageBox.height || undefined }}
-                className="relative overflow-hidden rounded-[28px] bg-surface-1 shadow-[0_28px_80px_rgba(0,0,0,0.75)]"
-              >
-                {renderStageMedia(true)}
-              </div>
+            <div ref={fitRef} className="mt-5 flex min-h-0 flex-1 items-center justify-center">
+              <AngleStage
+                stageRef={stageRef}
+                ids={desktopAngleIds}
+                activeId={activeAngleId}
+                onChange={setActiveAngleId}
+                swipe={!hasAfter}
+                width={stageBox.width}
+                height={stageBox.height}
+                prevLabel={tr('prevAngle')}
+                nextLabel={tr('nextAngle')}
+                renderSlide={(id, active) =>
+                  active ? renderStageMedia(true) : <img src={anglePhoto(id)} alt="" draggable={false} className="h-full w-full object-cover" />
+                }
+              />
             </div>
 
-            {/* Sides of the car */}
-            <div className="mt-4 flex min-w-0 shrink-0 items-center justify-center gap-2 xl:gap-3">
-              <button
-                type="button"
-                onClick={() => stepAngle(-1)}
-                aria-label={tr('prevAngle')}
-                className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-full bg-white/[0.04] text-white/70 ring-1 ring-white/10 transition hover:bg-white/[0.08] hover:text-white xl:h-11 xl:w-11"
-              >
-                <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
-              </button>
-              <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto rounded-full bg-white/[0.04] p-1 ring-1 ring-white/10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {FIVE_CAR_ANGLES.map((ang) => {
-                  const isActive = activeAngleId === ang.id;
-                  const hasCaptured = Boolean(multiAngles[ang.id]);
+            {/* Other sides of the car: tap one to bring it to the middle */}
+            {desktopAngleIds.length > 1 && (
+              <div className="mt-5 flex shrink-0 items-start justify-center gap-3">
+                {desktopAngleIds.map((id) => {
+                  const ang = FIVE_CAR_ANGLES.find((a) => a.id === id);
+                  const active = id === activeAngleId;
                   return (
                     <button
-                      key={ang.id}
+                      key={id}
                       type="button"
-                      onClick={() => setActiveAngleId(ang.id)}
-                      aria-pressed={isActive}
-                      className={`flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-[12px] font-medium transition xl:gap-2 xl:px-4 xl:text-[13px] ${isActive ? 'bg-gold-500 text-black' : 'text-white/65 hover:bg-white/[0.06] hover:text-white'}`}
+                      onClick={() => setActiveAngleId(id)}
+                      aria-pressed={active}
+                      aria-label={ang ? t(`angles.${ang.key}`) : id}
+                      className="group w-[88px] cursor-pointer text-center xl:w-[104px]"
                     >
-                      <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-black/60' : hasCaptured ? 'bg-emerald-400' : 'bg-white/25'}`} />
-                      {t(`anglesShort.${ang.key}`)}
+                      <span
+                        className={`block aspect-[16/10] overflow-hidden rounded-xl transition duration-300 ${
+                          active ? 'opacity-100 ring-2 ring-gold-500 ring-offset-2 ring-offset-[#0A0B0F]' : 'opacity-50 group-hover:opacity-90'
+                        }`}
+                      >
+                        <img src={generatedAngles[id] || anglePhoto(id)} alt="" draggable={false} className="h-full w-full object-cover" />
+                      </span>
+                      <span className={`mt-1.5 block truncate text-[11px] ${active ? 'text-white' : 'text-white/40 group-hover:text-white/70'}`}>
+                        {ang ? t(`anglesShort.${ang.key}`) : id}
+                      </span>
                     </button>
                   );
                 })}
               </div>
-              <button
-                type="button"
-                onClick={() => stepAngle(1)}
-                aria-label={tr('nextAngle')}
-                className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-full bg-white/[0.04] text-white/70 ring-1 ring-white/10 transition hover:bg-white/[0.08] hover:text-white xl:h-11 xl:w-11"
-              >
-                <ChevronRight className="h-5 w-5 rtl:rotate-180" />
-              </button>
-            </div>
+            )}
           </div>
 
-          {/* Right: the part in the middle of the wheel, then the build and the result button */}
-          <aside className="flex min-h-0 flex-col rounded-[28px] bg-gradient-to-b from-[#14171F] to-[#0E1016] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.5)] xl:p-6">
-            {/* Everything above the button scrolls on a short window; the total and the button stay put. */}
+          {/* Right: the part in the middle of the wheel, the build as one row, total and the result button */}
+          <aside className="flex min-h-0 flex-col">
             <div className="-me-2 min-h-0 flex-1 overflow-y-auto pe-2 [scrollbar-width:thin]">
-            {focusedPart && (() => {
-              const picked = selectedPartIds.includes(focusedPart.id);
-              const slot = partSlot(focusedPart);
-              const cat = CATEGORIES.find((c) => c.id.toLowerCase() === slot);
-              const fit = focusedPart.isUniversal ? t('fitAll') : focusedPart.targetCar || focusedPart.compatibility?.[0]?.name || t('fitFallback');
-              return (
-                <section aria-live="polite" className="shrink-0">
-                  {cat && <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-gold-500">{t(`categories.${cat.key}`)}</p>}
-                  <div className="mt-3 flex gap-4">
-                    <span className="relative h-[72px] w-24 shrink-0 overflow-hidden rounded-2xl bg-surface-1">
+              {focusedPart && (() => {
+                const picked = selectedPartIds.includes(focusedPart.id);
+                const slot = partSlot(focusedPart);
+                const cat = CATEGORIES.find((c) => c.id.toLowerCase() === slot);
+                const fit = focusedPart.isUniversal ? t('fitAll') : focusedPart.targetCar || focusedPart.compatibility?.[0]?.name || t('fitFallback');
+                return (
+                  <section aria-live="polite">
+                    <div className="h-[clamp(96px,22vh,250px)] w-full overflow-hidden rounded-[22px] bg-surface-1">
                       {focusedPart.swatch && !focusedPart.image ? (
                         <span className="block h-full w-full" style={{ background: focusedPart.swatch }} />
                       ) : (
                         <img src={focusedPart.image} alt="" className="h-full w-full object-cover" />
                       )}
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="line-clamp-2 text-[16px] font-medium leading-snug text-white">{focusedPart.name}</h3>
-                      <p className="mt-1 text-[20px] font-semibold tabular-nums text-gold-500">{formatPrice(getUSDPrice(focusedPart.price))}</p>
                     </div>
-                  </div>
-                  <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-white/55">{[focusedPart.spec, fit].filter(Boolean).join(' · ')}</p>
-                  <button
-                    type="button"
-                    onClick={() => togglePart(focusedPart.id)}
-                    aria-pressed={picked}
-                    className={`mt-4 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full text-[13px] font-semibold uppercase tracking-[0.12em] transition ${
-                      picked ? 'bg-gold-500/15 text-gold-500 ring-1 ring-gold-500/50 hover:bg-gold-500/25' : 'bg-white/[0.06] text-white ring-1 ring-white/15 hover:bg-white/[0.1]'
-                    }`}
-                  >
-                    {picked && <Check className="h-4 w-4" strokeWidth={2.6} />}
-                    {picked ? t('selected') : t('select')}
-                  </button>
-                </section>
-              );
-            })()}
+                    {cat && <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.28em] text-gold-500">{t(`categories.${cat.key}`)}</p>}
+                    <div className="mt-1.5 flex items-start justify-between gap-4">
+                      <h3 className="line-clamp-2 text-[17px] font-medium leading-snug text-white">{focusedPart.name}</h3>
+                      <p className="shrink-0 text-[19px] font-semibold tabular-nums text-gold-500">{formatPrice(getUSDPrice(focusedPart.price))}</p>
+                    </div>
+                    <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-white/45">{[focusedPart.spec, fit].filter(Boolean).join(' · ')}</p>
+                    <button
+                      type="button"
+                      onClick={() => togglePart(focusedPart.id)}
+                      aria-pressed={picked}
+                      className={`mt-4 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full text-[12px] font-semibold uppercase tracking-[0.14em] transition ${
+                        picked ? 'bg-gold-500/[0.14] text-gold-500 hover:bg-gold-500/[0.22]' : 'bg-white/[0.06] text-white hover:bg-white/[0.1]'
+                      }`}
+                    >
+                      {picked && <Check className="h-4 w-4" strokeWidth={2.6} />}
+                      {picked ? t('selected') : t('select')}
+                    </button>
+                  </section>
+                );
+              })()}
 
-            <div className="mt-6 flex shrink-0 items-center justify-between border-t border-white/[0.06] pt-5">
-              <h2 className="flex items-center gap-3 font-display text-[12px] font-medium uppercase tracking-[0.28em] text-white">
-                <span aria-hidden className="h-5 w-[3px] rounded-full bg-gold-500" />
-                {t('yourBuild')}
-                {selectedProducts.length > 0 && <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11px] tracking-normal tabular-nums text-white/70">{selectedProducts.length}</span>}
-              </h2>
-              {selectedProducts.length > 0 && (
-                <button type="button" onClick={() => setSelectedPartIds([])} className="cursor-pointer text-[12px] text-white/45 transition hover:text-white">
-                  {t('clearBuild')}
-                </button>
-              )}
-            </div>
-            <ul className="mt-3 space-y-2">
-              {selectedProducts.length === 0 && <li className="py-4 text-center text-[13px] text-white/40">{t('tapHint')}</li>}
-              {selectedProducts.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 rounded-2xl bg-white/[0.03] p-2">
-                  <span className="h-10 w-[54px] shrink-0 overflow-hidden rounded-xl bg-surface-1">
-                    {p.swatch && !p.image ? <span className="block h-full w-full" style={{ background: p.swatch }} /> : <img src={p.image} alt="" className="h-full w-full object-cover" />}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium text-white">{p.name}</span>
-                    <span className="block text-[12px] tabular-nums text-gold-500">{formatPrice(getUSDPrice(p.price))}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => togglePart(p.id)}
-                    aria-label={`${t('removePart')}: ${p.name}`}
-                    className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full text-white/45 transition hover:bg-white/[0.08] hover:text-white"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-            {/* Warnings (hidden parts, credits) scroll with the list instead of pushing the button off screen */}
-            <div className="mt-3">{creditsNote}</div>
+              <div className="mt-3">{creditsNote}</div>
             </div>
 
-            <div className="shrink-0 border-t border-white/[0.06] pt-4">
+            <div className="shrink-0 pt-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-[11px] font-medium uppercase tracking-[0.28em] text-white/80">
+                  {t('yourBuild')}
+                  {selectedProducts.length > 0 && <span className="ms-2 tabular-nums text-white/40">{selectedProducts.length}</span>}
+                </h2>
+                {selectedProducts.length > 0 && (
+                  <button type="button" onClick={() => setSelectedPartIds([])} className="cursor-pointer text-[12px] text-white/40 transition hover:text-white">
+                    {t('clearBuild')}
+                  </button>
+                )}
+              </div>
+              <div className="mt-3">
+                {selectedProducts.length === 0 ? (
+                  <p className="py-3 text-[13px] text-white/35">{t('tapHint')}</p>
+                ) : (
+                  <BuildStrip
+                    parts={selectedProducts}
+                    onRemove={togglePart}
+                    priceOf={(p) => formatPrice(getUSDPrice(p.price))}
+                    removeLabel={t('removePart')}
+                    prevLabel={t('scrollBack')}
+                    nextLabel={t('scrollForward')}
+                  />
+                )}
+              </div>
+              <div className="h-4" />
               {selectedProducts.length > 0 && (
                 <div className="mb-3 flex items-baseline justify-between px-1">
                   <span className="text-[13px] text-white/45">{t('selectedCount', { count: selectedProducts.length })}</span>
