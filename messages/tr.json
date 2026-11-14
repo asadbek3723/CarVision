@@ -1161,7 +1161,9 @@
       "r4": {
         "role": "BMW M4 sahibi",
         "text": "Body kiti takmadan önce gördüm ve hata yapmadım. Çok kullanışlı ve premium bir deneyim."
-      }
+      },
+      "prev": "Önceki yorum",
+      "next": "Sonraki yorum"
     },
     "app": {
       "eyebrow": "05 — MOBİL UYGULAMA",

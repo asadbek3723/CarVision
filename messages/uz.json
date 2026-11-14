@@ -1161,7 +1161,9 @@
       "r4": {
         "role": "BMW M4 egasi",
         "text": "Body kitni oʻrnatishdan oldin koʻrib oldim va xato qilmadim. Juda qulay va premium tajriba."
-      }
+      },
+      "prev": "Oldingi sharh",
+      "next": "Keyingi sharh"
     },
     "app": {
       "eyebrow": "05 — MOBIL ILOVA",

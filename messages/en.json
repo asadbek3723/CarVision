@@ -1161,7 +1161,9 @@
       "r4": {
         "role": "BMW M4 owner",
         "text": "I saw the body kit before installing it and made no mistake. A very convenient, premium experience."
-      }
+      },
+      "prev": "Previous review",
+      "next": "Next review"
     },
     "app": {
       "eyebrow": "05 — MOBILE APP",
