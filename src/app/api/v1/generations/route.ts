@@ -90,13 +90,20 @@ function sha256(value: string): string {
   return crypto.createHash('sha256').update(value).digest('hex');
 }
 
-/** Stable key: same owner + same photo + same parts + same angle => reuse the stored render (free). */
-function buildCacheKey(photo: string, angleId: string, parts: FitmentPartInput[]): string {
+/**
+ * Version of the render rules. Raise it whenever the prompt or the model choice changes in a way
+ * that changes results: renders made under older rules are then no longer served from the cache
+ * (a fixed bug would otherwise keep coming back for free on a retry).
+ */
+const RENDER_RULES_VERSION = 2;
+
+/** Stable key: same owner + same photo + same parts (and their photos) + same angle + same rules => reuse the stored render (free). */
+function buildCacheKey(photo: string, angleId: string, parts: Array<FitmentPartInput & { zone?: string | undefined }>): string {
   const normalized = parts
-    .map((p) => `${p.id}|${p.category}|${p.spec ?? ''}|${p.swatch ?? ''}`)
+    .map((p) => `${p.id}|${p.category}|${p.spec ?? ''}|${p.swatch ?? ''}|${p.zone ?? ''}|${p.angleImage || p.image || ''}`)
     .sort()
     .join(';');
-  return sha256(`${sha256(photo)}:${angleId}:${normalized}`);
+  return sha256(`v${RENDER_RULES_VERSION}:${sha256(photo)}:${angleId}:${normalized}`);
 }
 
 interface GenerationPayload {

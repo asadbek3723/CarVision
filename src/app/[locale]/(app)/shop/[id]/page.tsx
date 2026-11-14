@@ -8,7 +8,7 @@ import { getPublishedItem } from '@/server/catalog-public';
 import { localizedText } from '@/domain/catalog';
 import { toVeloceProduct } from '@/server/product-view';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
-import { CATEGORY_NAMES, categoryUrlSlug } from '@/lib/seo/categories';
+import { CATEGORY_NAMES, brandNotInName, categoryUrlSlug, seoCategory } from '@/lib/seo/categories';
 import { itemFitLabels, itemImageUrls } from '@/server/catalog-seo';
 
 // Product pages are built on first visit and then served from cache, refreshed at most once a minute,
@@ -35,11 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const text = localizedText(item, l);
-  const title = `${item.brand ? `${item.brand} ` : ''}${text.name} | CarVision`;
-  const description = (
-    text.description?.trim() || SEO_COPY[l].productDescription(text.name, item.brand, item.categoryLabel)
-  ).slice(0, 160);
-  const category = CATEGORY_NAMES[l][item.category] ?? item.categoryLabel;
+  const brand = brandNotInName(item.brand, text.name);
+  const category = CATEGORY_NAMES[l][seoCategory(item)] ?? item.categoryLabel;
+  const title = `${brand ? `${brand} ` : ''}${text.name} | CarVision`;
+  const description = (text.description?.trim() || SEO_COPY[l].productDescription(text.name, brand, category)).slice(0, 160);
   const fits = itemFitLabels(item, 8);
   return {
     ...buildMetadata({
@@ -59,6 +58,8 @@ export default async function ProductDetailPage({ params }: Props) {
   const l = isLocale(locale) ? locale : DEFAULT_LOCALE;
   const item = await getPublishedItem(id);
   const text = item ? localizedText(item, l) : null;
+  const name = text?.name ?? item?.name ?? '';
+  const category = item ? (CATEGORY_NAMES[l][seoCategory(item)] ?? item.categoryLabel) : '';
 
   return (
     <>
@@ -68,14 +69,13 @@ export default async function ProductDetailPage({ params }: Props) {
             productLd({
               locale: l,
               id,
-              name: text?.name ?? item.name,
+              name,
               brand: item.brand,
-              description:
-                text?.description?.trim() || SEO_COPY[l].productDescription(text?.name ?? item.name, item.brand, item.categoryLabel),
+              description: text?.description?.trim() || SEO_COPY[l].productDescription(name, brandNotInName(item.brand, name), category),
               images: itemImageUrls(item, 6),
               priceUSD: item.priceUSD,
               inStock: item.stock > 0,
-              category: CATEGORY_NAMES[l][item.category] ?? item.categoryLabel,
+              category,
               fits: itemFitLabels(item),
               universal: item.isUniversal,
             }),
@@ -83,10 +83,10 @@ export default async function ProductDetailPage({ params }: Props) {
               { name: SEO_COPY[l].breadcrumbHome, path: localePath(l) },
               { name: SEO_COPY[l].breadcrumbShop, path: localePath(l, '/catalog') },
               {
-                name: CATEGORY_NAMES[l][item.category] ?? item.categoryLabel,
-                path: localePath(l, `/catalog/${categoryUrlSlug(item.category)}`),
+                name: category,
+                path: localePath(l, `/catalog/${categoryUrlSlug(seoCategory(item))}`),
               },
-              { name: text?.name ?? item.name, path: localePath(l, `/shop/${id}`) },
+              { name, path: localePath(l, `/shop/${id}`) },
             ]),
           ]}
         />

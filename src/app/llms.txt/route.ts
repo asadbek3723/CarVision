@@ -1,5 +1,5 @@
 import { CATALOG_CATEGORIES, type CatalogCategory, type CatalogItemDTO } from '@/domain/catalog';
-import { CATEGORY_NAMES, categoryUrlSlug } from '@/lib/seo/categories';
+import { CATEGORY_NAMES, categoryUrlSlug, seoCategory } from '@/lib/seo/categories';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { SITE_NAME, absoluteUrl } from '@/lib/seo/site';
 import { itemFitLabels, listAllPublishedItems } from '@/server/catalog-seo';
@@ -18,7 +18,7 @@ function oneLine(s: string, max = 220): string {
 export async function GET(): Promise<Response> {
   const items = await listAllPublishedItems();
   const byCategory = new Map<CatalogCategory, CatalogItemDTO[]>();
-  for (const i of items) byCategory.set(i.category, [...(byCategory.get(i.category) ?? []), i]);
+  for (const i of items) byCategory.set(seoCategory(i), [...(byCategory.get(seoCategory(i)) ?? []), i]);
 
   const lines: string[] = [
     `# ${SITE_NAME}`,

@@ -4,7 +4,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { CatalogDirectory } from '@/components/seo/CatalogDirectory';
 import { JsonLd, breadcrumbLd, itemListLd } from '@/lib/seo/jsonld';
-import { CATALOG_COPY, CATEGORY_NAMES, categoryFromUrlSlug, categoryUrlSlug } from '@/lib/seo/categories';
+import { CATALOG_COPY, CATEGORY_NAMES, categoryFromUrlSlug, categoryUrlSlug, seoCategory } from '@/lib/seo/categories';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { DEFAULT_LOCALE, isLocale, localePath } from '@/lib/seo/site';
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const slug = categoryFromUrlSlug(category);
   if (!slug) return {};
   const name = CATEGORY_NAMES[l][slug];
-  const count = (await listAllPublishedItems()).filter((i) => i.category === slug).length;
+  const count = (await listAllPublishedItems()).filter((i) => seoCategory(i) === slug).length;
   return buildMetadata({
     locale: l,
     path: `/catalog/${category}`,
@@ -44,8 +44,8 @@ export default async function CategoryPage({ params }: Props) {
   setRequestLocale(l);
   const all = await listAllPublishedItems();
   const counts: Partial<Record<CatalogCategory, number>> = {};
-  for (const i of all) counts[i.category] = (counts[i.category] ?? 0) + 1;
-  const items = all.filter((i) => i.category === slug);
+  for (const i of all) counts[seoCategory(i)] = (counts[seoCategory(i)] ?? 0) + 1;
+  const items = all.filter((i) => seoCategory(i) === slug);
   const name = CATEGORY_NAMES[l][slug];
 
   return (

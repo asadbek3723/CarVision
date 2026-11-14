@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { CatalogDirectory } from '@/components/seo/CatalogDirectory';
 import { JsonLd, breadcrumbLd, itemListLd } from '@/lib/seo/jsonld';
-import { CATALOG_COPY } from '@/lib/seo/categories';
+import { CATALOG_COPY, seoCategory } from '@/lib/seo/categories';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { DEFAULT_LOCALE, isLocale, localePath } from '@/lib/seo/site';
@@ -27,7 +27,7 @@ export default async function CatalogPage({ params }: Props) {
   setRequestLocale(l);
   const items = await listAllPublishedItems();
   const counts: Partial<Record<CatalogCategory, number>> = {};
-  for (const i of items) counts[i.category] = (counts[i.category] ?? 0) + 1;
+  for (const i of items) counts[seoCategory(i)] = (counts[seoCategory(i)] ?? 0) + 1;
   const copy = CATALOG_COPY[l];
 
   return (

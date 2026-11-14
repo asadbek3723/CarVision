@@ -5,7 +5,7 @@ import { CATALOG_CATEGORIES, localizedText, type CatalogCategory, type CatalogIt
 import { ProductImage } from '@/components/ui/ProductImage';
 import { Wordmark } from '@/components/ui/Wordmark';
 import { geist, md, mdFocus } from '@/features/minimal/theme';
-import { CATALOG_COPY, CATEGORY_NAMES, categoryUrlSlug } from '@/lib/seo/categories';
+import { CATALOG_COPY, CATEGORY_NAMES, brandNotInName, categoryUrlSlug, seoCategory } from '@/lib/seo/categories';
 import { SEO_COPY } from '@/lib/seo/copy';
 import { itemFitLabels, itemImageUrls } from '@/server/catalog-seo';
 
@@ -118,7 +118,7 @@ export function CatalogDirectory({
               const text = localizedText(item, locale);
               const image = itemImageUrls(item, 1)[0];
               const fits = itemFitLabels(item, 3);
-              const category = names[item.category] ?? item.categoryLabel;
+              const category = names[seoCategory(item)] ?? item.categoryLabel;
               return (
                 <li key={item.id} className="min-w-0">
                   <article>
@@ -127,7 +127,7 @@ export function CatalogDirectory({
                         {image && (
                           <ProductImage
                             src={image}
-                            alt={[item.brand, text.name, category].filter(Boolean).join(' — ')}
+                            alt={[brandNotInName(item.brand, text.name), text.name, category].filter(Boolean).join(' — ')}
                             sizes="(min-width: 1024px) 22vw, (min-width: 640px) 30vw, 46vw"
                             className="object-cover transition duration-500 md:group-hover:scale-105"
                           />

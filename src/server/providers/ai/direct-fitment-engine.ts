@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { hasAnyImageKey, runImageChain } from './image-chain';
 import type { ProviderId } from './key-pool';
+import { partZone } from '@/lib/part-visibility';
 import { checkRender, hasRenderChecker, renderFaults, type RenderCheck } from './render-check';
 
 export interface FitmentPartInput {
@@ -12,6 +13,8 @@ export interface FitmentPartInput {
   image?: string | undefined;
   angleImage?: string | undefined;
   swatch?: string | undefined;
+  /** Where a bumper / lamp / body part sits: `front`, `rear` or `both` (guessed from the name when absent). */
+  zone?: string | undefined;
 }
 
 export interface DirectFitmentRequest {
@@ -184,10 +187,13 @@ const FINISH_LOOK: Record<PaintFinish, string> = {
  * Repaint instruction for a colour. The customer asked for paint that reads as real: lit by the
  * light of the photo, with true shadows and depth, and every small painted detail covered.
  */
-function paintInstruction(p: { name: string; spec?: string | undefined; swatch?: string | undefined }): string {
+function paintInstruction(p: { name: string; spec?: string | undefined; swatch?: string | undefined }, hasPhoto: boolean): string {
   const finish = paintFinish(p);
   return [
-    `REPAINT the whole car body in "${p.name}"${p.swatch ? ` (base tone ${p.swatch})` : ''}. Its reference photo is a close-up sample of this paint: match its hue, depth and finish exactly and ignore everything else in that photo.`,
+    `REPAINT the whole car body in "${p.name}"${p.swatch ? ` (base tone ${p.swatch})` : ''}.`,
+    hasPhoto
+      ? 'Its reference photo is a close-up sample of this paint: match its hue, depth and finish exactly and ignore everything else in that photo.'
+      : `No photo of this paint is given: the colour is exactly ${p.swatch ? `the base tone ${p.swatch}` : 'the one its name describes'}; never take a colour from any other input image.`,
     `${FINISH_LOOK[finish]}.`,
     'LIGHT FIRST: before painting, read the light in the customer photo: which side the sun or main light comes from, how hard or soft it is and its colour. The new paint is lit by exactly that light. Surfaces facing the light are brighter, surfaces turned away are darker, and the brightness follows the real curvature of every panel (hood, roof, fenders, doors, bumpers, pillars), so the body keeps its full 3D shape.',
     'SHADOWS AND DEPTH: keep every shadow where it is and as dark as it is: under the car, in the wheel arches, under the mirrors and door handles, along creases and character lines, and in every panel gap and door seam, which stay thin and dark. Recesses look deeper and richer, crowns and edges catch the light. Never a flat even fill, never a sticker or plastic look. A dark colour still shows its highlights so the shape stays readable; a light colour never burns out to white.',
@@ -395,8 +401,18 @@ function finalState(req: DirectFitmentRequest): string[] {
   return lines;
 }
 
-function partInstruction(p: FitmentPartInput, req: DirectFitmentRequest, side: boolean): string {
+const NO_PHOTO =
+  ' No photo of this part is given: ignore every mention of its reference photo above, fit a realistic, high-quality part that matches its name and suits this car, and never take it from the photo of another part';
+
+function partInstruction(p: FitmentPartInput, req: DirectFitmentRequest, side: boolean, hasPhoto: boolean): string {
+  const line = partInstructionText(p, req, side, hasPhoto);
+  const kind = partKind(p);
+  return !hasPhoto && sendsPartPhoto(p) && kind !== 'color' ? `${line}.${NO_PHOTO}` : line;
+}
+
+function partInstructionText(p: FitmentPartInput, req: DirectFitmentRequest, side: boolean, hasPhoto: boolean): string {
   const specText = p.spec ? ` (${p.spec})` : '';
+  const zone = partZone(p);
   const colorPart = req.parts.find((x) => partKind(x) === 'color');
   // A bumper or lamp photo is the part fitted on SOME car: that car's paint, lamps and plate are not
   // the part. The paint comes from the colour in this build, else from the customer's own car.
@@ -416,14 +432,14 @@ function partInstruction(p: FitmentPartInput, req: DirectFitmentRequest, side: b
     case 'polish':
       return `PAINT POLISHING "${p.name}": show the paint exactly as if it was machine-polished (paint correction). Swirl marks, haze, oxidation and light surface scratches are removed and the gloss is even and natural. The paint colour, dents, creases, deep scratches, chips and damaged areas stay exactly as in the photo`;
     case 'color':
-      return paintInstruction(p);
+      return paintInstruction(p, hasPhoto);
     case 'tint':
       return tintInstruction(p);
     case 'wheels':
       return `Replace EVERY visible wheel (front and rear, near side and far side) with "${p.name}"${specText}. Take only the wheel from its reference photo, never the car it is on. All wheels get the identical new design and finish: the exact spoke geometry, the exact colour and finish of the part photo applied over the WHOLE wheel face: spokes, centre, hub, centre cap, lug nuts area, barrel and lip. No part of any wheel keeps the old wheel's colour or design (no silver, white or chrome centre left over unless the part photo has it). Same wheel size and position, tyres and brake calipers kept, realistic contact shadow`;
     case 'bumper':
       return (
-        `Replace the front or rear bumper visible from this viewpoint with "${p.name}"${specText}. From its reference photo take ONLY the bumper itself: its shape, contours, air intakes and side vents, fog lamp housings, grille mesh, lip and splitter, rear diffuser and its fins, reflectors built into the bumper, the exhaust tip openings and tips, and the design trims that are not body paint (black, chrome, carbon or coloured accent pieces). ` +
+        `Replace the ${zone === 'front' ? 'FRONT bumper (never the rear one)' : zone === 'rear' ? 'REAR bumper (never the front one)' : 'front or rear bumper visible from this viewpoint'} with "${p.name}"${specText}. From its reference photo take ONLY the bumper itself: its shape, contours, air intakes and side vents, fog lamp housings, grille mesh, lip and splitter, rear diffuser and its fins, reflectors built into the bumper, the exhaust tip openings and tips, and the design trims that are not body paint (black, chrome, carbon or coloured accent pieces). ` +
         'That photo shows the bumper fitted on another car: IGNORE everything else in it, including its headlights and tail lights, grille above the bumper, hood, trunk lid, badges, number plate, wheels, background and, above all, its paint colour. ' +
         `Paint the painted surfaces of the new bumper in ${paintText}, so the bumper never keeps the colour of the car in the reference photo. ` +
         `The headlights and tail lights stay ${lightsText}; never copy the lamps of the bumper photo. Align the bumper with the factory panel gaps.${sideNote}`
@@ -431,7 +447,7 @@ function partInstruction(p: FitmentPartInput, req: DirectFitmentRequest, side: b
     case 'spoiler':
       return `Mount "${p.name}"${specText} on the trunk lid / rear deck exactly like the reference photo (same blade shape, end plates, uprights and finish), correctly scaled to this car and in perspective. If the spoiler in the photo is body-coloured, paint it in ${paintText}; carbon, black or unpainted spoilers keep their own finish. Nothing else from that photo`;
     case 'lights':
-      return `Replace the headlights or tail lights visible from this viewpoint with "${p.name}"${specText} inside the factory housings: same LED signature, projector layout and lens tint as the reference photo, identical on the left and right lamp, with a natural daytime running light glow. Take only the lamps from that photo, never its bumper, grille or paint colour.${sideNote}`;
+      return `Replace the ${zone === 'front' ? 'HEADLIGHTS (never the tail lights)' : zone === 'rear' ? 'TAIL LIGHTS (never the headlights)' : 'headlights or tail lights visible from this viewpoint'} with "${p.name}"${specText} inside the factory housings: same LED signature, projector layout and lens tint as the reference photo, identical on the left and right lamp, with a natural daytime running light glow. Take only the lamps from that photo, never its bumper, grille or paint colour.${sideNote}`;
     case 'body':
       return `Replace the matching body part with "${p.name}"${specText}, aligned with the factory panel gaps and painted in ${paintText} (or kept in the carbon / black finish of the part photo when it is unpainted). Take only that part from its photo.${sideNote}`;
     case 'suspension':
@@ -443,12 +459,24 @@ function partInstruction(p: FitmentPartInput, req: DirectFitmentRequest, side: b
   }
 }
 
-export function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest): string {
+/** Most part photos a model takes (the adapters send at most 3). */
+const MAX_PART_PHOTOS = 3;
+
+/** Parts that will have a photo when nothing was resolved yet: a shape part with an image url, at most 3. */
+function expectedPhotoIds(parts: FitmentPartInput[]): Set<string> {
+  return new Set(photoParts(parts).filter((p) => Boolean(p.angleImage || p.image)).slice(0, MAX_PART_PHOTOS).map((p) => p.id));
+}
+
+/**
+ * `photoIds` = the parts whose photo really reaches the model. A part without one is told so, or the
+ * model would take "its reference photo" to be the photo of another part.
+ */
+export function buildPrecisionAutomotivePrompt(req: DirectFitmentRequest, photoIds: Set<string> = expectedPhotoIds(req.parts)): string {
   const view = req.angleId || 'front-left';
   const angleText = ANGLE_TEXT[view] || 'three-quarter view';
   const side = SIDE_VIEWS.has(view);
   const kinds = req.parts.map(partKind);
-  const partInstructions = req.parts.filter((p) => partKind(p) !== 'interior').map((p) => partInstruction(p, req, side));
+  const partInstructions = req.parts.filter((p) => partKind(p) !== 'interior').map((p) => partInstruction(p, req, side, photoIds.has(p.id)));
 
   const touchesPaint = kinds.some((k) => k === 'color' || k === 'ceramic' || k === 'polish');
   const colorPart = req.parts.find((p) => partKind(p) === 'color');
@@ -514,7 +542,7 @@ export async function executeDirectAiFitment(
   req: DirectFitmentRequest
 ): Promise<DirectFitmentResponse> {
   const startMs = Date.now();
-  const promptUsed = buildPrecisionAutomotivePrompt(req);
+  let promptUsed = buildPrecisionAutomotivePrompt(req);
 
   const carDataUri = await resolveImageToDataUri(req.carPhoto);
   const providerConfigured = hasAnyImageKey();
@@ -525,9 +553,13 @@ export async function executeDirectAiFitment(
     // Tint / ceramic / polish cards and colours with a swatch send no photo: see `sendsPartPhoto`.
     const withPhoto = (
       await Promise.all(
-        photoParts(req.parts).map(async (p) => ({ label: partPhotoLabel(p), uri: await resolveImageToDataUri(p.angleImage || p.image) }))
+        photoParts(req.parts).map(async (p) => ({ id: p.id, label: partPhotoLabel(p), uri: await resolveImageToDataUri(p.angleImage || p.image) }))
       )
-    ).filter((r): r is { label: string; uri: string } => Boolean(r.uri));
+    )
+      .filter((r): r is { id: string; label: string; uri: string } => Boolean(r.uri))
+      .slice(0, MAX_PART_PHOTOS);
+    // The prompt says which parts really have a photo (an unreachable image url is not one).
+    promptUsed = buildPrecisionAutomotivePrompt(req, new Set(withPhoto.map((r) => r.id)));
     const partDataUris = withPhoto.map((r) => r.uri);
     const partLabels = withPhoto.map((r) => r.label);
     const referenceDataUri = req.referenceAfter ? await resolveImageToDataUri(req.referenceAfter) : null;

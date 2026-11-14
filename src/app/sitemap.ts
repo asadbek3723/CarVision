@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { CATALOG_CATEGORIES } from '@/domain/catalog';
-import { categoryUrlSlug } from '@/lib/seo/categories';
+import { categoryUrlSlug, seoCategory } from '@/lib/seo/categories';
 import { absoluteUrl, languageAlternates, localePath } from '@/lib/seo/site';
 import { itemImageUrls, listAllPublishedItems } from '@/server/catalog-seo';
 
@@ -42,7 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const categoryEntries = CATALOG_CATEGORIES.flatMap((c) => {
-    const inCategory = items.filter((i) => i.category === c.slug);
+    const inCategory = items.filter((i) => seoCategory(i) === c.slug);
     const first = inCategory[0];
     if (!first) return []; // empty category pages are noindex
     return perLocale(`/catalog/${categoryUrlSlug(c.slug)}`, {

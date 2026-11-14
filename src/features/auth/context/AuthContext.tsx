@@ -58,6 +58,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       if (res.status === 401) {
+        let wasSignedIn = false;
+        try {
+          wasSignedIn = Boolean(localStorage.getItem(STORAGE_KEY));
+        } catch {
+          // storage blocked: treat as a guest
+        }
+        if (!wasSignedIn) {
+          // A guest: nothing to keep and no reason to wait. The dead-cookie cleanup runs once per
+          // browser session, not on every page (it cost every visitor 1.2s and two extra requests).
+          setUser(null);
+          let cleaned = false;
+          try {
+            cleaned = sessionStorage.getItem('carvision_guest_cleanup') === '1';
+            sessionStorage.setItem('carvision_guest_cleanup', '1');
+          } catch {
+            // storage blocked: clean up below
+          }
+          if (!cleaned) void fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
+          return;
+        }
         // One 401 is not proof of a sign-out (a token refresh can race another request): ask once
         // more before dropping the user. Anything else (503, offline) keeps them signed in.
         await new Promise((r) => setTimeout(r, 1200));

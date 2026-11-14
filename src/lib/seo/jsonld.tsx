@@ -1,4 +1,5 @@
 import { BRAND_VARIANTS, SEO_COPY } from './copy';
+import { brandNotInName } from './categories';
 import { SITE_NAME, SITE_URL, absoluteUrl, localePath } from './site';
 import { socialLinks, supportEmail } from './social';
 import type { Locale } from '@/i18n/routing';
@@ -123,7 +124,7 @@ export function productLd(p: {
             url: src,
             contentUrl: src,
             name: i === 0 ? p.name : `${p.name} — ${i + 1}`,
-            caption: [p.brand, p.name, p.category].filter(Boolean).join(' · '),
+            caption: [brandNotInName(p.brand, p.name), p.name, p.category].filter(Boolean).join(' · '),
             representativeOfPage: i === 0,
           })),
         }

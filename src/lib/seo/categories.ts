@@ -6,6 +6,20 @@ export function categoryUrlSlug(slug: CatalogCategory): string {
   return slug.replace(/_/g, '-');
 }
 
+/**
+ * The catalog section a part is listed under. Window films are stored as `other` with
+ * `attributes.part = 'window_tint'`, but people look for them under "paint, wraps and tint".
+ */
+export function seoCategory(item: { category: CatalogCategory; attributes?: Record<string, unknown> | null }): CatalogCategory {
+  return item.attributes?.['part'] === 'window_tint' ? 'wrap_paint' : item.category;
+}
+
+/** The brand, unless the part name already starts with it ("3M" + "3M Crystalline" is not "3M 3M Crystalline"). */
+export function brandNotInName(brand: string | null | undefined, name: string): string {
+  const b = (brand ?? '').trim();
+  return b && !name.trim().toLowerCase().startsWith(b.toLowerCase()) ? b : '';
+}
+
 export function categoryFromUrlSlug(segment: string): CatalogCategory | null {
   const slug = segment.replace(/-/g, '_');
   return (CATALOG_CATEGORIES.find((c) => c.slug === slug)?.slug as CatalogCategory | undefined) ?? null;

@@ -1,6 +1,43 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "carvision-support", "runtimeExecutable": "npx", "runtimeArgs": ["next", "dev", "--turbopack", "-p", "3100"], "port": 3100 }
+    {
+      "name": "carvision-support",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "next",
+        "dev",
+        "--turbopack",
+        "-p",
+        "3100"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "carvision-noai",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "GEMINI_API_KEY=",
+        "GEMINI_API_KEYS=",
+        "GOOGLE_API_KEY=",
+        "OPENROUTER_API_KEYS=",
+        "OPENROUTER_API_KEY=",
+        "FAL_KEY=",
+        "FAL_KEYS=",
+        "FAL_API_KEY=",
+        "OPENAI_API_KEY=",
+        "OPENAI_API_KEYS=",
+        "CLOUDFLARE_API_TOKEN=",
+        "CLOUDFLARE_API_TOKENS=",
+        "CLOUDFLARE_ACCOUNT_ID=",
+        "npx",
+        "next",
+        "dev",
+        "--turbopack",
+        "-p",
+        "3101"
+      ],
+      "port": 3101
+    }
   ]
 }

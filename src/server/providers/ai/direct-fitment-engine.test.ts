@@ -305,3 +305,34 @@ describe('what a part does, and which photos reach the model', () => {
     expect(keepList([{ category: 'Color', name: 'Red', swatch: '#f00' }])).not.toContain('the same paint colour as IMAGE 1');
   });
 });
+
+describe('parts with and without a photo, front and rear', () => {
+  const car = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+
+  it('a part without a photo is told so, so it never borrows another part photo', async () => {
+    const res = await executeDirectAiFitment({
+      carPhoto: car,
+      angleId: 'front',
+      parts: [
+        { id: 'b', name: 'GT bumper', category: 'Bumper' },
+        { id: 'w', name: 'BBS', category: 'Wheels', image: '/images/studio/wheel_bbs.jpg' },
+      ],
+    });
+    const bumperLine = res.promptUsed.split('2. ')[0]!;
+    expect(bumperLine).toContain('No photo of this part is given');
+    expect(res.promptUsed.split('2. ')[1]!.split('Apply every change')[0]).not.toContain('No photo of this part is given');
+  });
+
+  it('a swatch colour says the colour comes from the swatch, not from a photo', async () => {
+    const res = await executeDirectAiFitment({ carPhoto: car, parts: [{ id: 'c', name: 'Red', category: 'Color', swatch: '#ff0000' }] });
+    expect(res.promptUsed).toContain('No photo of this paint is given: the colour is exactly the base tone #ff0000');
+    expect(res.promptUsed).not.toContain('Its reference photo is a close-up sample');
+  });
+
+  it('names the front or rear bumper and the head or tail lights by their zone', async () => {
+    const front = await executeDirectAiFitment({ carPhoto: car, angleId: 'right', parts: [{ id: 'b', name: 'GT', category: 'Bumper', zone: 'front' }] });
+    expect(front.promptUsed).toContain('Replace the FRONT bumper (never the rear one)');
+    const tail = await executeDirectAiFitment({ carPhoto: car, angleId: 'rear', parts: [{ id: 'l', name: 'Orqa fara LED', category: 'Lights' }] });
+    expect(tail.promptUsed).toContain('Replace the TAIL LIGHTS (never the headlights)');
+  });
+});
