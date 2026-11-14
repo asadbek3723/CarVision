@@ -50,6 +50,8 @@ export function Footer() {
     catalog: `/${locale}/catalog`,
     pricing: `/${locale}/plans`,
     visualizer: `/${locale}/shop`,
+    terms: `/${locale}/terms`,
+    privacy: `/${locale}/privacy`,
   };
   return (
     <footer className="mx-auto max-w-7xl px-6 pb-10 select-none">

@@ -16,6 +16,8 @@ const STATIC_PAGES: Array<{ path: string; priority: number; changeFrequency: Fre
   { path: '/shop', priority: 0.9, changeFrequency: 'daily' },
   { path: '/catalog', priority: 0.9, changeFrequency: 'daily' },
   { path: '/plans', priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/terms', priority: 0.3, changeFrequency: 'monthly' },
+  { path: '/privacy', priority: 0.3, changeFrequency: 'monthly' },
 ];
 
 function perLocale(path: string, extra: Omit<Entry, 'url' | 'alternates'>): Entry[] {
