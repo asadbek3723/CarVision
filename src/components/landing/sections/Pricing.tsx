@@ -1,7 +1,7 @@
 'use client';
 
 
-import { useTranslations } from 'next-intl';import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
   Check,
@@ -14,7 +14,6 @@ const TIERS: {
   key: 'free' | 'pro' | 'max';
   name: string;
   price: number;
-  originalPrice?: number;
   /** Values interpolated into the plan's feature texts. */
   items: { key: string; values?: Record<string, number> }[];
   hot: boolean;
@@ -37,7 +36,6 @@ const TIERS: {
     key: 'max',
     name: 'MAX',
     price: 99,
-    originalPrice: 145,
     items: [{ key: 'i1', values: { count: 4000 } }, { key: 'i2' }, { key: 'i3', values: { count: 4 } }, { key: 'i4' }, { key: 'i5' }],
     hot: true,
   },
@@ -45,7 +43,6 @@ const TIERS: {
 
 export function Pricing({ locale }: { locale: string }) {
   const t = useTranslations('landing.pricing');
-  const [isAnnual, setIsAnnual] = React.useState(false);
 
   return (
     <section id="pricing" className="mx-auto max-w-7xl px-6 py-20 sm:py-32">
@@ -55,21 +52,6 @@ export function Pricing({ locale }: { locale: string }) {
           title={t('title')}
           gold={t('gold')}
         />
-
-        <div className="reveal flex shrink-0 rounded-full p-1 text-xs select-none">
-          {[false, true].map((val) => (
-            <button
-              key={String(val)}
-              type="button"
-              onClick={() => setIsAnnual(val)}
-              className={`rounded-full px-5 py-2 transition-all duration-500 cursor-pointer ${
- isAnnual === val ? 'btn-gold font-bold' : 'text-muted-foreground'
- }`}
-            >
-              {val ? t('annual') : t('monthly')}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="reveal mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -85,7 +67,7 @@ export function Pricing({ locale }: { locale: string }) {
           >
             {tier.hot && (
               <span className="btn-gold absolute -top-3.5 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 rounded-full px-4 py-1 text-[9px] sm:text-[10px] font-bold tracking-[0.12em] whitespace-nowrap shadow-gold">
-                {tier.originalPrice ? t(`${tier.key}.badge`, { original: tier.originalPrice, price: tier.price, percent: Math.round((1 - tier.price / tier.originalPrice) * 100) }) : t('popular')}
+                {t('popular')}
               </span>
             )}
             <p className="text-[11px] tracking-lux text-primary">{t(`${tier.key}.tier`)}</p>
@@ -94,15 +76,8 @@ export function Pricing({ locale }: { locale: string }) {
             <p className="mt-6 flex items-baseline gap-2">
               <span className="font-display text-6xl text-gold">
                 $
-                {isAnnual && tier.price
-                  ? Math.round(tier.price * 0.8)
-                  : tier.price}
+                {tier.price}
               </span>
-              {tier.originalPrice && (
-                <span className="text-xl text-muted-foreground/60 line-through decoration-primary/50">
-                  ${isAnnual ? Math.round(tier.originalPrice * 0.8) : tier.originalPrice}
-                </span>
-              )}
               <span className="text-sm text-muted-foreground">/ {t(`${tier.key}.per`)}</span>
             </p>
 
