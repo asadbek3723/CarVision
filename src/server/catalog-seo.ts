@@ -13,9 +13,10 @@ const PAGE = 200;
  * gets its own indexable URL. Deduped per request; an unreachable database yields an empty list.
  */
 export const listAllPublishedItems = cache(async (): Promise<CatalogItemDTO[]> => {
-  const db = createAdminClient();
   const all: CatalogItemDTO[] = [];
   try {
+    // Inside the try: preview builds have no SUPABASE_SERVICE_ROLE_KEY, and the client throws without it.
+    const db = createAdminClient();
     for (let offset = 0; offset < MAX_ITEMS; offset += PAGE) {
       const page = await loadItems(db, { listedOnly: true, statuses: ['PUBLISHED'], limit: PAGE, offset });
       all.push(...page);
