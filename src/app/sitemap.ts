@@ -1,56 +1,64 @@
 import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
+import { CATALOG_CATEGORIES } from '@/domain/catalog';
+import { categoryUrlSlug } from '@/lib/seo/categories';
 import { absoluteUrl, languageAlternates, localePath } from '@/lib/seo/site';
-import { createAdminClient } from '@/lib/supabase/server';
-import { loadItems } from '@/server/catalog';
+import { itemImageUrls, listAllPublishedItems } from '@/server/catalog-seo';
 
-export const revalidate = 3600;
+export const revalidate = 600;
+
+type Freq = 'daily' | 'weekly' | 'monthly';
+type Entry = MetadataRoute.Sitemap[number];
 
 /** Public, indexable pages (login/register/app screens are noindex and excluded). */
-const STATIC_PAGES: Array<{ path: string; priority: number; changeFrequency: 'daily' | 'weekly' | 'monthly' }> = [
+const STATIC_PAGES: Array<{ path: string; priority: number; changeFrequency: Freq }> = [
   { path: '', priority: 1, changeFrequency: 'weekly' },
   { path: '/shop', priority: 0.9, changeFrequency: 'daily' },
+  { path: '/catalog', priority: 0.9, changeFrequency: 'daily' },
   { path: '/plans', priority: 0.6, changeFrequency: 'monthly' },
 ];
 
-async function productEntries(): Promise<Array<{ id: string; lastModified: Date; images: string[] }>> {
-  try {
-    const items = await loadItems(createAdminClient(), { listedOnly: true, statuses: ['PUBLISHED'], limit: 200 });
-    return items.map((i) => ({
-      id: i.id,
-      lastModified: new Date(i.createdAt),
-      // Image search: the part's photos are listed with its page.
-      images: (i.images ?? []).map((img) => img.url).filter((u) => u.startsWith('https://')).slice(0, 5),
-    }));
-  } catch {
-    // DB unavailable at build time: ship the static part of the sitemap anyway.
-    return [];
-  }
+function perLocale(path: string, extra: Omit<Entry, 'url' | 'alternates'>): Entry[] {
+  return routing.locales.map((locale) => ({
+    url: absoluteUrl(localePath(locale, path)),
+    ...extra,
+    alternates: { languages: languageAlternates(path) },
+  }));
 }
 
+/**
+ * Every page, in every language, with hreflang alternates. Every published part gets its own URL
+ * and its photos are listed with it (image sitemap), so they appear in Google Images too.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const items = await listAllPublishedItems();
+  const newest = items[0] ? new Date(items[0].createdAt) : now;
+
   const staticEntries = STATIC_PAGES.flatMap(({ path, priority, changeFrequency }) =>
-    routing.locales.map((locale) => ({
-      url: absoluteUrl(localePath(locale, path)),
-      lastModified: now,
-      changeFrequency,
-      priority,
-      alternates: { languages: languageAlternates(path) },
-    }))
+    perLocale(path, { lastModified: path === '/catalog' || path === '/shop' ? newest : now, changeFrequency, priority })
   );
 
-  const products = await productEntries();
-  const productEntriesAll = products.flatMap(({ id, lastModified, images }) =>
-    routing.locales.map((locale) => ({
-      url: absoluteUrl(localePath(locale, `/shop/${id}`)),
-      lastModified,
-      changeFrequency: 'weekly' as const,
+  const categoryEntries = CATALOG_CATEGORIES.flatMap((c) => {
+    const inCategory = items.filter((i) => i.category === c.slug);
+    const first = inCategory[0];
+    if (!first) return []; // empty category pages are noindex
+    return perLocale(`/catalog/${categoryUrlSlug(c.slug)}`, {
+      lastModified: new Date(first.createdAt),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    });
+  });
+
+  const productEntries = items.flatMap((item) => {
+    const images = itemImageUrls(item, 5);
+    return perLocale(`/shop/${item.id}`, {
+      lastModified: new Date(item.createdAt),
+      changeFrequency: 'weekly',
       priority: 0.7,
       ...(images.length ? { images } : {}),
-      alternates: { languages: languageAlternates(`/shop/${id}`) },
-    }))
-  );
+    });
+  });
 
-  return [...staticEntries, ...productEntriesAll];
+  return [...staticEntries, ...categoryEntries, ...productEntries];
 }

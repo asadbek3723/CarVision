@@ -100,8 +100,15 @@ export function productLd(p: {
   images: string[];
   priceUSD: number;
   inStock: boolean;
+  /** Category shown to people, e.g. "Disklar". */
+  category?: string;
+  /** Car models the part is listed for. */
+  fits?: string[];
+  universal?: boolean;
 }): Json {
   const url = absoluteUrl(localePath(p.locale, `/shop/${p.id}`));
+  // A year ahead: Google wants an end date on prices; sellers change them in the dashboard anyway.
+  const priceValidUntil = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().slice(0, 10);
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -109,15 +116,70 @@ export function productLd(p: {
     name: p.name,
     description: p.description,
     url,
-    ...(p.images.length ? { image: p.images } : {}),
+    sku: p.id,
+    inLanguage: p.locale,
+    ...(p.category ? { category: p.category } : {}),
+    ...(p.images.length
+      ? {
+          image: p.images.map((src, i) => ({
+            '@type': 'ImageObject',
+            url: src,
+            contentUrl: src,
+            name: i === 0 ? p.name : `${p.name} — ${i + 1}`,
+            caption: [p.brand, p.name, p.category].filter(Boolean).join(' · '),
+            representativeOfPage: i === 0,
+          })),
+        }
+      : {}),
     ...(p.brand ? { brand: { '@type': 'Brand', name: p.brand } } : {}),
+    ...(p.fits?.length
+      ? { isAccessoryOrSparePartFor: p.fits.map((name) => ({ '@type': 'Car', name })) }
+      : {}),
+    ...(p.universal
+      ? { additionalProperty: [{ '@type': 'PropertyValue', name: 'fitment', value: 'universal' }] }
+      : {}),
     offers: {
       '@type': 'Offer',
       url,
       price: p.priceUSD.toFixed(2),
       priceCurrency: 'USD',
+      priceValidUntil,
       itemCondition: 'https://schema.org/NewCondition',
       availability: p.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      seller: { '@id': `${SITE_URL}/#organization` },
+    },
+  };
+}
+
+/** A listing page (catalog / category): its parts as an ordered list of product links. */
+export function itemListLd(p: {
+  locale: Locale;
+  path: string;
+  name: string;
+  description: string;
+  items: Array<{ id: string; name: string; image?: string | undefined }>;
+}): Json {
+  const url = absoluteUrl(localePath(p.locale, p.path));
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${url}#page`,
+    name: p.name,
+    description: p.description,
+    url,
+    inLanguage: p.locale,
+    isPartOf: { '@id': `${SITE_URL}/#website` },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: p.items.length,
+      itemListOrder: 'https://schema.org/ItemListOrderDescending',
+      itemListElement: p.items.map((it, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        url: absoluteUrl(localePath(p.locale, `/shop/${it.id}`)),
+        name: it.name,
+        ...(it.image ? { image: it.image } : {}),
+      })),
     },
   };
 }

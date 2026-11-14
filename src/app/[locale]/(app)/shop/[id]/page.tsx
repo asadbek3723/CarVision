@@ -8,6 +8,8 @@ import { getPublishedItem } from '@/server/catalog-public';
 import { localizedText } from '@/domain/catalog';
 import { toVeloceProduct } from '@/server/product-view';
 import type { VeloceProduct } from '@/domain/veloce-catalog';
+import { CATEGORY_NAMES, categoryUrlSlug } from '@/lib/seo/categories';
+import { itemFitLabels, itemImageUrls } from '@/server/catalog-seo';
 
 // Product pages are built on first visit and then served from cache, refreshed at most once a minute,
 // so opening a part does not wait for the database every time.
@@ -37,14 +39,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = (
     text.description?.trim() || SEO_COPY[l].productDescription(text.name, item.brand, item.categoryLabel)
   ).slice(0, 160);
-  return buildMetadata({
-    locale: l,
-    path: `/shop/${id}`,
-    title,
-    description,
-    // The product image lives under the (app) route group, so Next picks its (hashed) URL itself.
-    imageFromFile: true,
-  });
+  const category = CATEGORY_NAMES[l][item.category] ?? item.categoryLabel;
+  const fits = itemFitLabels(item, 8);
+  return {
+    ...buildMetadata({
+      locale: l,
+      path: `/shop/${id}`,
+      title,
+      description,
+      // The product image lives under the (app) route group, so Next picks its (hashed) URL itself.
+      imageFromFile: true,
+    }),
+    keywords: [text.name, item.brand, category, ...fits.map((f) => `${f} ${category}`), 'CarVision'].filter(Boolean),
+  };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
@@ -65,14 +72,21 @@ export default async function ProductDetailPage({ params }: Props) {
               brand: item.brand,
               description:
                 text?.description?.trim() || SEO_COPY[l].productDescription(text?.name ?? item.name, item.brand, item.categoryLabel),
-              images: item.images.map((i) => i.url).slice(0, 6),
+              images: itemImageUrls(item, 6),
               priceUSD: item.priceUSD,
               inStock: item.stock > 0,
+              category: CATEGORY_NAMES[l][item.category] ?? item.categoryLabel,
+              fits: itemFitLabels(item),
+              universal: item.isUniversal,
             }),
             breadcrumbLd([
               { name: SEO_COPY[l].breadcrumbHome, path: localePath(l) },
-              { name: SEO_COPY[l].breadcrumbShop, path: localePath(l, '/shop') },
-              { name: item.name, path: localePath(l, `/shop/${id}`) },
+              { name: SEO_COPY[l].breadcrumbShop, path: localePath(l, '/catalog') },
+              {
+                name: CATEGORY_NAMES[l][item.category] ?? item.categoryLabel,
+                path: localePath(l, `/catalog/${categoryUrlSlug(item.category)}`),
+              },
+              { name: text?.name ?? item.name, path: localePath(l, `/shop/${id}`) },
             ]),
           ]}
         />

@@ -130,6 +130,8 @@ export interface LoadItemsOptions {
   category?: string | undefined;
   query?: string | undefined;
   limit?: number | undefined;
+  /** Rows to skip (newest first), for paging through the whole catalog (sitemap, catalog pages). */
+  offset?: number | undefined;
   /**
    * "My car": only universal items and items whose fitment names this model (and year). Applied in
    * the query, before the limit, so a large catalog never cuts off parts that fit.
@@ -170,7 +172,9 @@ export async function loadItems(db: Db, opts: LoadItemsOptions): Promise<Catalog
         'id, shop_id, category, name, brand, description, price_cents, input_currency, input_price, stock, install_available, install_price_cents, attributes, status, cover_image_url, created_at'
       )
       .order('created_at', { ascending: false })
-      .limit(Math.min(opts.limit ?? 100, 200));
+      .order('id', { ascending: true });
+    const size = Math.min(opts.limit ?? 100, 200);
+    q = opts.offset ? q.range(opts.offset, opts.offset + size - 1) : q.limit(size);
 
     if (opts.shopId) q = q.eq('shop_id', opts.shopId);
     if (opts.ids?.length) q = q.in('id', opts.ids);

@@ -58,7 +58,7 @@ export function MinimalProductCard({
           ) : (
             <ProductImage
               src={p.image}
-              alt=""
+              alt={[p.brand, p.name].filter(Boolean).join(' ')}
               sizes="(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 46vw"
               onError={() => setImgFailed(true)}
               className="object-cover transition duration-500 md:group-hover:scale-105"

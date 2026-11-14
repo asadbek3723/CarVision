@@ -58,14 +58,17 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     category: 'automotive',
     manifest: `/${l}/manifest.webmanifest`,
     icons: {
+      // Google's result favicon: /favicon.ico at the root plus square PNGs in multiples of 48px.
+      // Stable URLs (no query string) on the root ones, so both carvision.uz and www.carvision.uz resolve them.
       icon: [
+        { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
         { url: '/icons/icon.svg?v=3', type: 'image/svg+xml' },
         { url: '/icons/favicon-32.png?v=3', sizes: '32x32', type: 'image/png' },
         { url: '/icons/favicon-48.png?v=3', sizes: '48x48', type: 'image/png' },
         { url: '/icons/icon-192.png?v=3', sizes: '192x192', type: 'image/png' },
         { url: '/icons/icon-512.png?v=3', sizes: '512x512', type: 'image/png' },
       ],
-      shortcut: [{ url: '/icons/favicon-32.png?v=3', sizes: '32x32', type: 'image/png' }],
+      shortcut: [{ url: '/favicon.ico', type: 'image/x-icon' }],
       apple: [{ url: '/icons/apple-touch-icon.png?v=3', sizes: '180x180', type: 'image/png' }],
     },
     appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: SITE_NAME, startupImage: IOS_STARTUP_IMAGES },

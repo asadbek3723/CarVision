@@ -1,7 +1,8 @@
 'use client';
 
 
-import { useTranslations } from 'next-intl';import {
+import { useLocale, useTranslations } from 'next-intl';
+import {
   Clock,
   Instagram,
   Linkedin,
@@ -33,6 +34,13 @@ const NAV_LABELS = new Set(['visualizer', 'pricing', 'faq']);
 export function Footer() {
   const t = useTranslations('landing.footer');
   const tNav = useTranslations('landing.nav');
+  const locale = useLocale();
+  // Real destinations where they exist; the catalog link is what lets crawlers reach every part.
+  const HREF: Partial<Record<string, string>> = {
+    catalog: `/${locale}/catalog`,
+    pricing: `/${locale}/plans`,
+    visualizer: `/${locale}/shop`,
+  };
   return (
     <footer className="mx-auto max-w-7xl px-6 pb-10 select-none">
       <div className="grid grid-cols-2 gap-10 pt-14 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
@@ -67,7 +75,7 @@ export function Footer() {
               {col.links.map((link) => (
                 <li key={link}>
                   <a
-                    href="#"
+                    href={HREF[link] ?? '#'}
                     className="transition-colors hover:text-foreground"
                   >
                     {NAV_LABELS.has(link) ? tNav(link as 'visualizer' | 'pricing' | 'faq') : t(link)}
