@@ -2003,6 +2003,7 @@
     "AI_BLOCKED": "The AI could not process this photo (safety filter). Keep people out of the shot, frame the whole car and retake it. Your credit was refunded",
     "AI_STORAGE_FAILED": "The result could not be saved. Your credit was refunded, please try again",
     "AI_WRONG_VIEW": "The AI result showed another side of the car, so it was not delivered. Your credit was refunded, try again",
+    "AI_WRONG_CAR": "The AI result showed a different car, so it was not delivered. Your credit was refunded, try again",
     "CAPTCHA_FAILED": "The check failed. Refresh the page and try again"
   },
   "capturePage": {

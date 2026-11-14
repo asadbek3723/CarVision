@@ -48,9 +48,11 @@ function visibleFrom(part: VisibilityPart): string[] | null {
     case 'bumper':
     case 'lights':
     case 'body kit': {
+      // A side profile shows the corner of the bumper and the edge of the lamps at both ends of the
+      // car: the build must look the same there too, so a side photo is rendered with them.
       const zone = partZone(part);
-      if (zone === 'front') return FRONT_VIEWS;
-      if (zone === 'rear') return REAR_VIEWS;
+      if (zone === 'front') return [...FRONT_VIEWS, ...SIDE_VIEWS];
+      if (zone === 'rear') return [...REAR_VIEWS, ...SIDE_VIEWS];
       return null;
     }
     default:

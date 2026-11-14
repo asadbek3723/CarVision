@@ -28,6 +28,12 @@ describe('part visibility per camera angle', () => {
     expect(isPartVisibleFromAngle(front, 'front-left')).toBe(true);
   });
 
+  it('front and rear parts also show from a side profile (the corner of the bumper, the edge of the lamps)', () => {
+    expect(isPartVisibleFromAngle(part('Bumper', 'Sport bumper', 'front'), 'right')).toBe(true);
+    expect(isPartVisibleFromAngle(part('Lights', 'Orqa fara LED'), 'left')).toBe(true);
+    expect(isPartVisibleFromAngle(part('Bumper', 'Sport bumper', 'front'), 'rear')).toBe(false);
+  });
+
   it('an explicit zone beats the name; unclear parts stay visible everywhere', () => {
     expect(partZone(part('Bumper', 'Sport bumper', 'rear'))).toBe('rear');
     expect(partZone(part('Bumper', 'Front lip rear diffuser'))).toBe('both');

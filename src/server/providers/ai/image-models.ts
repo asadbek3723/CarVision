@@ -14,9 +14,6 @@ export interface ImageModelSpec {
   rank: number;
 }
 
-/** Text-to-image models cannot edit the car photo: they are only a last resort. */
-const TEXT_ONLY_PENALTY = 1000;
-
 export const STATIC_IMAGE_MODELS: ImageModelSpec[] = [
   // Nano Banana 2: about half the price of Pro with near-Pro quality, so it goes first and Pro is
   // the fallback when it is busy or fails (override per task with IMAGE_MODEL_FITMENT).
@@ -179,7 +176,7 @@ export function resetModelDiscovery(): void {
 }
 
 /**
- * Final try order: strongest first. Models that cannot edit images sink to the bottom, and models of
+ * Final try order: strongest first. Models that cannot edit images are dropped for edits, and models of
  * providers without a key are dropped. Ties keep the direct provider ahead of OpenRouter.
  */
 export function planModels(
@@ -190,9 +187,11 @@ export function planModels(
   const unique = new Map<string, ImageModelSpec>();
   for (const spec of candidates) {
     if (!configuredProviders.has(spec.provider)) continue;
+    // A text-to-image model never sees the customer's photo: it draws a different car, so the
+    // before/after would not match. It is never used for an edit, not even as a last resort.
+    if (needsEdit && !spec.supportsEdit) continue;
     unique.set(`${spec.provider}:${spec.model}`, spec);
   }
-  const score = (s: ImageModelSpec) =>
-    s.rank + (needsEdit && !s.supportsEdit ? TEXT_ONLY_PENALTY : 0) + (s.provider === 'openrouter' ? 0.5 : 0);
+  const score = (s: ImageModelSpec) => s.rank + (s.provider === 'openrouter' ? 0.5 : 0);
   return [...unique.values()].sort((a, b) => score(a) - score(b));
 }

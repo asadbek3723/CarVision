@@ -11,8 +11,17 @@ import { fetchGeminiGenerate, geminiVisionModels } from './google-endpoint';
  */
 export interface RenderCheck {
   sameView: boolean;
+  /** The same car (make, model, body) in the same scene: not a new car drawn from a part photo. */
+  sameCar: boolean;
+  /** Nothing that was not asked for changed (paint, lamps, wheels, bumper copied from a part photo). */
+  keepsRest: boolean;
   partsComplete: boolean;
   problem: string;
+}
+
+/** How bad a checked render is: another side / another car outweigh an unwanted change, which outweighs an unfinished part. */
+export function renderFaults(c: RenderCheck): number {
+  return (c.sameView ? 0 : 8) + (c.sameCar ? 0 : 8) + (c.keepsRest ? 0 : 2) + (c.partsComplete ? 0 : 1);
 }
 
 export function hasRenderChecker(): boolean {
@@ -30,6 +39,8 @@ export function parseRenderCheck(text: string): RenderCheck | null {
     const parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, '')) as Record<string, unknown>;
     return {
       sameView: parsed['sameView'] !== false,
+      sameCar: parsed['sameCar'] !== false,
+      keepsRest: parsed['keepsRest'] !== false,
       partsComplete: parsed['partsComplete'] !== false,
       problem: typeof parsed['problem'] === 'string' ? parsed['problem'].slice(0, 300) : '',
     };
@@ -43,7 +54,9 @@ export async function checkRender(
   beforeUri: string,
   afterUri: string,
   changes: string[],
-  timeoutMs: number
+  timeoutMs: number,
+  /** What must stay as in the original (paint colour when no colour was chosen, lamps, ...). */
+  keep: string[] = []
 ): Promise<RenderCheck | null> {
   const keys = envKeys('gemini').filter((k) => k.length >= 8);
   const key = keys[Math.floor(Math.random() * keys.length)];
@@ -54,10 +67,15 @@ export async function checkRender(
   const prompt =
     'IMAGE 1 is a customer photo of a car. IMAGE 2 is an AI edit of that photo that should only add these changes: ' +
     `${changes.map((c) => `"${c}"`).join(', ')}. ` +
-    'Reply ONLY with JSON: {"sameView": boolean, "partsComplete": boolean, "problem": string}. ' +
+    'Reply ONLY with JSON: {"sameView": boolean, "sameCar": boolean, "keepsRest": boolean, "partsComplete": boolean, "problem": string}. ' +
     'sameView: true when IMAGE 2 shows the car from the same side and roughly the same camera angle as IMAGE 1 ' +
     '(front stays front, rear stays rear, left side stays left side, a 3/4 view stays the same 3/4 view). ' +
-    'False when IMAGE 2 shows another side of the car, the car is turned around, or it is a different scene. ' +
+    'False when IMAGE 2 shows another side of the car, the car is turned around or mirrored, or it is a different scene. ' +
+    'sameCar: true when IMAGE 2 is clearly the same car as IMAGE 1 (same make, model, body shape and background). False when it is ' +
+    'a different car or a different background. ' +
+    `keepsRest: true when everything that is not one of the changes stays as in IMAGE 1${keep.length ? `, in particular: ${keep.join('; ')}` : ''}. ` +
+    'False when something that was not asked for changed, for example the paint colour, the lamps, the wheels or the bumper ' +
+    'look like they were copied from another car. ' +
     'partsComplete: true when every change is applied fully and identically to every visible instance: all visible wheels ' +
     'have the same new design and the same colour over the whole wheel face (spokes, centre, hub, centre cap, lip), ' +
     'both headlights / both tail lights look the same, and a new paint colour covers every painted panel. False when one ' +

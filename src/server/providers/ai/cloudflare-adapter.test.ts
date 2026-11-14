@@ -90,7 +90,7 @@ describe('buildCloudflarePrompt', () => {
   it('says which input image is the car, which are parts and which is the reference', () => {
     const p = buildCloudflarePrompt(input({ partLabels: ['BBS wheels (Wheels)'] }), 1, true);
     expect(p).toMatch(/^Image 1 is the customer's real car photo/);
-    expect(p).toContain('Image 2 is a reference photo of BBS wheels (Wheels)');
+    expect(p).toContain('Image 2 is a part photo of the BBS wheels (Wheels)');
     expect(p).toContain('Image 3 is the same car already finished');
     expect(p.endsWith('EDIT PROMPT')).toBe(true);
   });
@@ -138,13 +138,22 @@ describe('cloudflareAdapter request', () => {
     expect(String(form.get('prompt'))).toContain('Image 4 is the same car already finished');
   });
 
-  it('never sends more than 4 input images', async () => {
+  it('never sends more than 4 input images: every part photo first, the reference only if a slot is left', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ result: { image: jpegAnswer } }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
     await cloudflareAdapter(spec, KEY, input({ partDataUris: [jpeg(1, 1), jpeg(1, 1), jpeg(1, 1)], referenceDataUri: jpeg(1, 1) }), 30_000);
     const form = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as FormData;
     expect(form.get('input_image_4')).toBeNull();
-    expect((form.get('input_image_3') as File).name).toBe('reference.jpg');
+    expect((form.get('input_image_3') as File).name).toBe('part-3.jpg');
+  });
+
+  it('refuses (free) instead of rendering a part it cannot see', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const webp = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=';
+    const out = await cloudflareAdapter(spec, KEY, input({ partDataUris: [webp] }), 30_000);
+    expect(out).toEqual({ ok: false, kind: 'bad_request' });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('reports a used-up daily allocation as quota and a flagged output as blocked', async () => {

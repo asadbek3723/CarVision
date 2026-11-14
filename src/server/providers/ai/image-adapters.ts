@@ -123,8 +123,19 @@ function referenceImages(input: ChainInput): string[] {
   ];
 }
 
-const PART_NOTE =
-  "The first image is the customer's car. Any following images are the exact tuning parts that must be installed onto the car with 100% identical visual details.";
+/** For models without per-image captions: which input is which, and what to take from each. */
+export function partNote(input: ChainInput): string {
+  const lines = ["Input image 1 is the customer's car photo: edit it, keep its car, camera angle, framing and background."];
+  input.partDataUris.slice(0, 3).forEach((_, i) => {
+    lines.push(`Input image ${i + 2} is a part photo, ${input.partLabels?.[i]?.trim() || 'copy ONLY the part, never the car it is fitted on'}.`);
+  });
+  if (input.referenceDataUri) {
+    lines.push(
+      `Input image ${Math.min(3, input.partDataUris.length) + 2} is this same car already finished from another angle: only a reference for how the new parts look, never its angle or background.`
+    );
+  }
+  return lines.join(' ');
+}
 
 /** Image sizes the Gemini 3 image models accept (uppercase K is required). */
 const IMAGE_SIZES = new Set(['1K', '2K', '4K']);
@@ -198,7 +209,7 @@ export function buildGeminiParts(input: ChainInput): Array<Record<string, unknow
   add(`IMAGE ${n++}: the customer's real car photo. This is the photo to edit; keep everything in it except the requested changes.`, input.carDataUri);
   input.partDataUris.slice(0, 3).forEach((uri, i) => {
     const name = input.partLabels?.[i]?.trim() || 'part';
-    add(`IMAGE ${n++}: reference photo of the part "${name}". Reproduce exactly this part (shape, design, finish).`, uri);
+    add(`IMAGE ${n++}: part photo of the ${name}. Install exactly this part on the car of IMAGE 1.`, uri);
   });
   if (input.referenceDataUri) {
     add(`IMAGE ${n++}: the same car already finished from another angle. Reference only for how the new parts and paint look; never copy its angle or background.`, input.referenceDataUri);
@@ -254,7 +265,7 @@ export const geminiAdapter: Adapter = async (spec, key, input, timeoutMs) => {
 export const openRouterAdapter: Adapter = async (spec, key, input, timeoutMs) => {
   const body: Record<string, unknown> = {
     model: spec.model,
-    prompt: spec.supportsEdit ? `${input.prompt}\n${PART_NOTE}` : input.prompt,
+    prompt: spec.supportsEdit ? `${partNote(input)}\n\n${input.prompt}` : input.prompt,
     n: 1,
   };
   if (spec.supportsEdit) {
@@ -297,6 +308,9 @@ export const falAdapter: Adapter = async (spec, key, input, timeoutMs) => {
     if (!multi) return { ok: false, kind: 'bad_request' };
     body = { prompt: input.prompt, image_urls: refs, guidance_scale: 3.5, num_images: 1, output_format: 'jpeg' };
   } else {
+    // A single-image editor never sees the part photos: it would invent a bumper or wheel that
+    // differs on every angle. Only edits that need no photo (paint, tint, polish) may use it.
+    if (multi) return { ok: false, kind: 'bad_request' };
     body = { prompt: input.prompt, image_url: input.carDataUri, guidance_scale: 3.5, num_images: 1, output_format: 'jpeg' };
   }
   const out = await post(`https://fal.run/${spec.model}`, { Authorization: `Key ${key}` }, body, timeoutMs);
@@ -312,6 +326,10 @@ export const falAdapter: Adapter = async (spec, key, input, timeoutMs) => {
 };
 
 export const openAiAdapter: Adapter = async (spec, key, input, timeoutMs) => {
+  // This endpoint only draws from text: it never sees the customer's photo and would return a
+  // different car. Every call of the app edits a photo, so it refuses (free) and the chain moves on,
+  // even when an env preference names it.
+  if (input.carDataUri) return { ok: false, kind: 'bad_request' };
   const out = await post(
     'https://api.openai.com/v1/images/generations',
     { Authorization: `Bearer ${key}` },
@@ -373,7 +391,7 @@ export function buildCloudflarePrompt(input: ChainInput, partCount: number, hasR
   ];
   for (let i = 0; i < partCount; i += 1) {
     const name = input.partLabels?.[i]?.trim() || 'the part';
-    lines.push(`Image ${i + 2} is a reference photo of ${name}: reproduce exactly this part (shape, design, finish) on the car of image 1.`);
+    lines.push(`Image ${i + 2} is a part photo of the ${name}. Install exactly this part on the car of image 1.`);
   }
   if (hasReference) {
     lines.push(
@@ -393,7 +411,7 @@ export const refineCloudflareFail: RefineFail = (status, detail, kind) => {
   return kind;
 };
 
-/** Formats FLUX.2 on Workers AI is confirmed to read. A WebP part photo is left out rather than failing the whole render. */
+/** Formats FLUX.2 on Workers AI is confirmed to read. A render that needs a WebP part photo goes to another model. */
 const CF_INPUT_MIME = new Set(['image/jpeg', 'image/png']);
 
 function dataUriToBlob(uri: string): Blob | null {
@@ -416,14 +434,19 @@ export const cloudflareAdapter: Adapter = async (spec, key, input, timeoutMs) =>
   const car = dataUriToBlob(input.carDataUri);
   if (!car) return { ok: false, kind: 'bad_request' };
 
-  // Car first, then as many part photos as fit, the finished other-angle render last.
-  const reference = input.referenceDataUri ? dataUriToBlob(input.referenceDataUri) : null;
-  const partSlots = CF_MAX_INPUT_IMAGES - 1 - (reference ? 1 : 0);
+  // Car first, then every part photo, the finished other-angle render last when a slot is left.
+  // A part photo this model cannot read (WebP) would leave the part to its imagination: a different
+  // bumper or wheel on every angle. Refuse at once (costs nothing) so the next model in the chain,
+  // which can see every photo, does the render. The part photos themselves still pin the parts
+  // when the reference render has no slot left.
   const parts: Array<{ blob: Blob; label: string | undefined }> = [];
-  input.partDataUris.slice(0, 3).forEach((uri, i) => {
+  for (const [i, uri] of input.partDataUris.slice(0, CF_MAX_INPUT_IMAGES - 1).entries()) {
     const blob = dataUriToBlob(uri);
-    if (blob && parts.length < partSlots) parts.push({ blob, label: input.partLabels?.[i] });
-  });
+    if (!blob) return { ok: false, kind: 'bad_request' };
+    parts.push({ blob, label: input.partLabels?.[i] });
+  }
+  const reference =
+    input.referenceDataUri && parts.length < CF_MAX_INPUT_IMAGES - 1 ? dataUriToBlob(input.referenceDataUri) : null;
 
   const bytes = dataUriBytes(input.carDataUri);
   const size = cloudflareOutputSize(bytes ? readImageDims(bytes) : null, cloudflareLongEdge());

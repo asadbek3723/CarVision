@@ -2003,6 +2003,7 @@
     "AI_BLOCKED": "Yapay zekâ bu fotoğrafı işleyemedi (güvenlik filtresi). Kareden insanları çıkarın, aracı tamamen çekin ve yeniden deneyin. Krediniz iade edildi",
     "AI_STORAGE_FAILED": "Sonuç kaydedilemedi. Krediniz iade edildi, lütfen tekrar deneyin",
     "AI_WRONG_VIEW": "Yapay zekâ sonucu aracın başka bir tarafını gösterdi, bu yüzden teslim edilmedi. Krediniz iade edildi, tekrar deneyin",
+    "AI_WRONG_CAR": "Yapay zekâ sonucu başka bir araç gösterdi, bu yüzden teslim edilmedi. Krediniz iade edildi, tekrar deneyin",
     "CAPTCHA_FAILED": "Doğrulama başarısız. Sayfayı yenileyip tekrar deneyin"
   },
   "capturePage": {

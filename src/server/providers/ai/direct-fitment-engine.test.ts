@@ -5,6 +5,11 @@ import {
   executeDirectAiFitment,
   paintFinish,
   tintVlt,
+  partKind,
+  sendsPartPhoto,
+  photoParts,
+  partPhotoLabel,
+  keepList,
 } from './direct-fitment-engine';
 
 describe('direct-fitment-engine input safety', () => {
@@ -66,7 +71,7 @@ describe('direct-fitment-engine', () => {
 
     expect(res.promptUsed).toContain('BBS CI-R 20"');
     expect(res.promptUsed).toContain('Carbon Front Lip');
-    expect(res.promptUsed).toContain('front-left 3/4');
+    expect(res.promptUsed).toContain('front three-quarter view');
     expect(res.durationMs).toBeGreaterThanOrEqual(0);
   });
 
@@ -77,7 +82,7 @@ describe('direct-fitment-engine', () => {
       referenceAfter: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==',
       parts: [{ id: 'w1', name: 'BBS CI-R 20"', category: 'Wheels' }],
     });
-    expect(res.promptUsed).toContain('rear-left 3/4');
+    expect(res.promptUsed).toContain('rear three-quarter view');
     expect(res.promptUsed).toContain('LAST input image');
     expect(res.promptUsed).toContain('Only modify what is actually visible');
   });
@@ -153,7 +158,7 @@ describe('direct-fitment-engine', () => {
       parts: [{ id: 'p1', name: 'Polirovka 2 bosqich', category: 'Polish' }],
     });
     expect(polish.promptUsed).toContain('PAINT POLISHING');
-    expect(polish.promptUsed).toContain('Dents, creases, deep scratches');
+    expect(polish.promptUsed).toContain('dents, creases, deep scratches');
   });
 });
 
@@ -225,5 +230,78 @@ describe('window tint renders', () => {
   it('a build without tint still keeps the glass as it is', async () => {
     const res = await executeDirectAiFitment({ carPhoto: car, parts: [{ id: 'w1', name: 'BBS CI-R 20"', category: 'Wheels' }] });
     expect(res.promptUsed).toContain('number plate, glass, and all existing damage');
+  });
+});
+
+describe('what a part does, and which photos reach the model', () => {
+  const car = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+
+  it('a window film in the Color tab, or with a leftover swatch, tints the glass and never repaints the car', async () => {
+    expect(partKind({ category: 'Color', name: 'Tonirovka 35%', swatch: '#E8BF74' })).toBe('tint');
+    expect(partKind({ category: 'Tint', name: 'XPEL 20%', swatch: '#E8BF74' })).toBe('tint');
+    const res = await executeDirectAiFitment({
+      carPhoto: car,
+      angleId: 'right',
+      parts: [{ id: 't', name: 'Tonirovka 35%', category: 'Color', swatch: '#E8BF74' }],
+    });
+    expect(res.promptUsed).not.toContain('REPAINT');
+    expect(res.promptUsed).toContain('35% VLT');
+    expect(res.promptUsed).toContain('the exact paint colour of the customer photo');
+  });
+
+  it('a wheel with a colour swatch is still a wheel', () => {
+    expect(partKind({ category: 'Wheels', name: 'Vossen HF-5', swatch: '#111111' })).toBe('wheels');
+  });
+
+  it('tint, ceramic, polish and swatch colours send no shop photo; shape parts do, most important first', () => {
+    expect(sendsPartPhoto({ category: 'Tint', name: 'Film 5%' })).toBe(false);
+    expect(sendsPartPhoto({ category: 'Ceramic', name: 'Ceramic Pro' })).toBe(false);
+    expect(sendsPartPhoto({ category: 'Polish', name: 'Polirovka' })).toBe(false);
+    expect(sendsPartPhoto({ category: 'Color', name: 'Red', swatch: '#ff0000' })).toBe(false);
+    expect(sendsPartPhoto({ category: 'Color', name: 'Red' })).toBe(true);
+    const order = photoParts([
+      { category: 'Color', name: 'Red' },
+      { category: 'Lights', name: 'LED' },
+      { category: 'Tint', name: 'Film' },
+      { category: 'Wheels', name: 'BBS' },
+    ]).map((p) => p.name);
+    expect(order).toEqual(['BBS', 'LED', 'Red']);
+  });
+
+  it('every part photo caption says to ignore the car it is fitted on', () => {
+    expect(partPhotoLabel({ category: 'Bumper', name: 'GT bumper' })).toContain("that car's paint colour");
+    expect(partPhotoLabel({ category: 'Lights', name: 'LED' })).toContain('copy ONLY the lamp units');
+  });
+
+  it('reads the film darkness next to VLT, not the UV figure', () => {
+    expect(tintVlt({ name: 'Llumar', spec: 'blocks 99% UV, 35% VLT' })).toBe(35);
+    expect(tintVlt({ name: 'Llumar', spec: 'UV 99%' })).toBeNull();
+    expect(tintVlt({ name: 'Film', spec: 'VLT 20%' })).toBe(20);
+  });
+
+  it('ends with the finished state of every region, keeping what was not chosen', async () => {
+    const res = await executeDirectAiFitment({
+      carPhoto: car,
+      angleId: 'front',
+      parts: [{ id: 'b', name: 'GT bumper', category: 'Bumper' }],
+    });
+    expect(res.promptUsed).toContain('FINAL RESULT, region by region');
+    expect(res.promptUsed).toContain('never the colour of a part photo');
+    expect(res.promptUsed).toContain('Headlights and tail lights: exactly those of the customer photo, unchanged');
+    expect(res.promptUsed).not.toContain('studio');
+  });
+
+  it('a front bumper on a side photo changes only its visible corner', async () => {
+    const res = await executeDirectAiFitment({
+      carPhoto: car,
+      angleId: 'left',
+      parts: [{ id: 'b', name: 'GT bumper', category: 'Bumper' }],
+    });
+    expect(res.promptUsed).toContain('only its corner / side edge is visible');
+  });
+
+  it('the check knows what must stay', () => {
+    expect(keepList([{ category: 'Bumper', name: 'GT' }])).toContain('the same paint colour as IMAGE 1');
+    expect(keepList([{ category: 'Color', name: 'Red', swatch: '#f00' }])).not.toContain('the same paint colour as IMAGE 1');
   });
 });

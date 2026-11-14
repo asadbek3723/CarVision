@@ -76,6 +76,23 @@ export function toRequestBody(angle: PlanAngle, allParts: BuildPart[], reference
   };
 }
 
+/**
+ * The finished render to show the model as "this build from another angle". A rear photo learns the
+ * tail lights, spoiler and rear bumper best from a finished rear view, a front photo from a front
+ * view; the first finished render (the hero) is the fallback. Never the angle's own earlier result.
+ */
+export function pickReference(
+  angle: PlanAngle,
+  done: Array<{ id: string; side: string; url: string }>,
+  fallback: string | undefined
+): string | undefined {
+  const end = (side: string) => (side.startsWith('front') ? 'front' : side.startsWith('rear') ? 'rear' : 'side');
+  const others = done.filter((d) => d.id !== angle.id);
+  const mine = end(sideOf(angle));
+  const sameEnd = mine === 'side' ? undefined : others.find((d) => end(d.side) === mine);
+  return sameEnd?.url ?? others[0]?.url ?? (done.some((d) => d.url === fallback && d.id === angle.id) ? undefined : fallback);
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function renderAngle(angle: PlanAngle, parts: BuildPart[], reference?: string): Promise<{ url: string; demo: boolean }> {
@@ -111,7 +128,13 @@ export function useRenderBuild(onCreditsChanged?: () => void) {
   const [fatal, setFatal] = React.useState<RenderFatal | null>(null);
   const [demo, setDemo] = React.useState(false);
   const cancelled = React.useRef(false);
-  const ctx = React.useRef<{ parts: BuildPart[]; reference?: string | undefined; angles: PlanAngle[] }>({ parts: [], angles: [] });
+  const ctx = React.useRef<{
+    parts: BuildPart[];
+    reference?: string | undefined;
+    /** Usable finished renders of this build by the side they show, to pick the closest reference. */
+    done: Array<{ id: string; side: string; url: string }>;
+    angles: PlanAngle[];
+  }>({ parts: [], angles: [], done: [] });
 
   const patch = React.useCallback((id: string, p: Partial<AngleState>) => {
     setStates((prev) => prev.map((s) => (s.id === id ? { ...s, ...p } : s)));
@@ -121,10 +144,14 @@ export function useRenderBuild(onCreditsChanged?: () => void) {
     async (angle: PlanAngle): Promise<boolean> => {
       patch(angle.id, { status: 'rendering' });
       try {
-        const r = await renderAngle(angle, ctx.current.parts, ctx.current.reference);
+        const r = await renderAngle(angle, ctx.current.parts, pickReference(angle, ctx.current.done, ctx.current.reference));
         if (r.demo) setDemo(true);
         patch(angle.id, { status: 'done', url: r.url });
-        if (!ctx.current.reference) ctx.current.reference = usableReference(r.url);
+        const usable = usableReference(r.url);
+        if (usable) {
+          if (!ctx.current.reference) ctx.current.reference = usable;
+          ctx.current.done = [...ctx.current.done.filter((d) => d.id !== angle.id), { id: angle.id, side: sideOf(angle), url: usable }];
+        }
         onCreditsChanged?.();
         return true;
       } catch (e) {
@@ -155,7 +182,7 @@ export function useRenderBuild(onCreditsChanged?: () => void) {
       const plan = planRender(angles, parts);
       if (plan.order.length === 0 || parts.length === 0) return;
       cancelled.current = false;
-      ctx.current = { parts, angles: plan.order };
+      ctx.current = { parts, angles: plan.order, done: [] };
       setFatal(null);
       setDemo(false);
       setRunning(true);
@@ -166,10 +193,16 @@ export function useRenderBuild(onCreditsChanged?: () => void) {
       ]);
 
       try {
-        const [hero, ...rest] = plan.order;
-        await renderInto(hero!);
+        // One side at a time until a finished render exists: it is the look reference that makes every
+        // other side show the very same parts. If the hero fails, the next side becomes the reference
+        // instead of the rest being rendered blind in parallel (and each inventing its own version).
+        const queue = [...plan.order];
+        // (A finished render that cannot be sent as a reference, such as a demo picture, also ends the wait.)
+        let anyDone = false;
+        while (queue.length && !cancelled.current && !anyDone) {
+          anyDone = await renderInto(queue.shift()!);
+        }
 
-        const queue = [...rest];
         const worker = async () => {
           while (queue.length && !cancelled.current) {
             const next = queue.shift()!;

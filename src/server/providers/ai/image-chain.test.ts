@@ -28,7 +28,7 @@ const fail = (kind: AttemptResult extends infer R ? (R extends { ok: false; kind
 beforeEach(() => resetCooldowns());
 
 describe('planModels / ranking', () => {
-  it('orders strongest first, sinks text-only models and drops unconfigured providers', () => {
+  it('orders strongest first, drops text-only models and unconfigured providers', () => {
     const plan = planModels(
       [
         spec('openai', 'gpt-image-1', 12, false),
@@ -40,7 +40,7 @@ describe('planModels / ranking', () => {
       new Set<ProviderId>(['gemini', 'openrouter', 'openai']),
       true
     );
-    expect(plan.map((m) => m.model)).toEqual(['gemini-2.5-flash-image', 'a/seedream-4', 'gpt-image-1', 'a/text-only']);
+    expect(plan.map((m) => m.model)).toEqual(['gemini-2.5-flash-image', 'a/seedream-4']);
   });
 
   it('ranks known OpenRouter families by quality', () => {

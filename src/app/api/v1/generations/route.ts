@@ -358,7 +358,11 @@ export async function POST(request: NextRequest) {
         db,
         session,
         generationId,
-        ai.outcome === 'invalid_image' ? 'Invalid input image' : ai.outcome === 'wrong_view' ? 'AI result showed another side of the car' : 'AI provider failed'
+        ai.outcome === 'invalid_image' ? 'Invalid input image' : ai.outcome === 'wrong_view'
+            ? 'AI result showed another side of the car'
+            : ai.outcome === 'wrong_car'
+              ? 'AI result showed a different car or scene'
+              : 'AI provider failed'
       );
       reserved = null;
       if (ai.outcome === 'no_quota') {
@@ -373,6 +377,11 @@ export async function POST(request: NextRequest) {
       }
       if (ai.outcome === 'wrong_view') {
         return errorResponse(502, 'AI_WRONG_VIEW', "AI natijasi mashinaning boshqa tomonini ko'rsatdi, shuning uchun berilmadi. Kredit qaytarildi, qayta urinib ko'ring", {
+          creditsRemaining: currentBalance,
+        });
+      }
+      if (ai.outcome === 'wrong_car') {
+        return errorResponse(502, 'AI_WRONG_CAR', "AI natijasi boshqa mashinani ko'rsatdi, shuning uchun berilmadi. Kredit qaytarildi, qayta urinib ko'ring", {
           creditsRemaining: currentBalance,
         });
       }
