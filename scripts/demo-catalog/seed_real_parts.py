@@ -926,6 +926,76 @@ PARTS += [
     wheel('14', 'Chevrolet 6-spoke', 'OEM', 'silver', 240),
 ]
 
+# ------------------------------------------------------------ universal spoilers
+# Trunk-lid spoilers and GT wings for most sedans, fitted at the workshop. Photos made 4:3 with fit43.py
+# (the seller's caption of photo 02 removed). zone=rear: rendered only on rear and side photos.
+SPOILER_TEXT = {
+    'uz': ("{n}", "{f}. Ko'pchilik sedanlarga (Cobalt, Gentra, Nexia, Lacetti, Malibu va boshqalar) bagaj qopqog'iga mahkamlanadi; o'rnatish ustaxonada, kronshteynlar komplektda. Kerak bo'lsa mashina rangiga bo'yaladi."),
+    'ru': ("{n}", "{f}. Ставится на крышку багажника большинства седанов (Cobalt, Gentra, Nexia, Lacetti, Malibu и др.); установка в мастерской, кронштейны в комплекте. При желании красится в цвет авто."),
+    'en': ("{n}", "{f}. Mounts on the trunk lid of most sedans (Cobalt, Gentra, Nexia, Lacetti, Malibu and more); fitted at the workshop, brackets included. Can be painted to the car's colour."),
+    'ar': ("{n}", "{f}. يُركَّب على غطاء صندوق معظم سيارات السيدان (Cobalt وGentra وNexia وLacetti وMalibu وغيرها)؛ التركيب في الورشة والحوامل ضمن الطقم. يمكن طلاؤه بلون السيارة."),
+    'tr': ("{n}", "{f}. Çoğu sedanın bagaj kapağına takılır (Cobalt, Gentra, Nexia, Lacetti, Malibu ve diğerleri); montaj atölyede, braketler dahil. İstenirse aracın rengine boyanır."),
+    'kk': ("{n}", "{f}. Көптеген седандардың (Cobalt, Gentra, Nexia, Lacetti, Malibu және т.б.) жүксалғыш қақпағына орнатылады; орнату шеберханада, кронштейндер жиынтықта. Қаласаңыз көлік түсіне боялады."),
+    'ky': ("{n}", "{f}. Көпчүлүк седандардын (Cobalt, Gentra, Nexia, Lacetti, Malibu ж.б.) жүк салгычынын капкагына орнотулат; орнотуу устаканада, кронштейндер комплектте. Кааласаңыз унаанын түсүнө боёлот."),
+    'tg': ("{n}", "{f}. Ба сарпӯши бағоҷи аксари седанҳо (Cobalt, Gentra, Nexia, Lacetti, Malibu ва ғ.) насб мешавад; насб дар устохона, кронштейнҳо дар маҷмӯа. Дар ҳолати зарурӣ ба ранги мошин ранг карда мешавад."),
+}
+SPOILERS = [  # n, uz name, ru name, en name, style, material description (uz, ru, en, ar, tr, kk, ky, tg), price, install
+    ('01', "Ikki qavatli sport spoyler, yaltiroq qora", "Двухуровневый спортивный спойлер, глянцевый чёрный", "Two-tier sport spoiler, gloss black",
+     'two_tier', ("Yaltiroq qora ABS plastik, ikki qavatli: past ducktail va ustidagi qanot", "Глянцевый чёрный ABS-пластик, два уровня: низкий утиный хвост и крыло сверху",
+                  "Gloss black ABS, two tiers: a low ducktail with a raised blade above", "ABS أسود لامع بطبقتين: ذيل منخفض وجناح مرتفع فوقه",
+                  "Parlak siyah ABS, iki katlı: alçak ördek kuyruğu ve üstte kanat", "Жылтыр қара ABS, екі деңгейлі: төмен ducktail және үстінде қанат",
+                  "Жалтырак кара ABS, эки деңгээлдүү: төмөн ducktail жана үстүндө канат", "ABS-и сиёҳи ҷилодор, дуқабата: ducktail-и паст ва бол дар боло"), 150, 35),
+    ('02', "GT katta orqa qanot, karbon ko'rinishli, 145 sm", "Большое заднее крыло GT, под карбон, 145 см", "Large GT rear wing, carbon look, 145 cm",
+     'gt_wing', ("Karbon naqshli qoplamali qanot, uzunligi 145 sm, qora metall ustunlar", "Крыло с покрытием под карбон, длина 145 см, чёрные металлические стойки",
+                 "Carbon-pattern finish, 145 cm long, black metal uprights", "جناح بطبقة بنقش الكربون، طوله 145 سم، دعامات معدنية سوداء",
+                 "Karbon desenli kaplama, 145 cm uzunluk, siyah metal ayaklar", "Көміртек өрнекті жабын, ұзындығы 145 см, қара металл тіректер",
+                 "Көмүртек оймолуу каптоо, узундугу 145 см, кара металл тирөөчтөр", "Рӯйпӯши нақши карбонӣ, дарозӣ 145 см, сутунҳои металлии сиёҳ"), 190, 45),
+    ('03', "GT qanot, mat qora, sozlanadigan ustunlar", "Крыло GT, матовый чёрный, регулируемые стойки", "GT wing, matte black, adjustable uprights",
+     'gt_wing', ("Mat qora qanot, katta yon plastinalar va burchagi sozlanadigan metall ustunlar", "Матовое чёрное крыло, большие торцевые пластины и стойки с регулировкой угла",
+                 "Matte black blade, large end plates and angle-adjustable metal uprights", "جناح أسود مطفأ بألواح جانبية كبيرة ودعامات معدنية قابلة لضبط الزاوية",
+                 "Mat siyah kanat, büyük yan plakalar ve açısı ayarlanabilir metal ayaklar", "Күңгірт қара қанат, үлкен бүйір пластиналар және бұрышы реттелетін тіректер",
+                 "Күңүрт кара канат, чоң каптал пластиналар жана бурчу жөндөлүүчү тирөөчтөр", "Боли сиёҳи хира, лавҳаҳои калони паҳлӯ ва сутунҳои бо кунҷи танзимшаванда"), 170, 45),
+    ('04', "Karbon fiber GT qanot, yaltiroq", "Карбоновое крыло GT, глянец", "Carbon fibre GT wing, gloss",
+     'gt_wing', ("Haqiqiy karbon fiber (twill), yaltiroq lak, qora alyuminiy ustunlar", "Настоящий карбон (twill), глянцевый лак, чёрные алюминиевые стойки",
+                 "Real twill carbon fibre with a gloss clear coat, black aluminium uprights", "ألياف كربون حقيقية (twill) بورنيش لامع ودعامات ألمنيوم سوداء",
+                 "Gerçek twill karbon fiber, parlak vernik, siyah alüminyum ayaklar", "Нағыз twill көміртек талшығы, жылтыр лак, қара алюминий тіректер",
+                 "Чыныгы twill көмүртек жиби, жалтырак лак, кара алюминий тирөөчтөр", "Нахи карбонии ҳақиқӣ (twill), лаки ҷилодор, сутунҳои алюминийи сиёҳ"), 320, 50),
+    ('05', "Karbon GT qanot, kumushrang ustunlar", "Карбоновое крыло GT, серебристые стойки", "Carbon GT wing, silver uprights",
+     'gt_wing', ("Karbon fiber qanot, baland yon plastinalar va kumushrang frezalangan alyuminiy ustunlar", "Карбоновое крыло, высокие торцевые пластины и серебристые фрезерованные алюминиевые стойки",
+                 "Carbon fibre blade, tall end plates and silver machined aluminium uprights", "جناح من ألياف الكربون بألواح جانبية عالية ودعامات ألمنيوم فضية مشغولة",
+                 "Karbon fiber kanat, yüksek yan plakalar ve gümüş CNC alüminyum ayaklar", "Көміртек талшықты қанат, биік бүйір пластиналар және күміс түсті алюминий тіректер",
+                 "Көмүртек жиптүү канат, бийик каптал пластиналар жана күмүш түстүү алюминий тирөөчтөр", "Боли нахи карбонӣ, лавҳаҳои баланди паҳлӯ ва сутунҳои алюминийи нуқрагин"), 280, 50),
+    ('06', "Pedestalli karbon GT qanot", "Карбоновое крыло GT на пьедестале", "Carbon GT wing on a pedestal",
+     'gt_wing', ("Karbon fiber qanot, bagajga tushadigan ventilyatsiyali pedestal ustida; pedestal mashina rangiga bo'yaladi", "Карбоновое крыло на вентилируемом пьедестале по форме багажника; пьедестал красится в цвет авто",
+                 "Carbon fibre blade on a vented pedestal shaped to the trunk; the pedestal is painted to the car's colour", "جناح كربوني على قاعدة مهوّاة بشكل الصندوق، وتُطلى القاعدة بلون السيارة",
+                 "Bagaja uygun havalandırmalı kaide üzerinde karbon kanat; kaide aracın rengine boyanır", "Жүксалғышқа сай желдетілетін тұғырдағы көміртек қанат; тұғыр көлік түсіне боялады",
+                 "Жүк салгычка ылайык желдетилүүчү таканчадагы көмүртек канат; таканча унаанын түсүнө боёлот", "Боли карбонӣ дар пояи вентилятсиядор мувофиқи бағоҷ; поя ба ранги мошин ранг карда мешавад"), 350, 60),
+    ('07', "Swan-neck karbon GT qanot", "Карбоновое крыло GT swan-neck", "Swan-neck carbon GT wing",
+     'gt_wing', ("Karbon fiber qanot, ustunlari yuqoridan (swan-neck) mahkamlanadi: pastki yuzasi toza qoladi", "Карбоновое крыло на стойках swan-neck, крепится сверху: нижняя поверхность остаётся чистой",
+                 "Carbon fibre blade hung from swan-neck uprights, so the underside stays clean", "جناح كربوني معلّق بدعامات swan-neck فيبقى سطحه السفلي نظيفًا",
+                 "Swan-neck ayaklara üstten asılı karbon kanat, alt yüzey temiz kalır", "Swan-neck тіректерге үстінен ілінген көміртек қанат, асты таза қалады",
+                 "Swan-neck тирөөчтөргө үстүнөн илинген көмүртек канат, асты таза калат", "Боли карбонӣ, ки ба сутунҳои swan-neck аз боло овехта мешавад"), 420, 60),
+    ('08', "Karbon lip spoyler (ducktail)", "Карбоновый лип-спойлер (ducktail)", "Carbon lip spoiler (ducktail)",
+     'lip', ("Karbon fiber lip, bagaj qopqog'i chetiga yopishtiriladi, teshik ochish shart emas", "Карбоновая губа на кромку крышки багажника, клеится без сверления",
+             "Carbon fibre lip that bonds to the trunk lid edge, no drilling", "شفة من ألياف الكربون تُلصق على حافة غطاء الصندوق دون ثقب",
+             "Bagaj kapağı kenarına yapışan karbon lip, delme gerekmez", "Жүксалғыш қақпағының жиегіне жабыстырылатын көміртек ерін, тесу қажет емес",
+             "Жүк салгыч капкагынын кырына чапталуучу көмүртек эрин, тешүүнүн кереги жок", "Лаби карбонӣ, ки ба канори сарпӯши бағоҷ часпонда мешавад, бе сӯрох"), 90, 25),
+]
+LOCS = ('uz', 'ru', 'en', 'ar', 'tr', 'kk', 'ky', 'tg')
+
+
+def spoiler(n, uz, ru, en, style, mats, price, install):
+    names = {'uz': uz, 'ru': ru, 'en': en}
+    return dict(
+        key=f'universal-spoiler-{n}', car='universal', category='spoiler', file=f'universal/spoiler-{n}.webp',
+        brand={'lip': 'Carbon Lip', 'two_tier': 'Sport Line'}.get(style, 'GT Wing'), price=price, install=install, stock=6,
+        attrs=dict(universal=True, part='trunk_spoiler' if style != 'gt_wing' else 'gt_wing', zone='rear', style=style),
+        text={l: (names.get(l, en), SPOILER_TEXT[l][1].format(f=m)) for l, m in zip(LOCS, mats)},
+    )
+
+
+PARTS += [spoiler(*s) for s in SPOILERS]
+
 # ---------------------------------------------------------------- window tint
 # Every car gets six full packages (windshield, rear window and every side window), one per film darkness.
 # The price is per car (bigger glass, more film and work) and per level (light films are ceramic or athermal
