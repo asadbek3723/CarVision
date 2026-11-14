@@ -1,5 +1,6 @@
 import { BRAND_VARIANTS, SEO_COPY } from './copy';
 import { SITE_NAME, SITE_URL, absoluteUrl, localePath } from './site';
+import { socialLinks, supportEmail } from './social';
 import type { Locale } from '@/i18n/routing';
 
 type Json = Record<string, unknown>;
@@ -8,13 +9,6 @@ type Json = Record<string, unknown>;
 export function JsonLd({ data }: { data: Json | Json[] }) {
   const json = JSON.stringify(data).replace(/</g, '\\u003c');
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
-}
-
-function socialLinks(): string[] {
-  return (process.env['NEXT_PUBLIC_SOCIAL_LINKS'] || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s) => /^https:\/\//.test(s));
 }
 
 export function organizationLd(): Json {
@@ -30,6 +24,9 @@ export function organizationLd(): Json {
     description: SEO_COPY.en.home.description,
     // Official profiles (Instagram, Telegram...), comma-separated in NEXT_PUBLIC_SOCIAL_LINKS: they tie the brand together for search engines.
     ...(socialLinks().length ? { sameAs: socialLinks() } : {}),
+    ...(supportEmail()
+      ? { email: supportEmail(), contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', email: supportEmail(), availableLanguage: ['uz', 'ru', 'en'] } }
+      : {}),
   };
 }
 

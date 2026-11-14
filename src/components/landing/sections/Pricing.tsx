@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { SectionHeading } from './shared';
 
+// Prices, image counts and device limits must match the `plans` table (GET /api/v1/plans):
+// that is what checkout charges and what the app enforces.
 const TIERS: {
   key: 'free' | 'pro' | 'max';
   name: string;
@@ -28,7 +30,7 @@ const TIERS: {
     key: 'pro',
     name: 'PRO',
     price: 29,
-    items: [{ key: 'i1', values: { count: 800 } }, { key: 'i2' }, { key: 'i3', values: { count: 3 } }, { key: 'i4' }, { key: 'i5' }],
+    items: [{ key: 'i1', values: { count: 800 } }, { key: 'i2' }, { key: 'i3', values: { count: 2 } }, { key: 'i4' }, { key: 'i5' }],
     hot: false,
   },
   {
@@ -36,7 +38,7 @@ const TIERS: {
     name: 'MAX',
     price: 99,
     originalPrice: 145,
-    items: [{ key: 'i1', values: { count: 4000 } }, { key: 'i2' }, { key: 'i3', values: { count: 8 } }, { key: 'i4' }, { key: 'i5' }],
+    items: [{ key: 'i1', values: { count: 4000 } }, { key: 'i2' }, { key: 'i3', values: { count: 4 } }, { key: 'i4' }, { key: 'i5' }],
     hot: true,
   },
 ];

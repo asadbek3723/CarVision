@@ -4,23 +4,33 @@
 import { useLocale, useTranslations } from 'next-intl';
 import {
   Clock,
+  Facebook,
   Instagram,
   Linkedin,
   Mail,
   MapPin,
+  Music2,
   Send,
   Twitter,
   Youtube,
+  type LucideIcon,
 } from 'lucide-react';
+import { socialProfiles, supportEmail, type SocialNetwork } from '@/lib/seo/social';
 import { LogoWithText } from './shared';
 
-const SOCIAL_LINKS = [
-  { icon: Send, label: 'Telegram' },
-  { icon: Instagram, label: 'Instagram' },
-  { icon: Youtube, label: 'YouTube' },
-  { icon: Linkedin, label: 'LinkedIn' },
-  { icon: Twitter, label: 'X' },
-];
+const SOCIAL_ICONS: Record<SocialNetwork, { icon: LucideIcon; label: string }> = {
+  telegram: { icon: Send, label: 'Telegram' },
+  instagram: { icon: Instagram, label: 'Instagram' },
+  youtube: { icon: Youtube, label: 'YouTube' },
+  linkedin: { icon: Linkedin, label: 'LinkedIn' },
+  x: { icon: Twitter, label: 'X' },
+  facebook: { icon: Facebook, label: 'Facebook' },
+  tiktok: { icon: Music2, label: 'TikTok' },
+};
+
+/** Only real, configured profiles (NEXT_PUBLIC_SOCIAL_LINKS): a dead icon helps no one. */
+const SOCIALS = socialProfiles();
+const EMAIL = supportEmail();
 
 const FOOTER_COLUMNS = [
   { key: 'product', links: ['visualizer', 'pricing', 'mobileApp', 'catalog'] },
@@ -51,10 +61,14 @@ export function Footer() {
           </p>
 
           <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
-            <li className="flex items-center gap-3">
-              <Mail className="h-4 w-4 shrink-0 text-primary" />
-              <span>support@carvision.com</span>
-            </li>
+            {EMAIL && (
+              <li className="flex items-center gap-3">
+                <Mail className="h-4 w-4 shrink-0 text-primary" />
+                <a href={`mailto:${EMAIL}`} className="transition-colors hover:text-foreground">
+                  {EMAIL}
+                </a>
+              </li>
+            )}
             <li className="flex items-center gap-3">
               <MapPin className="h-4 w-4 shrink-0 text-primary" />
               <span>{t('address')}</span>
@@ -89,16 +103,21 @@ export function Footer() {
 
       <div className="mt-14 flex flex-col items-center justify-between gap-6 pt-8 sm:flex-row">
         <div className="flex gap-3">
-          {SOCIAL_LINKS.map(({ icon: Icon, label }) => (
+          {SOCIALS.map(({ network, url }) => {
+            const { icon: Icon, label } = SOCIAL_ICONS[network];
+            return (
             <a
-              key={label}
-              href="#"
+              key={url}
+              href={url}
+              target="_blank"
+              rel="me noopener"
               aria-label={label}
               className="glass grid h-11 w-11 place-items-center rounded-full text-muted-foreground transition-all duration-500 hover:-translate-y-1  hover:text-primary hover:shadow-gold"
             >
               <Icon className="h-4 w-4" />
             </a>
-          ))}
+            );
+          })}
         </div>
 
         <p className="text-center text-[10px] tracking-lux text-muted-foreground">

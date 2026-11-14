@@ -1131,7 +1131,7 @@
       },
       "max": {
         "tier": "PROFESSIONAL SERVICES",
-        "badge": "${original} INSTEAD OF ${price} — YOU SAVE {percent}%!",
+        "badge": "${price} INSTEAD OF ${original} — YOU SAVE {percent}%!",
         "per": "month",
         "d": "For owners of a large auto tuning store or a professional tuning salon.",
         "i1": "{count} images / month",
